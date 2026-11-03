@@ -8,6 +8,14 @@ export default async function handler({ request, env }) {
   const notAllowed = rejectMethod(request, ['POST'])
   if (notAllowed) return notAllowed
 
+  // Si faltan variables, es un fallo de CONFIGURACIÓN del servidor (500), no del usuario (401).
+  // Así el error nos dice exactamente qué falta en vez de un engañoso "Invalid credential".
+  const missing = ['GOOGLE_CLIENT_ID', 'SESSION_SECRET'].filter((name) => !env[name])
+  if (missing.length) {
+    console.error('Missing runtime variables:', missing)
+    return json({ error: `Server misconfigured: missing ${missing.join(', ')}` }, 500)
+  }
+
   const credential = (await readJson(request))?.credential
   if (typeof credential !== 'string' || credential.length === 0) {
     return json({ error: 'Missing Google credential' }, 400)
