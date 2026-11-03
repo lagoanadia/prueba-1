@@ -2,29 +2,29 @@ import { useState } from 'react'
 
 // Qué extensiones acepta el <input type="file"> según el tipo elegido.
 const CONFIG = {
-  pdf: { titulo: 'Subir PDF', accept: '.pdf,application/pdf' },
+  pdf: { title: 'Upload PDF', accept: '.pdf,application/pdf' },
   pptx: {
-    titulo: 'Subir PowerPoint',
-    accept: '.ppt,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    title: 'Upload PowerPoint',
+    accept: '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation',
   },
 }
 
-export default function FileUploader({ tipo, onSubmit, onBack, cargando }) {
-  const [archivo, setArchivo] = useState(null)
-  const { titulo, accept } = CONFIG[tipo]
+export default function FileUploader({ type, onSubmit, onBack }) {
+  const [file, setFile] = useState(null)
+  const { title, accept } = CONFIG[type]
 
   return (
     <div className="wf-panel">
-      <button className="wf-link" onClick={onBack}>← Volver</button>
-      <h2>{titulo}</h2>
+      <button className="wf-link" onClick={onBack}>← Back</button>
+      <h2>{title}</h2>
 
       <label className="wf-box wf-dropzone">
-        {archivo ? `✔ ${archivo.name}` : '[ Arrastra aquí o pulsa para elegir archivo ]'}
-        <input type="file" accept={accept} hidden onChange={(e) => setArchivo(e.target.files[0] ?? null)} />
+        {file ? `✔ ${file.name}` : '[ Drop a file here or tap to choose ]'}
+        <input type="file" accept={accept} hidden onChange={(e) => setFile(e.target.files[0] ?? null)} />
       </label>
 
-      <button className="wf-button" disabled={!archivo || cargando} onClick={() => onSubmit(archivo)}>
-        {cargando ? 'Procesando…' : 'Procesar con IA'}
+      <button className="wf-button" disabled={!file} onClick={() => onSubmit(file)}>
+        Continue to assistant →
       </button>
     </div>
   )

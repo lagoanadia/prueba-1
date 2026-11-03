@@ -23,3 +23,20 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #f2f2f2; color
 .wf-dropzone { min-height: 140px; display: flex; align-items: center; justify-content: center; text-align: center; color: #777; cursor: pointer; }
 .wf-textarea { min-height: 200px; font: inherit; resize: vertical; }
 .wf-result { width: 100%; }
+
+.wf-center { justify-content: center; align-items: center; text-align: center; }
+.wf-error { color: #b00020; margin: 0; }
+.wf-header-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.wf-user { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+.wf-avatar { width: 28px; height: 28px; border-radius: 50%; }
+
+.wf-chat { align-items: stretch; }
+.wf-chat h2 { margin: 0; }
+.wf-chip { align-self: flex-start; border: 1px solid #999; border-radius: 999px; padding: 4px 10px; font-size: .85rem; background: #eee; }
+.wf-messages { flex: 1; min-height: 300px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.wf-quick-actions { display: flex; flex-direction: column; gap: 8px; }
+.wf-message { max-width: 85%; padding: 8px 12px; border-radius: 8px; white-space: pre-wrap; }
+.wf-message-user { align-self: flex-end; background: #ddd; }
+.wf-message-assistant { align-self: flex-start; background: #fff; border: 1px solid #ccc; }
+.wf-composer { display: flex; gap: 8px; }
+.wf-input { flex: 1; font: inherit; border-style: solid; }

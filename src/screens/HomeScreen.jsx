@@ -2,77 +2,47 @@ import { useState } from 'react'
 import OptionsMenu from '../components/OptionsMenu.jsx'
 import FileUploader from '../components/FileUploader.jsx'
 import NotesEditor from '../components/NotesEditor.jsx'
-import { procesarArchivo, procesarNotas } from '../services/aiService.js'
+import { buildMaterial } from '../services/aiService.js'
 
 /**
- * Pantalla principal.
- *
- * Estado:
- *  - menuAbierto: ¿se ven las 3 opciones?
- *  - opcion:      qué opción eligió el usuario ('pdf' | 'pptx' | 'notas' | null)
- *  - resultado:   lo que devuelve la IA (de momento, un texto falso)
+ * Pantalla 1: elegir el material.
+ *  - menuOpen: ¿se ven las 3 opciones?
+ *  - option:   'pdf' | 'pptx' | 'notes' | null
  */
-export default function HomeScreen() {
-  const [menuAbierto, setMenuAbierto] = useState(false)
-  const [opcion, setOpcion] = useState(null)
-  const [resultado, setResultado] = useState('')
-  const [cargando, setCargando] = useState(false)
+export default function HomeScreen({ onMaterialReady, onOpenAssistant }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [option, setOption] = useState(null)
 
-  const elegirOpcion = (id) => {
-    setOpcion(id)
-    setMenuAbierto(false)
-    setResultado('')
+  const selectOption = (id) => {
+    setOption(id)
+    setMenuOpen(false)
   }
 
-  const volver = () => {
-    setOpcion(null)
-    setResultado('')
-  }
-
-  // Punto de unión UI <-> lógica IA: la UI solo llama a una función del servicio.
-  const enviar = async (datos) => {
-    setCargando(true)
-    try {
-      const respuesta =
-        opcion === 'notas' ? await procesarNotas(datos) : await procesarArchivo(datos, opcion)
-      setResultado(respuesta)
-    } finally {
-      setCargando(false)
-    }
+  const submit = async (input) => {
+    onMaterialReady(await buildMaterial(option, input))
   }
 
   return (
-    <main className="wf-screen">
-      <header className="wf-box wf-header">[ Logo / Nombre de la app ]</header>
+    <section className="wf-content">
+      {option === null && (
+        <>
+          <p className="wf-placeholder">[ Welcome text / explanation ]</p>
 
-      <section className="wf-content">
-        {opcion === null && (
-          <>
-            <p className="wf-placeholder">[ Texto de bienvenida / explicación ]</p>
+          <button className="wf-button wf-main-button" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? '✕ Close' : '+ Add material'}
+          </button>
 
-            <button className="wf-button wf-main-button" onClick={() => setMenuAbierto(!menuAbierto)}>
-              {menuAbierto ? '✕ Cerrar' : '+ Empezar'}
-            </button>
+          {menuOpen && <OptionsMenu onSelect={selectOption} />}
 
-            {menuAbierto && <OptionsMenu onSelect={elegirOpcion} />}
-          </>
-        )}
+          <button className="wf-link" onClick={onOpenAssistant}>Or chat with the assistant →</button>
+        </>
+      )}
 
-        {(opcion === 'pdf' || opcion === 'pptx') && (
-          <FileUploader tipo={opcion} onSubmit={enviar} onBack={volver} cargando={cargando} />
-        )}
+      {(option === 'pdf' || option === 'pptx') && (
+        <FileUploader type={option} onSubmit={submit} onBack={() => setOption(null)} />
+      )}
 
-        {opcion === 'notas' && <NotesEditor onSubmit={enviar} onBack={volver} cargando={cargando} />}
-
-        {resultado && (
-          <div className="wf-box wf-result">
-            <strong>[ Resultado IA ]</strong>
-            <p>{resultado}</p>
-          </div>
-        )}
-      </section>
-
-      <footer className="wf-box wf-footer">[ Footer / navegación ]</footer>
-    </main>
+      {option === 'notes' && <NotesEditor onSubmit={submit} onBack={() => setOption(null)} />}
+    </section>
   )
 }

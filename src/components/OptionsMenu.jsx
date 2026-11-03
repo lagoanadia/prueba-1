@@ -1,18 +1,18 @@
 // Lista de opciones como DATOS: para añadir una nueva solo tocas este array.
-const OPCIONES = [
-  { id: 'pdf', icono: '📄', texto: 'Subir PDF' },
-  { id: 'pptx', icono: '📊', texto: 'Subir PowerPoint' },
-  { id: 'notas', icono: '📝', texto: 'Escribir notas' },
+const OPTIONS = [
+  { id: 'pdf', icon: '📄', label: 'Upload PDF' },
+  { id: 'pptx', icon: '📊', label: 'Upload PowerPoint' },
+  { id: 'notes', icon: '📝', label: 'Write notes' },
 ]
 
 export default function OptionsMenu({ onSelect }) {
   return (
     <ul className="wf-options">
-      {OPCIONES.map((op) => (
+      {OPTIONS.map((op) => (
         <li key={op.id}>
           <button className="wf-button wf-option" onClick={() => onSelect(op.id)}>
-            <span className="wf-icon">{op.icono}</span>
-            {op.texto}
+            <span className="wf-icon">{op.icon}</span>
+            {op.label}
           </button>
         </li>
       ))}

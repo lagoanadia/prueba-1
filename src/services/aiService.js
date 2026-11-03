@@ -1,33 +1,26 @@
 /**
- * Capa de LÓGICA CON IA.
+ * Capa de LÓGICA CON IA (frontend).
  *
- * La UI nunca habla con la IA directamente: solo llama a estas funciones.
- * Así cada una puede trabajar en su parte sin pisarse:
- *   - Interfaz: components/ y screens/
- *   - Lógica IA: este archivo (y los que salgan de aquí)
- *
- * De momento devuelven datos falsos (mock) con un retardo para simular la red.
+ * La UI solo llama a estas funciones. La IA de verdad está en el backend
+ * (api/chat.js -> server/groq.js), porque la API key de Groq no puede estar aquí.
  */
-
-const esperar = (ms) => new Promise((r) => setTimeout(r, ms))
+import { request } from './api.js'
 
 /**
- * @param {File} archivo  El archivo que eligió el usuario
- * @param {'pdf'|'pptx'} tipo
- * @returns {Promise<string>}
+ * @param {{role: 'user'|'assistant', content: string}[]} messages  historial del chat
+ * @param {{type: string, name: string, text: string|null} | null} material
+ * @returns {Promise<string>} respuesta del asistente
  */
-export async function procesarArchivo(archivo, tipo) {
-  // TODO (IA): extraer el texto del archivo y mandarlo al modelo.
-  await esperar(800)
-  return `(mock) Recibido ${tipo.toUpperCase()} "${archivo.name}" de ${Math.round(archivo.size / 1024)} KB.`
+export async function askAssistant(messages, material) {
+  const { reply } = await request('/api/chat', { method: 'POST', body: { messages, material } })
+  return reply
 }
 
 /**
- * @param {string} texto  Las notas escritas por el usuario
- * @returns {Promise<string>}
+ * Convierte lo que elige el usuario en la pantalla Home en un objeto "material".
+ * TODO (IA): extraer el texto real de PDF (pdfjs-dist) y PPTX (JSZip).
  */
-export async function procesarNotas(texto) {
-  // TODO (IA): mandar las notas al modelo.
-  await esperar(800)
-  return `(mock) Recibidas notas de ${texto.trim().split(/\s+/).length} palabras.`
+export async function buildMaterial(type, input) {
+  if (type === 'notes') return { type: 'notes', name: 'My notes', text: input }
+  return { type, name: input.name, text: null }
 }
