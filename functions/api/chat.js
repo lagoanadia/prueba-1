@@ -1,10 +1,10 @@
 // POST /api/chat
 // body: { messages: [{ role: 'user'|'assistant', content }], material?: { type, name, text } }
 // ->    { reply: "<respuesta del asistente>" }
-import { rejectMethod } from '../server/http.js'
-import { getSessionUser } from '../server/session.js'
-import { groqChat } from '../server/groq.js'
-import { ORGANIZER_SYSTEM_PROMPT, materialToContext } from '../server/prompts.js'
+import { json, readJson, rejectMethod } from '../../server/http.js'
+import { getSessionUser } from '../../server/session.js'
+import { groqChat } from '../../server/groq.js'
+import { ORGANIZER_SYSTEM_PROMPT, materialToContext } from '../../server/prompts.js'
 
 // Límites para que nadie nos mande 10 MB de texto y nos funda la cuota de Groq.
 const MAX_MESSAGES = 30
@@ -30,17 +30,18 @@ function validate(messages, material) {
   return null
 }
 
-export default async function handler(req, res) {
-  if (rejectMethod(req, res, ['POST'])) return
+export async function onRequest({ request, env }) {
+  const notAllowed = rejectMethod(request, ['POST'])
+  if (notAllowed) return notAllowed
 
   // 1. ¿Está logueado? Sin esto, cualquiera podría usar nuestra API key gratis.
-  const user = await getSessionUser(req)
-  if (!user) return res.status(401).json({ error: 'Not signed in' })
+  const user = await getSessionUser(request, env)
+  if (!user) return json({ error: 'Not signed in' }, 401)
 
   // 2. ¿El body es válido?
-  const { messages, material } = req.body ?? {}
+  const { messages, material } = (await readJson(request)) ?? {}
   const error = validate(messages, material)
-  if (error) return res.status(400).json({ error })
+  if (error) return json({ error }, 400)
 
   // 3. Construir la conversación: reglas + material + historial del chat.
   const groqMessages = [
@@ -51,10 +52,10 @@ export default async function handler(req, res) {
 
   // 4. Llamar a Groq.
   try {
-    const reply = await groqChat(groqMessages)
-    return res.status(200).json({ reply })
+    const reply = await groqChat(groqMessages, env)
+    return json({ reply })
   } catch (err) {
-    console.error(err) // se ve en los logs de Vercel; al cliente no le damos detalles internos
-    return res.status(502).json({ error: 'The AI service failed. Please try again.' })
+    console.error(err) // se ve en los logs de Cloudflare; al cliente no le damos detalles internos
+    return json({ error: 'The AI service failed. Please try again.' }, 502)
   }
 }

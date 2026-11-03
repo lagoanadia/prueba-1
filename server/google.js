@@ -15,8 +15,8 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 // jose descarga y cachea las claves públicas de Google.
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'))
 
-export async function verifyGoogleIdToken(idToken) {
-  const clientId = process.env.GOOGLE_CLIENT_ID
+export async function verifyGoogleIdToken(idToken, env) {
+  const clientId = env.GOOGLE_CLIENT_ID
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not set')
 
   const { payload } = await jwtVerify(idToken, GOOGLE_JWKS, {

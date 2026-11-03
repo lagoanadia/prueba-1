@@ -1,11 +1,11 @@
 # StudyBuddy (PWA hackathon)
 
-Asistente con IA que organiza tu material escolar. Frontend en React + Vite, backend en funciones serverless de Vercel, IA con Groq y login con Google.
+Asistente con IA que organiza tu material escolar. Frontend en React + Vite, backend en Cloudflare Pages Functions, IA con Groq y login con Google.
 
 ## Estructura
 
 ```
-api/                    ← BACKEND: cada archivo es un endpoint (Vercel)
+functions/api/          ← BACKEND: la ruta del archivo es la URL (Cloudflare Pages Functions)
   auth/google.js          POST  verifica el token de Google y crea la sesión
   auth/me.js              GET   ¿quién soy? (401 si no hay sesión)
   auth/logout.js          POST  cierra sesión
@@ -24,23 +24,28 @@ src/                    ← FRONTEND
 ## Puesta en marcha (local)
 
 1. **Google Client ID** — [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
-   - Configura la *OAuth consent screen* (tipo External, modo Testing, añade vuestros emails como test users).
+   - Configura la *OAuth consent screen* (External, modo Testing, añade vuestros emails como test users).
    - *Create credentials → OAuth client ID → Web application*.
-   - En **Authorized JavaScript origins** añade `http://localhost:3000`, `http://localhost` y, cuando despleguéis, la URL de Vercel (`https://tu-app.vercel.app`).
+   - **Authorized JavaScript origins**: `http://localhost:5173`, `http://localhost` y la URL de Cloudflare (`https://tu-app.pages.dev`), sin barra final.
 2. **Groq API key** — <https://console.groq.com/keys>
-3. Copia `.env.example` a `.env.local` y rellénalo.
-4. Instala y arranca (frontend + `/api` juntos):
+3. Copia `.env.example` → `.env.local` (frontend) y `.dev.vars.example` → `.dev.vars` (backend), y rellénalos.
+4. Arranca en **dos terminales**:
 
 ```bash
 npm install
-npm i -g vercel
-vercel dev
+npm run dev:api
 ```
 
-Abre <http://localhost:3000>. (`npm run dev` arranca solo Vite, sin `/api`: el login no funcionará.)
+```bash
+npm run dev
+```
 
-## Despliegue en Vercel
+Abre <http://localhost:5173>. Vite reenvía `/api` a las Functions (puerto 8788). Si cambias algo en `functions/` o `server/`, reinicia `dev:api`.
 
-1. Importa el repo en <https://vercel.com/new> (detecta Vite solo).
-2. *Settings → Environment Variables*: añade las mismas variables de `.env.local`.
-3. Añade la URL de producción a los *Authorized JavaScript origins* de Google.
+## Despliegue en Cloudflare Pages
+
+1. Cloudflare → *Workers & Pages → Create → Pages → Connect to Git* → `lagoanadia/prueba-1`, rama `main`.
+2. Build: preset **React (Vite)** · command `npm run build` · output `dist`.
+3. *Settings → Variables and Secrets* (Production): `VITE_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_ID`, `SESSION_SECRET` (tipo Secret), `GROQ_API_KEY` (Secret), opcional `GROQ_MODEL`.
+4. Tras añadir/cambiar variables: *Deployments → Retry deployment* (las `VITE_` se incrustan al compilar).
+5. Añade `https://tu-app.pages.dev` a los *Authorized JavaScript origins* de Google.

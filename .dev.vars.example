@@ -1,0 +1,14 @@
+# BACKEND (Cloudflare Functions) en local. Copia como .dev.vars. NUNCA lo subas a git.
+# En producción van en Cloudflare: Settings > Variables and Secrets.
+
+# Mismo Client ID que VITE_GOOGLE_CLIENT_ID: comprueba que el token es para nuestra app
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+
+# Mínimo 32 caracteres. Genera uno con:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=
+
+# https://console.groq.com/keys
+GROQ_API_KEY=
+# Opcional. Modelos: https://console.groq.com/docs/models
+GROQ_MODEL=openai/gpt-oss-120b
