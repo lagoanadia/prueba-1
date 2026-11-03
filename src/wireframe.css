@@ -1,0 +1,25 @@
+/* Estilo WIREFRAME: grises, bordes y nada más. La compañera de UI lo sustituirá. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f2f2f2; color: #333; }
+
+.wf-screen { max-width: 420px; min-height: 100vh; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding: 16px; background: #fff; }
+.wf-box { border: 2px dashed #999; border-radius: 8px; padding: 12px; background: #fafafa; }
+.wf-header, .wf-footer { text-align: center; color: #777; }
+.wf-content { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.wf-placeholder { color: #888; text-align: center; }
+
+.wf-button { border: 2px solid #555; border-radius: 8px; background: #ddd; padding: 12px 20px; font-size: 1rem; cursor: pointer; }
+.wf-button:hover:not(:disabled) { background: #ccc; }
+.wf-button:disabled { opacity: .5; cursor: not-allowed; }
+.wf-main-button { width: 100%; padding: 20px; font-size: 1.2rem; }
+
+.wf-options { list-style: none; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.wf-option { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; background: #eee; }
+.wf-icon { font-size: 1.4rem; }
+
+.wf-panel { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.wf-panel h2 { margin: 0; }
+.wf-link { align-self: flex-start; background: none; border: none; color: #555; cursor: pointer; padding: 0; text-decoration: underline; }
+.wf-dropzone { min-height: 140px; display: flex; align-items: center; justify-content: center; text-align: center; color: #777; cursor: pointer; }
+.wf-textarea { min-height: 200px; font: inherit; resize: vertical; }
+.wf-result { width: 100%; }
