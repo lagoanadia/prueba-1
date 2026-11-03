@@ -1,39 +1,43 @@
 import { useEffect, useState } from 'react'
 import LoginScreen from './screens/LoginScreen.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
-import AssistantScreen from './screens/AssistantScreen.jsx'
+import SectionScreen from './screens/SectionScreen.jsx'
 import AppHeader from './components/AppHeader.jsx'
+import { SECTIONS } from './data/sections.js'
 import { getCurrentUser, signOut } from './services/authService.js'
 
+const emptyEntries = () => Object.fromEntries(SECTIONS.map((s) => [s.id, []]))
+
 /**
- * App decide qué pantalla se ve. Sin router: con 3 pantallas, un estado basta.
- *
- *   user === undefined -> aún preguntando al backend si hay sesión ("loading")
- *   user === null      -> no hay sesión          -> LoginScreen
- *   user === {...}     -> sesión iniciada        -> Home o Assistant
+ *   user === undefined -> cargando · null -> Login · objeto -> app
+ *   openSection === null -> Home · 'gym' | 'class' | ... -> pantalla de esa sección
  */
 export default function App() {
   const [user, setUser] = useState(undefined)
-  const [screen, setScreen] = useState('home') // 'home' | 'assistant'
-  const [material, setMaterial] = useState(null)
+  const [openSection, setOpenSection] = useState(null)
+  const [entries, setEntries] = useState(emptyEntries) // TODO: guardar en backend (D1/KV)
 
-  // Al arrancar: ¿ya hay cookie de sesión de otra visita?
   useEffect(() => {
-    getCurrentUser()
-      .then(setUser)
-      .catch(() => setUser(null))
+    getCurrentUser().then(setUser).catch(() => setUser(null))
   }, [])
+
+  // Aplica las acciones que decide el asistente: [{ section, title }]
+  const applyActions = (actions) => {
+    setEntries((prev) => {
+      const next = { ...prev }
+      for (const a of actions) {
+        if (!next[a.section]) continue // sección desconocida: la ignoramos
+        next[a.section] = [{ id: crypto.randomUUID(), title: a.title, createdAt: Date.now() }, ...next[a.section]]
+      }
+      return next
+    })
+  }
 
   const handleSignOut = async () => {
     await signOut()
     setUser(null)
-    setScreen('home')
-    setMaterial(null)
-  }
-
-  const openAssistant = (newMaterial) => {
-    setMaterial(newMaterial)
-    setScreen('assistant')
+    setOpenSection(null)
+    setEntries(emptyEntries())
   }
 
   if (user === undefined) return <main className="wf-screen wf-center">Loading…</main>
@@ -42,8 +46,11 @@ export default function App() {
   return (
     <main className="wf-screen">
       <AppHeader user={user} onSignOut={handleSignOut} />
-      {screen === 'home' && <HomeScreen onMaterialReady={openAssistant} onOpenAssistant={() => openAssistant(null)} />}
-      {screen === 'assistant' && <AssistantScreen material={material} onBack={() => setScreen('home')} />}
+      {openSection === null ? (
+        <HomeScreen entries={entries} onActions={applyActions} onOpenSection={setOpenSection} />
+      ) : (
+        <SectionScreen sectionId={openSection} entries={entries[openSection]} onBack={() => setOpenSection(null)} />
+      )}
     </main>
   )
 }

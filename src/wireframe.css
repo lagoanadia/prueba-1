@@ -40,3 +40,18 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #f2f2f2; color
 .wf-message-assistant { align-self: flex-start; background: #fff; border: 1px solid #ccc; }
 .wf-composer { display: flex; gap: 8px; }
 .wf-input { flex: 1; font: inherit; border-style: solid; }
+
+/* --- Voice circle + secciones --- */
+.wf-voice { width: 200px; height: 200px; border-radius: 50%; border: 3px dashed #777; background: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; cursor: pointer; margin-top: 16px; }
+.wf-voice-icon { font-size: 2.5rem; }
+.wf-voice-listening { border-style: solid; border-color: #333; background: #ddd; animation: wf-pulse 1.2s infinite; }
+.wf-voice-processing { opacity: .6; cursor: wait; }
+@keyframes wf-pulse { 50% { transform: scale(1.05); } }
+.wf-transcript { width: 100%; }
+.wf-transcript p { margin: 4px 0 8px; }
+.wf-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wf-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; cursor: pointer; text-align: left; font: inherit; }
+.wf-card:last-child:nth-child(odd) { grid-column: span 2; }
+.wf-section { align-items: stretch; }
+.wf-section h2 { margin: 0; }
+.wf-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }

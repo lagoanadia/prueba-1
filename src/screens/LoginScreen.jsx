@@ -19,7 +19,7 @@ export default function LoginScreen({ onSignedIn }) {
     <main className="wf-screen wf-center">
       <div className="wf-box wf-header">[ Logo / App name ]</div>
       <h1>Welcome</h1>
-      <p className="wf-placeholder">[ Short pitch: organize your school material with AI ]</p>
+      <p className="wf-placeholder">[ Short pitch: organize your life by voice ]</p>
       <GoogleSignInButton onCredential={handleCredential} />
       {error && <p className="wf-error">{error}</p>}
     </main>

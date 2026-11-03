@@ -1,48 +1,54 @@
 import { useState } from 'react'
-import OptionsMenu from '../components/OptionsMenu.jsx'
-import FileUploader from '../components/FileUploader.jsx'
-import NotesEditor from '../components/NotesEditor.jsx'
-import { buildMaterial } from '../services/aiService.js'
+import VoiceCircle from '../components/VoiceCircle.jsx'
+import { SECTIONS } from '../data/sections.js'
+import { transcribe, runCommand } from '../services/voiceService.js'
 
 /**
- * Pantalla 1: elegir el material.
- *  - menuOpen: ¿se ven las 3 opciones?
- *  - option:   'pdf' | 'pptx' | 'notes' | null
+ * Pantalla principal: hablas -> se transcribe -> el asistente lo apunta en la sección.
+ * entries viene de App (así la pantalla de cada sección ve lo mismo).
  */
-export default function HomeScreen({ onMaterialReady, onOpenAssistant }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [option, setOption] = useState(null)
+export default function HomeScreen({ entries, onActions, onOpenSection }) {
+  const [status, setStatus] = useState('idle') // 'idle' | 'listening' | 'processing'
+  const [transcript, setTranscript] = useState('')
+  const [reply, setReply] = useState('')
 
-  const selectOption = (id) => {
-    setOption(id)
-    setMenuOpen(false)
-  }
-
-  const submit = async (input) => {
-    onMaterialReady(await buildMaterial(option, input))
+  const handleCircle = async () => {
+    if (status === 'idle') {
+      setTranscript('')
+      setReply('')
+      setStatus('listening') // TODO (IA): empezar a grabar con MediaRecorder
+      return
+    }
+    // status === 'listening': parar y procesar
+    setStatus('processing')
+    const text = await transcribe() // TODO (IA): pasar el audio grabado
+    setTranscript(text)
+    const result = await runCommand(text)
+    onActions(result.actions)
+    setReply(result.reply)
+    setStatus('idle')
   }
 
   return (
     <section className="wf-content">
-      {option === null && (
-        <>
-          <p className="wf-placeholder">[ Welcome text / explanation ]</p>
+      <VoiceCircle status={status} onClick={handleCircle} />
 
-          <button className="wf-button wf-main-button" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? '✕ Close' : '+ Add material'}
+      <div className="wf-box wf-transcript">
+        <small>[ You said ]</small>
+        <p>{transcript || '…'}</p>
+        <small>[ Assistant ]</small>
+        <p>{reply || '…'}</p>
+      </div>
+
+      <div className="wf-grid">
+        {SECTIONS.map((s) => (
+          <button key={s.id} className="wf-box wf-card" onClick={() => onOpenSection(s.id)}>
+            <span className="wf-icon">{s.icon}</span>
+            <strong>{s.label}</strong>
+            <small>{entries[s.id]?.length ?? 0} items</small>
           </button>
-
-          {menuOpen && <OptionsMenu onSelect={selectOption} />}
-
-          <button className="wf-link" onClick={onOpenAssistant}>Or chat with the assistant →</button>
-        </>
-      )}
-
-      {(option === 'pdf' || option === 'pptx') && (
-        <FileUploader type={option} onSubmit={submit} onBack={() => setOption(null)} />
-      )}
-
-      {option === 'notes' && <NotesEditor onSubmit={submit} onBack={() => setOption(null)} />}
+        ))}
+      </div>
     </section>
   )
 }
