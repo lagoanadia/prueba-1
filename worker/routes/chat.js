@@ -30,7 +30,7 @@ function validate(messages, material) {
   return null
 }
 
-export async function onRequest({ request, env }) {
+export default async function handler({ request, env }) {
   const notAllowed = rejectMethod(request, ['POST'])
   if (notAllowed) return notAllowed
 

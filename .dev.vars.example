@@ -1,5 +1,5 @@
-# BACKEND (Cloudflare Functions) en local. Copia como .dev.vars. NUNCA lo subas a git.
-# En producción van en Cloudflare: Settings > Variables and Secrets.
+# BACKEND (Cloudflare Worker) en local. Copia como .dev.vars. NUNCA lo subas a git.
+# En producción van en Cloudflare: Workers > prueba-1 > Settings > Variables and Secrets.
 
 # Mismo Client ID que VITE_GOOGLE_CLIENT_ID: comprueba que el token es para nuestra app
 GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com

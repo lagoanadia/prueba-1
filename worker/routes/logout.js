@@ -1,8 +1,8 @@
 // POST /api/auth/logout  ->  borra la cookie de sesión.
-import { rejectMethod } from '../../../server/http.js'
-import { clearSessionCookie } from '../../../server/session.js'
+import { rejectMethod } from '../../server/http.js'
+import { clearSessionCookie } from '../../server/session.js'
 
-export async function onRequest({ request }) {
+export default async function handler({ request }) {
   const notAllowed = rejectMethod(request, ['POST'])
   if (notAllowed) return notAllowed
 

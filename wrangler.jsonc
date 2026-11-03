@@ -1,0 +1,19 @@
+// Configuración del Worker de Cloudflare.
+{
+  // Debe coincidir con el nombre del Worker en el dashboard de Cloudflare.
+  "name": "prueba-1",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    // Lo que genera `npm run build` (el frontend de React ya compilado).
+    "directory": "./dist",
+    // Cualquier URL desconocida devuelve index.html (lo normal en una SPA).
+    "not_found_handling": "single-page-application",
+    // Las URLs /api/* van SIEMPRE al Worker, nunca a los archivos estáticos.
+    "run_worker_first": ["/api/*"]
+  },
+  // No borrar las variables que pongáis en el dashboard al desplegar.
+  "keep_vars": true,
+  // Logs visibles en el dashboard (Workers > prueba-1 > Logs).
+  "observability": { "enabled": true }
+}
