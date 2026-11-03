@@ -12,12 +12,16 @@ import google from './routes/google.js'
 import me from './routes/me.js'
 import logout from './routes/logout.js'
 import chat from './routes/chat.js'
+import transcribe from './routes/transcribe.js'
+import command from './routes/command.js'
 
 const ROUTES = {
   '/api/auth/google': google,
   '/api/auth/me': me,
   '/api/auth/logout': logout,
   '/api/chat': chat,
+  '/api/transcribe': transcribe,
+  '/api/command': command,
 }
 
 export default {
