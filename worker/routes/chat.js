@@ -53,7 +53,9 @@ export default async function handler({ request, env }) {
   // 4. Llamar a Groq.
   try {
     const reply = await groqChat(groqMessages, env)
-    return json({ reply })
+    // Red de seguridad por si el modelo se salta la regla de "sin Markdown".
+    const plain = reply.replace(/[*#`_]/g, '').replace(/^\s*[-•]\s+/gm, '').trim()
+    return json({ reply: plain })
   } catch (err) {
     console.error(err) // se ve en los logs de Cloudflare; al cliente no le damos detalles internos
     return json({ error: 'The AI service failed. Please try again.' }, 502)
