@@ -2,9 +2,10 @@
 // Centraliza: JSON, cookies y manejo de errores, para no repetirlo en cada llamada.
 
 export class ApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, reason) {
     super(message)
     this.status = status
+    this.reason = reason // detalle técnico opcional que manda el backend
   }
 }
 
@@ -18,6 +19,6 @@ export async function request(path, { method = 'GET', body } = {}) {
 
   if (response.status === 204) return null
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new ApiError(response.status, data.error ?? 'Something went wrong')
+  if (!response.ok) throw new ApiError(response.status, data.error ?? 'Something went wrong', data.reason)
   return data
 }

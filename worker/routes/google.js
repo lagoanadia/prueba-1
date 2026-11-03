@@ -26,7 +26,9 @@ export default async function handler({ request, env }) {
     user = await verifyGoogleIdToken(credential, env)
   } catch (err) {
     console.warn('Google token rejected:', err.message)
-    return json({ error: 'Invalid Google credential' }, 401)
+    // `reason` ayuda a depurar (p. ej. "aud" = el Client ID no coincide). No revela nada secreto.
+    const reason = err.claim ? `claim "${err.claim}" failed` : (err.code ?? err.message)
+    return json({ error: 'Invalid Google credential', reason }, 401)
   }
 
   return json({ user }, 200, { 'Set-Cookie': await createSessionCookie(user, env, request) })

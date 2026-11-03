@@ -16,7 +16,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'))
 
 export async function verifyGoogleIdToken(idToken, env) {
-  const clientId = env.GOOGLE_CLIENT_ID
+  const clientId = env.GOOGLE_CLIENT_ID?.trim() // trim: al pegar en el dashboard se cuelan espacios
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not set')
 
   const { payload } = await jwtVerify(idToken, GOOGLE_JWKS, {

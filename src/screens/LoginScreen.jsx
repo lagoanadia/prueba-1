@@ -11,7 +11,7 @@ export default function LoginScreen({ onSignedIn }) {
     try {
       onSignedIn(await signInWithGoogle(credential))
     } catch (err) {
-      setError(err.message)
+      setError(err.reason ? `${err.message} (${err.reason})` : err.message)
     }
   }
 
