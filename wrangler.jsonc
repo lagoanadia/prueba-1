@@ -12,6 +12,13 @@
     // Las URLs /api/* van SIEMPRE al Worker, nunca a los archivos estáticos.
     "run_worker_first": ["/api/*"]
   },
+  // Variables NO secretas: van en el código para que ningún deploy las borre.
+  // El Client ID de Google es público (también va dentro del JavaScript del frontend).
+  "vars": {
+    "GOOGLE_CLIENT_ID": "909832973896-6fin2g10n5847640kg9tn6fmrvdmiln5.apps.googleusercontent.com",
+    "GROQ_MODEL": "openai/gpt-oss-120b"
+  },
+  // Los SECRETOS (SESSION_SECRET, GROQ_API_KEY) se ponen en el dashboard como tipo "Secret".
   // No borrar las variables que pongáis en el dashboard al desplegar.
   "keep_vars": true,
   // Logs visibles en el dashboard (Workers > prueba-1 > Logs).
