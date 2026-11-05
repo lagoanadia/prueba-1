@@ -1,41 +1,52 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import useBoard from '../hooks/useBoard.js'
 import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
 
 const DRAG_THRESHOLD = 6 // px que hay que mover antes de que cuente como arrastre (si no, es un toque)
-
-/** Tamaño según cuántas columnas/filas ocupa: 1x1 = S, 2x1 = M, 2x2 = L. */
-const sizeFor = (cols, rows) => (rows === 2 ? 'L' : cols === 2 ? 'M' : 'S')
+const SWAP_COOLDOWN = 280 // ms sin recolocar tras un cambio: evita que dos widgets "boten" entre sí
 
 /** Zoom CSS aplicado a la vista (en portátil escalamos todo). Lo necesitamos para colocar el "fantasma". */
 const zoomOf = (el) => parseFloat(getComputedStyle(el.closest('.d-app') ?? document.body).zoom) || 1
 
+/** Mueve un elemento de la posición `from` a la `to` (como arrastrar en una lista). */
+const arrayMove = (list, from, to) => {
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
+
 /**
  * Plantilla de un área: un grid invisible que se rellena con widgets.
- * Modo personalizar (botón arriba a la derecha), como en el iPhone:
+ * Modo personalizar (botón arriba a la derecha):
  *   - Arrastrar un widget        -> moverlo
- *   - Arrastrar la esquina ◢     -> cambiar tamaño (S / M / L)
+ *   - Dock de tamaños (abajo)    -> S / M / L con animación de "muelle"
  *   - Arrastrar desde la galería -> añadirlo donde lo sueltes (o pulsar «Añadir»)
  *   - ×                          -> quitarlo
+ *
+ * Rendimiento: mientras arrastras NO se vuelve a pintar React en cada movimiento.
+ * El fantasma se mueve tocando su `transform` directamente (en un requestAnimationFrame).
  */
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
   const [editing, setEditing] = useState(false)
   const [gallery, setGallery] = useState(false)
-  const [drag, setDrag] = useState(null) // { id, x, y, offX, offY, w, h, zoom }
-  const [stretch, setStretch] = useState(null) // redimensionando: { id, w, h, target, zoom }
+  const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
   const gridRef = useRef(null)
+  const ghostRef = useRef(null)
   const cards = useRef(new Map()) // id -> elemento del widget (para animar)
   const lastRects = useRef(new Map())
+  const available = widgetsFor(area.id)
 
   /*
-   * Animación FLIP (First, Last, Invert, Play), la que usa iOS al recolocar widgets:
-   * tras cada render medimos dónde ha quedado cada widget; si se ha movido o cambiado de tamaño,
-   * lo "devolvemos" visualmente a su sitio anterior con un transform y lo animamos hasta el nuevo.
-   * Las posiciones se miden respecto al grid para que hacer scroll no cuente como movimiento.
+   * Animación FLIP (First, Last, Invert, Play): cuando cambia el orden o el tamaño,
+   * medimos dónde ha quedado cada widget, lo "devolvemos" visualmente a su sitio anterior
+   * con un transform y lo animamos hasta el nuevo con un pequeño rebote.
+   * Solo se ejecuta cuando cambia el layout (no en cada render) para no forzar medidas sin motivo.
    */
+  const layoutKey = board?.layout.map((w) => w.id + w.size).join('|')
   useLayoutEffect(() => {
     const grid = gridRef.current
     if (!grid) return
@@ -47,7 +58,7 @@ export default function AreaScreen({ area, showTitle = true }) {
       const rect = { x: r.left - g.left, y: r.top - g.top, w: r.width, h: r.height }
       next.set(id, rect)
       const prev = lastRects.current.get(id)
-      if (!prev || id === drag?.id || id === stretch?.id) return
+      if (!prev) return
       const dx = (prev.x - rect.x) / zoom
       const dy = (prev.y - rect.y) / zoom
       const sx = prev.w / rect.w
@@ -55,55 +66,70 @@ export default function AreaScreen({ area, showTitle = true }) {
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) return
       el.animate(
         [{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: 'top left' }, { transform: 'none', transformOrigin: 'top left' }],
-        { duration: 420, easing: 'cubic-bezier(.2, 1.25, .35, 1)' } // pequeño rebote, como un muelle
+        { duration: 450, easing: 'cubic-bezier(.2, 1.3, .35, 1)' }
       )
     })
     lastRects.current = next
-  })
-  const available = widgetsFor(area.id)
+  }, [layoutKey])
 
   const remove = (id) => updateLayout((l) => l.filter((w) => w.id !== id))
-  const resize = (id, size) => updateLayout((l) => l.map((w) => (w.id === id ? { ...w, size } : w)))
+  const resize = (id, size) => {
+    navigator.vibrate?.(8) // pequeño "toque" en móviles que lo permiten
+    updateLayout((l) => l.map((w) => (w.id === id ? { ...w, size } : w)))
+  }
   const add = (type, size) => {
     updateLayout((l) => [...l, { id: crypto.randomUUID(), type, size }])
     setGallery(false)
   }
 
-  // ---------- Mover (y soltar widgets nuevos) ----------
-  // Mientras arrastras, el widget se recoloca en vivo encima del que tengas debajo.
-  const moveOver = (id, x, y) => {
-    const target = document.elementFromPoint(x, y)?.closest('[data-wid]')
-    if (!target || target.dataset.wid === id) return
-    const r = target.getBoundingClientRect()
-    const after = x > r.left + r.width / 2
-    updateLayout((l) => {
-      const dragged = l.find((w) => w.id === id)
-      const rest = l.filter((w) => w.id !== id)
-      const i = rest.findIndex((w) => w.id === target.dataset.wid)
-      if (!dragged || i === -1) return l
-      rest.splice(after ? i + 1 : i, 0, dragged)
-      return rest.map((w) => w.id).join() === l.map((w) => w.id).join() ? l : rest
-    })
-  }
-
+  // ---------- Arrastrar ----------
   useEffect(() => {
     if (!drag) return
+    const st = { x: drag.x0, y: drag.y0, frame: 0, last: null, cooldown: 0 }
+
+    const paintGhost = () => {
+      st.frame = 0
+      const el = ghostRef.current
+      if (el) el.style.transform = `translate3d(${(st.x - drag.offX) / drag.zoom}px, ${(st.y - drag.offY) / drag.zoom}px, 0) scale(1.04) rotate(1.5deg)`
+    }
+
+    // Recolocar con "histéresis": solo cuando entras en OTRO widget y ha pasado un momento desde el último cambio
+    const maybeReorder = () => {
+      const now = performance.now()
+      if (now < st.cooldown) return
+      const target = document.elementFromPoint(st.x, st.y)?.closest('[data-wid]')
+      const tid = target?.dataset.wid
+      if (!tid || tid === drag.id) { st.last = null; return }
+      if (tid === st.last) return
+      st.last = tid
+      st.cooldown = now + SWAP_COOLDOWN
+      updateLayout((l) => {
+        const from = l.findIndex((w) => w.id === drag.id)
+        const to = l.findIndex((w) => w.id === tid)
+        return from === -1 || to === -1 ? l : arrayMove(l, from, to)
+      })
+    }
+
     const onMove = (e) => {
-      setDrag((d) => d && { ...d, x: e.clientX, y: e.clientY })
-      moveOver(drag.id, e.clientX, e.clientY)
+      st.x = e.clientX
+      st.y = e.clientY
+      if (!st.frame) st.frame = requestAnimationFrame(paintGhost)
+      maybeReorder()
     }
     const onUp = () => setDrag(null)
+    paintGhost()
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp, { once: true })
     window.addEventListener('pointercancel', onUp, { once: true })
     return () => {
+      cancelAnimationFrame(st.frame)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [drag?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [drag]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Empieza a arrastrar `id` cuando el puntero se haya movido un poco desde `start`. */
+  /** Empieza a arrastrar `id` cuando el puntero se haya movido un poco (si no, es un toque normal). */
   const startDragAfterThreshold = (e, id, getRect) => {
     const sx = e.clientX
     const sy = e.clientY
@@ -111,8 +137,7 @@ export default function AreaScreen({ area, showTitle = true }) {
       if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < DRAG_THRESHOLD) return
       cleanup()
       const r = getRect()
-      const zoom = zoomOf(e.target)
-      setDrag({ id, x: ev.clientX, y: ev.clientY, offX: sx - r.left, offY: sy - r.top, w: r.width, h: r.height, zoom })
+      setDrag({ id, x0: ev.clientX, y0: ev.clientY, offX: sx - r.left, offY: sy - r.top, w: r.width, h: r.height, zoom: zoomOf(e.target) })
     }
     const cleanup = () => {
       window.removeEventListener('pointermove', onMove)
@@ -141,40 +166,17 @@ export default function AreaScreen({ area, showTitle = true }) {
     })
   }
 
-  // ---------- Cambiar tamaño arrastrando la esquina (como iOS) ----------
-  // Mientras arrastras, el widget se estira en vivo (por encima de los demás) y se marca el tamaño
-  // al que va a encajar. Al soltar, encaja y el resto se recoloca con la animación FLIP.
-  const onResizePointerDown = (e, w) => {
-    e.stopPropagation()
-    e.preventDefault()
-    const widgetEl = e.currentTarget.closest('[data-wid]')
-    const start = widgetEl.getBoundingClientRect()
-    const grid = gridRef.current
-    const zoom = zoomOf(grid)
-    const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length
-    const gap = parseFloat(getComputedStyle(grid).columnGap) * zoom
-    const cellW = (grid.getBoundingClientRect().width - gap * (cols - 1)) / cols
-    const cellH = parseFloat(getComputedStyle(grid).gridAutoRows) * zoom
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
-    let moved = false
-    let target = w.size
-    const onMove = (ev) => {
-      moved = true
-      const width = clamp(start.width + ev.clientX - e.clientX, cellW * 0.85, (cellW * 2 + gap) * 1.04)
-      const height = clamp(start.height + ev.clientY - e.clientY, cellH * 0.85, (cellH * 2 + gap) * 1.04)
-      target = sizeFor(width > cellW * 1.5 + gap / 2 ? 2 : 1, height > cellH * 1.5 + gap / 2 ? 2 : 1) // cambia justo a mitad de camino
-      const tw = target === 'S' ? cellW : cellW * 2 + gap
-      const th = target === 'L' ? cellH * 2 + gap : cellH
-      setStretch({ id: w.id, w: width / zoom, h: height / zoom, tw: tw / zoom, th: th / zoom, target })
-    }
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      setStretch(null)
-      resize(w.id, moved ? target : SIZES[(SIZES.indexOf(w.size) + 1) % SIZES.length]) // un toque = siguiente tamaño
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp, { once: true })
-  }
+  // Las tarjetas están memorizadas (memo): para que no se repinten sin motivo, les pasamos
+  // funciones estables que leen siempre la última versión desde este ref.
+  const api = useRef({})
+  api.current = { onPointerDown: onWidgetPointerDown, remove, resize, updateData }
+  const [stableApi] = useState(() => ({
+    onPointerDown: (e, id) => api.current.onPointerDown(e, id),
+    remove: (id) => api.current.remove(id),
+    resize: (id, size) => api.current.resize(id, size),
+    updateData: (fn) => api.current.updateData(fn),
+    setRef: (id, el) => (el ? cards.current.set(id, el) : cards.current.delete(id)),
+  }))
 
   const dragged = drag && board?.layout.find((w) => w.id === drag.id)
 
@@ -197,11 +199,7 @@ export default function AreaScreen({ area, showTitle = true }) {
       {board && (
         <div className={`grid ${editing ? 'grid-editing' : ''} ${drag ? 'grid-dragging' : ''}`} ref={gridRef}>
           {board.layout.map((w, i) => (
-            <WidgetCard key={w.id} w={w} i={i} data={board.data} update={updateData}
-              editing={editing} isDragged={drag?.id === w.id} stretch={stretch?.id === w.id ? stretch : null}
-              cardRef={(el) => (el ? cards.current.set(w.id, el) : cards.current.delete(w.id))}
-              onPointerDown={(e) => onWidgetPointerDown(e, w.id)}
-              onRemove={() => remove(w.id)} onResizeStart={(e) => onResizePointerDown(e, w)} />
+            <WidgetCard key={w.id} w={w} i={i} data={board.data} editing={editing} isDragged={drag?.id === w.id} api={stableApi} />
           ))}
           {editing && (
             <button className="widget w-S w-add" onClick={() => setGallery(true)} aria-label="Añadir widget">+</button>
@@ -216,13 +214,7 @@ export default function AreaScreen({ area, showTitle = true }) {
         document.body
       )}
       {drag && dragged && createPortal(
-        <div className="ghost" style={{
-          zoom: drag.zoom,
-          left: (drag.x - drag.offX) / drag.zoom,
-          top: (drag.y - drag.offY) / drag.zoom,
-          width: drag.w / drag.zoom,
-          height: drag.h / drag.zoom,
-        }}>
+        <div className="ghost" ref={ghostRef} style={{ zoom: drag.zoom, width: drag.w / drag.zoom, height: drag.h / drag.zoom }}>
           <WidgetView w={dragged} data={board.data} />
         </div>,
         document.body
@@ -244,29 +236,41 @@ function WidgetView({ w, data, update = () => {} }) {
   )
 }
 
-function WidgetCard({ w, i, data, update, editing, isDragged, stretch, cardRef, onPointerDown, onRemove, onResizeStart }) {
+/** Dock de tamaños: tres formas (cuadrado, rectángulo, cuadrado grande) y un indicador que se desliza. */
+function SizeDock({ size, onPick, name }) {
+  return (
+    <div className="size-dock" style={{ '--idx': SIZES.indexOf(size) }} role="radiogroup" aria-label={`Tamaño de ${name}`}>
+      <span className="size-dock-pill" aria-hidden="true" />
+      {SIZES.map((s) => (
+        <button key={s} role="radio" aria-checked={size === s} aria-label={{ S: 'Pequeño', M: 'Mediano', L: 'Grande' }[s]}
+          className={size === s ? 'on' : ''} onClick={() => size !== s && onPick(s)}>
+          <span className={`shape shape-${s}`} />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// memo: solo se repinta si cambian sus datos (no cada vez que se mueve el fantasma o cambia otro widget)
+const WidgetCard = memo(function WidgetCard({ w, i, data, editing, isDragged, api }) {
   const def = WIDGETS[w.type]
   if (!def) return null
   const Widget = def.component
   return (
-    <article ref={cardRef} data-wid={w.id} onPointerDown={onPointerDown}
-      className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''} ${stretch ? 'w-stretching' : ''}`}
-      style={stretch ? { '--i': i, width: stretch.w, height: stretch.h } : { '--i': i }}>
-      {/* Mientras se estira: contorno del tamaño al que va a encajar */}
-      {stretch && <span className="snap-outline" style={{ width: stretch.tw, height: stretch.th }} aria-hidden="true"><b>{stretch.target}</b></span>}
+    <article ref={(el) => api.setRef(w.id, el)} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
+      className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
       {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.color }} />{def.name}</h3>}
-      <div className="w-body"><Widget size={w.size} data={data} update={update} /></div>
+      {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
+      <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} /></div>
       {editing && (
         <>
-          <button className="w-remove" onClick={onRemove} aria-label={`Quitar ${def.name}`}>×</button>
-          <button className="w-resize" onPointerDown={onResizeStart} aria-label={`Cambiar tamaño de ${def.name} (ahora ${w.size})`} title="Arrastra para cambiar el tamaño">
-            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M13 3v10H3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
+          <button className="w-remove" onClick={() => api.remove(w.id)} aria-label={`Quitar ${def.name}`}>×</button>
+          <SizeDock size={w.size} name={def.name} onPick={(s) => api.resize(w.id, s)} />
         </>
       )}
     </article>
   )
-}
+})
 
 /** Galería: cada widget con vista previa real. Se puede arrastrar al tablero o pulsar «Añadir». */
 function Gallery({ widgets, data, onAdd, onDragStart, onClose }) {
