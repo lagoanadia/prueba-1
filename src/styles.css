@@ -93,8 +93,15 @@ h1, h2, h3, p { margin: 0; }
 .upcoming-card li b { white-space: nowrap; font-weight: 600; }
 
 /* ===== Portátil ===== */
-.d-app { min-height: 100vh; display: flex; }
-.sidebar { width: 260px; flex-shrink: 0; padding: 40px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; position: sticky; top: 0; height: 100vh; }
+.d-app {
+  /* El prototipo está dibujado a tamaño "pantalla grande". Lo escalamos entero con zoom
+     (como el zoom del navegador, pero solo en la vista portátil). Para ajustarlo, cambia --dz. */
+  --dz: .6;
+  zoom: var(--dz);
+  min-height: calc(100vh / var(--dz)); /* con zoom, 100vh también encoge: lo compensamos */
+  display: flex;
+}
+.sidebar { width: 260px; flex-shrink: 0; padding: 40px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; position: sticky; top: 0; height: calc(100vh / var(--dz)); }
 .sidebar-title { margin: 12px 12px 4px; }
 .nv { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 0 12px; border: none; border-radius: 28px; background: #FFFFFF; font-size: 18px; font-weight: 500; cursor: pointer; text-align: left; transition: background .2s, transform .15s var(--ease); }
 .nv:hover { background: var(--soft); }
@@ -150,6 +157,7 @@ h1, h2, h3, p { margin: 0; }
 .voice-backdrop { position: absolute; inset: 0; background: rgba(32, 33, 36, .35); backdrop-filter: blur(4px); }
 .voice-modal .voice-panel { position: relative; max-width: 460px; height: auto; max-height: 100%; border-radius: 32px; box-shadow: var(--shadow-lg); padding-top: 20px; }
 .voice-modal .hello { font-size: 36px; }
+.voice-modal .voice-panel { zoom: .8; max-height: calc(100% / .8); }
 .voice-modal .fan { transform: scale(.9); margin: -10px 0 -20px; }
 .voice-top { width: 100%; max-width: 360px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 16px; font-weight: 600; color: var(--muted); }
 .voice-sub { font-size: 17px; margin-top: 6px; min-height: 26px; text-align: center; }
