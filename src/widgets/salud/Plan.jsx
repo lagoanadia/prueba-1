@@ -3,7 +3,7 @@ import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
 
 // La planificación es semanal y se repite: guardamos qué toca cada día de la semana (0 = lunes)
-const DEFAULT_PLAN = ['Gimnasio', 'Natación', 'Descanso', 'Gimnasio', 'Pilates', 'Senderismo', 'Descanso']
+const DEFAULT_PLAN = Array(7).fill('Descanso')
 
 /**
  * Plan semanal. S: lo de hoy · T: la semana en lista · M: la semana en columnas

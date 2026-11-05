@@ -4,6 +4,7 @@ import { dayShort, lastDays, todayISO } from '../../lib/dates.js'
 export default function Sleep({ size, data, update }) {
   const today = todayISO()
   const sleep = data.sleep ?? {}
+  const goal = data.sleepGoal ?? 8
   const h = sleep[today] ?? 0 // la noche que acaba de terminar se guarda con la fecha de hoy
   const set = (v) => update((d) => ({ ...d, sleep: { ...d.sleep, [today]: Math.max(0, Math.min(14, v)) } }))
   const stepper = (
@@ -20,7 +21,7 @@ export default function Sleep({ size, data, update }) {
   return (
     <>
       {stepper}
-      <div className="bars bars-sleep" style={{ '--goal': `${(8 / 12) * 100}%` }}>
+      <div className="bars bars-sleep" style={{ '--goal': `${(goal / 12) * 100}%` }}>
         <span className="bars-goal" aria-hidden="true" />
         {nights.map((d, i) => (
           <div key={d} className={`bar-col ${d === today ? 'is-now' : ''}`} title={`${dayShort(d)}: ${sleep[d] ?? 0} h`}>

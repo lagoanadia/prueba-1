@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { todayISO } from '../../lib/dates.js'
 
-const MODES = { foco: 25 * 60, pausa: 5 * 60 }
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
 /**
@@ -11,8 +10,9 @@ const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 
 export default function Focus({ size, data, update }) {
   const today = todayISO()
   const sessions = data.focus?.[today] ?? 0
+  const MODES = { foco: (data.focusMinutes ?? 25) * 60, pausa: 5 * 60 }
   const [mode, setMode] = useState('foco')
-  const [left, setLeft] = useState(MODES.foco)
+  const [left, setLeft] = useState(() => MODES.foco)
   const [endsAt, setEndsAt] = useState(null) // momento en que acaba (ms); null = parado
   const finished = useRef(false)
 
@@ -55,7 +55,7 @@ export default function Focus({ size, data, update }) {
         <span className="focus-sessions">{Array.from({ length: Math.max(4, sessions) }, (_, i) => <span key={i} className={i < sessions ? 'on' : ''} />)}</span>
         <span className="w-hint">{sessions} {sessions === 1 ? 'sesión' : 'sesiones'} hoy</span>
         <div className="w-form">
-          {Object.keys(MODES).map((m) => <button key={m} className={`pill pill-sm ${mode === m ? 'pill-on' : ''}`} onClick={() => pick(m)}>{m === 'foco' ? 'Foco 25' : 'Pausa 5'}</button>)}
+          {Object.keys(MODES).map((m) => <button key={m} className={`pill pill-sm ${mode === m ? 'pill-on' : ''}`} onClick={() => pick(m)}>{m === 'foco' ? `Foco ${MODES.foco / 60}` : 'Pausa 5'}</button>)}
           <button className="pill pill-sm" onClick={reset}>Reiniciar</button>
         </div>
       </div>

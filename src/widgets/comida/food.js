@@ -2,8 +2,8 @@
 export const MEALS = { desayuno: 'Desayuno', comida: 'Comida', merienda: 'Merienda', cena: 'Cena' }
 export const OUT = 'fuera' // "Comer fuera"
 
-// Platos de ejemplo para empezar (el usuario los puede cambiar)
-export const DEFAULT_DISHES = [
+// Recetas de muestra: solo se usan si el usuario elige un plato con el mismo nombre en las preguntas
+export const SAMPLE_DISHES = [
   { id: 'd1', name: 'Curry de garbanzos con arroz', for: ['comida', 'cena'], time: 35,
     ingredients: ['Garbanzos cocidos', 'Leche de coco', 'Cebolla', 'Ajo', 'Jengibre', 'Curry en polvo', 'Tomate triturado', 'Arroz basmati'],
     steps: ['Sofríe cebolla, ajo y jengibre.', 'Añade el curry y el tomate, 2 minutos.', 'Incorpora garbanzos y leche de coco.', 'Cuece 15 minutos y sirve con arroz.'] },
@@ -24,7 +24,7 @@ export const DEFAULT_DISHES = [
     steps: ['Mezcla y listo.'] },
 ]
 
-export const dishesOf = (data) => data.dishes ?? DEFAULT_DISHES
+export const dishesOf = (data) => data.dishes ?? []
 export const mealsOf = (data) => data.meals ?? ['comida', 'cena']
 export const activeDishOf = (data) => dishesOf(data).find((d) => d.id === data.activeDish) ?? dishesOf(data)[0]
 export const dishName = (dishes, id) => (id === OUT ? 'Comer fuera' : dishes.find((d) => d.id === id)?.name ?? '')

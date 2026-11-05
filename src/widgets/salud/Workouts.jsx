@@ -9,7 +9,7 @@ import { colorOf, sportsOf } from './sports.js'
  */
 export default function Workouts({ size, data, update }) {
   const today = todayISO()
-  const sports = sportsOf(data)
+  const sports = sportsOf(data).length ? sportsOf(data) : ['Entreno'] // si aún no hay deportes, uno genérico
   const all = data.workouts ?? []
   const todays = all.filter((w) => w.date === today)
   const past = all.filter((w) => w.date < today).sort((a, b) => b.date.localeCompare(a.date))

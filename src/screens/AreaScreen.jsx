@@ -4,6 +4,8 @@ import Icon from '../components/Icon.jsx'
 import useBoard from '../hooks/useBoard.js'
 import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
 import { formatToday } from '../lib/dates.js'
+import Onboarding from '../onboarding/Onboarding.jsx'
+import { FLOWS } from '../onboarding/flows.js'
 
 const DRAG_THRESHOLD = 6 // px que hay que mover antes de que cuente como arrastre (si no, es un toque)
 const SWAP_COOLDOWN = 280 // ms sin recolocar tras un cambio: evita que dos widgets "boten" entre sí
@@ -180,6 +182,16 @@ export default function AreaScreen({ area, showTitle = true }) {
   }))
 
   const dragged = drag && board?.layout.find((w) => w.id === drag.id)
+
+  // Primera vez en esta área: preguntas para rellenar los widgets con tus datos (no con datos de ejemplo)
+  if (board?.isNew && !board.data.onboarded && FLOWS[area.id]) {
+    return (
+      <div className="area">
+        {showTitle && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span>{area.label}</h1></header>}
+        <Onboarding area={area} flow={FLOWS[area.id]} onDone={(answers) => updateData((d) => ({ ...d, ...answers }))} />
+      </div>
+    )
+  }
 
   return (
     <div className="area">

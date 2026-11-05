@@ -1,11 +1,11 @@
 import { lastDays, todayISO } from '../../lib/dates.js'
 
-const GOAL = 8
 
 /** Agua: vasos de hoy (toca para añadir / quitar). T y L: + últimos 7 días. */
 export default function Water({ size, data, update }) {
   const today = todayISO()
   const water = data.water ?? {}
+  const GOAL = data.waterGoal ?? 8
   const n = water[today] ?? 0
   const set = (v) => update((d) => ({ ...d, water: { ...d.water, [today]: Math.max(0, Math.min(12, v)) } }))
 

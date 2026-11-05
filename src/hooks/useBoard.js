@@ -15,14 +15,19 @@ export default function useBoard(area) {
     loaded.current = false
     setBoard(null)
     getBoard(area)
-      .then((b) => setBoard({ layout: b.layout ?? defaultLayout(area), data: b.data ?? {} }))
+      .then((b) => setBoard({
+        layout: b.layout ?? defaultLayout(area),
+        data: b.data ?? {},
+        // Área nueva: nunca guardada y sin datos -> se le hacen las preguntas iniciales
+        isNew: b.layout == null && Object.keys(b.data ?? {}).length === 0,
+      }))
       .catch((e) => setError(e.message))
   }, [area])
 
   useEffect(() => {
     if (!board) return
     if (!loaded.current) { loaded.current = true; return } // la primera vez es la carga, no un cambio
-    const t = setTimeout(() => saveBoard(area, board).catch((e) => setError(e.message)), 600)
+    const t = setTimeout(() => saveBoard(area, { layout: board.layout, data: board.data }).catch((e) => setError(e.message)), 600)
     return () => clearTimeout(t)
   }, [board, area])
 

@@ -29,6 +29,11 @@ import Dishes from './comida/Dishes.jsx'
 import Recipe from './comida/Recipe.jsx'
 import Shopping from './comida/Shopping.jsx'
 import Batch from './comida/Batch.jsx'
+import Subjects from './estudios/Subjects.jsx'
+import Syllabus from './estudios/Syllabus.jsx'
+import Timetable from './estudios/Timetable.jsx'
+import Assignments from './estudios/Assignments.jsx'
+import Resources from './estudios/Resources.jsx'
 
 export const SIZES = ['S', 'T', 'M', 'L']
 
@@ -54,6 +59,11 @@ export const WIDGETS = {
   recipe: { area: 'comida', name: 'Receta', color: '#3DDC97', component: Recipe },
   shopping: { area: 'comida', name: 'Lista de la compra', color: '#3185FC', component: Shopping },
   batch: { area: 'comida', name: 'Batch cooking', color: '#E84855', component: Batch },
+  subjects: { area: 'estudios', name: 'Asignaturas', color: '#3185FC', component: Subjects },
+  syllabus: { area: 'estudios', name: 'Temario', color: '#3DDC97', component: Syllabus },
+  timetable: { area: 'estudios', name: 'Horario', color: '#F9DC5C', component: Timetable },
+  assignments: { area: 'estudios', name: 'Entregas', color: '#E84855', component: Assignments },
+  resources: { area: 'estudios', name: 'Recursos', color: '#8E7CFF', component: Resources },
 }
 
 export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.area === area).map(([type, w]) => ({ type, ...w }))
@@ -64,6 +74,7 @@ const DEFAULTS = {
   salud: [['plan', 'L'], ['workouts', 'L'], ['progress', 'M'], ['water', 'M'], ['sleep', 'M']],
   trabajo: [['projects', 'L'], ['kanban', 'L'], ['priorities', 'M'], ['focus', 'M'], ['deadlines', 'M']],
   comida: [['menu', 'L'], ['recipe', 'L'], ['dishes', 'T'], ['shopping', 'T'], ['batch', 'M']],
+  estudios: [['subjects', 'L'], ['syllabus', 'L'], ['timetable', 'L'], ['assignments', 'L'], ['resources', 'M']],
 }
 
 export const defaultLayout = (area) => (DEFAULTS[area] ?? []).map(([type, size]) => ({ id: crypto.randomUUID(), type, size }))
