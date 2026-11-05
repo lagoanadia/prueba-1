@@ -48,7 +48,6 @@ export default function App() {
     firstName,
     user,
     today: entries.filter((e) => e.date === today),
-    upcoming: entries.filter((e) => e.date && e.date > today && !e.done),
     onToggle: toggle,
     onTalk: openVoice,
     onSignOut: handleSignOut,

@@ -3,13 +3,12 @@ import Icon from '../components/Icon.jsx'
 import RingArcs from '../components/RingArcs.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
-import Upcoming from '../components/Upcoming.jsx'
 import BlankPage from './BlankPage.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 
 /** Vista portátil: menú lateral + contenido. */
-export default function DesktopApp({ firstName, today, upcoming, onToggle, onTalk, onSignOut }) {
+export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignOut }) {
   const [view, setView] = useState('inicio')
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
@@ -45,7 +44,6 @@ export default function DesktopApp({ firstName, today, upcoming, onToggle, onTal
             <div className="rise" style={{ '--i': 1, width: '100%', display: 'flex', justifyContent: 'center' }}><Donut entries={today} /></div>
             <p className="date rise" style={{ '--i': 2 }}>{formatToday()}</p>
             <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks entries={today} onToggle={onToggle} /></div>
-            <div className="rise" style={{ '--i': 4, width: '100%', maxWidth: 860 }}><Upcoming entries={upcoming} /></div>
           </div>
         )}
         {area && <BlankPage title={area.label} icon={area.id} color={area.color} />}

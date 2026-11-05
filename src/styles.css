@@ -77,21 +77,6 @@ h1, h2, h3, p { margin: 0; }
 .tasks-compact .task-area { font-size: 16px; padding-top: 0; }
 .tasks-compact .task label { font-size: 16px; min-height: 34px; padding: 4px 0; }
 
-/* ===== Lo que viene ===== */
-.upcoming { width: 100%; margin-top: 40px; }
-.upcoming h2 { font-size: 26px; font-weight: 600; margin-bottom: 16px; }
-.upcoming-empty { display: flex; align-items: center; gap: 18px; padding: 24px 28px; }
-.upcoming-empty strong { font-size: 20px; }
-.upcoming-empty .muted { font-size: 17px; }
-.upcoming-empty svg { flex-shrink: 0; animation: spin 30s linear infinite; }
-.upcoming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-.upcoming-card { padding: 18px 20px; animation: rise .5s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms); transition: transform .2s var(--ease); }
-.upcoming-card:hover { transform: translateY(-3px); }
-.upcoming-card h3 { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-.upcoming-card ul { list-style: none; margin: 0; padding: 0; }
-.upcoming-card li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 15px; border-top: 1px solid var(--line); }
-.upcoming-card li b { white-space: nowrap; font-weight: 600; }
-
 /* ===== Portátil ===== */
 .d-app {
   /* El prototipo está dibujado a tamaño "pantalla grande". Lo escalamos entero con zoom
