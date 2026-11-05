@@ -96,7 +96,7 @@ h1, h2, h3, p { margin: 0; }
 .d-app {
   /* El prototipo está dibujado a tamaño "pantalla grande". Lo escalamos entero con zoom
      (como el zoom del navegador, pero solo en la vista portátil). Para ajustarlo, cambia --dz. */
-  --dz: .75;
+  --dz: .88;
   zoom: var(--dz);
   min-height: calc(100vh / var(--dz)); /* con zoom, 100vh también encoge: lo compensamos */
   display: flex;
