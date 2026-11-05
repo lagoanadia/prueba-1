@@ -2,7 +2,7 @@
 import { json, readJson, rejectMethod } from '../../server/http.js'
 import { getSessionUser } from '../../server/session.js'
 import { getProfile, saveProfile } from '../../server/profile.js'
-import { AVATAR_OPTIONS, isValidAvatar } from '../../src/data/avatar.js'
+import { AVATAR_OPTIONS, DEFAULT_AVATAR, isValidAvatar } from '../../src/data/avatar.js'
 
 export default async function handler({ request, env }) {
   const notAllowed = rejectMethod(request, ['GET', 'PUT'])
@@ -15,10 +15,12 @@ export default async function handler({ request, env }) {
   if (request.method === 'GET') return json(await getProfile(env, user.id))
 
   const body = await readJson(request)
+  if (!body?.avatar || typeof body.avatar !== 'object') return json({ error: 'Avatar no válido' }, 400)
+  // Lo que falte (p. ej. opciones nuevas) se rellena con el valor por defecto,
+  // y guardamos solo las claves conocidas (por si mandan campos de más).
+  const avatar = Object.fromEntries(Object.keys(AVATAR_OPTIONS).map((k) => [k, body.avatar[k] ?? DEFAULT_AVATAR[k]]))
   // El servidor también comprueba que no te pongas un traje bloqueado (no basta con ocultarlo en la UI).
-  if (!isValidAvatar(body?.avatar)) return json({ error: 'Avatar no válido' }, 400)
-  // Guardamos solo las claves conocidas (por si mandan campos de más)
-  const avatar = Object.fromEntries(Object.keys(AVATAR_OPTIONS).map((k) => [k, body.avatar[k]]))
+  if (!isValidAvatar(avatar)) return json({ error: 'Avatar no válido' }, 400)
   await saveProfile(env, user.id, { avatar })
   return json({ avatar })
 }
