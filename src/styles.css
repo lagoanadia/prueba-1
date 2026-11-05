@@ -364,10 +364,12 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 /* Contenido nuevo al cambiar de tamaño: entra con un fundido suave */
 @keyframes body-in { from { opacity: 0; } to { opacity: 1; } } /* solo opacidad: un transform movería los elementos absolutos de dentro */
 .grid-editing .w-body { animation: body-in .35s var(--ease) both; }
+.grid-editing .widget { padding-bottom: 52px; } /* hueco para el dock: el contenido se encoge y no queda tapado */
+.grid-editing .w-S, .grid-editing .w-T { padding-bottom: 42px; }
 .grid-editing .w-history { display: none; } /* editando no se consulta el historial y chocaría con la × */
 
 /* Dock de tamaños: formas mini y un indicador que se desliza con rebote */
-.size-dock { --idx: 1; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2; display: flex; gap: 2px; padding: 4px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(6px); border-radius: 16px; box-shadow: var(--shadow); animation: rise .3s var(--ease) both; }
+.size-dock { --idx: 1; position: absolute; left: 0; right: 0; margin-inline: auto; width: max-content; bottom: 10px; z-index: 2; display: flex; gap: 2px; padding: 4px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(6px); border-radius: 16px; box-shadow: var(--shadow); animation: rise .3s var(--ease) both; }
 .size-dock-pill { position: absolute; top: 4px; left: 4px; width: 38px; height: 30px; border-radius: 12px; background: var(--text); transform: translateX(calc(var(--idx) * 40px)); transition: transform .45s cubic-bezier(.2, 1.4, .35, 1); }
 .size-dock button { position: relative; width: 38px; height: 30px; border: none; background: none; border-radius: 12px; cursor: pointer; display: grid; place-items: center; transition: transform .15s var(--ease); }
 .size-dock button:active { transform: scale(.85); }
@@ -379,7 +381,7 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .size-dock button.on .shape { border-color: #FFFFFF; background: rgba(255, 255, 255, .25); }
 .size-dock button:hover:not(.on) .shape { background: var(--soft); }
 /* En S (1x1) el widget es pequeño: el dock se compacta */
-.w-S .size-dock { bottom: 6px; transform: translateX(-50%) scale(.85); }
+.w-S .size-dock, .w-T .size-dock { bottom: 6px; zoom: .8; } /* widgets de una columna: dock compacto */
 
 /* ===== Vista anual (estilo GitHub) y chips pequeños ===== */
 .year { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; width: 100%; }
@@ -395,7 +397,7 @@ button.ypx:not(:disabled):hover { transform: scale(1.4); }
 
 /* ===== Journal: ajustes del nuevo diseño ===== */
 .area-sub { font-size: 15px; margin-top: 4px; }
-.customize-pill { margin-left: auto; align-self: flex-start; }
+.customize-pill { margin-left: auto; align-self: flex-end; }
 .area-head-floating .customize-pill { background: rgba(255, 255, 255, .7); }
 .pill-sm { padding: 3px 10px; font-size: 12px; }
 .pill-soft { background: #E8F0FE; border-color: var(--blue); }
@@ -441,17 +443,18 @@ button.ypx:not(:disabled):hover { transform: scale(1.4); }
 .wordle { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .5em; outline: none; }
 @container (min-width: 420px) {
   .wordle-L { flex-direction: row; align-items: center; }
-  .wordle-L .fill { height: 100%; }
+  .wordle-L .wordle-area { align-self: stretch; }
   .wordle-L .keyboard, .wordle-L .wordle-end { flex: 1.1; }
   .wordle-M { flex-direction: row; align-items: center; }
-  .wordle-M .fill { height: 100%; }
+  .wordle-M .wordle-area { align-self: stretch; }
   .wordle-M .wordle-end, .wordle-M > .w-hint { flex: 1; }
 }
 .wordle:focus-visible { box-shadow: 0 0 0 2px var(--blue); border-radius: 12px; }
 /* Tamaño de cada casilla: lo que quepa a lo ancho (5) y a lo alto (6) del hueco */
-.wordle-board { --t: min(calc((100cqw - 24px) / 5), calc((100cqh - 25px) / 6), 52px); display: grid; gap: 5px; }
+.wordle-area { flex: 1; min-height: 0; min-width: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.wordle-board { display: grid; gap: 5px; }
 .wordle-row { display: grid; grid-template-columns: repeat(5, var(--t)); gap: 5px; }
-.tile { width: var(--t); height: var(--t); border: 2px solid var(--line); border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: calc(var(--t) * .5); text-transform: uppercase; background: #FFFFFF; }
+.tile { width: var(--t); height: var(--t); border: 2px solid var(--line); border-radius: calc(var(--t) * .2); display: grid; place-items: center; font-weight: 700; font-size: calc(var(--t) * .5); text-transform: uppercase; background: #FFFFFF; }
 .tile.filled { border-color: #9AA0A6; animation: pop .15s var(--ease); }
 .tile.correct, .tile.present, .tile.absent { color: #FFFFFF; border-color: transparent; animation: flip .5s var(--ease) both; animation-delay: var(--d); }
 .tile.correct { background: #3DDC97; color: var(--text); }

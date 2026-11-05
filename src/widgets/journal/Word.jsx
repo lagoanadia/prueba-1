@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import useBox from '../../hooks/useBox.js'
 import { todayISO } from '../../lib/dates.js'
 
 /*
@@ -50,7 +51,11 @@ export default function Word({ size, data, update }) {
   const game = data.wordle?.date === today ? data.wordle : { date: today, guesses: [] }
   const [current, setCurrent] = useState('')
   const [shake, setShake] = useState(false)
-  const boardRef = useRef(null)
+  const areaRef = useRef(null)
+  const area = useBox(areaRef)
+  // Tamaño de casilla = el mayor que quepa en el hueco medido (5 de ancho, 6 de alto), con margen
+  const GAP = 5
+  const tile = Math.max(4, Math.floor(Math.min((area.w - GAP * 4) / 5, (area.h - GAP * 5) / 6, 46) * 0.94))
 
   const won = game.guesses.includes(answer)
   const over = won || game.guesses.length >= TRIES
@@ -101,7 +106,7 @@ export default function Word({ size, data, update }) {
   }
 
   const board = (
-    <div className={`wordle-board ${shake ? 'shake' : ''}`}>
+    <div className={`wordle-board ${shake ? 'shake' : ''}`} style={{ '--t': `${tile}px` }}>
       {rows.map((row, r) => (
         <div key={r} className="wordle-row">
           {row.letters.map((ch, i) => (
@@ -115,8 +120,8 @@ export default function Word({ size, data, update }) {
   )
 
   return (
-    <div className={`wordle wordle-${size}`} tabIndex={0} onKeyDown={onKeyDown} ref={boardRef} aria-label="Palabra del día: escribe tu intento">
-      <div className="fill">{board}</div>
+    <div className={`wordle wordle-${size}`} tabIndex={0} onKeyDown={onKeyDown} aria-label="Palabra del día: escribe tu intento">
+      <div className="wordle-area" ref={areaRef}>{board}</div>
       {over ? (
         <div className="wordle-end">
           <b>{answer[0] + answer.slice(1).toLowerCase()}</b>
