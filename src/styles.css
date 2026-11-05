@@ -94,7 +94,8 @@ h1, h2, h3, p { margin: 0; }
 .nv.on { background: var(--soft); font-weight: 600; }
 .nv .ic { transition: transform .25s var(--ease); }
 .nv:hover .ic { transform: rotate(-8deg) scale(1.06); }
-.d-main { flex: 1; min-width: 0; padding: 32px 48px 56px; animation: fade .3s ease both; }
+.d-main { flex: 1; min-width: 0; padding: 32px 48px 56px; }
+.d-view { animation: fade .3s ease both; }
 .d-top { display: flex; justify-content: flex-end; }
 .talk-pill { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 24px 0 16px; border: none; border-radius: 28px; background: #FFFFFF; box-shadow: var(--shadow); font-size: 19px; font-weight: 600; cursor: pointer; transition: transform .2s var(--ease), box-shadow .2s; }
 .talk-pill:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
@@ -358,12 +359,12 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .m-avatar .avatar { width: 100%; height: 100%; }
 .nv .ic .avatar { width: 40px; height: 40px; }
 
-/* ===== Botón del asistente (portátil): bot con ondas de llamada ===== */
-.talk-bot { position: relative; width: 64px; height: 64px; border: none; border-radius: 50%; background: #FFFFFF; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .2s var(--ease), box-shadow .2s; }
-.talk-bot:hover { transform: scale(1.06); box-shadow: var(--shadow-lg); }
-.talk-bot:active { transform: scale(.95); }
-.talk-bot svg { position: relative; z-index: 1; }
-/* Ondas que salen como en una llamada entrante */
-@keyframes ring { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(1.9); opacity: 0; } }
-.talk-bot::before, .talk-bot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2.5px solid var(--blue); animation: ring 2.4s cubic-bezier(.2, .6, .3, 1) infinite; }
-.talk-bot::after { border-color: var(--green, #3DDC97); animation-delay: 1.2s; }
+/* ===== Botón del asistente (portátil): el círculo del móvil con ondas de sonido dentro ===== */
+.talk-circle { position: relative; width: 68px; height: 68px; border: none; padding: 0; background: none; cursor: pointer; transition: transform .2s var(--ease); }
+.talk-circle > svg { position: absolute; inset: 0; }
+.talk-circle-inner { position: absolute; inset: 10px; border-radius: 50%; background: #FFFFFF; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; transition: box-shadow .2s; }
+.talk-circle:hover { transform: scale(1.06); }
+.talk-circle:hover .talk-circle-inner { box-shadow: var(--shadow-lg); }
+.talk-circle:active { transform: scale(.95); }
+/* Solo al abrir la app: 3 vaivenes y quietas (nada de animación persistente) */
+.wave-once { animation: wave 1s ease-in-out 3 both; animation-delay: calc(.4s + var(--w) * 120ms); }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from '../components/Icon.jsx'
+import RingArcs from '../components/RingArcs.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
@@ -35,13 +36,24 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
         <NavItem id="perfil" label="Perfil" />
       </nav>
 
-      <main className="d-main" key={view}>
+      {/* El main NO lleva key: así el botón de hablar no se vuelve a montar (ni a animar) al cambiar de sección */}
+      <main className="d-main">
         <div className="d-top">
-          <button className="talk-bot" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
-            <Icon name="bot" size={34} strokeWidth={2.2} />
+          <button className="talk-circle" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
+            <RingArcs size={68} stroke={4} />
+            <span className="talk-circle-inner">
+              {/* Ondas de sonido: se mueven una vez al abrir la app y se quedan quietas */}
+              <svg aria-hidden="true" width="34" height="24" viewBox="0 0 112 72" fill="none" strokeWidth="7" strokeLinecap="round">
+                {['#3185FC', '#E84855', '#F9DC5C', '#3DDC97'].map((c, i) => (
+                  <path key={c} className="wave-once" style={{ '--w': i }} stroke={c}
+                    d={`M2 ${12 + i * 16}C16 ${4 + i * 16} 30 ${20 + i * 16} 44 ${12 + i * 16}S72 ${4 + i * 16} 86 ${12 + i * 16}S102 ${18 + i * 16} 110 ${12 + i * 16}`} />
+                ))}
+              </svg>
+            </span>
           </button>
         </div>
 
+        <div className="d-view" key={view}>
         {view === 'inicio' && (
           <div className="d-home">
             <h1 className="hello hello-xl rise">Hola, {firstName}</h1>
@@ -57,6 +69,7 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
             <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />
           </BlankPage>
         )}
+        </div>
       </main>
     </div>
   )
