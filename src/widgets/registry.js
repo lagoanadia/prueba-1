@@ -24,6 +24,11 @@ import Kanban from './trabajo/Kanban.jsx'
 import Priorities from './trabajo/Priorities.jsx'
 import Focus from './trabajo/Focus.jsx'
 import Deadlines from './trabajo/Deadlines.jsx'
+import Menu from './comida/Menu.jsx'
+import Dishes from './comida/Dishes.jsx'
+import Recipe from './comida/Recipe.jsx'
+import Shopping from './comida/Shopping.jsx'
+import Batch from './comida/Batch.jsx'
 
 export const SIZES = ['S', 'T', 'M', 'L']
 
@@ -44,6 +49,11 @@ export const WIDGETS = {
   priorities: { area: 'trabajo', name: 'Prioridades de hoy', color: '#F9DC5C', component: Priorities },
   focus: { area: 'trabajo', name: 'Foco', color: '#E84855', component: Focus },
   deadlines: { area: 'trabajo', name: 'Próximas entregas', color: '#8E7CFF', component: Deadlines },
+  menu: { area: 'comida', name: 'Menú semanal', color: '#EFABFF', component: Menu },
+  dishes: { area: 'comida', name: 'Mis platos', color: '#FF9F43', component: Dishes },
+  recipe: { area: 'comida', name: 'Receta', color: '#3DDC97', component: Recipe },
+  shopping: { area: 'comida', name: 'Lista de la compra', color: '#3185FC', component: Shopping },
+  batch: { area: 'comida', name: 'Batch cooking', color: '#E84855', component: Batch },
 }
 
 export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.area === area).map(([type, w]) => ({ type, ...w }))
@@ -53,6 +63,7 @@ const DEFAULTS = {
   journal: [['mood', 'L'], ['goals', 'L'], ['bottle', 'L'], ['pixels', 'L'], ['good', 'M'], ['word', 'M']],
   salud: [['plan', 'L'], ['workouts', 'L'], ['progress', 'M'], ['water', 'M'], ['sleep', 'M']],
   trabajo: [['projects', 'L'], ['kanban', 'L'], ['priorities', 'M'], ['focus', 'M'], ['deadlines', 'M']],
+  comida: [['menu', 'L'], ['recipe', 'L'], ['dishes', 'T'], ['shopping', 'T'], ['batch', 'M']],
 }
 
 export const defaultLayout = (area) => (DEFAULTS[area] ?? []).map(([type, size]) => ({ id: crypto.randomUUID(), type, size }))
