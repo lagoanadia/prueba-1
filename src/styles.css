@@ -207,9 +207,18 @@ h1, h2, h3, p { margin: 0; }
 .grid-editing .widget { animation: jiggle .35s ease-in-out infinite; }
 .grid-editing .widget:nth-child(2n) { animation-delay: -.15s; }
 .grid-editing .w-body { pointer-events: none; opacity: .55; }
-.w-edit { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 10px; }
-.w-remove { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--text); color: #FFFFFF; font-size: 16px; line-height: 1; cursor: pointer; }
-.w-edit-bar { display: flex; align-items: center; gap: 6px; background: #FFFFFF; border-radius: 16px; padding: 4px; box-shadow: var(--shadow); }
+.w-remove { position: absolute; top: 8px; right: 8px; z-index: 2; width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--text); color: #FFFFFF; font-size: 16px; line-height: 1; cursor: pointer; }
+/* Esquina para cambiar el tamaño (como en iOS) */
+.w-resize { position: absolute; right: 6px; bottom: 6px; z-index: 2; width: 30px; height: 30px; border-radius: 50%; border: none; background: #FFFFFF; box-shadow: var(--shadow); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: nwse-resize; touch-action: none; }
+.grid-editing .widget { cursor: grab; touch-action: none; user-select: none; }
+.grid-dragging .widget { animation: none; transition: transform .2s var(--ease); }
+.w-placeholder { opacity: .25; }
+.w-placeholder > * { visibility: hidden; }
+/* El "fantasma" que sigue al dedo mientras arrastras */
+.ghost { position: fixed; z-index: 40; pointer-events: none; transform: scale(1.04) rotate(1.5deg); filter: drop-shadow(0 12px 24px rgba(60, 64, 67, .3)); }
+.ghost .widget { width: 100%; height: 100%; animation: none; }
+.preview { cursor: grab; touch-action: none; user-select: none; }
+.gallery-tip { margin: -12px 0 16px; }
 .w-add { align-items: center; justify-content: center; font-size: 40px; font-weight: 300; color: var(--muted); border: 2px dashed var(--ring); box-shadow: none; cursor: pointer; animation: none !important; }
 .w-add:hover { background: var(--soft); }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 2px; }
@@ -293,7 +302,7 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .gallery-list { display: flex; flex-direction: column; gap: 20px; }
 .gallery-item { display: flex; gap: 20px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
 .gallery-item:last-child { border-bottom: none; }
-.preview { --row: 150px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, 150px); grid-auto-rows: var(--row); gap: 16px; zoom: .7; }
+.preview { --row: 150px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, 150px); grid-auto-rows: var(--row); gap: 16px; zoom: .7; cursor: grab; touch-action: none; user-select: none; }
 .preview .widget { animation: none; }
 .preview .w-body { pointer-events: none; }
 .gallery-ctrl { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
