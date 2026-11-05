@@ -187,7 +187,7 @@ h1, h2, h3, p { margin: 0; }
 .area-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .area-head h1 { display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 600; }
 .area-head h2 { font-size: 22px; font-weight: 600; }
-.customize { margin-left: auto; background: var(--soft); transition: background .2s, transform .2s var(--ease); }
+.customize { margin-left: auto; align-self: flex-end; background: var(--soft); transition: background .2s, transform .2s var(--ease); }
 .customize:hover { transform: rotate(-8deg); }
 .customize-on { background: var(--blue); }
 /* En móvil el título ya está en la cabecera de color: el botón se coloca ahí, junto a la X */

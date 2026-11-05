@@ -191,8 +191,9 @@ export default function AreaScreen({ area, showTitle = true }) {
           </div>
         )}
         {available.length > 0 && (
-          <button className={`pill customize-pill ${editing ? 'pill-on' : ''}`} onClick={() => setEditing(!editing)}>
-            {editing ? 'Listo' : 'Personalizar tablero'}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
+            aria-label={editing ? 'Terminar de personalizar' : 'Personalizar tablero'} title={editing ? 'Listo' : 'Personalizar tablero'}>
+            <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
           </button>
         )}
       </header>
