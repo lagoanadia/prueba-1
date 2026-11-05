@@ -19,7 +19,7 @@ export default async function handler({ request, env }) {
   // Lo que falte (p. ej. opciones nuevas) se rellena con el valor por defecto,
   // y guardamos solo las claves conocidas (por si mandan campos de más).
   const avatar = Object.fromEntries(Object.keys(AVATAR_OPTIONS).map((k) => [k, body.avatar[k] ?? DEFAULT_AVATAR[k]]))
-  // El servidor también comprueba que no te pongas un traje bloqueado (no basta con ocultarlo en la UI).
+  // El servidor también valida: no basta con que la UI solo ofrezca opciones correctas.
   if (!isValidAvatar(avatar)) return json({ error: 'Avatar no válido' }, 400)
   await saveProfile(env, user.id, { avatar })
   return json({ avatar })
