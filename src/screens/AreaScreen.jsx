@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import useBoard from '../hooks/useBoard.js'
@@ -25,7 +25,41 @@ export default function AreaScreen({ area, showTitle = true }) {
   const [editing, setEditing] = useState(false)
   const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // { id, x, y, offX, offY, w, h, zoom }
+  const [stretch, setStretch] = useState(null) // redimensionando: { id, w, h, target, zoom }
   const gridRef = useRef(null)
+  const cards = useRef(new Map()) // id -> elemento del widget (para animar)
+  const lastRects = useRef(new Map())
+
+  /*
+   * Animación FLIP (First, Last, Invert, Play), la que usa iOS al recolocar widgets:
+   * tras cada render medimos dónde ha quedado cada widget; si se ha movido o cambiado de tamaño,
+   * lo "devolvemos" visualmente a su sitio anterior con un transform y lo animamos hasta el nuevo.
+   * Las posiciones se miden respecto al grid para que hacer scroll no cuente como movimiento.
+   */
+  useLayoutEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const g = grid.getBoundingClientRect()
+    const zoom = zoomOf(grid)
+    const next = new Map()
+    cards.current.forEach((el, id) => {
+      const r = el.getBoundingClientRect()
+      const rect = { x: r.left - g.left, y: r.top - g.top, w: r.width, h: r.height }
+      next.set(id, rect)
+      const prev = lastRects.current.get(id)
+      if (!prev || id === drag?.id || id === stretch?.id) return
+      const dx = (prev.x - rect.x) / zoom
+      const dy = (prev.y - rect.y) / zoom
+      const sx = prev.w / rect.w
+      const sy = prev.h / rect.h
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) return
+      el.animate(
+        [{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: 'top left' }, { transform: 'none', transformOrigin: 'top left' }],
+        { duration: 420, easing: 'cubic-bezier(.2, 1.25, .35, 1)' } // pequeño rebote, como un muelle
+      )
+    })
+    lastRects.current = next
+  })
   const available = widgetsFor(area.id)
 
   const remove = (id) => updateLayout((l) => l.filter((w) => w.id !== id))
@@ -107,28 +141,36 @@ export default function AreaScreen({ area, showTitle = true }) {
     })
   }
 
-  // ---------- Cambiar tamaño arrastrando la esquina ----------
+  // ---------- Cambiar tamaño arrastrando la esquina (como iOS) ----------
+  // Mientras arrastras, el widget se estira en vivo (por encima de los demás) y se marca el tamaño
+  // al que va a encajar. Al soltar, encaja y el resto se recoloca con la animación FLIP.
   const onResizePointerDown = (e, w) => {
     e.stopPropagation()
     e.preventDefault()
     const widgetEl = e.currentTarget.closest('[data-wid]')
     const start = widgetEl.getBoundingClientRect()
     const grid = gridRef.current
+    const zoom = zoomOf(grid)
     const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length
-    const gap = parseFloat(getComputedStyle(grid).columnGap) * zoomOf(grid)
+    const gap = parseFloat(getComputedStyle(grid).columnGap) * zoom
     const cellW = (grid.getBoundingClientRect().width - gap * (cols - 1)) / cols
-    const cellH = parseFloat(getComputedStyle(grid).gridAutoRows) * zoomOf(grid)
+    const cellH = parseFloat(getComputedStyle(grid).gridAutoRows) * zoom
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
     let moved = false
+    let target = w.size
     const onMove = (ev) => {
       moved = true
-      const width = start.width + ev.clientX - e.clientX
-      const height = start.height + ev.clientY - e.clientY
-      const size = sizeFor(width > cellW * 1.5 ? 2 : 1, height > cellH * 1.5 + gap / 2 ? 2 : 1)
-      resize(w.id, size)
+      const width = clamp(start.width + ev.clientX - e.clientX, cellW * 0.85, (cellW * 2 + gap) * 1.04)
+      const height = clamp(start.height + ev.clientY - e.clientY, cellH * 0.85, (cellH * 2 + gap) * 1.04)
+      target = sizeFor(width > cellW * 1.5 + gap / 2 ? 2 : 1, height > cellH * 1.5 + gap / 2 ? 2 : 1) // cambia justo a mitad de camino
+      const tw = target === 'S' ? cellW : cellW * 2 + gap
+      const th = target === 'L' ? cellH * 2 + gap : cellH
+      setStretch({ id: w.id, w: width / zoom, h: height / zoom, tw: tw / zoom, th: th / zoom, target })
     }
     const onUp = () => {
       window.removeEventListener('pointermove', onMove)
-      if (!moved) resize(w.id, SIZES[(SIZES.indexOf(w.size) + 1) % SIZES.length]) // un toque = siguiente tamaño
+      setStretch(null)
+      resize(w.id, moved ? target : SIZES[(SIZES.indexOf(w.size) + 1) % SIZES.length]) // un toque = siguiente tamaño
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp, { once: true })
@@ -156,7 +198,8 @@ export default function AreaScreen({ area, showTitle = true }) {
         <div className={`grid ${editing ? 'grid-editing' : ''} ${drag ? 'grid-dragging' : ''}`} ref={gridRef}>
           {board.layout.map((w, i) => (
             <WidgetCard key={w.id} w={w} i={i} data={board.data} update={updateData}
-              editing={editing} isDragged={drag?.id === w.id}
+              editing={editing} isDragged={drag?.id === w.id} stretch={stretch?.id === w.id ? stretch : null}
+              cardRef={(el) => (el ? cards.current.set(w.id, el) : cards.current.delete(w.id))}
               onPointerDown={(e) => onWidgetPointerDown(e, w.id)}
               onRemove={() => remove(w.id)} onResizeStart={(e) => onResizePointerDown(e, w)} />
           ))}
@@ -201,12 +244,16 @@ function WidgetView({ w, data, update = () => {} }) {
   )
 }
 
-function WidgetCard({ w, i, data, update, editing, isDragged, onPointerDown, onRemove, onResizeStart }) {
+function WidgetCard({ w, i, data, update, editing, isDragged, stretch, cardRef, onPointerDown, onRemove, onResizeStart }) {
   const def = WIDGETS[w.type]
   if (!def) return null
   const Widget = def.component
   return (
-    <article data-wid={w.id} className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }} onPointerDown={onPointerDown}>
+    <article ref={cardRef} data-wid={w.id} onPointerDown={onPointerDown}
+      className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''} ${stretch ? 'w-stretching' : ''}`}
+      style={stretch ? { '--i': i, width: stretch.w, height: stretch.h } : { '--i': i }}>
+      {/* Mientras se estira: contorno del tamaño al que va a encajar */}
+      {stretch && <span className="snap-outline" style={{ width: stretch.tw, height: stretch.th }} aria-hidden="true"><b>{stretch.target}</b></span>}
       {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.color }} />{def.name}</h3>}
       <div className="w-body"><Widget size={w.size} data={data} update={update} /></div>
       {editing && (

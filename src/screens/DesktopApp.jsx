@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Icon from '../components/Icon.jsx'
-import RingArcs from '../components/RingArcs.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
@@ -38,8 +37,8 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
 
       <main className="d-main" key={view}>
         <div className="d-top">
-          <button className="talk-pill" onClick={onTalk} aria-label="Hablar con el asistente">
-            <RingArcs size={36} stroke={4} className="spin-slow" />Hablar
+          <button className="talk-bot" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
+            <Icon name="bot" size={34} strokeWidth={2.2} />
           </button>
         </div>
 
