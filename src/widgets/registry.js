@@ -19,6 +19,11 @@ import Workouts from './salud/Workouts.jsx'
 import Progress from './salud/Progress.jsx'
 import Water from './salud/Water.jsx'
 import Sleep from './salud/Sleep.jsx'
+import Projects from './trabajo/Projects.jsx'
+import Kanban from './trabajo/Kanban.jsx'
+import Priorities from './trabajo/Priorities.jsx'
+import Focus from './trabajo/Focus.jsx'
+import Deadlines from './trabajo/Deadlines.jsx'
 
 export const SIZES = ['S', 'T', 'M', 'L']
 
@@ -34,6 +39,11 @@ export const WIDGETS = {
   progress: { area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
   water: { area: 'salud', name: 'Agua', color: '#3185FC', component: Water },
   sleep: { area: 'salud', name: 'Sueño', color: '#8E7CFF', component: Sleep },
+  projects: { area: 'trabajo', name: 'Proyectos', color: '#E84855', component: Projects },
+  kanban: { area: 'trabajo', name: 'Tablero', color: '#3185FC', component: Kanban },
+  priorities: { area: 'trabajo', name: 'Prioridades de hoy', color: '#F9DC5C', component: Priorities },
+  focus: { area: 'trabajo', name: 'Foco', color: '#E84855', component: Focus },
+  deadlines: { area: 'trabajo', name: 'Próximas entregas', color: '#8E7CFF', component: Deadlines },
 }
 
 export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.area === area).map(([type, w]) => ({ type, ...w }))
@@ -42,6 +52,7 @@ export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.
 const DEFAULTS = {
   journal: [['mood', 'L'], ['goals', 'L'], ['bottle', 'L'], ['pixels', 'L'], ['good', 'M'], ['word', 'M']],
   salud: [['plan', 'L'], ['workouts', 'L'], ['progress', 'M'], ['water', 'M'], ['sleep', 'M']],
+  trabajo: [['projects', 'L'], ['kanban', 'L'], ['priorities', 'M'], ['focus', 'M'], ['deadlines', 'M']],
 }
 
 export const defaultLayout = (area) => (DEFAULTS[area] ?? []).map(([type, size]) => ({ id: crypto.randomUUID(), type, size }))
