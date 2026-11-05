@@ -5,6 +5,7 @@ import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
+import AreaScreen from './AreaScreen.jsx'
 
 /**
  * Vista móvil:
@@ -82,6 +83,7 @@ export default function MobileApp({ firstName, user, today, onToggle, onTalk, on
             </header>
             <div className="sheet-body">
               {sheet === 'perfil' && <button className="btn-secondary" onClick={onSignOut}>Cerrar sesión</button>}
+              {area && <AreaScreen area={area} key={area.id} showTitle={false} />}
             </div>
           </>
         )}

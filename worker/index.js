@@ -12,6 +12,7 @@ import google from './routes/google.js'
 import me from './routes/me.js'
 import logout from './routes/logout.js'
 import entries from './routes/entries.js'
+import board from './routes/board.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -20,6 +21,7 @@ const ROUTES = {
   '/api/auth/me': me,
   '/api/auth/logout': logout,
   '/api/entries': entries,
+  '/api/board': board,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }

@@ -4,6 +4,7 @@ import RingArcs from '../components/RingArcs.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
+import AreaScreen from './AreaScreen.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 
@@ -46,7 +47,7 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
             <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks entries={today} onToggle={onToggle} /></div>
           </div>
         )}
-        {area && <BlankPage title={area.label} icon={area.id} color={area.color} />}
+        {area && <AreaScreen area={area} key={area.id} />}
         {view === 'calendario' && <BlankPage title="Calendario" icon="calendario" />}
         {view === 'perfil' && (
           <BlankPage title="Perfil" icon="perfil">

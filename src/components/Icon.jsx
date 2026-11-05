@@ -39,6 +39,8 @@ const PATHS = {
   back: ['M19 12H5M11 6l-6 6 6 6'],
   arrow: ['M5 12h14M13 6l6 6-6 6'],
   close: ['M6 6l12 12M18 6L6 18'],
+  check: ['M5 12.5l4.5 4.5L19 7.5'],
+  sliders: ['M4 7h10M18 7h2M4 17h4M12 17h8', 'M16 5v4M10 15v4'],
 }
 
 export default function Icon({ name, size = 26, color = '#202124', strokeWidth = 2.3 }) {
