@@ -15,7 +15,7 @@ export async function transcribe(audio) {
     body: audio,
   })
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new ApiError(response.status, data.error ?? 'Transcription failed')
+  if (!response.ok) throw new ApiError(response.status, data.error ?? 'No he podido transcribir el audio')
   return data.text
 }
 

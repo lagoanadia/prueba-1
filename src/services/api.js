@@ -19,6 +19,6 @@ export async function request(path, { method = 'GET', body } = {}) {
 
   if (response.status === 204) return null
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new ApiError(response.status, data.error ?? 'Something went wrong', data.reason)
+  if (!response.ok) throw new ApiError(response.status, data.error ?? 'Algo ha fallado', data.reason)
   return data
 }

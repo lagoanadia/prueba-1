@@ -11,7 +11,7 @@ import { json } from '../server/http.js'
 import google from './routes/google.js'
 import me from './routes/me.js'
 import logout from './routes/logout.js'
-import chat from './routes/chat.js'
+import entries from './routes/entries.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -19,7 +19,7 @@ const ROUTES = {
   '/api/auth/google': google,
   '/api/auth/me': me,
   '/api/auth/logout': logout,
-  '/api/chat': chat,
+  '/api/entries': entries,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }

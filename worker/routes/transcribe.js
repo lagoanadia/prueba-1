@@ -14,21 +14,21 @@ export default async function handler({ request, env }) {
   if (notAllowed) return notAllowed
 
   const user = await getSessionUser(request, env)
-  if (!user) return json({ error: 'Not signed in' }, 401)
+  if (!user) return json({ error: 'No has iniciado sesión' }, 401)
 
   const type = (request.headers.get('Content-Type') ?? '').split(';')[0].trim()
   const ext = EXTENSIONS[type]
   if (!ext) return json({ error: `Unsupported audio type: ${type || 'none'}` }, 415)
 
   const audio = await request.blob()
-  if (audio.size === 0) return json({ error: 'Empty recording' }, 400)
-  if (audio.size > MAX_BYTES) return json({ error: 'Recording too long' }, 413)
+  if (audio.size === 0) return json({ error: 'La grabación está vacía' }, 400)
+  if (audio.size > MAX_BYTES) return json({ error: 'La grabación es demasiado larga' }, 413)
 
   try {
     const text = await groqTranscribe(audio, env, `voice.${ext}`)
     return json({ text })
   } catch (err) {
     console.error(err)
-    return json({ error: 'Transcription failed. Please try again.' }, 502)
+    return json({ error: 'No he podido transcribir el audio. Inténtalo otra vez.' }, 502)
   }
 }

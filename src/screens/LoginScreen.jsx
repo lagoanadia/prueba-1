@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx'
+import RingArcs from '../components/RingArcs.jsx'
 import { signInWithGoogle } from '../services/authService.js'
 
 export default function LoginScreen({ onSignedIn }) {
@@ -16,12 +17,12 @@ export default function LoginScreen({ onSignedIn }) {
   }
 
   return (
-    <main className="wf-screen wf-center">
-      <div className="wf-box wf-header">[ Logo / App name ]</div>
-      <h1>Welcome</h1>
-      <p className="wf-placeholder">[ Short pitch: organize your life by voice ]</p>
-      <GoogleSignInButton onCredential={handleCredential} />
-      {error && <p className="wf-error">{error}</p>}
+    <main className="login">
+      <RingArcs size={120} stroke={8} className="spin-slow rise" />
+      <h1 className="hello rise" style={{ '--i': 1 }}>Hola</h1>
+      <p className="muted rise" style={{ '--i': 2 }}>Organiza tu día hablando.</p>
+      <div className="rise" style={{ '--i': 3 }}><GoogleSignInButton onCredential={handleCredential} /></div>
+      {error && <p className="error">{error}</p>}
     </main>
   )
 }

@@ -21,6 +21,8 @@
   // Los SECRETOS (SESSION_SECRET, GROQ_API_KEY) se ponen en el dashboard como tipo "Secret".
   // No borrar las variables que pongáis en el dashboard al desplegar.
   "keep_vars": true,
+  // Base de datos clave-valor para las tareas. Sin "id": Cloudflare la crea sola en el primer deploy.
+  "kv_namespaces": [{ "binding": "DATA" }],
   // Logs visibles en el dashboard (Workers > prueba-1 > Logs).
   "observability": { "enabled": true }
 }

@@ -4,7 +4,7 @@ import { useRef } from 'react'
  * Grabar audio con el micrófono usando MediaRecorder (API del navegador).
  *   await start()  -> pide permiso de micro (la 1ª vez) y empieza a grabar
  *   await stop()   -> para y devuelve el audio como Blob
- *
+ *   cancel()       -> para sin devolver nada (p. ej. al cerrar la pantalla)
  * Ojo: el micro solo funciona en HTTPS o en localhost.
  */
 export default function useRecorder() {
@@ -15,21 +15,30 @@ export default function useRecorder() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     const recorder = new MediaRecorder(stream)
     chunksRef.current = []
-    // El navegador va entregando trozos de audio; los juntamos al parar.
     recorder.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data)
     recorder.start()
     recorderRef.current = recorder
   }
 
+  const release = (recorder) => recorder.stream.getTracks().forEach((t) => t.stop()) // apaga el micro
+
   const stop = () =>
     new Promise((resolve) => {
       const recorder = recorderRef.current
       recorder.onstop = () => {
-        recorder.stream.getTracks().forEach((t) => t.stop()) // apaga el micro (y el icono rojo del navegador)
+        release(recorder)
         resolve(new Blob(chunksRef.current, { type: recorder.mimeType }))
       }
       recorder.stop()
     })
 
-  return { start, stop }
+  const cancel = () => {
+    const recorder = recorderRef.current
+    if (recorder?.state === 'recording') {
+      recorder.onstop = () => release(recorder)
+      recorder.stop()
+    }
+  }
+
+  return { start, stop, cancel }
 }

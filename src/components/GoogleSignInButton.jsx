@@ -9,7 +9,7 @@ function loadGoogleScript() {
     script.src = GIS_SCRIPT
     script.async = true
     script.onload = resolve
-    script.onerror = () => { scriptPromise = null; reject(new Error('Could not load Google Sign-In')) }
+    script.onerror = () => { scriptPromise = null; reject(new Error('No se ha podido cargar el login de Google')) }
     document.head.appendChild(script)
   })
   return scriptPromise
@@ -29,7 +29,7 @@ export default function GoogleSignInButton({ onCredential }) {
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
     if (!clientId) {
-      setError('VITE_GOOGLE_CLIENT_ID is not set (see .env.example)')
+      setError('Falta VITE_GOOGLE_CLIENT_ID (mira .env.example)')
       return
     }
     let cancelled = false
@@ -44,7 +44,7 @@ export default function GoogleSignInButton({ onCredential }) {
           theme: 'outline',
           size: 'large',
           text: 'signin_with',
-          locale: 'en',
+          locale: 'es',
         })
       })
       .catch((err) => !cancelled && setError(err.message))
@@ -54,7 +54,7 @@ export default function GoogleSignInButton({ onCredential }) {
   return (
     <>
       <div ref={containerRef} />
-      {error && <p className="wf-error">{error}</p>}
+      {error && <p className="error">{error}</p>}
     </>
   )
 }

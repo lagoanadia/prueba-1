@@ -1,56 +1,64 @@
 import { useEffect, useState } from 'react'
 import LoginScreen from './screens/LoginScreen.jsx'
-import HomeScreen from './screens/HomeScreen.jsx'
-import SectionScreen from './screens/SectionScreen.jsx'
-import AppHeader from './components/AppHeader.jsx'
-import { SECTIONS } from './data/sections.js'
+import DesktopApp from './screens/DesktopApp.jsx'
+import MobileApp from './screens/MobileApp.jsx'
+import VoiceOverlay from './components/VoiceOverlay.jsx'
+import useEntries from './hooks/useEntries.js'
+import useMediaQuery from './hooks/useMediaQuery.js'
+import useVoiceAssistant from './hooks/useVoiceAssistant.js'
 import { getCurrentUser, signOut } from './services/authService.js'
-
-const emptyEntries = () => Object.fromEntries(SECTIONS.map((s) => [s.id, []]))
+import { todayISO } from './lib/dates.js'
 
 /**
  *   user === undefined -> cargando · null -> Login · objeto -> app
- *   openSection === null -> Home · 'gym' | 'class' | ... -> pantalla de esa sección
+ *   Portátil (≥ 900px) y móvil comparten datos y asistente; solo cambia la vista.
  */
 export default function App() {
   const [user, setUser] = useState(undefined)
-  const [openSection, setOpenSection] = useState(null)
-  const [entries, setEntries] = useState(emptyEntries) // TODO: guardar en backend (D1/KV)
+  const [voiceOpen, setVoiceOpen] = useState(false)
+  const isDesktop = useMediaQuery('(min-width: 900px)')
+  const { entries, add, toggle, error } = useEntries(Boolean(user))
+  const assistant = useVoiceAssistant(add)
 
   useEffect(() => {
     getCurrentUser().then(setUser).catch(() => setUser(null))
   }, [])
 
-  // Aplica las acciones que decide el asistente: [{ section, title }]
-  const applyActions = (actions) => {
-    setEntries((prev) => {
-      const next = { ...prev }
-      for (const a of actions) {
-        if (!next[a.section]) continue // sección desconocida: la ignoramos
-        next[a.section] = [{ id: crypto.randomUUID(), title: a.title, createdAt: Date.now() }, ...next[a.section]]
-      }
-      return next
-    })
+  // Abrir el asistente empieza a escuchar directamente (menos toques).
+  const openVoice = () => {
+    setVoiceOpen(true)
+    assistant.start()
+  }
+  const closeVoice = () => {
+    assistant.reset()
+    setVoiceOpen(false)
   }
 
   const handleSignOut = async () => {
     await signOut()
     setUser(null)
-    setOpenSection(null)
-    setEntries(emptyEntries())
   }
 
-  if (user === undefined) return <main className="wf-screen wf-center">Loading…</main>
+  if (user === undefined) return <main className="loading"><span className="spinner" aria-label="Cargando" /></main>
   if (user === null) return <LoginScreen onSignedIn={setUser} />
 
+  const firstName = user.name?.split(' ')[0] ?? ''
+  const today = todayISO()
+  const props = {
+    firstName,
+    user,
+    today: entries.filter((e) => e.date === today),
+    upcoming: entries.filter((e) => e.date && e.date > today && !e.done),
+    onToggle: toggle,
+    onTalk: openVoice,
+    onSignOut: handleSignOut,
+  }
+
   return (
-    <main className="wf-screen">
-      <AppHeader user={user} onSignOut={handleSignOut} />
-      {openSection === null ? (
-        <HomeScreen entries={entries} onActions={applyActions} onOpenSection={setOpenSection} />
-      ) : (
-        <SectionScreen sectionId={openSection} entries={entries[openSection]} onBack={() => setOpenSection(null)} />
-      )}
-    </main>
+    <>
+      {isDesktop ? <DesktopApp {...props} /> : <MobileApp {...props} />}
+      <VoiceOverlay open={voiceOpen} onClose={closeVoice} firstName={firstName} assistant={assistant} modal={isDesktop} />
+      {error && <p className="toast" role="alert">{error}</p>}
+    </>
   )
 }

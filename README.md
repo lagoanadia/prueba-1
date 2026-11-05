@@ -10,14 +10,17 @@ worker/                 ← BACKEND (Cloudflare Worker)
   routes/google.js          POST  verifica el token de Google y crea la sesión
   routes/me.js              GET   ¿quién soy? (401 si no hay sesión)
   routes/logout.js          POST  cierra sesión
-  routes/chat.js          POST  asistente IA (requiere sesión) -> Groq
+  routes/entries.js       GET/POST/PATCH/DELETE  tareas del usuario (Cloudflare KV)
+  routes/transcribe.js    POST  audio -> texto (Groq Whisper)
+  routes/command.js       POST  texto -> acciones propuestas (Groq)
 server/                 ← código del backend que NO es endpoint
   google.js               verificación del ID token de Google
   session.js              cookie de sesión firmada (JWT)
   groq.js                 cliente de la API de Groq
-  prompts.js              system prompt del asistente
+  entries.js              guardar/leer tareas en KV
 src/                    ← FRONTEND
-  screens/                Login → Home (subir material) → Assistant (chat)
+  screens/                Login, vista portátil (DesktopApp) y móvil (MobileApp)
+  data/areas.js           las 5 áreas (compartido con el backend)
   components/             piezas de UI
   services/               llamadas al backend (auth, IA)
 ```
