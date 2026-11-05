@@ -63,6 +63,11 @@ export async function groqTranscribe(audio, env, filename) {
   form.append('file', audio, filename)
   form.append('model', TRANSCRIBE_MODEL)
   form.append('response_format', 'json')
+  // Sin esto Whisper adivina el idioma y con audios cortos se equivoca (p. ej. lo toma por islandés).
+  form.append('language', 'es')
+  form.append('temperature', '0')
+  // Pista de contexto: ayuda a acertar con vocabulario y puntuación en español.
+  form.append('prompt', 'Notas de voz en español para una agenda: clases, exámenes, gimnasio, hábitos, trabajo y comidas.')
 
   const response = await fetch(TRANSCRIBE_URL, {
     method: 'POST',
