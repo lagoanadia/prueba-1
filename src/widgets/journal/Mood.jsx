@@ -1,21 +1,26 @@
+import { useState } from 'react'
 import MonthGrid from '../MonthGrid.jsx'
+import YearGrid from '../YearGrid.jsx'
+import Chips from '../Chips.jsx'
 import { lastDays, todayISO } from '../../lib/dates.js'
 
 export const MOODS = [
   { id: 'bueno', label: 'Bueno', color: '#3DDC97' },
-  { id: 'regular', label: 'Regular', color: '#F9DC5C' },
+  { id: 'regular', label: 'Mejorable', color: '#F9DC5C' },
   { id: 'malo', label: 'Malo', color: '#E84855' },
 ]
 const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? '#F1F3F4'
+const RANGES = [{ id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
-/** Mood tracker. S: elegir hoy · M: + últimas 2 semanas · L: + mes (tocar un día cambia su ánimo). */
+/** Mood tracker. S: elegir hoy · T: + mes · M: + 2 semanas · L: + Mes / Año (tocar un día cambia su ánimo). */
 export default function Mood({ size, data, update }) {
   const today = todayISO()
   const moods = data.moods ?? {}
+  const [range, setRange] = useState('año')
   const set = (date, mood) => update((d) => ({ ...d, moods: { ...d.moods, [date]: mood } }))
   const cycle = (date) => {
     const i = MOODS.findIndex((m) => m.id === moods[date])
-    set(date, i === MOODS.length - 1 ? null : MOODS[i + 1].id) // bueno → regular → malo → nada
+    set(date, i === MOODS.length - 1 ? null : MOODS[i + 1].id) // bueno → mejorable → malo → nada
   }
 
   const chips = (
@@ -30,14 +35,17 @@ export default function Mood({ size, data, update }) {
   )
 
   if (size === 'S') return <div className="w-center"><span className="w-hint">Hoy</span>{chips}</div>
+  if (size === 'T') return <>{chips}<div className="fill"><MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
+  if (size === 'M') return <>{chips}<div className="px-row">{lastDays(14).map((d) => <span key={d} className="px" style={{ background: colorOf(moods[d]) }} />)}</div></>
   return (
     <>
       {chips}
-      {size === 'M' ? (
-        <div className="px-row">{lastDays(14).map((d) => <span key={d} className="px" style={{ background: colorOf(moods[d]) }} />)}</div>
-      ) : (
-        <MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} cell={22} />
-      )}
+      <Chips options={RANGES} value={range} onChange={setRange} small />
+      <div className="slide-in fill" key={range}>
+        {range === 'mes'
+          ? <MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} />
+          : <YearGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} />}
+      </div>
     </>
   )
 }

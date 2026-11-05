@@ -46,3 +46,17 @@ export function streak(dates, today = todayISO()) {
   while (set.has(day)) { n++; day = addDays(day, -1) }
   return n
 }
+
+/** "2026-12-31" -> "31 de diciembre de 2026" */
+export const formatLong = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/** Todo el año actual en columnas de semanas (lunes arriba), estilo GitHub. Huecos = null. */
+export function yearWeeks(today = todayISO()) {
+  const year = Number(today.slice(0, 4))
+  const first = new Date(year, 0, 1)
+  const days = (new Date(year + 1, 0, 1) - first) / 86400000
+  const offset = (first.getDay() + 6) % 7
+  const cells = [...Array(offset).fill(null), ...Array.from({ length: days }, (_, i) => new Date(year, 0, 1 + i).toLocaleDateString('en-CA'))]
+  while (cells.length % 7) cells.push(null)
+  return cells
+}

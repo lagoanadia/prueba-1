@@ -199,6 +199,7 @@ h1, h2, h3, p { margin: 0; }
 .w-S { grid-column: span 1; grid-row: span 1; }
 .w-M { grid-column: span 2; grid-row: span 1; }
 .w-L { grid-column: span 2; grid-row: span 2; }
+.w-T { grid-column: span 1; grid-row: span 2; }
 .w-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); }
 .w-title .dot { width: 9px; height: 9px; }
 .w-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -256,12 +257,13 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .px-today { outline: 2px solid var(--text); outline-offset: 1px; }
 .px-row { display: flex; gap: 5px; flex-wrap: wrap; }
 .px-row .px { --cell: 20px; }
-.month { display: grid; grid-template-columns: repeat(7, var(--cell)); gap: 5px; }
+.month { --cell: 18px; display: grid; grid-template-columns: repeat(7, var(--cell)); gap: 5px; }
 .month .px:disabled { opacity: .5; }
 
 /* Metas */
 .goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
 .goal-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600; }
+.goal-top b { white-space: nowrap; }
 .bar { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; margin-top: 4px; }
 .bar span { display: block; height: 100%; background: var(--blue); border-radius: 4px; transition: width .5s var(--ease); }
 .goal-ctrl { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
@@ -373,7 +375,99 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .shape-S { width: 10px; height: 10px; }
 .shape-M { width: 20px; height: 10px; }
 .shape-L { width: 18px; height: 18px; }
+.shape-T { width: 10px; height: 20px; }
 .size-dock button.on .shape { border-color: #FFFFFF; background: rgba(255, 255, 255, .25); }
 .size-dock button:hover:not(.on) .shape { background: var(--soft); }
 /* En S (1x1) el widget es pequeño: el dock se compacta */
 .w-S .size-dock { bottom: 6px; transform: translateX(-50%) scale(.85); }
+
+/* ===== Vista anual (estilo GitHub) y chips pequeños ===== */
+.year { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; width: 100%; }
+.ypx { aspect-ratio: 1; width: 100%; border: none; padding: 0; border-radius: 2px; background: #F1F3F4; }
+.ypx:disabled { opacity: .45; }
+button.ypx:not(:disabled) { cursor: pointer; }
+button.ypx:not(:disabled):hover { transform: scale(1.4); }
+.chips-sm .chip { padding: 2px 10px; font-size: 12px; }
+.chips-sm .chip-on { background: #E8F0FE; border-color: var(--blue); }
+.w-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.slide-in { animation: slide-in .3s var(--ease) both; }
+@keyframes slide-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+
+/* ===== Journal: ajustes del nuevo diseño ===== */
+.area-sub { font-size: 15px; margin-top: 4px; }
+.customize-pill { margin-left: auto; align-self: flex-start; }
+.area-head-floating .customize-pill { background: rgba(255, 255, 255, .7); }
+.pill-sm { padding: 3px 10px; font-size: 12px; }
+.pill-soft { background: #E8F0FE; border-color: var(--blue); }
+.pill-pink { background: #FBE4FF; border-color: #EFABFF; }
+.capsules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+.capsules li { display: flex; gap: 10px; align-items: flex-start; }
+.capsules li > div { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; font-size: 14px; }
+.capsule-text { font-size: 18px; line-height: 1.5; white-space: pre-wrap; padding: 8px 0 4px; }
+.px-row-sm .px { --cell: 14px; }
+.big small { font-size: 14px; color: var(--muted); }
+
+/* ===== El contenido escala con el widget (container queries) =====
+   Cada widget es un "contenedor": su tamaño de letra base depende de su propio alto/ancho
+   (cqh / cqw = % del alto / ancho del widget). Dentro, los tamaños van en em, así todo crece junto. */
+.widget { container-type: size; }
+/* Ojo: las unidades cq se miden respecto al contenedor PADRE, por eso el tamaño va en los hijos del widget */
+.widget > .w-body { font-size: clamp(13px, min(5.6cqh, 3.6cqw), 20px); }
+.widget > .w-title { font-size: clamp(12px, min(4.2cqh, 3cqw), 17px); }
+.w-S > .w-body { font-size: clamp(12px, 8.5cqmin, 16px); }
+.w-T > .w-body { font-size: clamp(12px, 6.2cqw, 16px); }
+.w-T > .w-title { font-size: clamp(12px, 5.6cqw, 15px); }
+.w-text { font-size: 1em; }
+.w-hint { font-size: .85em; }
+.goal-top { font-size: 1em; }
+.chip { font-size: .9em; }
+.chips-sm .chip { font-size: .78em; }
+.pill { font-size: .9em; }
+.pill-sm { font-size: .78em; }
+.w-form input, .w-form textarea { font-size: .92em; }
+.capsules li > div { font-size: .92em; }
+.word-S { font-size: 1.6em; } .word-M { font-size: 2em; } .word-L, .word-T { font-size: 2.6em; }
+/* Rejillas que llenan el hueco disponible: el tamaño de cada píxel = el que quepa a lo ancho Y a lo alto */
+.fill { flex: 1; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; }
+.year-wrap { display: flex; flex-direction: column; gap: 6px; }
+.fill .year { --c: min(calc((100cqw - 54px) / 27), calc((100cqh - 32px) / 14), 22px); grid-template-rows: repeat(7, var(--c)); grid-auto-columns: var(--c); width: auto; }
+.fill .year .ypx { width: var(--c); height: var(--c); aspect-ratio: auto; }
+.fill .month { --cell: min(calc((100cqw - 30px) / 7), calc((100cqh - 25px) / 6), 40px); }
+.fill .month .px { border-radius: 25%; }
+.w-grow { flex: 1; }
+.w-grow textarea { flex: 1; }
+
+/* ===== Palabra del día (Wordle) ===== */
+.wordle { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .5em; outline: none; }
+@container (min-width: 420px) {
+  .wordle-L { flex-direction: row; align-items: center; }
+  .wordle-L .fill { height: 100%; }
+  .wordle-L .keyboard, .wordle-L .wordle-end { flex: 1.1; }
+  .wordle-M { flex-direction: row; align-items: center; }
+  .wordle-M .fill { height: 100%; }
+  .wordle-M .wordle-end, .wordle-M > .w-hint { flex: 1; }
+}
+.wordle:focus-visible { box-shadow: 0 0 0 2px var(--blue); border-radius: 12px; }
+/* Tamaño de cada casilla: lo que quepa a lo ancho (5) y a lo alto (6) del hueco */
+.wordle-board { --t: min(calc((100cqw - 24px) / 5), calc((100cqh - 25px) / 6), 52px); display: grid; gap: 5px; }
+.wordle-row { display: grid; grid-template-columns: repeat(5, var(--t)); gap: 5px; }
+.tile { width: var(--t); height: var(--t); border: 2px solid var(--line); border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: calc(var(--t) * .5); text-transform: uppercase; background: #FFFFFF; }
+.tile.filled { border-color: #9AA0A6; animation: pop .15s var(--ease); }
+.tile.correct, .tile.present, .tile.absent { color: #FFFFFF; border-color: transparent; animation: flip .5s var(--ease) both; animation-delay: var(--d); }
+.tile.correct { background: #3DDC97; color: var(--text); }
+.tile.present { background: #F9DC5C; color: var(--text); }
+.tile.absent { background: #9AA0A6; }
+@keyframes flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.wordle-end { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; animation: rise .4s var(--ease) both; }
+.wordle-end b { font-size: 1.4em; }
+.keyboard { display: flex; flex-direction: column; gap: 4px; }
+.kb-row { display: flex; gap: 3px; justify-content: center; }
+.key { flex: 1; max-width: 34px; height: 2.3em; border: none; border-radius: 6px; background: var(--soft); font-weight: 600; font-size: .78em; cursor: pointer; padding: 0; transition: transform .1s, background .2s; }
+.key:active { transform: scale(.9); }
+.key-wide { max-width: 50px; flex: 1.5; }
+.key.correct { background: #3DDC97; } .key.present { background: #F9DC5C; } .key.absent { background: #9AA0A6; color: #FFFFFF; }
+.wordle-mini { display: grid; grid-template-columns: repeat(5, 9px); gap: 2px; }
+.wm { width: 9px; height: 9px; border-radius: 2px; background: var(--soft); }
+.wm.correct { background: #3DDC97; } .wm.present { background: #F9DC5C; } .wm.absent { background: #9AA0A6; }

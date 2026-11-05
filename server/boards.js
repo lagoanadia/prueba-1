@@ -11,7 +11,7 @@ import { AREA_IDS } from '../src/data/areas.js'
 
 const MAX_WIDGETS = 30
 const MAX_BYTES = 200 * 1024 // 200 KB por tablero: de sobra para texto
-const SIZES = ['S', 'M', 'L']
+const SIZES = ['S', 'T', 'M', 'L'] // T = vertical (1x2)
 
 const key = (userId, area) => `board:${userId}:${area}`
 
