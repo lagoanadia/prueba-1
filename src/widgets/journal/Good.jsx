@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { addDays, formatShort, todayISO } from '../../lib/dates.js'
+import History from '../../components/History.jsx'
+import { formatShort, todayISO } from '../../lib/dates.js'
 
-/** Una cosa buena del día. S: la de hoy · M: escribirla · L: + días anteriores. */
+/** Una cosa buena del día. S: la de hoy · M y L: escribirla. Los días anteriores, en el historial. */
 export default function Good({ size, data, update }) {
   const today = todayISO()
   const good = data.good ?? {}
@@ -13,18 +14,16 @@ export default function Good({ size, data, update }) {
 
   if (size === 'S') return <p className={good[today] ? 'w-text w-clamp' : 'w-hint w-center'}>{good[today] || '¿Algo bueno hoy?'}</p>
 
-  const previous = Array.from({ length: 30 }, (_, i) => addDays(today, -i - 1)).filter((d) => good[d]).slice(0, 3)
+  const past = Object.keys(good).filter((d) => d < today && good[d]).sort().reverse()
   return (
     <>
-      <form className="w-form" onSubmit={save}>
-        <input placeholder="¿Algo bueno hoy?" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} />
+      <History title="Cosas buenas" empty="Aún no hay días anteriores" items={past.map((d) => ({ id: d, date: formatShort(d), text: good[d] }))} />
+      <form className={`w-form ${size === 'L' ? 'w-form-col' : ''}`} onSubmit={save}>
+        {size === 'L'
+          ? <textarea placeholder="¿Algo bueno hoy?" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} rows={4} />
+          : <input placeholder="¿Algo bueno hoy?" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} />}
         <button className="pill pill-on" disabled={text.trim() === (good[today] ?? '')}>Guardar</button>
       </form>
-      {size === 'L' && (
-        <ul className="good-list">
-          {previous.map((d) => <li key={d}><span className="w-hint">{formatShort(d)}</span><span className="w-text">{good[d]}</span></li>)}
-        </ul>
-      )}
     </>
   )
 }

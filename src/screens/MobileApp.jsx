@@ -6,6 +6,8 @@ import TodayTasks from '../components/TodayTasks.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 import AreaScreen from './AreaScreen.jsx'
+import AvatarEditor from './AvatarEditor.jsx'
+import Avatar from '../components/Avatar.jsx'
 
 /**
  * Vista móvil:
@@ -13,7 +15,7 @@ import AreaScreen from './AreaScreen.jsx'
  *    El deslizamiento horizontal es CSS puro (scroll-snap), así se siente nativo.
  *  - Abajo: barras de color de las áreas. Al tocarlas (o deslizar hacia arriba) sube una hoja.
  */
-export default function MobileApp({ firstName, user, today, onToggle, onTalk, onSignOut }) {
+export default function MobileApp({ firstName, today, onToggle, onTalk, onSignOut, avatar, onSaveAvatar }) {
   const [page, setPage] = useState(0)
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
@@ -27,7 +29,7 @@ export default function MobileApp({ firstName, user, today, onToggle, onTalk, on
   return (
     <div className="m-app">
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
-        {user.picture ? <img src={user.picture} alt="" referrerPolicy="no-referrer" /> : <Icon name="perfil" size={22} />}
+        <Avatar avatar={avatar} size={40} />
       </button>
 
       <div className="m-pager" ref={pagerRef} onScroll={onScroll}>
@@ -82,7 +84,7 @@ export default function MobileApp({ firstName, user, today, onToggle, onTalk, on
               <button className="icon-btn" onClick={() => setSheet(null)} aria-label="Cerrar"><Icon name="close" /></button>
             </header>
             <div className="sheet-body">
-              {sheet === 'perfil' && <button className="btn-secondary" onClick={onSignOut}>Cerrar sesión</button>}
+              {sheet === 'perfil' && <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />}
               {area && <AreaScreen area={area} key={area.id} showTitle={false} />}
             </div>
           </>

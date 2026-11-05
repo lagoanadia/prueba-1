@@ -8,6 +8,8 @@ import useMediaQuery from './hooks/useMediaQuery.js'
 import useVoiceAssistant from './hooks/useVoiceAssistant.js'
 import { getCurrentUser, signOut } from './services/authService.js'
 import { todayISO } from './lib/dates.js'
+import { getProfile, saveAvatar } from './services/profileService.js'
+import { DEFAULT_AVATAR } from './data/avatar.js'
 
 /**
  *   user === undefined -> cargando · null -> Login · objeto -> app
@@ -16,6 +18,7 @@ import { todayISO } from './lib/dates.js'
 export default function App() {
   const [user, setUser] = useState(undefined)
   const [voiceOpen, setVoiceOpen] = useState(false)
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR)
   const isDesktop = useMediaQuery('(min-width: 900px)')
   const { entries, add, toggle, error } = useEntries(Boolean(user))
   const assistant = useVoiceAssistant(add)
@@ -23,6 +26,12 @@ export default function App() {
   useEffect(() => {
     getCurrentUser().then(setUser).catch(() => setUser(null))
   }, [])
+
+  useEffect(() => {
+    if (user) getProfile().then((p) => setAvatar(p.avatar)).catch(() => {})
+  }, [user])
+
+  const handleSaveAvatar = async (next) => setAvatar((await saveAvatar(next)).avatar)
 
   // Abrir el asistente empieza a escuchar directamente (menos toques).
   const openVoice = () => {
@@ -51,6 +60,8 @@ export default function App() {
     onToggle: toggle,
     onTalk: openVoice,
     onSignOut: handleSignOut,
+    avatar,
+    onSaveAvatar: handleSaveAvatar,
   }
 
   return (

@@ -5,16 +5,20 @@ import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
 import AreaScreen from './AreaScreen.jsx'
+import AvatarEditor from './AvatarEditor.jsx'
+import Avatar from '../components/Avatar.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 
 /** Vista portátil: menú lateral + contenido. */
-export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignOut }) {
+export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignOut, avatar, onSaveAvatar }) {
   const [view, setView] = useState('inicio')
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
     <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => setView(id)} aria-current={view === id ? 'page' : undefined}>
-      <span className="ic" style={{ background: id === 'inicio' && view === id ? '#FFFFFF' : color }}><Icon name={id} /></span>
+      <span className="ic" style={{ background: id === 'inicio' && view === id ? '#FFFFFF' : color }}>
+        {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
+      </span>
       {label}
     </button>
   )
@@ -51,7 +55,7 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
         {view === 'calendario' && <BlankPage title="Calendario" icon="calendario" />}
         {view === 'perfil' && (
           <BlankPage title="Perfil" icon="perfil">
-            <button className="btn-secondary" onClick={onSignOut}>Cerrar sesión</button>
+            <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />
           </BlankPage>
         )}
       </main>
