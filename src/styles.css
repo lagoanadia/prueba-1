@@ -474,3 +474,12 @@ button.ypx:not(:disabled):hover { transform: scale(1.4); }
 .wordle-mini { display: grid; grid-template-columns: repeat(5, 9px); gap: 2px; }
 .wm { width: 9px; height: 9px; border-radius: 2px; background: var(--soft); }
 .wm.correct { background: #3DDC97; } .wm.present { background: #F9DC5C; } .wm.absent { background: #9AA0A6; }
+
+/* Una cosa buena: vista de lectura (se toca para editar) */
+.good-read { flex: 1; min-height: 0; width: 100%; border: none; background: none; padding: 0; text-align: left; cursor: text; display: flex; align-items: center; border-radius: 12px; transition: background .2s; animation: body-in .3s var(--ease) both; }
+.good-read:hover { background: var(--soft); }
+.good-quote { font-size: 1.3em; font-weight: 500; line-height: 1.35; padding: 4px 8px; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.good-S .good-quote { font-size: 1em; -webkit-line-clamp: 4; }
+.good-M .good-quote { -webkit-line-clamp: 2; }
+.good-L .good-quote, .good-T .good-quote { font-size: 1.6em; -webkit-line-clamp: 6; }
+.good-quote::before { content: '“'; color: #3DDC97; font-weight: 700; margin-right: 2px; }
