@@ -12,20 +12,73 @@ const color = (key, id) => AVATAR_OPTIONS[key].find((o) => o.id === id)?.color
 const line = { fill: 'none', stroke: INK, strokeWidth: SW, strokeLinecap: 'round', strokeLinejoin: 'round' }
 const shape = (fill) => ({ fill, stroke: INK, strokeWidth: SW, strokeLinejoin: 'round' })
 
-/**
- * Contorno "de nube" para rizos y afro: puntos sobre una elipse unidos por curvas que salen hacia fuera.
- * a0/a1 en grados (0 = derecha, 90 = abajo).
+
+
+/*
+ * PELO RIZO: una sola forma con el contorno ondulado (no bolitas sueltas)
+ * y unos pocos trazos en "c" dentro para que se lea como rizo.
+ * El flequillo / parte de delante va SIN contorno, solo relleno.
  */
-function scallop(cx, cy, rx, ry, n, a0 = 0, a1 = 360, bulge = 1.16) {
-  const rad = (t) => ((a0 + ((a1 - a0) * t) / n) * Math.PI) / 180
-  const pt = (t, k = 1) => `${(cx + rx * k * Math.cos(rad(t))).toFixed(1)} ${(cy + ry * k * Math.sin(rad(t))).toFixed(1)}`
-  let d = `M${pt(0)}`
-  for (let i = 1; i <= n; i++) d += `Q${pt(i - 0.5, bulge)} ${pt(i)}`
-  return d
+function bumpy(points, amp, closed = true) {
+  let seed = 7 // pseudo-aleatorio estable: el mismo dibujo siempre
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280
+  let d = `M${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`
+  const n = closed ? points.length : points.length - 1
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = points[i]
+    const [x1, y1] = points[(i + 1) % points.length]
+    const mx = (x0 + x1) / 2
+    const my = (y0 + y1) / 2
+    let nx = -(y1 - y0)
+    let ny = x1 - x0
+    const len = Math.hypot(nx, ny) || 1
+    nx /= len; ny /= len
+    if ((mx - 100) * nx + (my - 95) * ny < 0) { nx = -nx; ny = -ny } // siempre hacia fuera
+    const a = amp * (0.75 + rnd() * 0.5)
+    d += ` Q${(mx + nx * a).toFixed(1)} ${(my + ny * a).toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`
+  }
+  return d + (closed ? 'Z' : '')
+}
+/** Silueta tipo gota: redonda arriba (top) y hasta `bottom` por abajo. */
+function silhouette(top, side, bottom, n) {
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * Math.PI * 2
+    const y = Math.sin(t) < 0 ? 92 + (92 - top) * Math.sin(t) : 92 + (bottom - 92) * Math.sin(t)
+    return [100 + side * Math.cos(t), y]
+  })
+}
+const CURLY_LEN = { short: [36, 50, 118, 20, 7], mid: [36, 54, 160, 24, 8], long: [36, 56, 196, 28, 8] }
+const curlyBack = (len) => { const [t, sd, b, n, amp] = CURLY_LEN[len]; return bumpy(silhouette(t, sd, b, n), amp) }
+function curlyFront(bangs) {
+  const outer = Array.from({ length: 11 }, (_, i) => { const t = Math.PI + (i / 10) * Math.PI; return [100 + 41 * Math.cos(t), 92 + 46 * Math.sin(t)] })
+  let d = bumpy(outer, 6, false)
+  d += bangs
+    ? ' ' + bumpy([[141, 92], [130, 82], [118, 84], [106, 80], [94, 84], [82, 80], [70, 86], [59, 92]], 5, false).replace(/^M[^Q]*/, '').trim()
+    : ' Q132 70 112 64 Q104 58 96 64 Q76 68 59 92'
+  return d + 'Z'
+}
+// Calculado una vez al cargar (no en cada render)
+const CURLY = {
+  back: { short: curlyBack('short'), mid: curlyBack('mid'), long: curlyBack('long'), afro: bumpy(silhouette(20, 64, 138, 30), 7) },
+  front: { plain: curlyFront(false), bangs: curlyFront(true) },
+}
+const curlyOf = (style) => ({
+  curly: ['short', false], curlyMid: ['mid', false], curlyLong: ['long', false],
+  curlyBangs: ['short', true], curlyMidBangs: ['mid', true], curlyLongBangs: ['long', true], afro: ['afro', false],
+}[style])
+function CurlMarks({ len, bangs }) {
+  const spots = [[72, 62], [100, 50], [126, 60], [56, 100], [146, 100]]
+  if (len === 'afro') spots.push([60, 40], [140, 40], [44, 72], [156, 72], [48, 118], [152, 118], [100, 30])
+  if (len === 'mid' || len === 'long') spots.push([58, 128], [143, 128])
+  if (len === 'long') spots.push([56, 150], [146, 150])
+  if (bangs) spots.push([88, 74], [112, 74])
+  return <g fill="none" stroke="#000" strokeOpacity=".28" strokeWidth="2" strokeLinecap="round">{spots.map(([x, y]) => <path key={x + '-' + y} d={`M${x - 4} ${y}a4 4 0 1 1 4 4`} />)}</g>
 }
 
 // ---------- Pelo (detrás de la cabeza) ----------
 function HairBack({ style, c }) {
+  const curly = curlyOf(style)
+  if (curly) return <path d={CURLY.back[curly[0]]} {...shape(c)} />
   switch (style) {
     case 'long': return <path d="M64 88C55 120 56 158 68 172C78 180 92 176 98 168C106 176 122 180 132 172C144 158 145 120 136 88C131 56 69 56 64 88Z" {...shape(c)} />
     case 'wavy': return <path d="M64 88C58 104 64 112 58 126C53 140 64 148 60 160C64 172 80 172 88 164L112 164C120 172 136 172 140 160C136 148 147 140 142 126C136 112 142 104 136 88C131 56 69 56 64 88Z" {...shape(c)} />
@@ -33,14 +86,17 @@ function HairBack({ style, c }) {
     case 'bangs': return <path d="M61 90C57 114 58 134 66 141C88 145 112 145 134 141C142 134 143 114 139 90C136 56 64 56 61 90Z" {...shape(c)} />
     case 'ponytail': return <path d="M127 70C152 64 164 92 157 120C154 134 147 143 139 146C145 126 145 104 134 88Z" {...shape(c)} />
     case 'bun': return <path d="M100 26C109 26 115 32 115 40C115 48 109 54 100 54C91 54 85 48 85 40C85 32 91 26 100 26Z" {...shape(c)} />
-    case 'curly': return <path d={scallop(100, 80, 44, 38, 14) + 'Z'} {...shape(c)} />
-    case 'afro': return <path d={scallop(100, 82, 56, 52, 20) + 'Z'} {...shape(c)} />
     default: return null
   }
 }
 
 // ---------- Pelo (delante: flequillo / parte de arriba) ----------
 function HairFront({ style, c }) {
+  const curly = curlyOf(style)
+  if (curly) {
+    const [len, bangs] = curly
+    return <g><path d={CURLY.front[bangs ? 'bangs' : 'plain']} fill={c} /><CurlMarks len={len} bangs={bangs} /></g>
+  }
   switch (style) {
     case 'short': return <path d="M63 92C60 66 75 50 99 50C123 50 139 63 137 86C130 79 123 74 114 72C102 78 85 77 73 70C69 77 65 84 63 92Z" {...shape(c)} />
     case 'long':
@@ -62,8 +118,6 @@ function HairFront({ style, c }) {
           <path d="M84 60C94 56 108 56 118 60" {...line} strokeWidth={1.8} opacity=".5" />
         </g>
       )
-    case 'curly': return <path d={scallop(100, 80, 38, 26, 8, 196, 344) + 'C120 72 80 72 63.5 72.8Z'} {...shape(c)} />
-    case 'afro': return <path d={scallop(100, 80, 38, 24, 8, 196, 344) + 'C120 72 80 72 63.5 73.4Z'} {...shape(c)} />
     case 'buzz':
       return (
         <g>
@@ -185,7 +239,7 @@ export default function Avatar({ avatar = DEFAULT_AVATAR, size = 160, round = tr
   return (
     <svg viewBox={viewBox} width={size} height={size} role="img" aria-label="Avatar" className="avatar"
       style={{ borderRadius: round ? '50%' : 22, background: color('bg', a.bg) }}>
-      <HairBack style={(hatOn || a.accessory === 'crown') && ['curly', 'afro', 'bun', 'spiky'].includes(a.hair) ? 'none' : a.hair} c={hair} />
+      <HairBack style={(hatOn || a.accessory === 'crown') && ['afro', 'bun', 'spiky'].includes(a.hair) ? 'none' : a.hair} c={hair} />
       <Outfit type={a.outfit} c={color('outfitColor', a.outfitColor)} />
       {/* Cuello: relleno sin contorno + solo las dos líneas laterales (sin raya por abajo) */}
       <path d="M90 124V153C95 156 105 156 110 153V124Z" fill={skin} />
@@ -202,7 +256,7 @@ export default function Avatar({ avatar = DEFAULT_AVATAR, size = 160, round = tr
       <Brows type={a.brows} />
       <path d="M95 97q-4 5 1 7" {...line} strokeWidth={2.2} />
       <Mouth type={a.mouth} />
-      {!(hatOn && ['curly', 'afro', 'short', 'buzz', 'bangs', 'spiky'].includes(a.hair)) && <HairFront style={a.hair} c={hair} />}
+      {!(hatOn && (['afro', 'short', 'buzz', 'bangs', 'spiky'].includes(a.hair) || curlyOf(a.hair))) && <HairFront style={a.hair} c={hair} />}
       <Glasses type={a.glasses} />
       <Accessory type={a.accessory} />
     </svg>

@@ -9,7 +9,10 @@ export const AVATAR_OPTIONS = {
   mouth: [{ id: 'smile', label: 'Sonrisa' }, { id: 'grin', label: 'Risa' }, { id: 'laugh', label: 'Carcajada' }, { id: 'tongue', label: 'Lengua' }, { id: 'smirk', label: 'Pícara' }, { id: 'flat', label: 'Seria' }, { id: 'o', label: '¡Oh!' }, { id: 'frown', label: 'Puchero' }],
   hair: [
     { id: 'short', label: 'Corto' }, { id: 'wavy', label: 'Ondas' }, { id: 'long', label: 'Largo' }, { id: 'bob', label: 'Bob' }, { id: 'bangs', label: 'Flequillo' }, { id: 'spiky', label: 'Pincho' },
-    { id: 'ponytail', label: 'Coleta' }, { id: 'bun', label: 'Moño' }, { id: 'curly', label: 'Rizos' }, { id: 'afro', label: 'Afro' },
+    { id: 'ponytail', label: 'Coleta' }, { id: 'bun', label: 'Moño' },
+    { id: 'curly', label: 'Rizo corto' }, { id: 'curlyMid', label: 'Rizo media melena' }, { id: 'curlyLong', label: 'Rizo largo' },
+    { id: 'curlyBangs', label: 'Rizo corto con flequillo' }, { id: 'curlyMidBangs', label: 'Rizo media melena con flequillo' }, { id: 'curlyLongBangs', label: 'Rizo largo con flequillo' },
+    { id: 'afro', label: 'Afro' },
     { id: 'buzz', label: 'Rapado' }, { id: 'bald', label: 'Calva' },
   ],
   hairColor: ['#202124', '#5A3825', '#9C6B43', '#F2D27A', '#E8735A', '#EFABFF', '#3185FC', '#E0E0E0'].map((color, i) => ({ id: `h${i + 1}`, color })),
