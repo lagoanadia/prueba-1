@@ -60,3 +60,13 @@ export function yearWeeks(today = todayISO()) {
   while (cells.length % 7) cells.push(null)
   return cells
 }
+
+/** Lunes de la semana de una fecha. */
+export function weekStart(iso = todayISO()) {
+  const d = new Date(`${iso}T12:00:00`)
+  return addDays(iso, -((d.getDay() + 6) % 7))
+}
+/** Los 7 días (lunes a domingo) de la semana de una fecha. */
+export const weekDays = (iso = todayISO()) => Array.from({ length: 7 }, (_, i) => addDays(weekStart(iso), i))
+/** "2026-11-05" -> "jue" */
+export const dayShort = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '')

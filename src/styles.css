@@ -483,3 +483,55 @@ button.ypx:not(:disabled):hover { transform: scale(1.4); }
 .good-M .good-quote { -webkit-line-clamp: 2; }
 .good-L .good-quote, .good-T .good-quote { font-size: 1.6em; -webkit-line-clamp: 6; }
 .good-quote::before { content: '“'; color: #3DDC97; font-weight: 700; margin-right: 2px; }
+
+/* ===== Salud ===== */
+.sport-big { font-size: 1.5em; font-weight: 700; padding: 4px 14px; border-radius: 14px; background: color-mix(in srgb, var(--c) 35%, #FFFFFF); }
+.week-cols { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: stretch; }
+.week-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; border-radius: 12px; }
+.week-col.is-today { background: var(--soft); }
+.week-col.is-today .w-hint { color: var(--text); font-weight: 700; }
+.week-chip { flex: 1; width: 100%; min-height: 1.8em; display: grid; place-items: center; border-radius: 10px; font-size: .82em; font-weight: 600; background: color-mix(in srgb, var(--c) 40%, #FFFFFF); white-space: nowrap; overflow: hidden; }
+.week-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; flex: 1; min-height: 0; overflow: auto; }
+.week-list li { display: flex; align-items: center; gap: 8px; padding: 2px 6px; border-radius: 10px; }
+.week-list li.is-today { background: var(--soft); font-weight: 700; }
+.week-day { width: 3.6em; flex-shrink: 0; font-size: .85em; color: var(--muted); text-transform: capitalize; }
+.week-list li.is-today .week-day { color: var(--text); }
+.week-list .week-chip { flex: 1; min-height: 1.6em; place-items: center start; padding: 0 10px; }
+.week-list select, .w-form select { flex: 1; font: inherit; font-size: .9em; border: 2px solid var(--line); border-radius: 10px; padding: 3px 8px; background: color-mix(in srgb, var(--c, #FFFFFF) 30%, #FFFFFF); cursor: pointer; }
+.sport-lib { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip-lib { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; font-size: .78em; background: color-mix(in srgb, var(--c) 30%, #FFFFFF); cursor: default; }
+.chip-lib button { border: none; background: none; cursor: pointer; font-size: 1.1em; line-height: 1; padding: 0 4px; color: var(--muted); }
+.sport-lib input { width: 6.5em; font: inherit; font-size: .78em; border: 2px dashed var(--ring); border-radius: 14px; padding: 3px 10px; outline: none; }
+.workouts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; overflow: auto; }
+.workouts li { display: flex; align-items: center; gap: 8px; font-size: .92em; animation: rise .3s var(--ease) both; }
+.workout-min { margin-left: auto; white-space: nowrap; }
+.ring-green { background: conic-gradient(#3DDC97 calc(var(--p) * 1%), var(--soft) 0); }
+.goal-step { display: flex; gap: 4px; }
+/* Barras (evolución y sueño): la línea discontinua marca el objetivo */
+.bars { position: relative; flex: 1; min-height: 40px; display: flex; align-items: flex-end; gap: 6px; padding-top: 6px; }
+.bars-goal { position: absolute; left: 0; right: 0; bottom: var(--goal); border-top: 2px dashed var(--ring); }
+.bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.bar-fill { width: 100%; min-height: 3px; border-radius: 6px 6px 3px 3px; background: color-mix(in srgb, #3185FC 45%, #FFFFFF); transform-origin: bottom; animation: grow .6s var(--ease) both; animation-delay: var(--d); }
+.bar-col.is-now .bar-fill { background: #3185FC; }
+.bars-sleep .bar-fill { background: color-mix(in srgb, #8E7CFF 45%, #FFFFFF); }
+.bars-sleep .bar-col.is-now .bar-fill { background: #8E7CFF; }
+@keyframes grow { from { transform: scaleY(0); } }
+.sleep-step { display: flex; align-items: center; gap: 10px; justify-content: center; }
+/* Agua */
+.glasses { display: flex; gap: 4px; flex-wrap: wrap; }
+.glass { --g: #FFFFFF; width: 1.7em; height: 2.1em; padding: 0; border: none; background: none; cursor: pointer; transition: transform .15s var(--ease); }
+.glass svg { width: 100%; height: 100%; }
+.glass.full { --g: #9CC5FF; }
+.glass:active { transform: scale(.85); }
+.water-s { position: relative; flex: 1; border: none; border-radius: 16px; background: var(--soft); overflow: hidden; cursor: pointer; display: grid; place-items: center; }
+.water-fill { position: absolute; left: 0; right: 0; bottom: 0; background: #9CC5FF; transition: height .5s cubic-bezier(.2, 1.3, .35, 1); }
+.water-s b { position: relative; font-size: 1.8em; }
+.water-s small { font-size: .5em; color: var(--muted); }
+.mini-bars { flex: 1; min-height: 24px; display: flex; align-items: flex-end; gap: 4px; }
+.mini-bars span { flex: 1; min-height: 3px; border-radius: 4px; background: #9CC5FF; }
+
+.lib-toggle { align-self: flex-start; }
+/* Filas del plan compactas para que quepan los 7 días */
+.week-list { gap: 2px; justify-content: space-between; }
+.week-list select { padding: 1px 8px; font-size: .85em; }
+.w-T .week-list .week-chip, .w-T .week-list select { font-size: .8em; }
