@@ -1407,27 +1407,6 @@ button.subject-card:hover { transform: translateY(-3px); }
 label.pv-stat { cursor: pointer; }
 .pv-stat input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .pv-stat.is-late { background: #FCE4E4; color: #B3261E; }
-.pv-timeline-block { gap: 14px; }
-.pv-timeline { position: relative; height: 92px; margin: 0 40px 0 56px; }
-.pv-line { position: absolute; left: 0; right: 0; top: 46px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
-.pv-line span { display: block; height: 100%; border-radius: 4px; transition: width .6s var(--ease); }
-.pv-today { position: absolute; top: 36px; width: 3px; height: 28px; margin-left: -1px; border-radius: 2px; background: var(--text); }
-.pv-today::after { content: 'hoy'; position: absolute; top: 30px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; }
-.pv-mile { position: absolute; top: 0; transform: translateX(-50%); border: none; background: none; padding: 0; font: inherit; cursor: pointer; display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; height: 58px; justify-content: flex-start; }
-.pv-dot { width: 20px; height: 20px; border-radius: 6px; transform: rotate(45deg); background: #FFFFFF; border: 3px solid var(--c); transition: background .2s, transform .2s var(--ease); }
-.pv-mile:hover .pv-dot { transform: rotate(45deg) scale(1.15); }
-.pv-mile.done .pv-dot { background: var(--c); }
-.pv-mile.late .pv-dot { border-color: #E84855; }
-.pv-mile-label { font-size: 12px; font-weight: 600; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-.pv-edge { position: absolute; top: 66px; font-size: 12px; font-weight: 600; }
-.pv-edge-start { left: 0; } .pv-edge-end { right: 0; }
-.pv-miles { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 4px 20px; }
-.pv-miles li { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-.pv-miles li:hover .wk-x { opacity: 1; }
-.pv-miles label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
-.pv-miles input { width: 18px; height: 18px; accent-color: var(--c); }
-.pv-late { color: #B3261E !important; font-weight: 600; }
-.pv-mileform { padding-left: 0; }
 .wk-block.wk-board.span-2 .wk-board { padding-top: 0; }
 .pv-time, .pv-meetings { gap: 12px; }
 .pv-timer { align-self: center; width: 150px; height: 150px; border-radius: 50%; border: 6px solid color-mix(in srgb, var(--c) 35%, #FFFFFF); background: #FFFFFF; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform .15s var(--ease), border-color .3s; }
@@ -1444,18 +1423,12 @@ label.pv-stat { cursor: pointer; }
 .pv-meetings li { border-left: 4px solid; padding: 4px 10px; display: flex; flex-direction: column; font-size: 15px; }
 .pv-meetings li span { font-size: 13px; }
 .pv-meetings li.pv-empty { border: none; padding: 0; font-size: 14px; }
-.pv-time > .wk-badge, .pv-meetings > .wk-badge, .pv-timeline-block > .wk-badge { position: absolute; top: 18px; left: 20px; }
 .pv-time { padding-top: 60px; }
-.pv-timeline-block { padding-top: 60px; }
 @media (max-width: 899px) {
   .pv-name { font-size: 24px; }
-  .pv-timeline { margin: 0 24px 0 30px; }
   .pv-stat { min-width: 0; flex: 1 1 40%; }
   .wk-grid > * { min-width: 0; }
   .pv-stats { width: 100%; }
-  .pv-miles { grid-template-columns: 1fr; }
-  .pv-mile-label { display: none; }
-  .pv-timeline { height: 80px; }
 }
 /* Tablero: arrastrar y ficha de tarea */
 .wk-task { touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -1490,3 +1463,56 @@ label.pv-stat { cursor: pointer; }
 .te-subs label { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
 .te-subs input { width: 18px; height: 18px; accent-color: var(--c); }
 @media (max-width: 899px) { .wk-filter { padding-left: 0; padding-top: 44px; } .wk-filter + .wk-taskform { padding-top: 0; } }
+
+/* Hitos (paradas) */
+.pv-ms-block { padding: 20px; }
+.ms { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.ms-next { border-radius: 22px; padding: 20px 22px; display: flex; flex-direction: column; gap: 6px; }
+.ms-kicker { font-size: 13px; font-weight: 600; color: var(--muted); }
+.ms-next-title { font-size: 22px; line-height: 1.2; }
+.ms-count { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.ms-count b { font-size: 56px; line-height: 1; letter-spacing: -2px; }
+.ms-count span { font-size: 16px; font-weight: 600; }
+.ms-count.is-late { color: #B3261E; }
+.ms-date { font-size: 15px; color: var(--muted); text-transform: capitalize; }
+.ms-progress { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+.ms-pips { display: flex; gap: 4px; }
+.ms-pips span { width: 18px; height: 6px; border-radius: 3px; background: #FFFFFF; }
+.ms-pips span.on { background: var(--c); }
+.ms-route { min-width: 0; }
+.ms-list { list-style: none; margin: 0; padding: 0; position: relative; }
+.ms-list::before { content: ''; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 3px; border-radius: 2px; background: var(--soft); }
+.ms-stop, .ms-today { position: relative; display: flex; align-items: center; gap: 14px; padding: 8px 0; }
+.ms-node { position: relative; z-index: 1; width: 29px; height: 29px; flex-shrink: 0; border-radius: 50%; border: 3px solid var(--c); background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: transform .2s var(--ease), background .2s; }
+.ms-node:hover { transform: scale(1.1); }
+.ms-stop.is-done .ms-node { background: var(--c); }
+.ms-stop.is-late .ms-node { border-color: #E84855; }
+.ms-stop.is-next .ms-node { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 25%, transparent); }
+.ms-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ms-text b { font-size: 16px; }
+.ms-text span { font-size: 13px; color: var(--muted); text-transform: none; }
+.ms-stop.is-done .ms-text b { color: var(--muted); text-decoration: line-through; }
+.ms-stop.is-late .ms-text span { color: #B3261E; font-weight: 600; }
+.ms-stop:hover .wk-x { opacity: 1; }
+.ms-today { padding: 4px 0; font-size: 12px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.ms-today .ms-node { width: 29px; height: 12px; border: none; background: transparent; cursor: default; }
+.ms-today .ms-node::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 4px #FFFFFF; }
+.ms-today .ms-node:hover { transform: none; }
+.ms-add { display: flex; align-items: center; gap: 10px; padding-top: 8px; flex-wrap: wrap; }
+.ms-node-add { border-style: dashed; border-color: var(--ring); color: var(--muted); cursor: default; }
+.ms-add input { font: inherit; font-size: 15px; border: none; border-bottom: 2px solid var(--line); outline: none; padding: 4px 2px; background: none; transition: border-color .2s; }
+.ms-add input:focus { border-color: var(--c); }
+.ms-add input:not([type=date]) { flex: 1; min-width: 120px; }
+.ms-add input[type=date] { font-size: 13px; color: var(--muted); }
+/* Tablero: palabras en vez de iconos */
+.wk-col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 6px 4px; font-size: 14px; font-weight: 700; }
+.wk-col-head b { min-width: 24px; height: 22px; padding: 0 7px; border-radius: 11px; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.wk-task { border-left: none; border-radius: 14px; padding: 12px 14px; gap: 8px; }
+.wk-task .wk-tag { display: inline-flex; align-items: center; gap: 5px; background: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.wk-task .wk-tag .dot { width: 8px; height: 8px; }
+.wk-prio-word { border-radius: 8px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+.wk-task-meta { gap: 8px; }
+.wk-due { font-size: 12px; }
+.wk-subs { font-size: 12px; color: var(--muted); font-weight: 600; }
+@media (max-width: 899px) { .ms { grid-template-columns: 1fr; gap: 16px; } .ms-count b { font-size: 44px; } }
+.pv-time > .wk-badge, .pv-meetings > .wk-badge { position: absolute; top: 18px; left: 20px; }

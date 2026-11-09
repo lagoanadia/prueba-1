@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
-import { addDays, daysUntil, formatShort, lastDays, todayISO } from '../../lib/dates.js'
+import { daysUntil, formatShort, lastDays, todayISO } from '../../lib/dates.js'
 import { progressOf } from '../../widgets/trabajo/projects.js'
 import QuickNote from '../study/QuickNote.jsx'
 import Tools from '../study/Tools.jsx'
 import BoardBlock from './BoardBlock.jsx'
+import Milestones from './Milestones.jsx'
 import { PROJECT_COLORS, colorOf, soft } from './shared.js'
 
 const fmtTime = (min) => (min >= 60 ? `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}` : `${min} min`)
@@ -18,7 +19,6 @@ export default function ProjectView({ data, update, projectId, back }) {
   const today = todayISO()
   const project = (data.projects ?? []).find((p) => p.id === projectId)
   const [tick, setTick] = useState(0)
-  const [milestone, setMilestone] = useState({ title: '', date: '' })
   useEffect(() => { if (!project?.timerStart) return; const id = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(id) }, [project?.timerStart])
   if (!project) return null
 
@@ -29,7 +29,6 @@ export default function ProjectView({ data, update, projectId, back }) {
   const time = project.time ?? {}
   const totalMin = Object.values(time).reduce((a, b) => a + b, 0)
   const meetings = (data.meetings ?? []).filter((m) => m.projectId === projectId && m.date >= today).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
-  const milestones = [...(project.milestones ?? [])].sort((a, b) => a.date.localeCompare(b.date))
 
   // Cronómetro: se guarda la hora de inicio, así sigue contando aunque cierres la app
   const running = project.timerStart ? Math.floor((Date.now() - project.timerStart) / 1000) : 0
@@ -41,20 +40,6 @@ export default function ProjectView({ data, update, projectId, back }) {
   })
   const week = lastDays(7, today)
   const maxDay = Math.max(30, ...week.map((d) => time[d] ?? 0))
-
-  // Línea de tiempo: del inicio del proyecto a su fecha límite
-  const start = project.createdAt ?? [...project.tasks.map((t) => t.due).filter(Boolean), today].sort()[0]
-  const end = project.deadline ?? addDays(today, 30)
-  const span = Math.max(1, daysUntil(end, start))
-  const at = (iso) => `${Math.min(100, Math.max(0, (daysUntil(iso, start) / span) * 100))}%`
-  const addMilestone = (e) => {
-    e.preventDefault()
-    if (!milestone.title.trim() || !milestone.date) return
-    change((p) => ({ ...p, milestones: [...(p.milestones ?? []), { id: crypto.randomUUID(), title: milestone.title.trim(), date: milestone.date, done: false }] }))
-    setMilestone({ title: '', date: '' })
-  }
-  const toggleMilestone = (id) => change((p) => ({ ...p, milestones: p.milestones.map((m) => (m.id === id ? { ...m, done: !m.done } : m)) }))
-  const removeMilestone = (id) => change((p) => ({ ...p, milestones: p.milestones.filter((m) => m.id !== id) }))
 
   // Enlaces del proyecto: reutiliza la cuadrícula de herramientas sobre project.links
   const linksData = { tools: project.links ?? [] }
@@ -86,35 +71,8 @@ export default function ProjectView({ data, update, projectId, back }) {
           </div>
         </section>
 
-        <section className="card plan-block wk-block span-3 pv-timeline-block" aria-label="Hitos">
-          <span className="wk-badge" title="Hitos"><Icon name="star" size={18} /></span>
-          <div className="pv-timeline">
-            <span className="pv-line"><span style={{ width: at(today), background: c }} /></span>
-            <span className="pv-today" style={{ left: at(today) }} title="Hoy" />
-            {milestones.map((m) => (
-              <button key={m.id} className={`pv-mile ${m.done ? 'done' : ''} ${m.date < today && !m.done ? 'late' : ''}`} style={{ left: at(m.date) }} onClick={() => toggleMilestone(m.id)} title={`${m.title} · ${formatShort(m.date)}`}>
-                <span className="pv-dot" /><span className="pv-mile-label">{m.title}</span>
-              </button>
-            ))}
-            <span className="pv-edge pv-edge-start muted">{formatShort(start).replace(/^\S+ /, '')}</span>
-            <span className="pv-edge pv-edge-end muted">{project.deadline ? formatShort(end).replace(/^\S+ /, '') : '—'}</span>
-          </div>
-          <ul className="pv-miles">
-            {milestones.map((m) => (
-              <li key={m.id}>
-                <label><input type="checkbox" checked={m.done} onChange={() => toggleMilestone(m.id)} /><span className={m.done ? 'is-clear' : ''}>{m.title}</span></label>
-                <span className={`muted ${m.date < today && !m.done ? 'pv-late' : ''}`}>{formatShort(m.date)}</span>
-                <button className="wk-x" onClick={() => removeMilestone(m.id)} aria-label={`Quitar ${m.title}`}><Icon name="close" size={12} /></button>
-              </li>
-            ))}
-          </ul>
-          <form className="wk-taskform pv-mileform" onSubmit={addMilestone}>
-            <input placeholder="Nuevo hito (entrega, demo…)" value={milestone.title} onChange={(e) => setMilestone({ ...milestone, title: e.target.value })} maxLength={50} aria-label="Nuevo hito" />
-            <label className={`icon-btn wk-date ${milestone.date ? 'on' : ''}`} title={milestone.date ? formatShort(milestone.date) : 'Fecha'}>
-              <Icon name="calendario" size={18} /><input type="date" value={milestone.date} onChange={(e) => setMilestone({ ...milestone, date: e.target.value })} aria-label="Fecha del hito" />
-            </label>
-            <button className="icon-btn on" disabled={!milestone.title.trim() || !milestone.date} aria-label="Añadir hito"><Icon name="plus" size={20} /></button>
-          </form>
+        <section className="card plan-block wk-block span-3 pv-ms-block" aria-label="Hitos">
+          <Milestones project={project} change={change} color={c} />
         </section>
 
         <section className="card plan-block wk-block wk-board span-2" aria-label="Tareas">

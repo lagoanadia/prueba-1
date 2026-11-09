@@ -7,7 +7,7 @@ import TaskEditor from './TaskEditor.jsx'
 import { colorOf, selectedOf, soft } from './shared.js'
 
 const PRIORITY = { alta: '#E84855', media: '#F9DC5C', baja: '#3DDC97' }
-const STATE_ICON = { todo: 'list', doing: 'clock', done: 'check' }
+const PRIORITY_WORD = { alta: 'Alta', media: 'Media', baja: 'Baja' }
 const LONG_PRESS = 260 // ms: en táctil hay que mantener pulsado para arrastrar (si no, la página se desplaza)
 
 /**
@@ -85,18 +85,19 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
 
   if (!projects.length) return <p className="muted wk-empty"><Icon name="trabajo" size={20} /> Crea un proyecto para empezar</p>
 
-  const card = (t, ghost = false) => {
+  const card = (t) => {
     const c = colorOf(data, t.projectId)
     const subs = t.subtasks ?? []
+    const late = t.status !== 'done' && t.due && t.due < today
     return (
       <>
+        {mixed && <span className="wk-tag"><span className="dot" style={{ background: c }} />{t.projectName}</span>}
         <span className="wk-task-title">{t.title}</span>
         <span className="wk-task-meta">
-          <span className="wk-prio" style={{ background: PRIORITY[t.priority] }} title={`Prioridad ${t.priority}`} />
-          {mixed && <span className="wk-tag" style={{ background: soft(c, 30) }}>{t.projectName}</span>}
-          {t.due && <span className={`wk-due ${t.status !== 'done' && t.due < today ? 'is-late' : ''}`}>{formatShort(t.due).replace(/^\S+ /, '')}</span>}
-          {subs.length > 0 && <span className="wk-subs"><Icon name="check" size={12} />{subs.filter((s) => s.done).length}/{subs.length}</span>}
-          {t.notes && !ghost && <Icon name="note" size={13} />}
+          <span className="wk-prio-word" style={{ background: soft(PRIORITY[t.priority], 35) }}>{PRIORITY_WORD[t.priority]}</span>
+          {t.due && <span className={`wk-due ${late ? 'is-late' : ''}`}>{late ? 'Vencida · ' : ''}{formatShort(t.due).replace(/^\S+ /, '')}</span>}
+          {subs.length > 0 && <span className="wk-subs">{subs.filter((s) => s.done).length}/{subs.length} subtareas</span>}
+          {t.notes && <span className="wk-subs">Notas</span>}
         </span>
       </>
     )
@@ -135,7 +136,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
           const list = tasks.filter((t) => t.status === s.id).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
           return (
             <section key={s.id} data-state={s.id} className={`wk-col wk-col-${s.id} ${drag && drag.over === s.id ? 'is-over' : ''}`} aria-label={s.label}>
-              <span className="wk-col-head" title={s.label}><Icon name={STATE_ICON[s.id]} size={18} /><b>{list.length}</b></span>
+              <span className="wk-col-head">{s.id === 'done' ? 'Hechas' : s.label}<b>{list.length}</b></span>
               {list.map((t) => (
                 <div key={t.id} className={`wk-task ${drag?.task.id === t.id ? 'is-dragging' : ''}`} style={{ '--c': colorOf(data, t.projectId) }} role="button" tabIndex={0}
                   onPointerDown={(e) => onPointerDown(e, t)} onKeyDown={(e) => e.key === 'Enter' && setEditing({ projectId: t.projectId, taskId: t.id })}
@@ -149,7 +150,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
       </div>
 
       {drag && createPortal(
-        <div className="wk-task wk-ghost" style={{ '--c': colorOf(data, drag.task.projectId), width: drag.w, left: drag.x - drag.dx, top: drag.y - drag.dy }}>{card(drag.task, true)}</div>,
+        <div className="wk-task wk-ghost" style={{ '--c': colorOf(data, drag.task.projectId), width: drag.w, left: drag.x - drag.dx, top: drag.y - drag.dy }}>{card(drag.task)}</div>,
         document.body,
       )}
       {editing && <TaskEditor data={data} update={update} projectId={editing.projectId} taskId={editing.taskId} onClose={() => setEditing(null)} />}
