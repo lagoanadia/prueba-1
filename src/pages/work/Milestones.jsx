@@ -1,85 +1,89 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
-import { daysUntil, formatShort, todayISO } from '../../lib/dates.js'
-import { soft } from './shared.js'
+import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 
-const relative = (n) => (n === 0 ? 'hoy' : n === 1 ? 'mañana' : n === -1 ? 'ayer' : n > 0 ? `en ${n} días` : `hace ${-n} días`)
+const relative = (n) => (n === 0 ? 'hoy' : n === 1 ? 'mañana' : n > 0 ? `en ${n} días` : `hace ${-n} días`)
+const short = (iso) => formatShort(iso).replace(/^\S+ /, '')
+
+/** Ventana para crear o cambiar un hito. */
+function MilestonePopup({ initial, onSave, onDelete, onClose }) {
+  const [m, setM] = useState(initial)
+  useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
+  const ok = m.title.trim() && m.date
+  return createPortal(
+    <div className="popup" role="dialog" aria-modal="true" aria-label="Hito">
+      <div className="popup-backdrop" onClick={onClose} />
+      <form className="popup-panel ms-pop" onSubmit={(e) => { e.preventDefault(); if (ok) onSave({ ...m, title: m.title.trim() }) }}>
+        <input className="te-title" autoFocus placeholder="Demo, entrega, lanzamiento…" value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} maxLength={50} aria-label="Nombre del hito" />
+        <label className="te-date"><Icon name="calendario" size={18} /><input type="date" value={m.date} onChange={(e) => setM({ ...m, date: e.target.value })} aria-label="Fecha del hito" /></label>
+        {onDelete && (
+          <label className="ms-done"><input type="checkbox" checked={m.done} onChange={() => setM({ ...m, done: !m.done })} />Cumplido</label>
+        )}
+        <div className="ms-pop-actions">
+          {onDelete && <button type="button" className="icon-btn" onClick={onDelete} aria-label="Borrar hito"><Icon name="trash" size={18} /></button>}
+          <button type="button" className="pill" onClick={onClose}>Cancelar</button>
+          <button className="pill pill-on" disabled={!ok}>{onDelete ? 'Guardar' : 'Añadir'}</button>
+        </div>
+      </form>
+    </div>,
+    document.body,
+  )
+}
 
 /**
- * Hitos del proyecto: a la izquierda el próximo con su cuenta atrás; a la derecha el recorrido
- * como paradas de una línea, con «Hoy» marcado entre lo pasado y lo que viene.
+ * Hitos en una línea de tiempo: del inicio del proyecto a su fecha límite, con «hoy» marcado.
+ * Tocar un hito lo abre para cambiarlo; el + añade uno nuevo.
  */
 export default function Milestones({ project, change, color }) {
   const today = todayISO()
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
+  const [editing, setEditing] = useState(null) // hito abierto (o uno nuevo)
   const list = [...(project.milestones ?? [])].sort((a, b) => a.date.localeCompare(b.date))
   const next = list.find((m) => !m.done)
-  const doneCount = list.filter((m) => m.done).length
-  const todayAt = list.findIndex((m) => m.date >= today) // dónde va la marca de hoy
 
-  const toggle = (id) => change((p) => ({ ...p, milestones: p.milestones.map((m) => (m.id === id ? { ...m, done: !m.done } : m)) }))
-  const remove = (id) => change((p) => ({ ...p, milestones: p.milestones.filter((m) => m.id !== id) }))
-  const add = (e) => {
-    e.preventDefault()
-    if (!title.trim() || !date) return
-    change((p) => ({ ...p, milestones: [...(p.milestones ?? []), { id: crypto.randomUUID(), title: title.trim(), date, done: false }] }))
-    setTitle('')
-    setDate('')
+  const start = project.createdAt ?? [...project.tasks.map((t) => t.due).filter(Boolean), ...list.map((m) => m.date), today].sort()[0]
+  const end = [project.deadline ?? addDays(today, 30), ...list.map((m) => m.date)].sort().at(-1)
+  const span = Math.max(1, daysUntil(end, start))
+  const at = (iso) => `${Math.min(100, Math.max(0, (daysUntil(iso, start) / span) * 100))}%`
+
+  const save = (m) => {
+    change((p) => {
+      const ms = p.milestones ?? []
+      return { ...p, milestones: ms.some((x) => x.id === m.id) ? ms.map((x) => (x.id === m.id ? m : x)) : [...ms, m] }
+    })
+    setEditing(null)
   }
-
-  const todayRow = <li key="hoy" className="ms-today"><span className="ms-node" /><span>Hoy · {formatShort(today)}</span></li>
+  const remove = (id) => { change((p) => ({ ...p, milestones: p.milestones.filter((m) => m.id !== id) })); setEditing(null) }
 
   return (
-    <div className="ms" style={{ '--c': color }}>
-      <div className="ms-next" style={{ background: soft(color, 22) }}>
-        <span className="ms-kicker">{next ? 'Próximo hito' : list.length ? 'Todo cumplido' : 'Sin hitos'}</span>
-        {next ? (
-          <>
-            <b className="ms-next-title">{next.title}</b>
-            <span className={`ms-count ${daysUntil(next.date) < 0 ? 'is-late' : ''}`}>
-              <b>{Math.abs(daysUntil(next.date))}</b>
-              <span>{daysUntil(next.date) < 0 ? 'días de retraso' : daysUntil(next.date) === 1 ? 'día' : 'días'}</span>
-            </span>
-            <span className="ms-date">{formatShort(next.date)}</span>
-          </>
-        ) : <span className="ms-date">{list.length ? '¡Bien hecho!' : 'Añade entregas, demos, lanzamientos…'}</span>}
-        {list.length > 0 && (
-          <span className="ms-progress">
-            <span className="ms-pips">{list.map((m) => <span key={m.id} className={m.done ? 'on' : ''} />)}</span>
-            {doneCount} de {list.length}
-          </span>
-        )}
+    <div className="ms-line" style={{ '--c': color }}>
+      <div className="ms-head">
+        <span className="wk-badge" title="Hitos"><Icon name="star" size={18} /></span>
+        <span className="ms-summary">
+          {next ? <>Próximo: <b>{next.title}</b> · <span className={daysUntil(next.date) < 0 ? 'is-late' : ''}>{daysUntil(next.date) < 0 ? `${-daysUntil(next.date)} días tarde` : relative(daysUntil(next.date))}</span></>
+            : list.length ? <b>Todos los hitos cumplidos</b> : <span className="muted">Sin hitos todavía</span>}
+        </span>
+        <button className="icon-btn ms-plus" onClick={() => setEditing({ id: crypto.randomUUID(), title: '', date: '', done: false, isNew: true })} aria-label="Añadir hito" title="Añadir hito"><Icon name="plus" size={20} /></button>
       </div>
 
-      <div className="ms-route">
-        <ol className="ms-list">
-          {list.map((m, i) => {
-            const n = daysUntil(m.date)
-            const late = !m.done && n < 0
-            return [
-              i === todayAt && todayRow,
-              <li key={m.id} className={`ms-stop ${m.done ? 'is-done' : ''} ${late ? 'is-late' : ''} ${m === next ? 'is-next' : ''}`}>
-                <button className="ms-node" onClick={() => toggle(m.id)} aria-label={m.done ? `Desmarcar ${m.title}` : `Marcar ${m.title} como cumplido`}>
-                  {m.done && <Icon name="check" size={14} color="#FFFFFF" />}
-                </button>
-                <span className="ms-text">
-                  <b>{m.title}</b>
-                  <span>{formatShort(m.date)} · {m.done ? 'cumplido' : late ? `${-n} días tarde` : relative(n)}</span>
-                </span>
-                <button className="wk-x" onClick={() => remove(m.id)} aria-label={`Quitar ${m.title}`}><Icon name="close" size={12} /></button>
-              </li>,
-            ]
-          })}
-          {todayAt === -1 && list.length > 0 && todayRow}
-        </ol>
-        <form className="ms-add" onSubmit={add}>
-          <span className="ms-node ms-node-add"><Icon name="plus" size={14} /></span>
-          <input placeholder="Nuevo hito" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={50} aria-label="Nuevo hito" />
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha del hito" />
-          <button className="pill pill-sm" disabled={!title.trim() || !date}>Añadir</button>
-        </form>
+      <div className="pv-timeline">
+        <span className="pv-line"><span style={{ width: at(today), background: color }} /></span>
+        <span className="pv-today" style={{ left: at(today) }} title={`Hoy, ${short(today)}`} />
+        {list.map((m, i) => (
+          <button key={m.id} className={`pv-mile ${i % 2 ? 'below' : ''} ${m.done ? 'done' : ''} ${m.date < today && !m.done ? 'late' : ''} ${m === next ? 'next' : ''}`} style={{ left: at(m.date) }}
+            onClick={() => setEditing(m)} title={`${m.title} · ${formatShort(m.date)}`}>
+            <span className="pv-mile-label"><b>{m.title}</b><span>{short(m.date)}</span></span>
+            <span className="pv-dot" />
+          </button>
+        ))}
+        <span className="pv-edge pv-edge-start">{short(start)}</span>
+        <span className="pv-edge pv-edge-end">{project.deadline ? short(project.deadline) : '—'}</span>
       </div>
+
+      {editing && (
+        <MilestonePopup initial={editing} onClose={() => setEditing(null)}
+          onSave={({ isNew, ...m }) => save(m)} onDelete={editing.isNew ? null : () => remove(editing.id)} />
+      )}
     </div>
   )
 }

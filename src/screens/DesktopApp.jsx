@@ -63,10 +63,17 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         <div className="d-top">
           <div className="d-top-left">
             {view === 'perfil' && <h1 className="perfil-title">Ajustes del perfil</h1>}
+            {(area || view === 'calendario') && (
+              <h1 className="d-title" key={view}>
+                <span className="ic" style={{ background: area?.color ?? '#F1F3F4' }}><Icon name={view} /></span>
+                {area?.label ?? 'Calendario'}
+              </h1>
+            )}
             {focus && view === 'estudios' && (
               <button className="icon-btn ws-toggle" onClick={() => setPanelOpen(!panelOpen)} aria-label={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panelOpen} title={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
             )}
           </div>
+          <div id="top-actions" className="d-top-actions" />
           <button className="talk-circle" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
             <span className="talk-circle-inner">
               {/* Ondas de sonido: se mueven una vez al abrir la app y se quedan quietas */}

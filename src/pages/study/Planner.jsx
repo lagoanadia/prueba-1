@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TopActions from '../../components/TopActions.jsx'
 import Icon from '../../components/Icon.jsx'
 import { progressFor, soft, SUBJECT_COLORS } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
@@ -57,7 +58,7 @@ export default function Planner({ data, update, openSubject }) {
       <header className="page-head">
         <h1 className="sr-only">Planificador de estudios</h1>
         <span />
-        <div className="page-actions">
+        <TopActions><div className="page-actions">
           {editing && (
             <div className="add-wrap">
               <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
@@ -73,7 +74,7 @@ export default function Planner({ data, update, openSubject }) {
             aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
             <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
           </button>
-        </div>
+        </div></TopActions>
       </header>
 
       <h2 className="page-h2">Asignaturas</h2>

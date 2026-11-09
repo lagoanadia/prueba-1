@@ -52,7 +52,6 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   if (loaded && calendar && calendar.layout == null && !calendar.data?.onboarded && Object.keys(calendar.data ?? {}).length === 0) {
     return (
       <div className="area">
-        <header className="area-head"><h1><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="calendario" /></span><span className="sr-only">Calendario</span></h1></header>
         <Onboarding area={{ id: 'calendario', label: 'Calendario', color: '#F1F3F4' }} flow={FLOWS.calendario}
           onDone={(answers) => change('calendario', (d) => ({ ...d, ...answers }))} />
       </div>

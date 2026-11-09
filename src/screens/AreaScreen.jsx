@@ -1,6 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
+import TopActions from '../components/TopActions.jsx'
 import useBoard from '../hooks/useBoard.js'
 import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
@@ -187,7 +188,6 @@ export default function AreaScreen({ area, showTitle = true }) {
   if (board?.isNew && !board.data.onboarded && FLOWS[area.id]) {
     return (
       <div className="area">
-        {showTitle && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1></header>}
         <Onboarding area={area} flow={FLOWS[area.id]} onDone={(answers) => updateData((d) => ({ ...d, ...answers }))} />
       </div>
     )
@@ -202,17 +202,13 @@ export default function AreaScreen({ area, showTitle = true }) {
 
   return (
     <div className="area">
-      <header className={`area-head ${showTitle ? '' : 'area-head-floating'}`}>
-        {showTitle && (
-          <div>
-            <h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1>
-          </div>
-        )}
+      <header className="area-head area-head-floating">
+        <h1 className="sr-only">{area.label}</h1>
         {available.length > 0 && (
-          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
+          <TopActions><button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
             aria-label={editing ? 'Terminar de personalizar' : 'Personalizar tablero'} title={editing ? 'Listo' : 'Personalizar tablero'}>
             <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
-          </button>
+          </button></TopActions>
         )}
       </header>
 
