@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
@@ -119,9 +120,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
       )}
       <form className="wk-taskform" onSubmit={add}>
         {mixed && (
-          <select value={projectFor?.id} onChange={(e) => setTarget(e.target.value)} aria-label="Proyecto" style={{ background: soft(colorOf(data, projectFor?.id), 30) }}>
-            {shown.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <Select value={projectFor?.id} label="Proyecto" onChange={setTarget} options={shown.map((p) => ({ value: p.id, label: p.name, color: colorOf(data, p.id) }))} />
         )}
         <input placeholder="Nueva tarea" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} aria-label="Nueva tarea" />
         <label className={`icon-btn wk-date ${due ? 'on' : ''}`} title={due ? formatShort(due) : 'Fecha'}>

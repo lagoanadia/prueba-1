@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
@@ -33,9 +34,7 @@ export default function TaskEditor({ data, update, projectId, taskId, onClose })
       <div className="popup-backdrop" onClick={onClose} />
       <div className="popup-panel task-editor" style={{ '--c': c }}>
         <div className="te-top">
-          <select className="te-project" value={projectId} onChange={(e) => { moveTo(e.target.value); onClose() }} style={{ background: soft(c, 30) }} aria-label="Proyecto">
-            {projectsOf(data).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <Select className="te-project" value={projectId} label="Proyecto" onChange={(v) => { moveTo(v); onClose() }} options={projectsOf(data).map((p) => ({ value: p.id, label: p.name, color: colorOf(data, p.id) }))} />
           <button className="icon-btn" onClick={remove} aria-label="Borrar tarea" title="Borrar"><Icon name="trash" size={18} /></button>
           <button className="icon-btn on" onClick={onClose} aria-label="Cerrar" title="Listo"><Icon name="check" size={18} /></button>
         </div>

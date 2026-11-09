@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { MEALS, OUT, dishName, dishesOf, mealsOf } from './food.js'
 
@@ -34,11 +35,8 @@ export default function Menu({ size, data, update }) {
     const v = menu[d]?.[m] ?? ''
     const cls = `menu-cell ${v === OUT ? 'is-out' : ''} ${d === today ? 'is-today' : ''}`
     return (
-      <select className={cls} value={v} onChange={(e) => set(d, m, e.target.value)} aria-label={`${MEALS[m]} del ${dayShort(d)}`}>
-        <option value="">—</option>
-        {dishes.filter((x) => x.for.includes(m)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-        <option value={OUT}>Comer fuera</option>
-      </select>
+      <Select className={cls} value={v} label={`${MEALS[m]} del ${dayShort(d)}`} onChange={(val) => set(d, m, val)}
+        options={[{ value: '', label: '—' }, ...dishes.filter((x) => x.for.includes(m)).map((x) => ({ value: x.id, label: x.name, color: '#EFABFF' })), { value: OUT, label: 'Comer fuera', color: '#F9DC5C' }]} />
     )
   }
 

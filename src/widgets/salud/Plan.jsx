@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useState } from 'react'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
@@ -76,9 +77,8 @@ export default function Plan({ size, data, update }) {
           <li key={d} className={i === todayIdx ? 'is-today' : ''}>
             <span className="week-day">{dayShort(d)} {Number(d.slice(8))}</span>
             {size === 'L' ? (
-              <select value={plan[i]} onChange={(e) => setDay(i, e.target.value)} style={{ '--c': colorOf(sports, plan[i]) }}>
-                {[...sports, 'Descanso'].map((s) => <option key={s}>{s}</option>)}
-              </select>
+              <Select className="week-sel" value={plan[i]} label={`Deporte del ${dayShort(d)}`} onChange={(v) => setDay(i, v)}
+                options={[...sports, 'Descanso'].map((s) => ({ value: s, label: s, color: colorOf(sports, s) }))} />
             ) : (
               <button className="week-chip" style={{ '--c': colorOf(sports, plan[i]) }} onClick={() => cycle(i)} title="Toca para cambiar">{plan[i]}</button>
             )}
