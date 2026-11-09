@@ -102,12 +102,6 @@ export default function Schedule({ data, update, subjects }) {
                 <span className="tt-dash">–</span>
                 <input type="time" className="tt-in tt-end" key={`e${row.dur}${times[i].start}`} defaultValue={fmt(times[i].end).padStart(5, '0')} onBlur={(e) => setEnd(i, e.target.value)} aria-label="Hora de fin" />
               </span>
-              <span className="tt-dur-step">
-                <button type="button" className="mini" onClick={() => setDur(i, row.dur - 5)} aria-label="5 minutos menos">−</button>
-                <input className="tt-dur-in" key={`d${row.dur}`} defaultValue={row.dur} inputMode="numeric" onBlur={(e) => setDur(i, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Duración en minutos" />
-                <span className="muted">min</span>
-                <button type="button" className="mini" onClick={() => setDur(i, row.dur + 5)} aria-label="5 minutos más">+</button>
-              </span>
             </span>
             {row.kind === 'break'
               ? <label className="tt-break"><Icon name="clock" size={16} /><input className="tt-break-in" defaultValue={breakName(row.label)} maxLength={24} aria-label="Nombre del descanso"
