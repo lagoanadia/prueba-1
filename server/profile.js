@@ -1,5 +1,6 @@
 // Perfil del usuario (de momento solo el avatar), en KV: "profile:<usuario>" -> { avatar }
 import { AVATAR_OPTIONS, DEFAULT_AVATAR } from '../src/data/avatar.js'
+import { normalizeSettings } from '../src/data/settings.js'
 
 export async function getProfile(env, userId) {
   const saved = await env.DATA.get(`profile:${userId}`, 'json')
@@ -8,7 +9,7 @@ export async function getProfile(env, userId) {
     const v = saved?.avatar?.[k]
     return [k, opts.some((o) => o.id === v) ? v : DEFAULT_AVATAR[k]]
   }))
-  return { avatar }
+  return { avatar, settings: normalizeSettings(saved?.settings) }
 }
 
 export async function saveProfile(env, userId, profile) {

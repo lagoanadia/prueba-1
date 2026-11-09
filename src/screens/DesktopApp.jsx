@@ -5,14 +5,17 @@ import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
 import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
+import AreasSettings from './AreasSettings.jsx'
 import CalendarPage from './CalendarPage.jsx'
 import Avatar from '../components/Avatar.jsx'
-import { AREAS, getArea } from '../data/areas.js'
+import { AREAS } from '../data/areas.js'
+import { activeAreaIds } from '../data/settings.js'
 import { formatToday } from '../lib/dates.js'
 
 /** Vista portátil: menú lateral + contenido. */
-export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar }) {
+export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [view, setView] = useState('inicio')
+  const visible = AREAS.filter((a) => activeAreaIds(settings).includes(a.id)) // solo las activas, sin huecos
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
     <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
@@ -24,14 +27,14 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
     </button>
   )
 
-  const area = getArea(view)
+  const area = visible.find((a) => a.id === view) // un área desactivada no se abre
 
   return (
     <div className="d-app">
       <nav className="sidebar" aria-label="Navegación">
         <NavItem id="inicio" label="Inicio" color="#FFFFFF" />
         <p className="eyebrow sidebar-title">Mis áreas</p>
-        {AREAS.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
+        {visible.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
         <div style={{ flex: 1 }} />
         <NavItem id="calendario" label="Calendario" />
         <NavItem id="perfil" label="Perfil" />
@@ -66,6 +69,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         {view === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
         {view === 'perfil' && (
           <BlankPage title="Perfil" icon="perfil">
+            <AreasSettings settings={settings} onSave={onSaveSettings} />
             <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />
           </BlankPage>
         )}

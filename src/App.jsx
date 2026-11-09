@@ -8,8 +8,9 @@ import useMediaQuery from './hooks/useMediaQuery.js'
 import useVoiceAssistant from './hooks/useVoiceAssistant.js'
 import useAgenda from './hooks/useAgenda.js'
 import { getCurrentUser, signOut } from './services/authService.js'
-import { getProfile, saveAvatar } from './services/profileService.js'
+import { getProfile, saveAvatar, saveSettings } from './services/profileService.js'
 import { DEFAULT_AVATAR } from './data/avatar.js'
+import { DEFAULT_SETTINGS } from './data/settings.js'
 
 /**
  *   user === undefined -> cargando · null -> Login · objeto -> app
@@ -19,6 +20,7 @@ export default function App() {
   const [user, setUser] = useState(undefined)
   const [voiceOpen, setVoiceOpen] = useState(false)
   const [avatar, setAvatar] = useState(DEFAULT_AVATAR)
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const isDesktop = useMediaQuery('(min-width: 900px)')
   const { entries, add, toggle, error } = useEntries(Boolean(user))
   const assistant = useVoiceAssistant(add)
@@ -29,10 +31,16 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (user) getProfile().then((p) => setAvatar(p.avatar)).catch(() => {})
+    if (user) getProfile().then((p) => { setAvatar(p.avatar); if (p.settings) setSettings(p.settings) }).catch(() => {})
   }, [user])
 
   const handleSaveAvatar = async (next) => setAvatar((await saveAvatar(next)).avatar)
+
+  // Se aplica al momento y se guarda en segundo plano
+  const handleSaveSettings = (next) => {
+    setSettings(next)
+    saveSettings(next).catch(() => {})
+  }
 
   // Abrir el asistente empieza a escuchar directamente (menos toques).
   const openVoice = () => {
@@ -64,13 +72,15 @@ export default function App() {
     onSignOut: handleSignOut,
     avatar,
     onSaveAvatar: handleSaveAvatar,
+    settings,
+    onSaveSettings: handleSaveSettings,
   }
 
   return (
-    <>
+    <div className={settings.bigText ? 'big-text' : undefined}>
       {isDesktop ? <DesktopApp {...props} /> : <MobileApp {...props} />}
       <VoiceOverlay open={voiceOpen} onClose={closeVoice} firstName={firstName} assistant={assistant} modal={isDesktop} />
       {error && <p className="toast" role="alert">{error}</p>}
-    </>
+    </div>
   )
 }
