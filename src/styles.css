@@ -1834,3 +1834,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sv-break { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); background: #ECEDEF; letter-spacing: .02em; }
 .tt-break-in { font: inherit; font-weight: 600; border: none; background: none; outline: none; color: inherit; text-align: center; width: 12ch; border-bottom: 2px dashed transparent; }
 .tt-break-in:hover, .tt-break-in:focus { border-color: var(--ring); }
+/* Horario vacío */
+.sv-empty { display: block; margin: 8px auto 4px; border: none; background: none; padding: 0; cursor: pointer; border-radius: 50%; transition: transform .25s var(--ease); }
+.sv-empty:hover { transform: scale(1.04); }
+.sv-empty:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.sv-empty text { font-family: Poppins, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 2px; fill: #202124; }
+.sv-empty-ring { transform-origin: 100px 100px; animation: sv-spin 22s linear infinite; }
+@keyframes sv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sv-empty-ring { animation: none; } }

@@ -165,7 +165,8 @@ function ScheduleView({ tt, times, look, onEdit }) {
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(id) }, [])
   const today = (now.getDay() + 6) % 7
   const [day, setDay] = useState(today < 5 ? today : 0) // en móvil se ve un día
-  if (!times.length) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2><button className="icon-btn sv-edit" onClick={onEdit} aria-label="Editar horario"><Icon name="pen" size={18} /></button></div><p className="muted">Pulsa el lápiz para crear tu horario.</p></div>
+  // Vacío (sin franjas o sin ninguna asignatura puesta): un lápiz grande con el texto girando alrededor
+  if (!times.length || !Object.values(tt.cells).some(Boolean)) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2></div><EmptySchedule onEdit={onEdit} /></div>
 
   // Posición de cada fila (en píxeles) según su tipo, no según sus minutos
   const tops = []
@@ -226,5 +227,22 @@ function ScheduleView({ tt, times, look, onEdit }) {
         ))}
       </div>
     </div>
+  )
+}
+
+/** Estado vacío: círculo con el lápiz en el centro y «AÑADE TU HORARIO» escrito alrededor. */
+function EmptySchedule({ onEdit }) {
+  const text = 'AÑADE TU HORARIO · AÑADE TU HORARIO · '
+  return (
+    <button className="sv-empty" onClick={onEdit} aria-label="Añade tu horario">
+      <svg viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+        <defs><path id="sv-ring" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0" /></defs>
+        <g className="sv-empty-ring"><text><textPath href="#sv-ring" textLength="490">{text}</textPath></text></g>
+        <circle cx="100" cy="100" r="60" fill="#E3EEFF" />
+        <g transform="translate(64 64) scale(3)" fill="none" stroke="#202124" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 20L5 15L16 4L20 8L9 19Z" fill="#F9DC5C" /><path d="M14 6L18 10" />
+        </g>
+      </svg>
+    </button>
   )
 }
