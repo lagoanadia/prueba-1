@@ -1876,10 +1876,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sdk-cell.bb { border-bottom: 2px solid var(--text); }
 .sdk-cell.peer { background: #F3F6FB; }
 .sdk-cell.same { background: #DCE8FF; }
-.sdk-cell.is-sel { background: #FFE7A8; }
+.sdk-cell { border-radius: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+.sdk-cell.is-sel { background: #FFD96A; }
 .sdk-cell.wrong { color: #E84855; }
 .sdk-pad { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
 .sdk-pad button { border: none; border-radius: 8px; background: var(--soft); font: inherit; font-weight: 700; padding: 6px 0; cursor: pointer; }
+.sdk-erase { display: grid; place-items: center; color: var(--text); }
 .sdk-pad button:active { transform: scale(.92); }
 .bee-rank { font-size: 15px; }
 .bee-word { min-height: 32px; text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 1px; }

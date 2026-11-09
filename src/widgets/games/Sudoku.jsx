@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Icon from '../../components/Icon.jsx'
 import { clock, seeded, sendScore, shuffle, today } from './common.js'
 
 /** Sudoku del día: se genera a partir de la fecha (igual para todos) quitando casillas de una solución válida. */
@@ -73,7 +74,7 @@ export default function Sudoku({ data, update }) {
       {!done && (
         <div className="sdk-pad">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => <button key={n} onClick={() => put(n)}>{n}</button>)}
-          <button onClick={() => put(0)} aria-label="Borrar">⌫</button>
+          <button className="sdk-erase" onClick={() => put(0)} aria-label="Borrar"><Icon name="erase" size={20} color="currentColor" /></button>
         </div>
       )}
     </div>
