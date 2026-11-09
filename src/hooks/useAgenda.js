@@ -27,6 +27,11 @@ export default function useAgenda(enabled, entries, toggleEntry) {
     items.push({ key: 't' + t.id, area: 'trabajo', title: t.title, done: t.status === 'done', late: t.status !== 'done' && t.due < today,
       toggle: () => change('trabajo', (x) => ({ ...x, projects: x.projects.map((pp) => (pp.id !== p.id ? pp : { ...pp, tasks: pp.tasks.map((tt) => (tt.id !== t.id ? tt : tt.status === 'done' ? { ...tt, status: 'todo', doneAt: null } : { ...tt, status: 'done', doneAt: today })) })) })) })
   }))
+  // Trabajo: reuniones y eventos de la agenda de hoy (con su hora)
+  ;(d('trabajo').meetings ?? []).filter((m) => m.date === today).sort((a, b) => a.start.localeCompare(b.start)).forEach((m) => {
+    items.push({ key: 'm' + m.id, area: 'trabajo', title: m.title, time: m.start, done: Boolean(m.done),
+      toggle: () => change('trabajo', (x) => ({ ...x, meetings: x.meetings.map((y) => (y.id === m.id ? { ...y, done: !y.done } : y)) })) })
+  })
   // Salud: la sesión del plan de hoy
   const session = d('salud').plan?.[dayIdx]
   if (session && session !== 'Descanso') items.push({ key: 's' + today, area: 'salud', title: session, done: Boolean(d('salud').planDone?.[today]),

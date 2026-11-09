@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx'
 import { cleanUrl, faviconOf } from './helpers.js'
 
 /** Herramientas: enlaces como iconos grandes de la app (Drive, Vercel…). Sin nombre; el icono sale del propio enlace. */
-export default function Tools({ data, update }) {
+export default function Tools({ data, update, bare = false }) {
   const tools = (data.tools ?? []).filter((t) => cleanUrl(t.url))
   const [adding, setAdding] = useState(false)
   const [text, setText] = useState('')
@@ -22,7 +22,7 @@ export default function Tools({ data, update }) {
 
   return (
     <div className="tools">
-      <h2 className="page-h2">Herramientas</h2>
+      {!bare && <h2 className="page-h2">Herramientas</h2>}
       <div className="tool-grid">
         {tools.map((t) => (
           <div key={t.id} className="tool">

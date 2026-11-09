@@ -1,105 +1,104 @@
 import { useState } from 'react'
 import Icon from '../components/Icon.jsx'
-import { formatLong, formatShort, todayISO } from '../lib/dates.js'
-import { STATES, activeOf, progressOf, projectsOf, updateTask } from '../widgets/trabajo/projects.js'
+import Focus from '../widgets/trabajo/Focus.jsx'
+import QuickNote from './study/QuickNote.jsx'
+import Tools from './study/Tools.jsx'
+import AgendaBlock from './work/AgendaBlock.jsx'
+import BoardBlock from './work/BoardBlock.jsx'
+import ProjectsBlock from './work/ProjectsBlock.jsx'
 
-const PRIORITY = { alta: { label: 'Alta', color: '#E84855' }, media: { label: 'Media', color: '#F9DC5C' }, baja: { label: 'Baja', color: '#3DDC97' } }
-const NEXT_PRIORITY = { baja: 'media', media: 'alta', alta: 'baja' }
-const NEXT_STATE = { todo: 'doing', doing: 'done', done: 'todo' }
+// Bloques de la página. span = ancho (1-3 columnas); tall = ocupa dos filas
+const DEFAULT_BLOCKS = [
+  { id: 'projects', type: 'projects', span: 3 },
+  { id: 'board', type: 'board', span: 3 },
+  { id: 'agenda', type: 'agenda', span: 2, tall: true },
+  { id: 'tools', type: 'tools', span: 1 },
+  { id: 'focus', type: 'focus', span: 1 },
+]
+const BLOCKS = {
+  projects: { label: 'Proyectos', icon: 'trabajo' },
+  board: { label: 'Tablero', icon: 'board' },
+  agenda: { label: 'Agenda', icon: 'calendario' },
+  tools: { label: 'Herramientas', icon: 'link' },
+  focus: { label: 'Foco', icon: 'clock' },
+}
 
 /**
- * Página de Trabajo (diseño oficial): proyectos en tarjetas + tablero del proyecto elegido.
- * Pulsar una tarea la pasa al siguiente estado; pulsar su prioridad la cambia.
+ * Trabajo: todo en bloques del mismo estilo (como el planificador de Estudios), que se pueden
+ * mover, ensanchar, quitar y añadir con el botón del tablero. Cada bloque se identifica con su icono.
  */
 export default function WorkPage({ data, update }) {
-  const today = todayISO()
-  const projects = projectsOf(data)
-  const project = activeOf(data)
-  const [name, setName] = useState('')
-  const [task, setTask] = useState('')
-  const [due, setDue] = useState('')
+  const blocks = data.workBlocks ?? DEFAULT_BLOCKS
+  const [editing, setEditing] = useState(false)
+  const [menu, setMenu] = useState(false)
 
-  const addProject = (e) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    const id = crypto.randomUUID()
-    update((d) => ({ ...d, activeProject: id, projects: [...projectsOf(d), { id, name: name.trim(), deadline: null, tasks: [] }] }))
-    setName('')
+  const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(d.workBlocks ?? DEFAULT_BLOCKS) }))
+  const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
+  const resize = (id) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span: (x.span % 3) + 1 } : x)))
+  const removeBlock = (blk) => {
+    setBlocks((b) => b.filter((x) => x.id !== blk.id))
+    if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
   }
-  const addTask = (e) => {
-    e.preventDefault()
-    if (!task.trim() || !project) return
-    const t = { id: crypto.randomUUID(), title: task.trim(), priority: 'media', due: due || null, status: 'todo' }
-    update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === project.id ? { ...p, tasks: [...p.tasks, t] } : p)) }))
-    setTask('')
-    setDue('')
+  const addBlock = (type) => {
+    setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'board' || type === 'projects' ? 3 : type === 'agenda' ? 2 : 1, tall: type === 'agenda' }])
+    setMenu(false)
   }
-  const advance = (t) => update((d) => updateTask(d, project.id, t.id, { status: NEXT_STATE[t.status], doneAt: NEXT_STATE[t.status] === 'done' ? today : null }))
-  const cyclePriority = (t) => update((d) => updateTask(d, project.id, t.id, { priority: NEXT_PRIORITY[t.priority] }))
-  const setDeadline = (id, deadline) => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, deadline } : p)) }))
+  const missing = Object.keys(BLOCKS).filter((t) => !blocks.some((b) => b.type === t))
+
+  const render = (b) => {
+    switch (b.type) {
+      case 'projects': return <ProjectsBlock data={data} update={update} />
+      case 'board': return <BoardBlock data={data} update={update} />
+      case 'agenda': return <AgendaBlock data={data} update={update} />
+      case 'tools': return <Tools data={data} update={update} bare />
+      case 'focus': return <div className="wk-focus"><Focus size="T" data={data} update={update} /></div>
+      default: {
+        const note = data.quickNotes?.[b.id] ?? { html: '' }
+        return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
+      }
+    }
+  }
 
   return (
     <div className="page work">
-      <header className="page-head">
+      <header className="page-head wk-head">
         <h1 className="sr-only">Trabajo</h1>
-        <form className="page-actions" onSubmit={addProject}>
-          <input className="pill-input" placeholder="Nombre del proyecto" value={name} onChange={(e) => setName(e.target.value)} maxLength={50} />
-          <button className="icon-btn on" disabled={!name.trim()} aria-label="Nuevo proyecto" title="Nuevo proyecto"><Icon name="plus" size={22} /></button>
-        </form>
+        <span />
+        <div className="page-actions">
+          {editing && (
+            <div className="add-wrap">
+              <button className="icon-btn" onClick={() => setMenu(!menu)} aria-label="Añadir bloque" aria-expanded={menu} title="Añadir"><Icon name="plus" size={22} /></button>
+              {menu && (
+                <div className="card add-menu" role="menu">
+                  <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
+                  {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={BLOCKS[t].icon} size={20} />{BLOCKS[t].label}</button>)}
+                </div>
+              )}
+            </div>
+          )}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setMenu(false) }}
+            aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
+            <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
+          </button>
+        </div>
       </header>
 
-      <h2 className="sr-only">Proyectos</h2>
-      {projects.length === 0 && <p className="muted">Crea tu primer proyecto arriba.</p>}
-      <div className="project-cards">
-        {projects.map((p, i) => {
-          const { total, done, pct } = progressOf(p)
-          return (
-            <button key={p.id} className={`card project-card ${project?.id === p.id ? 'is-active' : ''}`} style={{ '--i': i }}
-              onClick={() => update((d) => ({ ...d, activeProject: p.id }))}>
-              <b className="project-card-name">{p.name}</b>
-              <label className="muted project-deadline" onClick={(e) => e.stopPropagation()}>
-                Fecha límite: {p.deadline ? formatLong(p.deadline).replace(/ de \d{4}$/, '') : '—'}
-                <input type="date" value={p.deadline ?? ''} onChange={(e) => setDeadline(p.id, e.target.value || null)} aria-label="Cambiar fecha límite" />
-              </label>
-              <span className="w-row"><span>{done} de {total} tareas</span><b className="project-pct">{pct} %</b></span>
-              <span className="bar bar-red"><span style={{ width: `${pct}%` }} /></span>
-            </button>
-          )
-        })}
+      <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
+        {blocks.map((b, i) => (
+          <section key={b.id} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'}>
+            {BLOCKS[b.type] && <span className="wk-badge" title={BLOCKS[b.type].label}><Icon name={BLOCKS[b.type].icon} size={18} /></span>}
+            {editing && (
+              <div className="block-tools">
+                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover antes"><Icon name="left" size={18} /></button>
+                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === blocks.length - 1} aria-label="Mover después"><Icon name="right" size={18} /></button>
+                <button className="icon-btn" onClick={() => resize(b.id)} aria-label="Cambiar tamaño" title={`Ancho ${b.span} de 3`}><Icon name="expand" size={18} /></button>
+                <button className="icon-btn" onClick={() => removeBlock(b)} aria-label="Quitar"><Icon name="close" size={18} /></button>
+              </div>
+            )}
+            {render(b)}
+          </section>
+        ))}
       </div>
-
-      {project && (
-        <>
-          <div className="page-head page-head-sm">
-            <h2 className="page-h2">{project.name}</h2>
-            <form className="page-actions" onSubmit={addTask}>
-              <input className="pill-input" placeholder="Nueva tarea" value={task} onChange={(e) => setTask(e.target.value)} maxLength={60} />
-              <input className="pill-input pill-date" type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Fecha" />
-              <button className="pill pill-red" disabled={!task.trim()}>Añadir tarea</button>
-            </form>
-          </div>
-          <p className="muted page-hint">Pulsa una tarea para pasarla al siguiente estado.</p>
-          <div className="kanban-page">
-            {STATES.map((s) => {
-              const tasks = project.tasks.filter((t) => t.status === s.id)
-              return (
-                <section key={s.id} className={`kcol kcol-${s.id}`}>
-                  <h3>{s.label} · {tasks.length}</h3>
-                  {tasks.map((t) => (
-                    <div key={t.id} className="ktask" role="button" tabIndex={0} onClick={() => advance(t)} onKeyDown={(e) => e.key === 'Enter' && advance(t)}>
-                      <b className="ktask-title">{t.title}</b>
-                      <span className="w-row">
-                        <button className="prio-badge" style={{ '--c': PRIORITY[t.priority].color }} onClick={(e) => { e.stopPropagation(); cyclePriority(t) }} title="Cambiar prioridad">{PRIORITY[t.priority].label}</button>
-                        {t.due && <span className={`muted ktask-due ${t.status !== 'done' && t.due < today ? 'is-late' : ''}`}>{formatShort(t.due).replace(/^\S+ /, '')}</span>}
-                      </span>
-                    </div>
-                  ))}
-                </section>
-              )
-            })}
-          </div>
-        </>
-      )}
     </div>
   )
 }
