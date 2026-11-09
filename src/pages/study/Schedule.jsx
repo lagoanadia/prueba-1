@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { DEFAULT_BREAK, DEFAULT_CLASS, fmt, normalizeTimetable, spans, toMin } from './timetable.js'
@@ -16,7 +16,15 @@ export default function Schedule({ data, update, subjects }) {
   const times = spans(tt)
   const today = (new Date().getDay() + 6) % 7
   const [brush, setBrush] = useState(null)
-  const [dialog, setDialog] = useState(null) // 'row' | 'label'
+  const [dialog, setDialog] = useState(null) // 'label'
+  const [menu, setMenu] = useState(false)
+  const menuRef = useRef(null)
+  useEffect(() => {
+    if (!menu) return
+    const close = (e) => { if (!menuRef.current?.contains(e.target)) setMenu(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [menu])
   const [dragId, setDragId] = useState(null)
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
@@ -38,28 +46,16 @@ export default function Schedule({ data, update, subjects }) {
   const setStart = (text) => { const m = toMin(text); if (m != null) patch((t) => ({ ...t, start: fmt(m) })) }
   const removeRow = (id) => patch((t) => ({ ...t, rows: t.rows.filter((r) => r.id !== id) }))
   const move = (from, to) => patch((t) => { const rows = [...t.rows]; if (to < 0 || to >= rows.length) return t; const [r] = rows.splice(from, 1); rows.splice(to, 0, r); return { ...t, rows } })
-  const addRow = ({ kind, label, end }) => {
-    const last = times.length ? times[times.length - 1].end : toMin(tt.start) ?? 510
-    const dur = end != null && end > last ? end - last : kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK
-    patch((t) => {
-      const row = { id: crypto.randomUUID(), kind: kind === 'class' ? 'class' : 'break', dur, ...(kind === 'class' ? {} : { label }) }
-      const cells = { ...t.cells }
-      if (row.kind === 'class' && options.length) DAYS.forEach((_, c) => { cells[`${row.id}:${c}`] = brush ?? options[0] })
-      return { ...t, rows: [...t.rows, row], cells }
-    })
-    setDialog(null)
+  const addRow = (kind) => {
+    patch((t) => ({ ...t, rows: [...t.rows, { id: crypto.randomUUID(), kind, dur: kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK, ...(kind === 'class' ? {} : { label: 'Recreo' }) }] }))
+    setMenu(false)
   }
   const addLabel = ({ name, color }) => { patch((t) => ({ ...t, labels: [...t.labels, { id: crypto.randomUUID(), name, color }] })); setDialog(null) }
   const removeLabel = (id) => patch((t) => ({ ...t, labels: t.labels.filter((l) => l.id !== id), cells: Object.fromEntries(Object.entries(t.cells).filter(([, v]) => v !== `#${id}`)) }))
 
-  if (!subjects.length) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2></div><p className="muted">Añade tus asignaturas para construir el horario.</p></div>
-
   return (
     <div className="schedule">
-      <div className="deliv-head">
-        <h2 className="page-h2">Horario</h2>
-        <button className="icon-btn" onClick={() => setDialog('row')} aria-label="Añadir franja" title="Añadir franja"><Icon name="plus" size={22} /></button>
-      </div>
+      <div className="deliv-head"><h2 className="page-h2">Horario</h2></div>
 
       <div className="tt-grid">
         <div className="tt-row tt-head">
@@ -97,7 +93,6 @@ export default function Schedule({ data, update, subjects }) {
       </div>
 
       <div className="tt-tools">
-        <span className="tt-tool-ic" title="Pincel: elige y pinta casillas" aria-label="Pincel"><Icon name="marker" size={18} /></span>
         {subjects.map((s) => <button key={s.id} className={`seg-chip ${brush === s.short ? 'on' : ''}`} style={{ background: soft(s.color) }} aria-pressed={brush === s.short} onClick={() => setBrush(brush === s.short ? null : s.short)}>{s.short}</button>)}
         <span className="tt-sep" />
         {tt.labels.map((l) => (
@@ -106,48 +101,23 @@ export default function Schedule({ data, update, subjects }) {
             <button className="seg-x" onClick={() => removeLabel(l.id)} aria-label={`Borrar la etiqueta ${l.name}`}><Icon name="close" size={12} /></button>
           </span>
         ))}
-        <button className="seg-chip seg-add" onClick={() => setDialog('label')} aria-label="Crear etiqueta" title="Crear etiqueta (p. ej. Convalidada)"><Icon name="plus" size={16} /></button>
+        <span className="seg-wrap" ref={menuRef}>
+          <button className="seg-chip seg-add" onClick={() => setMenu(!menu)} aria-label="Añadir" aria-haspopup="menu" aria-expanded={menu} title="Añadir etiqueta, franja o recreo"><Icon name="plus" size={16} /></button>
+          {menu && (
+            <div className="card tt-menu" role="menu">
+              <button role="menuitem" onClick={() => { setMenu(false); setDialog('label') }}>Añadir etiqueta</button>
+              <button role="menuitem" onClick={() => addRow('class')}>Añadir franja vacía</button>
+              <button role="menuitem" onClick={() => addRow('break')}>Añadir recreo</button>
+            </div>
+          )}
+        </span>
       </div>
 
-      {dialog === 'row' && <RowDialog start={times.length ? times[times.length - 1].end : toMin(tt.start) ?? 510} onSubmit={addRow} onClose={() => setDialog(null)} />}
       {dialog === 'label' && <LabelDialog onSubmit={addLabel} onClose={() => setDialog(null)} />}
     </div>
   )
 }
 
-
-/** Ventana para añadir una franja: Clase, Recreo u Otra (con nombre) y hasta qué hora dura. */
-function RowDialog({ start, onSubmit, onClose }) {
-  const [kind, setKind] = useState('class')
-  const [label, setLabel] = useState('')
-  const [end, setEnd] = useState(fmt(start + DEFAULT_CLASS))
-  const [touched, setTouched] = useState(false)
-  const pick = (k) => { setKind(k); if (!touched) setEnd(fmt(start + (k === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK))) }
-  const endMin = toMin(end)
-  const dur = endMin != null && endMin > start ? endMin - start : null
-  const name = kind === 'break' ? 'Recreo' : label.trim()
-  const ok = dur && (kind !== 'other' || name)
-  return createPortal(
-    <div className="popup" role="dialog" aria-modal="true" aria-label="Añadir franja" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
-      <div className="popup-backdrop" onClick={onClose} />
-      <form className="card name-dialog" onSubmit={(e) => { e.preventDefault(); if (ok) onSubmit({ kind, label: name, end: endMin }) }}>
-        <div className="seg-row" role="radiogroup" aria-label="Tipo de franja">
-          {[['class', 'Clase'], ['break', 'Recreo'], ['other', 'Otra']].map(([k, t]) => <button type="button" key={k} role="radio" aria-checked={kind === k} className={`seg-chip ${kind === k ? 'on' : ''}`} onClick={() => pick(k)}>{t}</button>)}
-        </div>
-        {kind === 'other' && <input className="pill-input" autoFocus value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Nombre (Comida, Tutoría…)" maxLength={30} aria-label="Nombre de la franja" />}
-        <label className="end-row"><span className="muted">Acaba a las</span>
-          <input className="tt-in tt-end" value={end} onChange={(e) => { setEnd(e.target.value); setTouched(true) }} maxLength={5} aria-label="Hora de fin" aria-invalid={!dur} />
-          <span className="tt-dur">{dur ? `${dur} min` : 'Hora no válida'}</span>
-        </label>
-        <div className="name-dialog-actions">
-          <button type="button" className="icon-btn name-x" onClick={onClose} aria-label="Cancelar"><Icon name="close" size={22} /></button>
-          <button className="icon-btn on" disabled={!ok} aria-label="Añadir"><Icon name="check" size={22} /></button>
-        </div>
-      </form>
-    </div>,
-    document.body
-  )
-}
 
 /** Ventana para crear una etiqueta (no es una asignatura: no sale en las tarjetas ni cuenta en el progreso). */
 function LabelDialog({ onSubmit, onClose }) {

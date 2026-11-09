@@ -1289,3 +1289,28 @@ button.subject-card:hover { transform: translateY(-3px); }
 .notif-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #E84855; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; animation: pop .4s var(--ease) both; }
 .nv .ic { position: relative; }
 .m-avatar { overflow: visible; }
+
+/* ===== Fila de arriba alineada con «Inicio» (todas las páginas) ===== */
+.d-top { height: 72px; align-items: center; }
+.d-top-left { display: flex; align-items: center; gap: 14px; }
+.area-title-text { font-size: 32px; font-weight: 600; line-height: 1.1; margin: 0; white-space: nowrap; }
+.d-top-left .customize { margin: 0; align-self: center; width: 40px; height: 40px; }
+.d-top-left .customize svg { width: 22px; height: 22px; }
+.d-top-left .add-wrap { margin-left: 2px; }
+.d-top-left .add-menu { left: 0; right: auto; }
+.talk-circle { width: 48px; height: 48px; }
+.talk-circle svg { width: 28px; height: 20px; }
+.d-view { padding-top: 6px; }
+
+/* Horario: fila a todo el ancho del widget, horas juntas, menú del + */
+.schedule .tt-grid { width: 100%; }
+.tt-row { grid-template-columns: 22px 96px repeat(5, minmax(0, 1fr)); gap: 8px; }
+.tt-times { gap: 0; }
+.tt-dash { margin: 0 1px; }
+.tt-start, .tt-start-text { width: 5ch; text-align: right; padding: 2px 0; }
+.tt-end { width: 5ch; text-align: left; padding: 2px 0; }
+.tt-time { align-items: center; }
+.tt-dur { padding-left: 0; text-align: center; }
+.tt-menu { position: absolute; left: 0; top: calc(100% + 8px); z-index: 30; padding: 6px; display: flex; flex-direction: column; min-width: 210px; }
+.tt-menu button { border: none; background: none; font: inherit; font-size: 15px; font-weight: 600; text-align: left; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
+.tt-menu button:hover { background: var(--soft); }

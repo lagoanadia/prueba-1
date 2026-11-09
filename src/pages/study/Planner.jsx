@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
+import TopBar, { useTopBar } from '../../screens/TopBar.jsx'
 import { progressFor, soft, SUBJECT_COLORS } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
 import QuickNote from './QuickNote.jsx'
@@ -22,6 +23,7 @@ const ICONS = { entregas: 'exam', tools: 'link', schedule: 'clock' }
 export default function Planner({ data, update, openSubject }) {
   const subjects = data.subjects ?? []
   const blocks = data.planner?.blocks ?? DEFAULT_BLOCKS
+  const slot = useTopBar()
   const [editing, setEditing] = useState(false)
   const [addMenu, setAddMenu] = useState(false)
   const [short, setShort] = useState('')
@@ -52,29 +54,29 @@ export default function Planner({ data, update, openSubject }) {
     return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
   }
 
-  return (
-    <div className="page study">
-      <header className="page-head">
-        <h1 className="sr-only">Planificador de estudios</h1>
-        <span />
-        <div className="page-actions">
-          {editing && (
-            <div className="add-wrap">
-              <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
-              {addMenu && (
-                <div className="card add-menu" role="menu">
-                  <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
-                  {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{LABELS[t]}</button>)}
-                </div>
-              )}
+  const controls = (
+    <>
+      <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAddMenu(false) }}
+        aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
+        <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
+      </button>
+      {editing && (
+        <div className="add-wrap">
+          <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
+          {addMenu && (
+            <div className="card add-menu" role="menu">
+              <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
+              {missing.map((t) => <button key={t} role="menuitem" onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{LABELS[t]}</button>)}
             </div>
           )}
-          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAddMenu(false) }}
-            aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
-            <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
-          </button>
         </div>
-      </header>
+      )}
+    </>
+  )
+
+  return (
+    <div className="page study">
+      {slot ? <TopBar>{controls}</TopBar> : <header className="page-head"><h1 className="sr-only">Planificador de estudios</h1><span /><div className="page-actions">{controls}</div></header>}
 
       <h2 className="page-h2">Asignaturas</h2>
       <div className="subject-cards">
@@ -88,8 +90,7 @@ export default function Planner({ data, update, openSubject }) {
           )
         })}
         <form className="card subject-card subject-add" onSubmit={addSubject}>
-          <input placeholder="Asignatura" value={short} onChange={(e) => setShort(e.target.value)} maxLength={14} aria-label="Nueva asignatura" />
-          <button className="icon-btn" disabled={!short.trim()} aria-label="Añadir asignatura"><Icon name="plus" size={20} /></button>
+          <input placeholder="Asignatura" value={short} onChange={(e) => setShort(e.target.value)} maxLength={14} aria-label="Nueva asignatura (Enter para añadir)" enterKeyHint="done" />
         </form>
       </div>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FocusCtx } from './focus.js'
+import { TopBarCtx } from './TopBar.jsx'
 import Icon from '../components/Icon.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
@@ -20,6 +21,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   const requests = useFriendRequests() // peticiones de amistad sin responder
   const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
   const [navOpen, setNavOpen] = useState(true)
+  const [slot, setSlot] = useState(null) // ranura de la fila de arriba
   const [panelOpen, setPanelOpen] = useState(true) // panel de unidades (modo concentración)
   const focusCtx = useMemo(() => ({ setFocus: (v) => { setFocus(v); if (!v) setNavOpen(true) }, panelOpen, setPanelOpen }), [panelOpen])
   const iconsOnly = settings.iconsOnly
@@ -41,6 +43,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
 
   return (
     <FocusCtx.Provider value={focusCtx}>
+    <TopBarCtx.Provider value={slot}>
     <div className="d-app">
       {focus && !navOpen ? (
         <nav className="sidebar sidebar-slim" aria-label="Navegación">
@@ -61,7 +64,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       {/* El main NO lleva key: así el botón de hablar no se vuelve a montar (ni a animar) al cambiar de sección */}
       <main className="d-main">
         <div className="d-top">
-          <div className="d-top-left">
+          <div className="d-top-left" ref={setSlot}>
             {view === 'perfil' && <h1 className="perfil-title">Ajustes del perfil</h1>}
             {focus && view === 'estudios' && (
               <button className="icon-btn ws-toggle" onClick={() => setPanelOpen(!panelOpen)} aria-label={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panelOpen} title={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
@@ -108,6 +111,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         </div>
       </main>
     </div>
+    </TopBarCtx.Provider>
     </FocusCtx.Provider>
   )
 }

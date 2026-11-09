@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import TopBar from './TopBar.jsx'
 import Icon from '../components/Icon.jsx'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
@@ -69,7 +70,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
     <div className="area cal">
       <header className="area-head">
         <div>
-          <h1 className="sr-only">Calendario</h1>
+          <TopBar><h1 className="area-title-text">Calendario</h1></TopBar>
           <div className="cal-nav">
             <button className="mini" onClick={() => move(-1)} aria-label="Anterior">‹</button>
             <span className="muted cal-range">{title}</span>

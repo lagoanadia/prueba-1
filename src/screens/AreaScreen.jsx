@@ -6,6 +6,7 @@ import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import { PAGES } from '../pages/index.js'
+import TopBar, { useTopBar } from './TopBar.jsx'
 
 const DRAG_THRESHOLD = 6 // px que hay que mover antes de que cuente como arrastre (si no, es un toque)
 const SWAP_COOLDOWN = 280 // ms sin recolocar tras un cambio: evita que dos widgets "boten" entre sí
@@ -34,6 +35,7 @@ const arrayMove = (list, from, to) => {
  */
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
+  const slot = useTopBar() // fila de arriba (solo en portátil)
   const [editing, setEditing] = useState(false)
   const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
@@ -182,12 +184,14 @@ export default function AreaScreen({ area, showTitle = true }) {
   }))
 
   const dragged = drag && board?.layout.find((w) => w.id === drag.id)
+  const topTitle = slot && showTitle ? <TopBar><h1 className="area-title-text">Área de {area.label}</h1></TopBar> : null
 
   // Primera vez en esta área: preguntas para rellenar los widgets con tus datos (no con datos de ejemplo)
   if (board?.isNew && !board.data.onboarded && FLOWS[area.id]) {
     return (
       <div className="area">
-        {showTitle && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1></header>}
+        {topTitle}
+        {showTitle && !slot && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1></header>}
         <Onboarding area={area} flow={FLOWS[area.id]} onDone={(answers) => updateData((d) => ({ ...d, ...answers }))} />
       </div>
     )
@@ -197,24 +201,27 @@ export default function AreaScreen({ area, showTitle = true }) {
   const Page = PAGES[area.id]
   if (Page) {
     if (!board) return <div className="area">{error ? <p className="error">{error}</p> : <div className="spinner" aria-label="Cargando" />}</div>
-    return <Page area={area} data={board.data} update={updateData} />
+    return <>{topTitle}<Page area={area} data={board.data} update={updateData} /></>
   }
 
   return (
     <div className="area">
-      <header className={`area-head ${showTitle ? '' : 'area-head-floating'}`}>
-        {showTitle && (
-          <div>
-            <h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1>
-          </div>
-        )}
-        {available.length > 0 && (
+      {topTitle}
+      {(() => {
+        const customize = available.length > 0 && (
           <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
             aria-label={editing ? 'Terminar de personalizar' : 'Personalizar tablero'} title={editing ? 'Listo' : 'Personalizar tablero'}>
             <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
           </button>
-        )}
-      </header>
+        )
+        if (slot) return <TopBar>{customize}</TopBar>
+        return (
+          <header className={`area-head ${showTitle ? '' : 'area-head-floating'}`}>
+            {showTitle && <div><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1></div>}
+            {customize}
+          </header>
+        )
+      })()}
 
       {error && <p className="error">{error}</p>}
       {!board && !error && <div className="spinner" aria-label="Cargando" />}
