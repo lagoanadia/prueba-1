@@ -1,6 +1,6 @@
+import { locale } from '../i18n/index.js'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import TopBar from './TopBar.jsx'
 import Icon from '../components/Icon.jsx'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
@@ -14,7 +14,7 @@ const FILTERS = [{ id: 'todo', label: 'Todo' }, { id: 'pendientes', label: 'Pend
 const MAX_IN_CELL = 2
 
 const monthOf = (iso) => iso.slice(0, 7)
-const label = (iso, opts) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', opts)
+const label = (iso, opts) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), opts)
 /** Cambia de mes: "2026-11-09", +1 -> "2026-12-01" */
 const shiftMonth = (iso, n) => { const d = new Date(`${iso.slice(0, 7)}-01T12:00:00`); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('en-CA') }
 
@@ -53,7 +53,6 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   if (loaded && calendar && calendar.layout == null && !calendar.data?.onboarded && Object.keys(calendar.data ?? {}).length === 0) {
     return (
       <div className="area">
-        <header className="area-head"><h1><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="calendario" /></span><span className="sr-only">Calendario</span></h1></header>
         <Onboarding area={{ id: 'calendario', label: 'Calendario', color: '#F1F3F4' }} flow={FLOWS.calendario}
           onDone={(answers) => change('calendario', (d) => ({ ...d, ...answers }))} />
       </div>
@@ -70,7 +69,6 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
     <div className="area cal">
       <header className="area-head">
         <div>
-          <TopBar><h1 className="area-title-text">Calendario</h1></TopBar>
           <div className="cal-nav">
             <button className="mini" onClick={() => move(-1)} aria-label="Anterior">‹</button>
             <span className="muted cal-range">{title}</span>

@@ -13,6 +13,8 @@ const TABS = [
   { id: 'fondo', label: 'Fondo', keys: ['bg'] },
 ]
 // Opciones que son solo un color -> círculos. El resto -> miniaturas con zoom a la parte que cambia.
+// Títulos de cada grupo en la pestaña Cara
+const GROUP_LABELS = { skin: 'Piel', eyes: 'Ojos', brows: 'Cejas', mouth: 'Boca' }
 const SWATCH_KEYS = ['skin', 'hairColor', 'outfitColor', 'bg']
 const ZOOM = {
   eyes: '66 72 60 46', brows: '66 68 60 46', mouth: '72 90 50 36', glasses: '62 74 80 46',
@@ -51,7 +53,9 @@ export default function AvatarEditor({ avatar, onSave, onSignOut, withFriends = 
 
       <div className="avatar-options" key={tab}>
         {current.keys.map((key) => (
-          <div key={key} className={SWATCH_KEYS.includes(key) ? 'swatches' : 'thumbs'}>
+          <section key={key} className={`opt-group ${tab === 'cara' ? 'opt-compact' : ''}`}>
+          {tab === 'cara' && <h4 className="opt-label">{GROUP_LABELS[key]}</h4>}
+          <div className={SWATCH_KEYS.includes(key) ? 'swatches' : 'thumbs'}>
             {AVATAR_OPTIONS[key].map((opt, i) => {
               const on = draft[key] === opt.id
               return SWATCH_KEYS.includes(key) ? (
@@ -64,6 +68,7 @@ export default function AvatarEditor({ avatar, onSave, onSignOut, withFriends = 
               )
             })}
           </div>
+          </section>
         ))}
       </div>
       {withFriends && <Friends />}

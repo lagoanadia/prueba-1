@@ -1,17 +1,19 @@
+import { getLang, locale } from '../i18n/index.js'
+
 // Fechas siempre en la zona horaria del usuario, en formato "2026-11-05".
 export const todayISO = () => new Date().toLocaleDateString('en-CA')
 
 /** "Hoy, jueves 5 de noviembre" */
 export function formatToday() {
   const d = new Date()
-  const weekday = d.toLocaleDateString('es-ES', { weekday: 'long' })
-  const dayMonth = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
-  return `Hoy, ${weekday} ${dayMonth}`
+  const weekday = d.toLocaleDateString(locale(), { weekday: 'long' })
+  const dayMonth = d.toLocaleDateString(locale(), { day: 'numeric', month: 'long' })
+  return getLang() === 'en' ? `Today, ${weekday} ${dayMonth}` : `Hoy, ${weekday} ${dayMonth}`
 }
 
 /** "2026-11-06" -> "vie 6 nov" */
 export function formatShort(iso) {
-  return new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')
+  return new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')
 }
 
 /** Suma (o resta) días a una fecha "YYYY-MM-DD". */
@@ -48,7 +50,7 @@ export function streak(dates, today = todayISO()) {
 }
 
 /** "2026-12-31" -> "31 de diciembre de 2026" */
-export const formatLong = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+export const formatLong = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' })
 
 /** Todo el año actual en columnas de semanas (lunes arriba), estilo GitHub. Huecos = null. */
 export function yearWeeks(today = todayISO()) {
@@ -69,4 +71,4 @@ export function weekStart(iso = todayISO()) {
 /** Los 7 días (lunes a domingo) de la semana de una fecha. */
 export const weekDays = (iso = todayISO()) => Array.from({ length: 7 }, (_, i) => addDays(weekStart(iso), i))
 /** "2026-11-05" -> "jue" */
-export const dayShort = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '')
+export const dayShort = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')

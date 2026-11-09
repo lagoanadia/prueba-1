@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- inblocks: bloques de colores (las áreas) entrando en una bandeja de entrada -->
+  <rect width="512" height="512" rx="116" fill="#FFFFFF"/>
+  <g stroke="#202124" stroke-width="18" stroke-linejoin="round">
+    <rect x="252" y="58" width="96" height="96" rx="24" fill="#EFABFF" transform="rotate(16 300 106)"/>
+    <rect x="150" y="96" width="84" height="84" rx="22" fill="#F9DC5C" transform="rotate(-12 192 138)"/>
+    <rect x="132" y="210" width="112" height="112" rx="26" fill="#3185FC"/>
+    <rect x="268" y="210" width="112" height="112" rx="26" fill="#3DDC97"/>
+    <path d="M84 290H190C196 316 222 334 256 334C290 334 316 316 322 290H428V392C428 416 412 432 388 432H124C100 432 84 416 84 392Z" fill="#E84855"/>
+  </g>
+</svg>

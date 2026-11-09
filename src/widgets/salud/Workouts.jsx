@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useState } from 'react'
 import History from '../../components/History.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
@@ -47,7 +48,7 @@ export default function Workouts({ size, data, update }) {
   const form = (
     <form className={`w-form ${size === 'L' ? 'w-form-col' : ''}`} onSubmit={save}>
       <div className="w-form">
-        <select value={sport} onChange={(e) => setSport(e.target.value)}>{sports.map((s) => <option key={s}>{s}</option>)}</select>
+        <Select value={sport} label="Deporte" onChange={setSport} options={sports.map((s) => ({ value: s, label: s, color: colorOf(sports, s) }))} />
         <input type="number" min="1" placeholder="min" value={min} onChange={(e) => setMin(e.target.value)} style={{ width: 70, flex: 'none' }} />
         {size !== 'L' && <button className="pill pill-on" disabled={!(Number(min) > 0)}>Guardar</button>}
       </div>
@@ -60,7 +61,7 @@ export default function Workouts({ size, data, update }) {
     </form>
   )
 
-  if (size === 'T') return <>{history}<b className="big">{minutes}<small> min hoy</small></b>{list}</>
+  if (size === 'T') return <>{history}<b className="big">{minutes}<small> min hoy</small></b>{form}{list}</>
   if (size === 'M') return <>{history}{form}{list}</>
   return <>{history}{form}{list}</>
 }

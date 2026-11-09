@@ -24,7 +24,7 @@ export default function Progress({ size, data, update }) {
   return (
     <>
       <div className="w-row"><b className="big">{thisWeek}<small> / {goal} min</small></b>
-        {size !== 'M' && <span className="goal-step"><button className="mini" onClick={() => setGoal(-30)} aria-label="Bajar objetivo">−</button><button className="mini" onClick={() => setGoal(30)} aria-label="Subir objetivo">+</button></span>}
+        {<span className="goal-step"><button className="mini" onClick={() => setGoal(-30)} aria-label="Bajar objetivo">−</button><button className="mini" onClick={() => setGoal(30)} aria-label="Subir objetivo">+</button></span>}
       </div>
       <div className="bars" style={{ '--goal': `${(goal / max) * 100}%` }}>
         <span className="bars-goal" aria-hidden="true" />

@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useState } from 'react'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
@@ -25,6 +26,8 @@ export default function Plan({ size, data, update }) {
     update((d) => ({ ...d, sports: [...sportsOf(d), name.trim()] }))
     setName('')
   }
+  // Tocar un día pasa al siguiente deporte (y después a Descanso)
+  const cycle = (i) => { const opts = [...sports, 'Descanso']; setDay(i, opts[(opts.indexOf(plan[i]) + 1) % opts.length]) }
   const removeSport = (s) => update((d) => ({ ...d, sports: sportsOf(d).filter((x) => x !== s), plan: (d.plan ?? DEFAULT_PLAN).map((p) => (p === s ? 'Descanso' : p)) }))
 
   if (size === 'S') {
@@ -32,7 +35,7 @@ export default function Plan({ size, data, update }) {
     return (
       <div className="w-center">
         <span className="w-hint">Hoy</span>
-        <span className="sport-big" style={{ '--c': colorOf(sports, s) }}>{s}</span>
+        <button className="sport-big" style={{ '--c': colorOf(sports, s) }} onClick={() => cycle(todayIdx)} title="Toca para cambiar">{s}</button>
       </div>
     )
   }
@@ -43,7 +46,7 @@ export default function Plan({ size, data, update }) {
         {days.map((d, i) => (
           <div key={d} className={`week-col ${i === todayIdx ? 'is-today' : ''}`}>
             <span className="w-hint">{dayShort(d)}</span>
-            <span className="week-chip" style={{ '--c': colorOf(sports, plan[i]) }} title={plan[i]}>{plan[i] === 'Descanso' ? '—' : plan[i].slice(0, 3)}</span>
+            <button className="week-chip" style={{ '--c': colorOf(sports, plan[i]) }} title={`${plan[i]} · toca para cambiar`} onClick={() => cycle(i)}>{plan[i] === 'Descanso' ? '—' : plan[i].slice(0, 3)}</button>
           </div>
         ))}
       </div>
@@ -74,11 +77,10 @@ export default function Plan({ size, data, update }) {
           <li key={d} className={i === todayIdx ? 'is-today' : ''}>
             <span className="week-day">{dayShort(d)} {Number(d.slice(8))}</span>
             {size === 'L' ? (
-              <select value={plan[i]} onChange={(e) => setDay(i, e.target.value)} style={{ '--c': colorOf(sports, plan[i]) }}>
-                {[...sports, 'Descanso'].map((s) => <option key={s}>{s}</option>)}
-              </select>
+              <Select className="week-sel" value={plan[i]} label={`Deporte del ${dayShort(d)}`} onChange={(v) => setDay(i, v)}
+                options={[...sports, 'Descanso'].map((s) => ({ value: s, label: s, color: colorOf(sports, s) }))} />
             ) : (
-              <span className="week-chip" style={{ '--c': colorOf(sports, plan[i]) }}>{plan[i]}</span>
+              <button className="week-chip" style={{ '--c': colorOf(sports, plan[i]) }} onClick={() => cycle(i)} title="Toca para cambiar">{plan[i]}</button>
             )}
           </li>
         ))}

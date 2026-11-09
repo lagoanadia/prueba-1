@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx'
-import RingArcs from '../components/RingArcs.jsx'
 import { signInWithGoogle } from '../services/authService.js'
 
 export default function LoginScreen({ onSignedIn }) {
@@ -18,8 +17,8 @@ export default function LoginScreen({ onSignedIn }) {
 
   return (
     <main className="login">
-      <RingArcs size={120} stroke={8} className="spin-slow rise" />
-      <h1 className="hello rise" style={{ '--i': 1 }}>Hola</h1>
+      <img src="/logo.svg" alt="" width={120} height={120} className="login-logo rise" />
+      <h1 className="hello rise" style={{ '--i': 1 }}>inblocks</h1>
       <p className="muted rise" style={{ '--i': 2 }}>Organiza tu día hablando.</p>
       <div className="rise" style={{ '--i': 3 }}><GoogleSignInButton onCredential={handleCredential} /></div>
       {error && <p className="error">{error}</p>}

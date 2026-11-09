@@ -41,12 +41,12 @@ export const WIDGETS = {
   mood: { area: 'journal', name: 'Mood tracker', color: '#F9DC5C', component: Mood },
   goals: { area: 'journal', name: 'Metas', color: '#3185FC', component: Goals },
   pixels: { area: 'journal', name: 'Pixels', color: '#3DDC97', component: Pixels },
-  word: { area: 'journal', name: 'Palabra del día', color: '#F9DC5C', component: Word },
+  word: { sizes: ['T', 'L'], area: 'journal', name: 'Palabra del día', color: '#F9DC5C', component: Word },
   bottle: { area: 'journal', name: 'Cápsulas del tiempo', color: '#EFABFF', component: Bottle },
   good: { area: 'journal', name: 'Una cosa buena del día', color: '#3DDC97', component: Good },
   plan: { area: 'salud', name: 'Plan semanal', color: '#3DDC97', component: Plan },
-  workouts: { area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },
-  progress: { area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
+  workouts: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },
+  progress: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
   water: { area: 'salud', name: 'Agua', color: '#3185FC', component: Water },
   sleep: { area: 'salud', name: 'Sueño', color: '#8E7CFF', component: Sleep },
   projects: { area: 'trabajo', name: 'Proyectos', color: '#E84855', component: Projects },
@@ -54,16 +54,26 @@ export const WIDGETS = {
   priorities: { area: 'trabajo', name: 'Prioridades de hoy', color: '#F9DC5C', component: Priorities },
   focus: { area: 'trabajo', name: 'Foco', color: '#E84855', component: Focus },
   deadlines: { area: 'trabajo', name: 'Próximas entregas', color: '#8E7CFF', component: Deadlines },
-  menu: { area: 'comida', name: 'Menú semanal', color: '#EFABFF', component: Menu },
-  dishes: { area: 'comida', name: 'Mis platos', color: '#FF9F43', component: Dishes },
-  recipe: { area: 'comida', name: 'Receta', color: '#3DDC97', component: Recipe },
-  shopping: { area: 'comida', name: 'Lista de la compra', color: '#3185FC', component: Shopping },
-  batch: { area: 'comida', name: 'Batch cooking', color: '#E84855', component: Batch },
+  menu: { sizes: ['T', 'M', 'L'], area: 'comida', name: 'Menú semanal', color: '#EFABFF', component: Menu },
+  dishes: { sizes: ['T', 'M', 'L'], area: 'comida', name: 'Mis platos', color: '#FF9F43', component: Dishes },
+  recipe: { sizes: ['T', 'M', 'L'], area: 'comida', name: 'Receta', color: '#3DDC97', component: Recipe },
+  shopping: { sizes: ['T', 'M', 'L'], area: 'comida', name: 'Lista de la compra', color: '#3185FC', component: Shopping },
+  batch: { sizes: ['T', 'M', 'L'], area: 'comida', name: 'Batch cooking', color: '#E84855', component: Batch },
   subjects: { area: 'estudios', name: 'Asignaturas', color: '#3185FC', component: Subjects },
   syllabus: { area: 'estudios', name: 'Temario', color: '#3DDC97', component: Syllabus },
   timetable: { area: 'estudios', name: 'Horario', color: '#F9DC5C', component: Timetable },
   assignments: { area: 'estudios', name: 'Entregas', color: '#E84855', component: Assignments },
   resources: { area: 'estudios', name: 'Recursos', color: '#8E7CFF', component: Resources },
+}
+
+// Tamaños en los que cada widget es útil de verdad (si no dice nada: todos)
+export const sizesOf = (type) => WIDGETS[type]?.sizes ?? SIZES
+/** Si un tamaño no vale para ese widget, el más parecido que sí vale. */
+export function fitSize(type, size) {
+  const ok = sizesOf(type)
+  if (ok.includes(size)) return size
+  const order = { S: ['M', 'T', 'L'], T: ['M', 'L'], M: ['T', 'L'], L: ['M', 'T'] }[size] ?? ['M', 'T', 'L']
+  return order.find((x) => ok.includes(x)) ?? ok[0]
 }
 
 export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.area === area).map(([type, w]) => ({ type, ...w }))

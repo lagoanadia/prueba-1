@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import TopActions from '../../components/TopActions.jsx'
+import BlockEdit from '../../components/BlockEdit.jsx'
 import Icon from '../../components/Icon.jsx'
-import TopBar, { useTopBar } from '../../screens/TopBar.jsx'
 import { progressFor, soft, SUBJECT_COLORS } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
 import QuickNote from './QuickNote.jsx'
@@ -23,14 +24,13 @@ const ICONS = { entregas: 'exam', tools: 'link', schedule: 'clock' }
 export default function Planner({ data, update, openSubject }) {
   const subjects = data.subjects ?? []
   const blocks = data.planner?.blocks ?? DEFAULT_BLOCKS
-  const slot = useTopBar()
   const [editing, setEditing] = useState(false)
   const [addMenu, setAddMenu] = useState(false)
   const [short, setShort] = useState('')
 
   const setBlocks = (fn) => update((d) => ({ ...d, planner: { ...(d.planner ?? {}), blocks: fn(d.planner?.blocks ?? DEFAULT_BLOCKS) } }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
-  const resize = (id) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span: (x.span % 3) + 1 } : x)))
+  const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (blk) => {
     setBlocks((b) => b.filter((x) => x.id !== blk.id))
     if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
@@ -54,29 +54,29 @@ export default function Planner({ data, update, openSubject }) {
     return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
   }
 
-  const controls = (
-    <>
-      <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAddMenu(false) }}
-        aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
-        <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
-      </button>
-      {editing && (
-        <div className="add-wrap">
-          <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
-          {addMenu && (
-            <div className="card add-menu" role="menu">
-              <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
-              {missing.map((t) => <button key={t} role="menuitem" onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{LABELS[t]}</button>)}
-            </div>
-          )}
-        </div>
-      )}
-    </>
-  )
-
   return (
     <div className="page study">
-      {slot ? <TopBar>{controls}</TopBar> : <header className="page-head"><h1 className="sr-only">Planificador de estudios</h1><span /><div className="page-actions">{controls}</div></header>}
+      <header className="page-head">
+        <h1 className="sr-only">Planificador de estudios</h1>
+        <span />
+        <TopActions><div className="page-actions">
+          {editing && (
+            <div className="add-wrap">
+              <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
+              {addMenu && (
+                <div className="card add-menu" role="menu">
+                  <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
+                  {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{LABELS[t]}</button>)}
+                </div>
+              )}
+            </div>
+          )}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAddMenu(false) }}
+            aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
+            <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
+          </button>
+        </div></TopActions>
+      </header>
 
       <h2 className="page-h2">Asignaturas</h2>
       <div className="subject-cards">
@@ -91,20 +91,14 @@ export default function Planner({ data, update, openSubject }) {
         })}
         <form className="card subject-card subject-add" onSubmit={addSubject}>
           <input placeholder="Asignatura" value={short} onChange={(e) => setShort(e.target.value)} maxLength={14} aria-label="Nueva asignatura (Enter para añadir)" enterKeyHint="done" />
+
         </form>
       </div>
 
       <div className={`plan-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
           <section key={b.id} className={`plan-block span-${b.span} ${b.type === 'note' ? 'is-note' : 'card'}`}>
-            {editing && (
-              <div className="block-tools">
-                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover antes"><Icon name="left" size={18} /></button>
-                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === blocks.length - 1} aria-label="Mover después"><Icon name="right" size={18} /></button>
-                <button className="icon-btn" onClick={() => resize(b.id)} aria-label="Cambiar tamaño" title={`Ancho ${b.span} de 3`}><Icon name="expand" size={18} /></button>
-                <button className="icon-btn" onClick={() => removeBlock(b)} aria-label="Quitar"><Icon name="close" size={18} /></button>
-              </div>
-            )}
+            {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {render(b)}
           </section>
         ))}

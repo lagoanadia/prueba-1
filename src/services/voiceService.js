@@ -3,6 +3,7 @@
  *   1. transcribe(audio) -> POST /api/transcribe -> Groq Whisper -> texto
  *   2. runCommand(text)  -> POST /api/command    -> Groq decide qué apuntar y dónde
  */
+import { getLang } from '../i18n/index.js'
 import { ApiError, request } from './api.js'
 
 /** @param {Blob} audio */
@@ -11,7 +12,7 @@ export async function transcribe(audio) {
     method: 'POST',
     credentials: 'same-origin',
     // Mandamos el audio tal cual; el tipo sin parámetros (p. ej. "audio/webm;codecs=opus" -> "audio/webm")
-    headers: { 'Content-Type': audio.type.split(';')[0] },
+    headers: { 'Content-Type': audio.type.split(';')[0], 'X-Lang': getLang() },
     body: audio,
   })
   const data = await response.json().catch(() => ({}))
@@ -22,5 +23,5 @@ export async function transcribe(audio) {
 /** @returns {Promise<{reply: string, actions: {section: string, title: string}[]}>} */
 export async function runCommand(text) {
   const today = new Date().toLocaleDateString('en-CA') // "2026-11-03" en la zona horaria del usuario
-  return request('/api/command', { method: 'POST', body: { text, today } })
+  return request('/api/command', { method: 'POST', body: { text, today, lang: getLang() } })
 }

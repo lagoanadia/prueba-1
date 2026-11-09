@@ -38,6 +38,11 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to }
       toggle: () => change('trabajo', (x) => ({ ...x, projects: x.projects.map((pp) => (pp.id !== p.id ? pp : { ...pp, tasks: pp.tasks.map((tt) => (tt.id !== t.id ? tt : { ...tt, status: tt.status === 'done' ? 'todo' : 'done', doneAt: tt.status === 'done' ? null : t.due })) })) })),
     }))
   })
+  // Trabajo: agenda (reuniones…)
+  ;(d('trabajo').meetings ?? []).filter((m) => inRange(m.date)).forEach((m) => items.push({
+    key: 'm' + m.id, date: m.date, title: `${m.start} ${m.title}`, type: 'evento', area: 'trabajo', done: Boolean(m.done),
+    toggle: () => change('trabajo', (x) => ({ ...x, meetings: x.meetings.map((y) => (y.id === m.id ? { ...y, done: !y.done } : y)) })),
+  }))
   // Estudios: entregas
   ;(d('estudios').assignments ?? []).filter((a) => inRange(a.due)).forEach((a) => items.push({
     key: 'a' + a.id, date: a.due, title: a.course ? `${a.title} · ${a.course}` : a.title, type: 'entrega', area: 'estudios', done: a.done,

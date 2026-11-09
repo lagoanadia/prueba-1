@@ -9,6 +9,7 @@ import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
 import CalendarPage from './CalendarPage.jsx'
 import useFriendRequests from '../hooks/useFriendRequests.js'
+import FriendToast from '../components/FriendToast.jsx'
 import Avatar from '../components/Avatar.jsx'
 
 /**
@@ -19,7 +20,7 @@ import Avatar from '../components/Avatar.jsx'
  */
 export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings }) {
   const [page, setPage] = useState(0)
-  const requests = useFriendRequests() // peticiones de amistad sin responder
+  const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
   const touchY = useRef(0)
@@ -31,6 +32,7 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
 
   return (
     <div className="m-app">
+      <FriendToast toast={toast} onOpen={() => setSheet('perfil')} onClose={dismiss} />
       <button className="m-cal" onClick={() => setSheet('calendario')} aria-label="Calendario"><Icon name="calendario" size={22} /></button>
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
         <Avatar avatar={avatar} size={40} />

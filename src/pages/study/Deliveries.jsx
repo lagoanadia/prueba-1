@@ -1,3 +1,4 @@
+import Select from '../../components/Select.jsx'
 import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import History from '../../components/History.jsx'
@@ -47,7 +48,7 @@ export default function Deliveries({ data, update, subjects, course = null }) {
             ))}
           </div>
           <input className="line-input" autoFocus placeholder="Qué hay que entregar" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} />
-          {!course && <select value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} aria-label="Asignatura">{subjects.map((s) => <option key={s.id} value={s.short}>{s.short}</option>)}</select>}
+          {!course && <Select value={form.course} label="Asignatura" onChange={(v) => setForm({ ...form, course: v })} options={subjects.map((s) => ({ value: s.short, label: s.short, color: s.color }))} />}
           <input type="date" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} aria-label="Fecha" />
           <button className="icon-btn on" aria-label="Guardar" title="Guardar" disabled={!form.title.trim() || !form.due}><Icon name="check" size={20} /></button>
           <button type="button" className="icon-btn" aria-label="Cancelar" title="Cancelar" onClick={() => setForm(null)}><Icon name="close" size={20} /></button>

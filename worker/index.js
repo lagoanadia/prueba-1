@@ -15,6 +15,7 @@ import entries from './routes/entries.js'
 import board from './routes/board.js'
 import profile from './routes/profile.js'
 import friends from './routes/friends.js'
+import shares from './routes/shares.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -26,6 +27,7 @@ const ROUTES = {
   '/api/board': board,
   '/api/profile': profile,
   '/api/friends': friends,
+  '/api/shares': shares,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }
@@ -33,6 +35,13 @@ const ROUTES = {
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url)
+    // Archivos del frontend: si no existe (p. ej. de un deploy anterior), 404 de verdad en vez de la página,
+    // así el navegador se da cuenta y la app se recarga sola con la versión nueva.
+    if (pathname.startsWith('/assets/')) {
+      const res = await env.ASSETS.fetch(request)
+      if ((res.headers.get('content-type') ?? '').includes('text/html')) return new Response('Not found', { status: 404 })
+      return res
+    }
     const handler = ROUTES[pathname]
     if (!handler) return json({ error: 'Not found' }, 404)
     return handler({ request, env })

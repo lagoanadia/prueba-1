@@ -8,7 +8,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <title>Hola</title>
+    <title>inblocks</title>
+    <script>
+      // Si falta un archivo (la pestaña era de una versión anterior), recargar una sola vez para coger la nueva
+      window.addEventListener('error', function (e) {
+        var t = e.target
+        if (!t || (t.tagName !== 'LINK' && t.tagName !== 'SCRIPT')) return
+        try { if (sessionStorage.getItem('inblocks-reload')) return; sessionStorage.setItem('inblocks-reload', '1') } catch (_) { return }
+        location.reload()
+      }, true)
+      window.addEventListener('load', function () { setTimeout(function () { try { sessionStorage.removeItem('inblocks-reload') } catch (_) {} }, 3000) })
+    </script>
+    <meta name="description" content="inblocks · organiza tu día en bloques, hablando." />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="inblocks" />
   </head>
   <body>
     <div id="root"></div>

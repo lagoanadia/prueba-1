@@ -54,7 +54,7 @@ const TRANSCRIBE_MODEL = 'whisper-large-v3-turbo'
  * @param {Blob} audio  lo que grabó el navegador (webm en Chrome, mp4 en Safari)
  * @returns {Promise<string>}
  */
-export async function groqTranscribe(audio, env, filename) {
+export async function groqTranscribe(audio, env, filename, lang = 'es') {
   const apiKey = env.GROQ_API_KEY
   if (!apiKey) throw new Error('GROQ_API_KEY is not set')
 
@@ -64,10 +64,10 @@ export async function groqTranscribe(audio, env, filename) {
   form.append('model', TRANSCRIBE_MODEL)
   form.append('response_format', 'json')
   // Sin esto Whisper adivina el idioma y con audios cortos se equivoca (p. ej. lo toma por islandés).
-  form.append('language', 'es')
+  form.append('language', lang === 'en' ? 'en' : 'es')
   form.append('temperature', '0')
   // Pista de contexto: ayuda a acertar con vocabulario y puntuación en español.
-  form.append('prompt', 'Notas de voz en español para una agenda: clases, exámenes, gimnasio, hábitos, trabajo y comidas.')
+  form.append('prompt', lang === 'en' ? 'Voice notes for a personal planner: classes, exams, gym, habits, work and meals.' : 'Notas de voz en español para una agenda: clases, exámenes, gimnasio, hábitos, trabajo y comidas.')
 
   const response = await fetch(TRANSCRIBE_URL, {
     method: 'POST',
