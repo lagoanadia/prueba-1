@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS = {
   areas: Object.fromEntries(AREA_IDS.map((id) => [id, { added: true, active: true }])),
   bigText: false,
   iconsOnly: false, // barra lateral solo con iconos
+  lang: null, // 'es' | 'en' (null = el del sistema)
 }
 
 /** Completa lo que falte y descarta lo desconocido. */
@@ -14,7 +15,7 @@ export function normalizeSettings(raw) {
     const added = a?.added !== false
     return [id, { added, active: added && a?.active !== false }]
   }))
-  return { areas, bigText: raw?.bigText === true, iconsOnly: raw?.iconsOnly === true }
+  return { areas, bigText: raw?.bigText === true, iconsOnly: raw?.iconsOnly === true, lang: raw?.lang === 'en' || raw?.lang === 'es' ? raw.lang : null }
 }
 
 /** Ids de las áreas que se ven en la barra lateral. */

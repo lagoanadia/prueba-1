@@ -11,6 +11,7 @@ import { getCurrentUser, signOut } from './services/authService.js'
 import { getProfile, saveAvatar, saveSettings } from './services/profileService.js'
 import { DEFAULT_AVATAR } from './data/avatar.js'
 import { DEFAULT_SETTINGS } from './data/settings.js'
+import { getLang, syncLang } from './i18n/index.js'
 
 /**
  *   user === undefined -> cargando · null -> Login · objeto -> app
@@ -31,7 +32,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (user) getProfile().then((p) => { setAvatar(p.avatar); if (p.settings) setSettings(p.settings) }).catch(() => {})
+    if (user) getProfile().then((p) => { setAvatar(p.avatar); if (p.settings) { setSettings(p.settings); if (p.settings.lang && p.settings.lang !== getLang()) syncLang(p.settings.lang) } }).catch(() => {})
   }, [user])
 
   const handleSaveAvatar = async (next) => setAvatar((await saveAvatar(next)).avatar)
@@ -39,7 +40,7 @@ export default function App() {
   // Se aplica al momento y se guarda en segundo plano
   const handleSaveSettings = (next) => {
     setSettings(next)
-    saveSettings(next).catch(() => {})
+    return saveSettings(next).catch(() => {}) // devuelve la promesa: el cambio de idioma espera a guardarse antes de recargar
   }
 
   // Abrir el asistente empieza a escuchar directamente (menos toques).

@@ -25,7 +25,7 @@ export default async function handler({ request, env }) {
   if (audio.size > MAX_BYTES) return json({ error: 'La grabación es demasiado larga' }, 413)
 
   try {
-    const text = await groqTranscribe(audio, env, `voice.${ext}`)
+    const text = await groqTranscribe(audio, env, `voice.${ext}`, request.headers.get('X-Lang') === 'en' ? 'en' : 'es')
     return json({ text })
   } catch (err) {
     console.error(err)

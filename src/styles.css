@@ -1659,3 +1659,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .gf-examples .chip { font-size: 12px; }
 .gf-preview { border-radius: 16px; background: var(--soft); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
 .gf-save { align-self: stretch; text-align: center; padding: 10px; font-size: 15px; }
+.lang-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 14px; background: var(--soft); flex-shrink: 0; }
+.lang-seg button { border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 11px; cursor: pointer; color: var(--muted); transition: background .2s, color .2s; }
+.lang-seg button.on { background: #FFFFFF; color: var(--text); box-shadow: 0 1px 3px rgba(60, 64, 67, .2); }

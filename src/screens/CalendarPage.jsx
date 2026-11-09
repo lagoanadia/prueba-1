@@ -1,3 +1,4 @@
+import { locale } from '../i18n/index.js'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
@@ -13,7 +14,7 @@ const FILTERS = [{ id: 'todo', label: 'Todo' }, { id: 'pendientes', label: 'Pend
 const MAX_IN_CELL = 2
 
 const monthOf = (iso) => iso.slice(0, 7)
-const label = (iso, opts) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', opts)
+const label = (iso, opts) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), opts)
 /** Cambia de mes: "2026-11-09", +1 -> "2026-12-01" */
 const shiftMonth = (iso, n) => { const d = new Date(`${iso.slice(0, 7)}-01T12:00:00`); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('en-CA') }
 

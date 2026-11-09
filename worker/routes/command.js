@@ -12,8 +12,9 @@ import { AREAS } from '../../src/data/areas.js'
 const MAX_TEXT_CHARS = 2000
 const MAX_ACTIONS = 10
 
-function systemPrompt(today) {
+function systemPrompt(today, lang = 'es') {
   const weekday = new Date(`${today}T12:00:00Z`).toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' })
+  const english = lang === 'en' ? '\nIMPORTANTE: el usuario habla en inglés. Escribe title y reply en inglés; la frase de reply termina con "Shall I save it?".' : ''
   return `Conviertes lo que dice el usuario en entradas de su organizador personal. Hoy es ${weekday} ${today}.
 
 Áreas (usa el id): ${AREAS.map((a) => `${a.id} = ${a.label}`).join(', ')}.
@@ -34,7 +35,7 @@ Reglas:
 - done: true si cuenta algo que YA ha hecho ("hoy he hecho...", "he leído..."); false si es algo pendiente.
 - reply: una sola frase en español que resuma lo que vas a apuntar y termine con "¿Lo confirmo?". Ejemplo: "Apunto la sesión de pierna para hoy. ¿Lo confirmo?"
 - Si no hay nada que apuntar, "actions": [] y en reply explica por qué en una frase.
-- Sin muletillas ni saludos.`
+- Sin muletillas ni saludos.${english}`
 }
 
 /** Por si el modelo envuelve el JSON en texto: nos quedamos con lo que hay entre la primera { y la última }. */
@@ -65,7 +66,7 @@ export default async function handler({ request, env }) {
   try {
     const raw = await groqChat(
       [
-        { role: 'system', content: systemPrompt(today) },
+        { role: 'system', content: systemPrompt(today, body.lang === 'en' ? 'en' : 'es') },
         { role: 'user', content: text },
       ],
       env,

@@ -1,3 +1,4 @@
+import { locale } from '../../i18n/index.js'
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import useMediaQuery from '../../hooks/useMediaQuery.js'
@@ -54,7 +55,7 @@ export default function AgendaBlock({ data, update }) {
         <button className="icon-btn" onClick={() => setAnchor(addDays(anchor, -step))} aria-label="Anterior"><Icon name="left" size={18} /></button>
         <button className="pill pill-sm" onClick={() => setAnchor(today)} disabled={days.includes(today)}>Hoy</button>
         <button className="icon-btn" onClick={() => setAnchor(addDays(anchor, step))} aria-label="Siguiente"><Icon name="right" size={18} /></button>
-        <span className="muted agenda-range">{new Date(`${days[0]}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}{days.length > 1 && ` – ${new Date(`${days[6]}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`}</span>
+        <span className="muted agenda-range">{new Date(`${days[0]}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}{days.length > 1 && ` – ${new Date(`${days[6]}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}`}</span>
       </div>
 
       <div className="agenda-grid" style={{ '--cols': days.length, '--row': `${ROW}px` }}>
