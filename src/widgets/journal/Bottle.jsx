@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import AddPopup from '../AddPopup.jsx'
 import History from '../../components/History.jsx'
+import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
+import Select from '../../components/Select.jsx'
+import { getFriends, getShared, openShared, sendCapsule } from '../../services/friendsService.js'
 import { addDays, daysUntil, formatLong, formatShort, todayISO } from '../../lib/dates.js'
 
 const TINTS = ['#9CC5FF', '#B9F2D6', '#F7C8FF', '#FFE59A', '#FFC4A8']
@@ -28,7 +31,19 @@ const tintOf = (b) => TINTS[[...b.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)
  */
 export default function Bottle({ size, data, update }) {
   const today = todayISO()
-  const all = [...(data.bottles ?? [])].sort((a, b) => a.openDate.localeCompare(b.openDate))
+  // Cápsulas que te han mandado tus amigos (vienen del servidor; el texto llega solo cuando ya se pueden abrir)
+  const [inbox, setInbox] = useState([])
+  const [friends, setFriends] = useState([])
+  const [to, setTo] = useState('') // '' = solo para mí
+  const [sent, setSent] = useState('')
+  useEffect(() => {
+    let alive = true
+    getShared().then((r) => alive && setInbox(r.items ?? [])).catch(() => {})
+    getFriends().then((r) => alive && setFriends(r.friends ?? [])).catch(() => {})
+    return () => { alive = false }
+  }, [])
+  const received = inbox.filter((x) => x.kind === 'capsule').map((x) => ({ ...x, remote: true }))
+  const all = [...(data.bottles ?? []), ...received].sort((a, b) => a.openDate.localeCompare(b.openDate))
   const ready = all.filter((b) => b.openDate <= today && !b.openedAt)
   const sealed = all.filter((b) => b.openDate > today)
   const opened = all.filter((b) => b.openedAt).reverse()
@@ -36,23 +51,33 @@ export default function Bottle({ size, data, update }) {
   const [date, setDate] = useState(addDays(today, 30))
   const [reading, setReading] = useState(null)
 
-  const seal = (e) => {
+  const seal = async (e) => {
     e.preventDefault()
-    if (!text.trim() || date <= today) return
-    update((d) => ({ ...d, bottles: [...(d.bottles ?? []), { id: crypto.randomUUID(), text: text.trim(), openDate: date, createdAt: today }] }))
+    if (!text.trim() || date <= today) return false
+    if (to) {
+      try { await sendCapsule(to, text.trim(), date); setSent(`Enviada a @${to}. La podrá abrir el ${formatLong(date)}.`) } catch (err) { setSent(err.message); return false }
+    } else {
+      update((d) => ({ ...d, bottles: [...(d.bottles ?? []), { id: crypto.randomUUID(), text: text.trim(), openDate: date, createdAt: today }] }))
+    }
     setText('')
+    return true
   }
   const open = (b) => {
+    if (b.remote) {
+      openShared(b.id).then((r) => setInbox(r.items ?? [])).catch(() => {})
+      setReading(b)
+      return
+    }
     setReading(b)
     update((d) => ({ ...d, bottles: d.bottles.map((x) => (x.id === b.id ? { ...x, openedAt: today } : x)) }))
   }
 
-  const history = <History title="Cápsulas abiertas" empty="Aún no has abierto ninguna" items={opened.map((b) => ({ id: b.id, date: formatShort(b.openedAt), text: b.text }))} />
+  const history = <History title="Cápsulas abiertas" empty="Aún no has abierto ninguna" items={opened.map((b) => ({ id: b.id, date: formatShort(b.openedAt) + (b.from ? ` · de @${b.from.username}` : ''), text: b.text }))} />
   const popup = reading && createPortal(
     <div className="popup" role="dialog" aria-modal="true" aria-label="Cápsula abierta">
       <div className="popup-backdrop" onClick={() => setReading(null)} />
       <div className="popup-panel capsule-open">
-        <header className="area-head"><h2>Escrita el {formatLong(reading.createdAt)}</h2><button className="icon-btn" onClick={() => setReading(null)} aria-label="Cerrar"><Icon name="close" /></button></header>
+        <header className="area-head"><h2>{reading.from ? `De @${reading.from.username} · ` : ''}Escrita el {formatLong(reading.createdAt)}</h2><button className="icon-btn" onClick={() => setReading(null)} aria-label="Cerrar"><Icon name="close" /></button></header>
         <p className="w-text capsule-text">{reading.text}</p>
       </div>
     </div>,
@@ -60,15 +85,23 @@ export default function Bottle({ size, data, update }) {
   )
 
   const writeForm = (close) => (
-    <form className="w-form w-form-col" onSubmit={(e) => { seal(e); if (text.trim() && date > today) close?.() }}>
-      <textarea autoFocus placeholder="Escribe a tu yo del futuro. La botella quedará cerrada hasta la fecha que elijas." value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4} />
+ <form className="w-form w-form-col" onSubmit={async (e) => { if (await seal(e)) close?.() }}>
+      {friends.length > 0 && (
+        <div className="w-form capsule-to">
+          <span className="w-hint">Para</span>
+          <Select value={to} label="Para quién" onChange={setTo}
+            options={[{ value: '', label: 'Solo yo (privada)', color: '#EFABFF' }, ...friends.map((f) => ({ value: f.username, label: `@${f.username}`, color: '#9CC5FF' }))]} />
+        </div>
+      )}
+      <textarea autoFocus placeholder={to ? `Escribe a @${to}. No podrá leerla hasta la fecha que elijas.` : 'Escribe a tu yo del futuro. La botella quedará cerrada hasta la fecha que elijas.'} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4} />
       <div className="w-form">
         <input type="date" value={date} min={addDays(today, 1)} onChange={(e) => setDate(e.target.value)} style={{ flex: 'none' }} aria-label="Se abre el" />
-        <button className="pill pill-pink" disabled={!text.trim()}>Sellar</button>
+        <button className="pill pill-pink" disabled={!text.trim()}>{to ? 'Enviar' : 'Sellar'}</button>
       </div>
     </form>
   )
   const addBtn = <AddPopup label="Nueva cápsula">{writeForm}</AddPopup>
+  const sentNote = sent && <p className="w-hint capsule-sent" role="status" onClick={() => setSent('')}>{sent}</p>
   const shelf = [...ready, ...sealed]
   const one = (b, big = false) => {
     const isReady = b.openDate <= today
@@ -77,6 +110,7 @@ export default function Bottle({ size, data, update }) {
       <button key={b.id} className={`bottle ${isReady ? 'is-ready' : ''} ${big ? 'bottle-big' : ''}`} onClick={() => isReady && open(b)} disabled={!isReady}
         title={isReady ? 'Toca para abrir' : `Se abre el ${formatLong(b.openDate)}`} aria-label={isReady ? 'Abrir cápsula' : `Cápsula cerrada, faltan ${left} días`}>
         <BottleArt tint={tintOf(b)} ready={isReady} />
+        {b.from && <span className="bottle-from" title={`De @${b.from.username}`}><Avatar avatar={b.from.avatar} size={22} /></span>}
         <span className="bottle-tag">{isReady ? 'Abrir' : left === 1 ? '1 día' : `${left} días`}</span>
       </button>
     )
@@ -94,7 +128,7 @@ export default function Bottle({ size, data, update }) {
 
   return (
     <>
-      {history}{popup}{addBtn}
+      {history}{popup}{addBtn}{sentNote}
       <div className={`shelf shelf-${size}`}>
         {shelf.map((b) => one(b))}
         {shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula con el +</span>}
