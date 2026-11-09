@@ -26,6 +26,7 @@ export default function Schedule({ data, update, subjects }) {
     return () => document.removeEventListener('pointerdown', close)
   }, [menu])
   const [dragId, setDragId] = useState(null)
+  const [editing, setEditing] = useState(false) // por defecto se ve; la cuadrícula solo al editar
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
   const options = [...subjects.map((s) => s.short), ...tt.labels.map((l) => `#${l.id}`)]
@@ -53,9 +54,11 @@ export default function Schedule({ data, update, subjects }) {
   const addLabel = ({ name, color }) => { patch((t) => ({ ...t, labels: [...t.labels, { id: crypto.randomUUID(), name, color }] })); setDialog(null) }
   const removeLabel = (id) => patch((t) => ({ ...t, labels: t.labels.filter((l) => l.id !== id), cells: Object.fromEntries(Object.entries(t.cells).filter(([, v]) => v !== `#${id}`)) }))
 
+  if (!editing) return <ScheduleView tt={tt} times={times} look={look} onEdit={() => setEditing(true)} />
+
   return (
     <div className="schedule">
-      <div className="deliv-head"><h2 className="page-h2">Horario</h2></div>
+      <div className="deliv-head"><h2 className="page-h2">Horario</h2><button className="icon-btn on sv-edit" onClick={() => setEditing(false)} aria-label="Terminar de editar" title="Listo"><Icon name="check" size={18} /></button></div>
 
       <div className="tt-grid">
         <div className="tt-row tt-head">
@@ -139,5 +142,76 @@ function LabelDialog({ onSubmit, onClose }) {
       </form>
     </div>,
     document.body
+  )
+}
+
+const PX = 1.15 // píxeles por minuto
+
+/**
+ * El horario para MIRAR: la semana como un calendario. Cada clase es un bloque del color de su asignatura
+ * con su duración real; las horas seguidas de la misma asignatura se juntan. Sin casillas vacías.
+ */
+function ScheduleView({ tt, times, look, onEdit }) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => { const id = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(id) }, [])
+  const today = (now.getDay() + 6) % 7
+  const [day, setDay] = useState(today < 5 ? today : 0) // en móvil se ve un día
+  if (!times.length) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2><button className="icon-btn sv-edit" onClick={onEdit} aria-label="Editar horario"><Icon name="pen" size={18} /></button></div><p className="muted">Pulsa el lápiz para crear tu horario.</p></div>
+  const first = times[0].start
+  const last = times[times.length - 1].end
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  const y = (m) => (m - first) * PX
+
+  // Bloques de cada día: juntar filas seguidas con lo mismo
+  const blocksOf = (c) => {
+    const out = []
+    tt.rows.forEach((row, i) => {
+      if (row.kind === 'break') return
+      const v = tt.cells[`${row.id}:${c}`]
+      const prev = out[out.length - 1]
+      if (!v) return
+      if (prev && prev.v === v && prev.end === times[i].start) prev.end = times[i].end
+      else out.push({ v, start: times[i].start, end: times[i].end, ...look(v) })
+    })
+    return out
+  }
+  const breaks = tt.rows.map((r, i) => (r.kind === 'break' ? { ...times[i], label: r.label } : null)).filter(Boolean)
+  const current = today < 5 ? blocksOf(today).find((b) => nowMin >= b.start && nowMin < b.end) : null
+  const next = today < 5 ? blocksOf(today).find((b) => b.start > nowMin) : null
+  const hours = []
+  for (let h = Math.ceil(first / 60) * 60; h <= last; h += 60) hours.push(h)
+
+  return (
+    <div className="schedule sv">
+      <div className="deliv-head">
+        <h2 className="page-h2">Horario</h2>
+        {current ? <span className="sv-now" style={{ background: current.color }}>Ahora: <b>{current.name}</b> · hasta {fmt(current.end)}</span>
+          : next ? <span className="sv-now">Luego: <b>{next.name}</b> a las {fmt(next.start)}</span> : null}
+        <button className="icon-btn sv-edit" onClick={onEdit} aria-label="Editar horario" title="Editar"><Icon name="pen" size={18} /></button>
+      </div>
+      <div className="sv-days" role="tablist">
+        {DAYS.map((d, i) => <button key={d} role="tab" aria-selected={day === i} className={`sv-daytab ${day === i ? 'on' : ''} ${i === today ? 'is-today' : ''}`} onClick={() => setDay(i)}>{d.slice(0, 3)}</button>)}
+      </div>
+      <div className="sv-grid" style={{ '--h': `${(last - first) * PX}px` }}>
+        <div className="sv-hours">{hours.map((h) => <span key={h} style={{ top: y(h) }}>{fmt(h)}</span>)}</div>
+        {DAYS.map((d, c) => (
+          <div key={d} className={`sv-col ${c === today ? 'is-today' : ''} ${c === day ? 'is-shown' : ''}`}>
+            <span className="sv-dayname">{d}</span>
+            <div className="sv-track">
+              {breaks.map((b) => <span key={b.start} className="sv-break" style={{ top: y(b.start), height: (b.end - b.start) * PX }} title={b.label} />)}
+              {blocksOf(c).map((b) => {
+                const isNow = c === today && nowMin >= b.start && nowMin < b.end
+                return (
+                  <div key={b.start} className={`sv-block ${isNow ? 'is-now' : ''}`} style={{ top: y(b.start), height: (b.end - b.start) * PX - 3, background: b.color }}>
+                    <b>{b.name}</b><span>{fmt(b.start)}–{fmt(b.end)}</span>
+                  </div>
+                )
+              })}
+              {c === today && nowMin >= first && nowMin <= last && <span className="sv-line" style={{ top: y(nowMin) }} />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
