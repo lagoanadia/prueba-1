@@ -1843,7 +1843,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 @keyframes sv-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .sv-empty-ring { animation: none; } }
 /* Horario (editar): inicio – fin y duración con − / + en cada franja */
-.schedule .tt-row { grid-template-columns: 56px 170px repeat(5, minmax(0, 1fr)); }
+.schedule .tt-row { grid-template-columns: 56px 180px repeat(5, minmax(0, 1fr)); }
 .tt-time-edit { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .tt-time-edit .tt-times { display: flex; align-items: center; gap: 2px; }
 .tt-time-edit input[type=time] { width: 74px; font-size: 14px; font-weight: 600; color: var(--text); padding: 2px 2px; border-radius: 8px; background: #FFFFFF; border: 1.5px solid var(--line); }
