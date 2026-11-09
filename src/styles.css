@@ -1387,3 +1387,4 @@ button.subject-card:hover { transform: translateY(-3px); }
   .wk-taskform select { max-width: none; flex-basis: 100%; }
 }
 @media (hover: none) { .wk-x { opacity: 1; } }
+.login-logo { border-radius: 28px; box-shadow: var(--shadow); }
