@@ -8,7 +8,7 @@ import { PROJECT_COLORS, colorOf, selectedOf, soft } from './shared.js'
  * Proyectos: cada uno con su color, plazo y progreso. Tocar uno lo enciende o apaga en el tablero
  * (se pueden mezclar varios); si están todos encendidos, tocar uno deja SOLO ese.
  */
-export default function ProjectsBlock({ data, update }) {
+export default function ProjectsBlock({ data, update, openProject }) {
   const projects = projectsOf(data)
   const selected = selectedOf(data)
   const all = selected.length === projects.length
@@ -26,7 +26,7 @@ export default function ProjectsBlock({ data, update }) {
     e.preventDefault()
     if (!name.trim()) return
     const id = crypto.randomUUID()
-    update((d) => ({ ...d, projects: [...projectsOf(d), { id, name: name.trim(), color: PROJECT_COLORS[projectsOf(d).length % PROJECT_COLORS.length], deadline: null, tasks: [] }] }))
+    update((d) => ({ ...d, projects: [...projectsOf(d), { id, name: name.trim(), createdAt: new Date().toLocaleDateString('en-CA'), color: PROJECT_COLORS[projectsOf(d).length % PROJECT_COLORS.length], deadline: null, tasks: [] }] }))
     setName('')
     setAdding(false)
   }
@@ -55,6 +55,7 @@ export default function ProjectsBlock({ data, update }) {
                 <Icon name="calendario" size={14} />{p.deadline ? formatShort(p.deadline).replace(/^\S+ /, '') : '—'}
                 <input type="date" value={p.deadline ?? ''} onChange={(e) => setDeadline(p.id, e.target.value || null)} aria-label={`Fecha límite de ${p.name}`} />
               </label>
+              <button className="wk-open" onClick={() => openProject(p.id)} aria-label={`Abrir ${p.name}`} title="Abrir proyecto"><Icon name="arrow" size={16} /></button>
               <button className="wk-x" onClick={() => remove(p)} aria-label={`Borrar ${p.name}`}><Icon name="close" size={12} /></button>
             </div>
           )

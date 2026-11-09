@@ -6,6 +6,7 @@ import Tools from './study/Tools.jsx'
 import AgendaBlock from './work/AgendaBlock.jsx'
 import BoardBlock from './work/BoardBlock.jsx'
 import ProjectsBlock from './work/ProjectsBlock.jsx'
+import ProjectView from './work/ProjectView.jsx'
 
 // Bloques de la página. span = ancho (1-3 columnas); tall = ocupa dos filas
 const DEFAULT_BLOCKS = [
@@ -31,6 +32,7 @@ export default function WorkPage({ data, update }) {
   const blocks = data.workBlocks ?? DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
+  const [open, setOpen] = useState(null) // proyecto abierto por dentro
 
   const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(d.workBlocks ?? DEFAULT_BLOCKS) }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
@@ -47,7 +49,7 @@ export default function WorkPage({ data, update }) {
 
   const render = (b) => {
     switch (b.type) {
-      case 'projects': return <ProjectsBlock data={data} update={update} />
+      case 'projects': return <ProjectsBlock data={data} update={update} openProject={(id) => { setOpen(id); window.scrollTo?.({ top: 0 }) }} />
       case 'board': return <BoardBlock data={data} update={update} />
       case 'agenda': return <AgendaBlock data={data} update={update} />
       case 'tools': return <Tools data={data} update={update} bare />
@@ -58,6 +60,8 @@ export default function WorkPage({ data, update }) {
       }
     }
   }
+
+  if (open && (data.projects ?? []).some((p) => p.id === open)) return <ProjectView data={data} update={update} projectId={open} back={() => setOpen(null)} />
 
   return (
     <div className="page work">

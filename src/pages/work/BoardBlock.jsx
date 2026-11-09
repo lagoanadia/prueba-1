@@ -10,10 +10,10 @@ const NEXT_STATE = { todo: 'doing', doing: 'done', done: 'todo' }
 const STATE_ICON = { todo: 'list', doing: 'clock', done: 'check' }
 
 /** Tablero con las tareas de los proyectos encendidos (mezclados, cada una con el color de su proyecto). */
-export default function BoardBlock({ data, update }) {
+export default function BoardBlock({ data, update, onlyProject = null }) {
   const today = todayISO()
   const projects = projectsOf(data)
-  const selected = selectedOf(data)
+  const selected = onlyProject ? [onlyProject] : selectedOf(data)
   const shown = projects.filter((p) => selected.includes(p.id))
   const mixed = shown.length > 1
   const [title, setTitle] = useState('')
