@@ -65,7 +65,7 @@ export default function Sudoku({ data, update }) {
           const peer = sel && (sel[0] === r || sel[1] === c || (Math.floor(sel[0] / 3) === Math.floor(r / 3) && Math.floor(sel[1] / 3) === Math.floor(c / 3)))
           const wrong = v && !given && v !== solution[r][c]
           return (
-            <button key={r + '-' + c} role="gridcell" className={`sdk-cell ${given ? 'given' : ''} ${isSel ? 'sel' : peer ? 'peer' : ''} ${v && v === same ? 'same' : ''} ${wrong ? 'wrong' : ''} ${c % 3 === 2 && c < 8 ? 'br' : ''} ${r % 3 === 2 && r < 8 ? 'bb' : ''}`}
+            <button key={r + '-' + c} role="gridcell" className={`sdk-cell ${given ? 'given' : ''} ${isSel ? 'is-sel' : peer ? 'peer' : ''} ${v && v === same ? 'same' : ''} ${wrong ? 'wrong' : ''} ${c % 3 === 2 && c < 8 ? 'br' : ''} ${r % 3 === 2 && r < 8 ? 'bb' : ''}`}
               onClick={() => setSel([r, c])} aria-label={`Fila ${r + 1}, columna ${c + 1}${v ? `: ${v}` : ''}`}>{v || ''}</button>
           )
         }))}

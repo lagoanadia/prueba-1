@@ -11,24 +11,34 @@ const LANG = { es: 'español', en: 'English' }
 // ---------- Spelling Bee ----------
 /** Comprueba y limpia un panal: 7 letras distintas, la central en todas las palabras, solo esas letras, 4+ letras. */
 export function cleanBee(raw) {
-  const letters = [...new Set(strip(raw?.letters ?? '').split(''))]
-  const center = strip(raw?.center ?? '')[0]
-  if (letters.length !== 7 || !center || !letters.includes(center)) return null
+  // Las letras salen del pangrama (una palabra con 7 letras distintas): así siempre hay al menos uno
+  const pan = strip(raw?.pangram ?? '')
+  const letters = pan ? [...new Set(pan)] : [...new Set(strip(raw?.letters ?? '').split(''))]
+  if (letters.length !== 7) return null
+  let center = strip(raw?.center ?? '')[0]
+  if (!letters.includes(center)) center = letters.find((l) => 'AEIOU'.includes(l)) ?? letters[0]
   const set = new Set(letters)
-  const words = [...new Set((raw.words ?? []).map(strip))].filter((w) => w.length >= 4 && w.includes(center) && [...w].every((c) => set.has(c)))
-  if (words.length < 12) return null
+  const words = [...new Set([...(raw.words ?? []), pan].map(strip))].filter((w) => w.length >= 4 && w.includes(center) && [...w].every((c) => set.has(c)))
   const pangrams = words.filter((w) => letters.every((l) => w.includes(l)))
-  if (!pangrams.length) return null
+  if (words.length < 8 || !pangrams.length) return null
   return { letters: letters.filter((l) => l !== center), center, words: words.sort(), pangrams }
 }
 
+// Panales de reserva (por si la IA falla): comprobados a mano
+const FALLBACK_BEE = {
+  es: { pangram: 'CAMINOS', center: 'A', words: ['CAMA', 'CAMAS', 'CAMINO', 'CAMINOS', 'CASINO', 'CASO', 'COSA', 'MANO', 'MANOS', 'MASA', 'MISA', 'NASA', 'OCASO', 'SANA', 'SANO', 'ASMA', 'MONA', 'CANOA', 'CAÑA'] },
+  en: { pangram: 'PAINTER', center: 'A', words: ['PAINTER', 'PAIN', 'PAINT', 'TAPE', 'RATE', 'TRAIN', 'PART', 'PANT', 'PANE', 'NEAR', 'EARN', 'RAIN', 'PIRATE', 'PARENT', 'TAPER', 'PATIENT', 'PATTERN', 'APART', 'TRAP', 'PEAR', 'TEAR', 'NEAT'] },
+}
+
 async function makeBee(env, lang) {
-  const sys = `Create a Spelling Bee puzzle in ${LANG[lang]}. Pick 7 different letters (one is the center) so that there is at least one common ${LANG[lang]} word (a "pangram") using all 7. List 20 to 40 common, real ${LANG[lang]} words of 4+ letters that use ONLY those letters (letters can repeat) and ALWAYS contain the center letter. No proper nouns, no plurals of rare words, no conjugations nobody uses. Answer only JSON: {"letters":"ABCDEFG","center":"A","words":["...","..."]}`
-  for (let i = 0; i < 3; i++) {
-    const bee = cleanBee(parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.9 })))
-    if (bee) return bee
+  const sys = `Create a Spelling Bee puzzle in ${LANG[lang]}. First pick a common ${LANG[lang]} word (the "pangram") that has EXACTLY 7 DIFFERENT letters. Its 7 letters are the puzzle letters; choose a vowel of it as the center. Then list 25 to 40 common, real ${LANG[lang]} words of 4 or more letters built ONLY from those 7 letters (letters may repeat) and ALWAYS containing the center letter. No proper nouns. Answer only JSON: {"pangram":"...","center":"A","words":["...","..."]}`
+  for (let i = 0; i < 5; i++) {
+    try {
+      const bee = cleanBee(parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.8 })))
+      if (bee) return bee
+    } catch (e) { console.error(e) }
   }
-  throw new Error('No he podido crear el panal de hoy')
+  return cleanBee(FALLBACK_BEE[lang])
 }
 
 // ---------- Mini crucigrama ----------
@@ -91,12 +101,15 @@ export function buildCrossword(entries, size = 7, shuffle = 0) {
 /** Prueba varios órdenes y se queda con la rejilla que más palabras cruza. */
 export function bestCrossword(entries) {
   let best = null
-  for (let k = 0; k < 40; k++) { const cw = buildCrossword(entries, 7, k); if (cw && (!best || cw.clues.length > best.clues.length)) best = cw }
+  // Mini de verdad: rejilla pequeña (5×5) y lo más llena posible
+  const fill = (cw) => cw.cells.flat().filter(Boolean).length / (cw.w * cw.h)
+  const score = (cw) => cw.clues.length * 2 + fill(cw) * 10
+  for (const size of [5, 6]) for (let k = 0; k < 120; k++) { const cw = buildCrossword(entries, size, k); if (cw && cw.clues.length >= 6 && (!best || score(cw) > score(best))) best = cw }
   return best
 }
 
 async function makeCrossword(env, lang) {
-  const sys = `Write 14 entries for a small crossword in ${LANG[lang]}: common words of 3 to 7 letters (no spaces, no proper nouns) with a short, clever, general-knowledge clue each (culture, science, language, everyday life). Answer only JSON: {"entries":[{"answer":"...","clue":"..."}]}`
+  const sys = `Write 26 entries for a small crossword in ${LANG[lang]}: common words of 3 to 5 letters (mostly 3 and 4, many vowels) (no spaces, no proper nouns) with a short, clever, general-knowledge clue each (culture, science, language, everyday life). Answer only JSON: {"entries":[{"answer":"...","clue":"..."}]}`
   for (let i = 0; i < 3; i++) {
     const raw = parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.9 }))
     const cw = bestCrossword(raw?.entries ?? [])
