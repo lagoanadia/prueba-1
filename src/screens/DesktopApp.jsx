@@ -11,11 +11,12 @@ import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 
 /** Vista portátil: menú lateral + contenido. */
-export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignOut, avatar, onSaveAvatar }) {
+export default function DesktopApp({ firstName, today, onHome, onTalk, onSignOut, avatar, onSaveAvatar }) {
   const [view, setView] = useState('inicio')
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
-    <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => setView(id)} aria-current={view === id ? 'page' : undefined}>
+    <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
+      style={view === id && id !== 'inicio' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} 22%, #FFFFFF)` } : undefined}>
       <span className="ic" style={{ background: id === 'inicio' && view === id ? '#FFFFFF' : color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
       </span>
@@ -59,7 +60,7 @@ export default function DesktopApp({ firstName, today, onToggle, onTalk, onSignO
             <h1 className="hello hello-xl rise">Hola, {firstName}</h1>
             <div className="rise" style={{ '--i': 1, width: '100%', display: 'flex', justifyContent: 'center' }}><Donut entries={today} /></div>
             <p className="date rise" style={{ '--i': 2 }}>{formatToday()}</p>
-            <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks entries={today} onToggle={onToggle} /></div>
+            <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks items={today} /></div>
           </div>
         )}
         {area && <AreaScreen area={area} key={area.id} />}

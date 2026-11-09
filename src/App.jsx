@@ -6,8 +6,8 @@ import VoiceOverlay from './components/VoiceOverlay.jsx'
 import useEntries from './hooks/useEntries.js'
 import useMediaQuery from './hooks/useMediaQuery.js'
 import useVoiceAssistant from './hooks/useVoiceAssistant.js'
+import useAgenda from './hooks/useAgenda.js'
 import { getCurrentUser, signOut } from './services/authService.js'
-import { todayISO } from './lib/dates.js'
 import { getProfile, saveAvatar } from './services/profileService.js'
 import { DEFAULT_AVATAR } from './data/avatar.js'
 
@@ -22,6 +22,7 @@ export default function App() {
   const isDesktop = useMediaQuery('(min-width: 900px)')
   const { entries, add, toggle, error } = useEntries(Boolean(user))
   const assistant = useVoiceAssistant(add)
+  const agenda = useAgenda(Boolean(user), entries, toggle)
 
   useEffect(() => {
     getCurrentUser().then(setUser).catch(() => setUser(null))
@@ -52,12 +53,11 @@ export default function App() {
   if (user === null) return <LoginScreen onSignedIn={setUser} />
 
   const firstName = user.name?.split(' ')[0] ?? ''
-  const today = todayISO()
   const props = {
     firstName,
     user,
-    today: entries.filter((e) => e.date === today),
-    onToggle: toggle,
+    today: agenda.items,
+    onHome: agenda.reload, // al volver a Inicio, recargamos lo de hoy por si cambió algo en las áreas
     onTalk: openVoice,
     onSignOut: handleSignOut,
     avatar,
