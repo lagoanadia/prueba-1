@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
-import { cleanUrl, faviconOf } from './helpers.js'
+import SiteIcon from '../../components/SiteIcon.jsx'
+import { cleanUrl } from './helpers.js'
 
 /** Herramientas: enlaces como iconos grandes de la app (Drive, Vercel…). Sin nombre; el icono sale del propio enlace. */
 export default function Tools({ data, update, bare = false }) {
@@ -27,7 +28,7 @@ export default function Tools({ data, update, bare = false }) {
         {tools.map((t) => (
           <div key={t.id} className="tool">
             <a href={t.url} target="_blank" rel="noreferrer noopener" aria-label={t.name} title={t.name}>
-              <img src={faviconOf(t.url)} alt="" loading="lazy" onError={(e) => { e.currentTarget.replaceWith(Object.assign(document.createElement('b'), { textContent: t.name[0]?.toUpperCase() })) }} />
+              <SiteIcon url={t.url} name={t.name} />
             </a>
             <button className="tool-x" onClick={() => remove(t.id)} aria-label={`Quitar ${t.name}`}><Icon name="close" size={14} color="#FFFFFF" /></button>
           </div>

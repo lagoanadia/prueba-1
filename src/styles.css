@@ -1549,3 +1549,11 @@ label.pv-stat { cursor: pointer; }
 .pv-mile.edge-r .pv-mile-label { transform: translateX(-30%); }
 .pv-mile.edge-l .pv-mile-label { transform: translateX(30%); }
 .doc-sheet { max-width: 900px; width: 100%; margin: 0 auto; }
+/* Iconos de webs: nunca estirados */
+.tool .site-img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+.site-letter { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700; color: var(--text); }
+.site-small { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.site-small img { width: 44%; height: auto; image-rendering: auto; }
+.tool a { container-type: inline-size; }
+.site-letter { font-size: 42cqw; }
+.site-small img { width: auto; max-width: 46%; min-width: 30%; }
