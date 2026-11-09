@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Avatar from '../components/Avatar.jsx'
 import Icon from '../components/Icon.jsx'
-import { FriendsBox, FriendsProvider, UsernameBox } from '../components/Friends.jsx'
+import { FriendsBox, FriendsProvider } from '../components/Friends.jsx'
+import useFriendRequests from '../hooks/useFriendRequests.js'
 import useAllBoards from '../hooks/useAllBoards.js'
 import useSocial from '../hooks/useSocial.js'
 import { EMOJIS } from '../services/socialService.js'
@@ -48,7 +49,7 @@ export default function FriendsPage() {
         <>
           <div className="fp-strip">
             {state.friends.map((f) => <MoodFace key={f.username} person={f} onClick={() => setFriend(f.username)} />)}
-            {state.friends.length === 0 && <span className="muted">Añade amigos en Ajustes y aparecerán aquí</span>}
+            <AddFriendsButton />
           </div>
           <div className="tabs fp-tabs" role="tablist">
             {TABS.map(([id, label]) => <button key={id} role="tab" aria-selected={tab === id} className={`tab ${tab === id ? 'on' : ''}`} onClick={() => setTab(id)}>{label}</button>)}
@@ -335,7 +336,6 @@ function Settings({ state, run }) {
   const Toggle = ({ on, label, k }) => <button className="share-feed" onClick={() => run('settings', { [k]: !on })} aria-pressed={on}><span><b>{label}</b></span><span className={`toggle-dot ${on ? 'on' : ''}`} /></button>
   return (
     <div className="feed">
-      <FriendsProvider><UsernameBox /><FriendsBox /></FriendsProvider>
       <div className="card feed-card">
         <b>Compartir automáticamente</b>
         <Toggle on={me.shareMood} label="Cómo me siento hoy" k="shareMood" />
@@ -353,5 +353,20 @@ function Settings({ state, run }) {
         {!state.feed.some((p) => p.mine) && <span className="muted">Nada todavía</span>}
       </div>
     </div>
+  )
+}
+
+/** + junto a las caras: añadir amigos por su nombre, responder peticiones y ver tus amigos. */
+function AddFriendsButton() {
+  const [open, setOpen] = useState(false)
+  const { count } = useFriendRequests()
+  return (
+    <>
+      <button className="mood-btn fp-add" onClick={() => setOpen(true)} aria-label="Añadir amigos">
+        <span className="fp-add-ic"><Icon name="plus" size={24} />{count > 0 && <span className="notif-badge">{count}</span>}</span>
+        <span>Añadir</span>
+      </button>
+      {open && <Sheet title="Amigos" onClose={() => setOpen(false)}><FriendsProvider><FriendsBox /></FriendsProvider></Sheet>}
+    </>
   )
 }

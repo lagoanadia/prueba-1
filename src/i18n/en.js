@@ -133,6 +133,7 @@ const EN = {
   'sesiones': 'sessions', '{0} sesiones hoy': '{0} sessions today', '{0} sesión hoy': '{0} session today', 'raciones para lo que queda de semana': 'portions for the rest of the week', 'vasos': 'glasses', 'de': 'of', 'toca para pausar': 'tap to pause',
   'Falta VITE_GOOGLE_CLIENT_ID (mira .env.example)': 'VITE_GOOGLE_CLIENT_ID is missing (see .env.example)',
   'libros': 'books', 'veces': 'times', 'palabras': 'words', 'Ahorrar': 'Save', 'Aprender palabras': 'Learn words', '{0} de': '{0} of', 'de {0}': 'of {0}', '·': '·',
+  'Elige tu nombre de usuario en Perfil para añadir amigos': 'Pick your username in Profile to add friends', 'Añadir amigos': 'Add friends', 'Avatar': 'Avatar',
   'Amigos': 'Friends', 'Feed': 'Feed', 'Retos': 'Challenges', 'Edificio': 'Building', 'Ajustes': 'Settings', 'Ver todo': 'See all', 'Tus amigos hoy': 'Your friends today', 'Comentar': 'Comment', '1 comentario': '1 comment', '{0} comentarios': '{0} comments',
   'Dejar de compartir': 'Stop sharing', 'privado': 'private', 'para ti': 'for you', 'ahora': 'now', 'hace {0} min': '{0} min ago', 'hace {0} h': '{0} h ago', 'Escribe un comentario…': 'Write a comment…', 'Gracias': 'Thanks',
   'Guardar en mis platos': 'Save to my dishes', 'Guardada en tus platos': 'Saved to your dishes', 'El feed está tranquilo': 'The feed is quiet', 'Compartir': 'Share', 'En el feed': 'In the feed', 'Lo ven todos tus amigos y pueden reaccionar': 'All your friends see it and can react',

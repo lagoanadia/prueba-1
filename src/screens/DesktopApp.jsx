@@ -3,10 +3,7 @@ import { FocusCtx } from './focus.js'
 import Icon from '../components/Icon.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
-import { FriendsProvider, FriendsBox, UsernameBox } from '../components/Friends.jsx'
 import AreaScreen from './AreaScreen.jsx'
-import AvatarEditor from './AvatarEditor.jsx'
-import AreasSettings from './AreasSettings.jsx'
 import CalendarPage from './CalendarPage.jsx'
 import Avatar from '../components/Avatar.jsx'
 import { AREAS } from '../data/areas.js'
@@ -15,6 +12,7 @@ import { formatToday } from '../lib/dates.js'
 import useFriendRequests from '../hooks/useFriendRequests.js'
 import useCloseDay from '../hooks/useCloseDay.js'
 import FriendsPage from './FriendsPage.jsx'
+import ProfilePage from './ProfilePage.jsx'
 import FriendsStrip from '../components/FriendsStrip.jsx'
 import FriendToast from '../components/FriendToast.jsx'
 
@@ -36,7 +34,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} 22%, #FFFFFF)` } : undefined}>
       <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : ''}`} style={{ background: color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
-        {id === 'perfil' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
+        {id === 'amigos' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </span>
       {!iconsOnly && label}
     </button>
@@ -47,7 +45,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   return (
     <FocusCtx.Provider value={focusCtx}>
     <div className="d-app">
-      <FriendToast toast={toast} onOpen={() => setView('perfil')} onClose={dismiss} />
+      <FriendToast toast={toast} onOpen={() => setView('amigos')} onClose={dismiss} />
       {closed && <div className="toast" role="status"><span className="toast-block" />{closed}<button className="pill" onClick={() => setView('amigos')}>Ver</button></div>}
       {focus && !navOpen ? (
         <nav className="sidebar sidebar-slim" aria-label="Navegación">
@@ -70,7 +68,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       <main className="d-main">
         <div className="d-top">
           <div className="d-top-left">
-            {view === 'perfil' && <h1 className="perfil-title">Ajustes del perfil</h1>}
+            {view === 'perfil' && <h1 className="perfil-title">Perfil</h1>}
             {(area || view === 'calendario' || view === 'amigos') && (
               <h1 className="d-title" key={view}>{area ? `Área de ${area.label}` : view === 'amigos' ? 'Amigos' : 'Calendario'}</h1>
             )}
@@ -106,20 +104,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         {area && <AreaScreen area={area} key={area.id} />}
         {view === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
         {view === 'amigos' && <FriendsPage />}
-        {view === 'perfil' && (
-          <FriendsProvider>
-            <div className="perfil-cols">
-              <div className="perfil-left">
-                <AreasSettings settings={settings} onSave={onSaveSettings} />
-                <FriendsBox />
-              </div>
-              <div className="perfil-right">
-                <UsernameBox />
-                <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} withFriends={false} />
-              </div>
-            </div>
-          </FriendsProvider>
-        )}
+        {view === 'perfil' && <ProfilePage avatar={avatar} onSaveAvatar={onSaveAvatar} settings={settings} onSaveSettings={onSaveSettings} onSignOut={onSignOut} />}
         </div>
       </main>
     </div>

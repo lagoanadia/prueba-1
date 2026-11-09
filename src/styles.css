@@ -1770,3 +1770,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .m-friends { position: absolute; top: 16px; right: 112px; z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--soft); display: grid; place-items: center; cursor: pointer; }
 .toast-block { width: 22px; height: 16px; border-radius: 5px; border: 2px solid var(--text); background: #3185FC; flex-shrink: 0; }
 .good-share { align-self: flex-end; }
+.fp-add-ic { position: relative; width: 62px; height: 62px; border-radius: 50%; border: 2px dashed var(--ring); display: grid; place-items: center; color: var(--muted); transition: border-color .2s, transform .2s var(--ease); }
+.fp-add:hover .fp-add-ic { border-color: var(--text); transform: translateY(-2px); }
+.fp-add-ic .notif-badge { top: -2px; right: -2px; }
+.m-friends { position: absolute; }
+.m-friends .notif-badge { top: -4px; right: -4px; }
+.profile-page { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+.profile-tabs { align-self: center; }
+.profile-avatar, .profile-settings { width: 100%; max-width: 720px; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: fade .25s ease both; }
+.profile-avatar .friends-row { width: 100%; max-width: 520px; }
