@@ -57,6 +57,8 @@ export default function App() {
     firstName,
     user,
     today: agenda.items,
+    entries,
+    toggleEntry: toggle,
     onHome: agenda.reload, // al volver a Inicio, recargamos lo de hoy por si cambió algo en las áreas
     onTalk: openVoice,
     onSignOut: handleSignOut,

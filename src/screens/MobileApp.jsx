@@ -7,6 +7,7 @@ import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
+import CalendarPage from './CalendarPage.jsx'
 import Avatar from '../components/Avatar.jsx'
 
 /**
@@ -15,7 +16,7 @@ import Avatar from '../components/Avatar.jsx'
  *    El deslizamiento horizontal es CSS puro (scroll-snap), así se siente nativo.
  *  - Abajo: barras de color de las áreas. Al tocarlas (o deslizar hacia arriba) sube una hoja.
  */
-export default function MobileApp({ firstName, today, onHome, onTalk, onSignOut, avatar, onSaveAvatar }) {
+export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar }) {
   const [page, setPage] = useState(0)
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
@@ -28,6 +29,7 @@ export default function MobileApp({ firstName, today, onHome, onTalk, onSignOut,
 
   return (
     <div className="m-app">
+      <button className="m-cal" onClick={() => setSheet('calendario')} aria-label="Calendario"><Icon name="calendario" size={22} /></button>
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
         <Avatar avatar={avatar} size={40} />
       </button>
@@ -79,11 +81,12 @@ export default function MobileApp({ firstName, today, onHome, onTalk, onSignOut,
         {sheet && (
           <>
             <header className="sheet-head" style={{ background: area?.color ?? '#F1F3F4' }}>
-              <span className="ic" style={{ background: '#FFFFFF' }}><Icon name={area?.id ?? 'perfil'} /></span>
-              <h2>{area?.label ?? 'Perfil'}</h2>
+              <span className="ic" style={{ background: '#FFFFFF' }}><Icon name={area?.id ?? sheet} /></span>
+              <h2>{area?.label ?? (sheet === 'calendario' ? 'Calendario' : 'Perfil')}</h2>
               <button className="icon-btn" onClick={() => setSheet(null)} aria-label="Cerrar"><Icon name="close" /></button>
             </header>
             <div className="sheet-body">
+              {sheet === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
               {sheet === 'perfil' && <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />}
               {area && <AreaScreen area={area} key={area.id} showTitle={false} />}
             </div>

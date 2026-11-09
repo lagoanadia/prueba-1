@@ -15,7 +15,8 @@ const SIZES = ['S', 'T', 'M', 'L'] // T = vertical (1x2)
 
 const key = (userId, area) => `board:${userId}:${area}`
 
-export const isArea = (area) => AREA_IDS.includes(area)
+// Tableros válidos: las 5 áreas + el calendario (eventos y cumpleaños propios)
+export const isArea = (area) => AREA_IDS.includes(area) || area === 'calendario'
 
 export async function getBoard(env, userId, area) {
   return (await env.DATA.get(key(userId, area), 'json')) ?? { layout: null, data: {} }

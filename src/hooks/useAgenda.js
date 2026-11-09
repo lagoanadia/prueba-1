@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getBoard, saveBoard } from '../services/boardService.js'
+import useAllBoards from './useAllBoards.js'
 import { AREA_IDS } from '../data/areas.js'
 import { todayISO } from '../lib/dates.js'
 import { MEALS, dishName, dishesOf } from '../widgets/comida/food.js'
@@ -11,23 +10,7 @@ import { MEALS, dishName, dishesOf } from '../widgets/comida/food.js'
  * y las tareas que apuntaste por voz. Marcar una casilla guarda el cambio en su área.
  */
 export default function useAgenda(enabled, entries, toggleEntry) {
-  const [boards, setBoards] = useState({})
-
-  const load = useCallback(() => {
-    if (!enabled) return
-    Promise.all(AREA_IDS.map((a) => getBoard(a).then((b) => [a, b]).catch(() => [a, null])))
-      .then((pairs) => setBoards(Object.fromEntries(pairs.filter(([, b]) => b))))
-  }, [enabled])
-  useEffect(load, [load])
-
-  // Cambia los datos de un área y los guarda (manteniendo su layout)
-  const change = (area, fn) => setBoards((all) => {
-    const b = all[area]
-    if (!b) return all
-    const next = { ...b, data: fn(b.data ?? {}) }
-    saveBoard(area, { layout: b.layout ?? [], data: next.data }).catch(() => {})
-    return { ...all, [area]: next }
-  })
+  const { boards, change, reload: load } = useAllBoards(enabled, AREA_IDS)
 
   const today = todayISO()
   const dayIdx = (new Date(`${today}T12:00:00`).getDay() + 6) % 7

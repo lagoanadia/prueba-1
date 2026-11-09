@@ -5,12 +5,13 @@ import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
 import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
+import CalendarPage from './CalendarPage.jsx'
 import Avatar from '../components/Avatar.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 
 /** Vista portátil: menú lateral + contenido. */
-export default function DesktopApp({ firstName, today, onHome, onTalk, onSignOut, avatar, onSaveAvatar }) {
+export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar }) {
   const [view, setView] = useState('inicio')
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
@@ -62,7 +63,7 @@ export default function DesktopApp({ firstName, today, onHome, onTalk, onSignOut
           </div>
         )}
         {area && <AreaScreen area={area} key={area.id} />}
-        {view === 'calendario' && <BlankPage title="Calendario" icon="calendario" />}
+        {view === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
         {view === 'perfil' && (
           <BlankPage title="Perfil" icon="perfil">
             <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />

@@ -100,4 +100,17 @@ export const FLOWS = {
       }
     },
   },
+
+  calendario: {
+    steps: [
+      { id: 'birthdays', type: 'items', title: '¿Qué cumpleaños no quieres olvidar?', fields: [{ key: 'name', placeholder: 'Mamá' }, { key: 'date', type: 'date' }] },
+      { id: 'events', type: 'items', title: '¿Alguna fecha importante pronto?', fields: [{ key: 'title', placeholder: 'Viaje a Lisboa' }, { key: 'date', type: 'date' }] },
+    ],
+    build: (a) => ({
+      events: [
+        ...(a.birthdays ?? []).filter((b) => b.name && b.date).map((b) => ({ id: id(), title: `Cumpleaños de ${b.name}`, date: b.date, type: 'cumpleaños', area: null, done: false })),
+        ...(a.events ?? []).filter((e) => e.title && e.date).map((e) => ({ id: id(), title: e.title, date: e.date, type: 'evento', area: null, done: false })),
+      ],
+    }),
+  },
 }
