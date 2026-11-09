@@ -23,12 +23,57 @@ export async function setUsername(env, userId, username) {
   return null
 }
 
-export const getFriendIds = async (env, userId) => (await env.DATA.get(`friends:${userId}`, 'json')) ?? []
-export const saveFriendIds = (env, userId, ids) => env.DATA.put(`friends:${userId}`, JSON.stringify(ids))
+// Listas de ids guardadas en KV como JSON
+const getIds = async (env, key) => (await env.DATA.get(key, 'json')) ?? []
+const putIds = (env, key, ids) => env.DATA.put(key, JSON.stringify(ids))
+const addId = async (env, key, id) => { const ids = await getIds(env, key); if (!ids.includes(id)) await putIds(env, key, [...ids, id]) }
+const removeId = async (env, key, id) => { const ids = await getIds(env, key); if (ids.includes(id)) await putIds(env, key, ids.filter((x) => x !== id)) }
 
-/** Lista de amigos con su nombre y su avatar (lo único que se comparte). */
-export async function listFriends(env, userId) {
-  const ids = await getFriendIds(env, userId)
-  const friends = await Promise.all(ids.map(async (id) => ({ username: await getUsername(env, id), avatar: (await getProfile(env, id)).avatar })))
-  return friends.filter((f) => f.username) // si alguien dejó de tener nombre, no se muestra
+//   "friends:<id>"   -> amigos (siempre en los dos sentidos)
+//   "req-in:<id>"    -> peticiones recibidas · "req-out:<id>" -> peticiones enviadas
+export const getFriendIds = (env, id) => getIds(env, `friends:${id}`)
+
+/** Envía una petición. Si el otro ya me la había enviado, somos amigos directamente. Devuelve 'sent' | 'friends'. */
+export async function sendRequest(env, me, other) {
+  if ((await getFriendIds(env, me)).includes(other)) return 'friends'
+  if ((await getIds(env, `req-in:${me}`)).includes(other)) { await accept(env, me, other); return 'friends' }
+  await addId(env, `req-out:${me}`, other)
+  await addId(env, `req-in:${other}`, me)
+  return 'sent'
+}
+
+/** Acepta una petición recibida: amigos en los dos sentidos. */
+export async function accept(env, me, other) {
+  if (!(await getIds(env, `req-in:${me}`)).includes(other)) return false
+  await clearRequests(env, me, other)
+  await addId(env, `friends:${me}`, other)
+  await addId(env, `friends:${other}`, me)
+  return true
+}
+
+/** Borra cualquier petición entre los dos (rechazar o cancelar). */
+export async function clearRequests(env, a, b) {
+  await removeId(env, `req-in:${a}`, b); await removeId(env, `req-out:${b}`, a)
+  await removeId(env, `req-in:${b}`, a); await removeId(env, `req-out:${a}`, b)
+}
+
+/** Deja de ser amigos (en los dos lados) y borra peticiones pendientes. */
+export async function unfriend(env, a, b) {
+  await removeId(env, `friends:${a}`, b)
+  await removeId(env, `friends:${b}`, a)
+  await clearRequests(env, a, b)
+}
+
+// Lo único que se comparte de otra persona: su nombre y su avatar
+const publicUser = async (env, id) => ({ username: await getUsername(env, id), avatar: (await getProfile(env, id)).avatar })
+const publicList = async (env, ids) => (await Promise.all(ids.map((id) => publicUser(env, id)))).filter((u) => u.username)
+
+/** Estado completo para la pantalla de amigos. */
+export async function friendsState(env, id) {
+  const [friends, incoming, outgoing] = await Promise.all([
+    getFriendIds(env, id).then((ids) => publicList(env, ids)),
+    getIds(env, `req-in:${id}`).then((ids) => publicList(env, ids)),
+    getIds(env, `req-out:${id}`).then((ids) => publicList(env, ids)),
+  ])
+  return { username: await getUsername(env, id), friends, incoming, outgoing: outgoing.map((u) => u.username) }
 }

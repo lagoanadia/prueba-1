@@ -12,10 +12,12 @@ import Avatar from '../components/Avatar.jsx'
 import { AREAS } from '../data/areas.js'
 import { activeAreaIds } from '../data/settings.js'
 import { formatToday } from '../lib/dates.js'
+import useFriendRequests from '../hooks/useFriendRequests.js'
 
 /** Vista portátil: menú lateral + contenido. */
 export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [view, setView] = useState('inicio')
+  const requests = useFriendRequests() // peticiones de amistad sin responder
   const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
   const [navOpen, setNavOpen] = useState(true)
   const focusCtx = useMemo(() => ({ setFocus: (v) => { setFocus(v); if (!v) setNavOpen(true) } }), [])
@@ -27,6 +29,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       style={view === id && id !== 'inicio' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} 22%, #FFFFFF)` } : undefined}>
       <span className="ic" style={{ background: id === 'inicio' && view === id ? '#FFFFFF' : color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
+        {id === 'perfil' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </span>
       {label}
     </button>

@@ -1134,3 +1134,14 @@ button.subject-card:hover { transform: translateY(-3px); }
 .friends-list li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 18px; background: #F8F9FA; font-size: 14px; font-weight: 600; animation: rise .35s var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
 .friends-list li span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .friends-list .prio-x { position: absolute; top: 4px; right: 6px; }
+.friends-ok { font-size: 14px; font-weight: 600; color: #1E8E5A; }
+.friend-requests { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; }
+.friend-requests li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid var(--blue); animation: rise .35s var(--ease) both; flex-wrap: wrap; }
+.friend-requests li > span { flex: 1; min-width: 140px; font-size: 15px; }
+.friends-list li.is-pending { opacity: .75; }
+.friends-wait { width: 72px; height: 72px; border-radius: 50%; border: 2px dashed var(--ring); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); }
+.friends-tag { font-size: 12px; font-weight: 600; }
+/* Globo de notificaciones (peticiones de amistad) */
+.notif-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #E84855; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; animation: pop .4s var(--ease) both; }
+.nv .ic { position: relative; }
+.m-avatar { overflow: visible; }

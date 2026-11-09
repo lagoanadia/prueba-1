@@ -8,6 +8,7 @@ import { formatToday } from '../lib/dates.js'
 import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
 import CalendarPage from './CalendarPage.jsx'
+import useFriendRequests from '../hooks/useFriendRequests.js'
 import Avatar from '../components/Avatar.jsx'
 
 /**
@@ -18,6 +19,7 @@ import Avatar from '../components/Avatar.jsx'
  */
 export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings }) {
   const [page, setPage] = useState(0)
+  const requests = useFriendRequests() // peticiones de amistad sin responder
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
   const touchY = useRef(0)
@@ -32,6 +34,7 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
       <button className="m-cal" onClick={() => setSheet('calendario')} aria-label="Calendario"><Icon name="calendario" size={22} /></button>
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
         <Avatar avatar={avatar} size={40} />
+        {requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </button>
 
       <div className="m-pager" ref={pagerRef} onScroll={onScroll}>
