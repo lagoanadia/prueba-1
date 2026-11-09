@@ -1121,3 +1121,16 @@ button.subject-card:hover { transform: translateY(-3px); }
 .tool a b { color: var(--text); text-decoration: none; }
 .ws { height: calc(100vh / var(--dz) - 130px); }
 .tool a { text-decoration: none; color: var(--text); }
+/* Amigos (Perfil) */
+.friends { width: 100%; max-width: 520px; margin: 28px auto 0; display: flex; flex-direction: column; gap: 10px; }
+.friends-row { display: flex; align-items: center; gap: 8px; border: 2px solid var(--line); border-radius: 22px; padding: 4px 4px 4px 16px; transition: border-color .2s; }
+.friends-row:focus-within { border-color: var(--blue); }
+.friends-row input { flex: 1; min-width: 0; font: inherit; font-size: 16px; border: none; outline: none; background: none; padding: 6px 0; }
+.friends-at { font-weight: 700; color: var(--muted); }
+.friends-h { font-size: 18px; font-weight: 600; margin-top: 10px; }
+.friends-hint { font-size: 14px; }
+.friends-error { font-size: 14px; font-weight: 600; color: #B3261E; }
+.friends-list { list-style: none; padding: 0; margin: 4px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.friends-list li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 18px; background: #F8F9FA; font-size: 14px; font-weight: 600; animation: rise .35s var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.friends-list li span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.friends-list .prio-x { position: absolute; top: 4px; right: 6px; }

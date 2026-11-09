@@ -14,6 +14,7 @@ import logout from './routes/logout.js'
 import entries from './routes/entries.js'
 import board from './routes/board.js'
 import profile from './routes/profile.js'
+import friends from './routes/friends.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -24,6 +25,7 @@ const ROUTES = {
   '/api/entries': entries,
   '/api/board': board,
   '/api/profile': profile,
+  '/api/friends': friends,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }
