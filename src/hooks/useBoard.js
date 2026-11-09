@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getBoard, saveBoard } from '../services/boardService.js'
+import { BOARDS_EVENT } from '../services/entriesService.js'
 import { defaultLayout } from '../widgets/registry.js'
 
 /**
@@ -22,6 +23,16 @@ export default function useBoard(area) {
         isNew: b.layout == null && Object.keys(b.data ?? {}).length === 0,
       }))
       .catch((e) => setError(e.message))
+  }, [area])
+
+  // Si el asistente ha apuntado algo en esta área, se recarga sola (sin refrescar la página)
+  useEffect(() => {
+    const onChange = (e) => {
+      if (!e.detail?.includes(area)) return
+      getBoard(area).then((b) => { loaded.current = false; setBoard((cur) => ({ ...(cur ?? {}), layout: b.layout ?? cur?.layout ?? defaultLayout(area), data: b.data ?? {}, isNew: false })) }).catch(() => {})
+    }
+    window.addEventListener(BOARDS_EVENT, onChange)
+    return () => window.removeEventListener(BOARDS_EVENT, onChange)
   }, [area])
 
   useEffect(() => {

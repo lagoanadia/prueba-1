@@ -33,6 +33,10 @@ export function cleanAction(a) {
     date: DATE_RE.test(a.date) ? a.date : null,
     time: TIME_RE.test(a.time) ? a.time : null,
     done: a.done === true,
+    // Para colocarlo en su sitio (ver server/assistantContext.js)
+    kind: ['task', 'assignment', 'meeting', 'note'].includes(a.kind) ? a.kind : 'note',
+    project: typeof a.project === 'string' ? a.project.trim().slice(0, 60) || null : null,
+    course: typeof a.course === 'string' ? a.course.trim().slice(0, 60) || null : null,
   }
 }
 

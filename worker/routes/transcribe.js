@@ -3,6 +3,7 @@
 import { json, rejectMethod } from '../../server/http.js'
 import { getSessionUser } from '../../server/session.js'
 import { groqTranscribe } from '../../server/groq.js'
+import { userContext, vocabulary } from '../../server/assistantContext.js'
 
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB: de sobra para un mensaje de voz
 
@@ -25,7 +26,8 @@ export default async function handler({ request, env }) {
   if (audio.size > MAX_BYTES) return json({ error: 'La grabación es demasiado larga' }, 413)
 
   try {
-    const text = await groqTranscribe(audio, env, `voice.${ext}`, request.headers.get('X-Lang') === 'en' ? 'en' : 'es')
+    const vocab = env.DATA ? vocabulary(await userContext(env, user.id).catch(() => ({ subjects: [], projects: [], habits: [], dishes: [], sports: [] }))) : ''
+    const text = await groqTranscribe(audio, env, `voice.${ext}`, request.headers.get('X-Lang') === 'en' ? 'en' : 'es', vocab)
     return json({ text })
   } catch (err) {
     console.error(err)

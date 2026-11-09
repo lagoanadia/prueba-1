@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getBoard, saveBoard } from '../services/boardService.js'
+import { BOARDS_EVENT } from '../services/entriesService.js'
 
 /**
  * Carga los tableros de varias áreas a la vez y permite cambiar sus datos (se guardan solos).
@@ -15,6 +16,8 @@ export default function useAllBoards(enabled, areas) {
       .then((pairs) => setBoards(Object.fromEntries(pairs.filter(([, b]) => b))))
   }, [enabled, key])
   useEffect(load, [load])
+  // Lo que apunta el asistente aparece al momento en Inicio y en el Calendario
+  useEffect(() => { window.addEventListener(BOARDS_EVENT, load); return () => window.removeEventListener(BOARDS_EVENT, load) }, [load])
 
   const change = (area, fn) => setBoards((all) => {
     const b = all[area] ?? { layout: null, data: {} }

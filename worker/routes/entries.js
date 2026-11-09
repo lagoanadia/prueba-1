@@ -6,6 +6,7 @@
 import { json, readJson, rejectMethod } from '../../server/http.js'
 import { getSessionUser } from '../../server/session.js'
 import { listEntries, addEntries, updateEntry, deleteEntry, cleanAction } from '../../server/entries.js'
+import { placeActions } from '../../server/assistantContext.js'
 
 const MAX_ACTIONS = 10
 
@@ -25,7 +26,11 @@ export default async function handler({ request, env }) {
     if (!Array.isArray(body.actions)) return json({ error: 'actions must be an array' }, 400)
     const actions = body.actions.slice(0, MAX_ACTIONS).map(cleanAction).filter(Boolean)
     if (actions.length === 0) return json({ error: 'No valid actions' }, 400)
-    return json({ entries: await addEntries(env, user.id, actions) })
+    // Cada cosa a su sitio (entregas, tareas de proyecto, agenda); lo demás, como nota de voz
+    const today = /^\d{4}-\d{2}-\d{2}$/.test(body.today ?? '') ? body.today : new Date().toISOString().slice(0, 10)
+    const { rest, placed } = await placeActions(env, user.id, actions, today)
+    const entries = rest.length ? await addEntries(env, user.id, rest) : await listEntries(env, user.id)
+    return json({ entries, placed })
   }
 
   if (typeof body.id !== 'string') return json({ error: 'Missing id' }, 400)
