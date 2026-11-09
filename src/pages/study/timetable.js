@@ -15,7 +15,7 @@ export const DEFAULT_BREAK = 20
 export function normalizeTimetable(tt, subjects = []) {
   // Primera vez: una franja de clase de 50 min a las 8:30, con las casillas vacías
   if (!tt) return { start: '8:30', rows: [{ id: 'r-default', kind: 'class', dur: DEFAULT_CLASS }], cells: {}, labels: [] }
-  if (tt?.rows) return { start: tt.start ?? '8:30', rows: tt.rows, cells: tt.cells ?? {}, labels: tt.labels ?? [] }
+  if (tt?.rows) return { start: tt.start ?? '8:30', rows: tt.rows.length ? tt.rows : [{ id: 'r-default', kind: 'class', dur: DEFAULT_CLASS }], cells: tt.cells ?? {}, labels: tt.labels ?? [] }
   const slots = tt?.slots ?? []
   const shorts = new Set(subjects.map((s) => s.short))
   const rows = []

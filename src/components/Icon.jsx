@@ -50,6 +50,7 @@ const PATHS = {
   history: ['M3.5 12a8.5 8.5 0 1 0 2.5-6', 'M3.5 4.5V8H7', 'M12 7.5V12l3 2'],
   // Editor, estudios y acciones (iconos en lugar de cabeceras)
   plus: ['M12 5V19M5 12H19'],
+  grip: ['M9 6V6.1M9 12V12.1M9 18V18.1M15 6V6.1M15 12V12.1M15 18V18.1'],
   pen: ['M4 20L5 15L16 4L20 8L9 19Z', 'M14 6L18 10'],
   trash: ['M5 7H19M10 7V4H14V7M7 7L8 20H16L17 7M10 11V16M14 11V16'],
   bold: ['M7 5H13C16 5 16 11 13 11H7ZM7 11H14C17 11 17 19 14 19H7Z'],

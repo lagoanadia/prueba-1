@@ -1693,3 +1693,21 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .d-title { font-size: 32px; }
 .d-top-left .d-top-actions .customize { width: 40px; height: 40px; }
 .d-top { justify-content: space-between; }
+
+/* Horario: asas tipo Notion delante de las horas (aparecen al acercarte a la fila) */
+.tt-row { position: relative; grid-template-columns: 56px 96px repeat(5, minmax(0, 1fr)); }
+.tt-row:has(.tt-menu) { z-index: 40; }
+.tt-hand { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 0; opacity: 0; transition: opacity .15s; }
+.tt-row:hover .tt-hand, .tt-row:focus-within .tt-hand, .tt-hand.open { opacity: 1; }
+@media (hover: none) { .tt-hand { opacity: 1; } }
+.tt-h-btn { width: 26px; height: 28px; border: none; background: none; border-radius: 8px; color: #9AA0A6; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.tt-h-btn:hover, .tt-h-btn.on { background: var(--soft); color: var(--text); }
+.tt-h-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
+.tt-grip { cursor: grab; }
+.tt-hand .tt-menu { left: 0; top: calc(100% + 4px); min-width: 190px; }
+.tt-menu button:disabled { opacity: .4; cursor: default; }
+.tt-time .tt-start, .tt-time .tt-start-text { width: 5ch; text-align: right; padding: 2px 0; }
+.tt-time .tt-end { width: 5ch; text-align: left; padding: 2px 0; }
+.tt-time input { font-size: 14px; }
+.schedule .tt-grid { position: relative; z-index: 5; }
+.schedule .tt-row { overflow: visible; }

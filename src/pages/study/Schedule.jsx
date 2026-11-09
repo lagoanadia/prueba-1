@@ -17,14 +17,14 @@ export default function Schedule({ data, update, subjects }) {
   const today = (new Date().getDay() + 6) % 7
   const [brush, setBrush] = useState(null)
   const [dialog, setDialog] = useState(null) // 'label'
-  const [menu, setMenu] = useState(false)
+  const [rowMenu, setRowMenu] = useState(null) // { id, mode: 'add' | 'grip' } de la fila con menú abierto
   const menuRef = useRef(null)
   useEffect(() => {
-    if (!menu) return
-    const close = (e) => { if (!menuRef.current?.contains(e.target)) setMenu(false) }
+    if (!rowMenu) return
+    const close = (e) => { if (!menuRef.current?.contains(e.target)) setRowMenu(null) }
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
-  }, [menu])
+  }, [rowMenu])
   const [dragId, setDragId] = useState(null)
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
@@ -44,11 +44,16 @@ export default function Schedule({ data, update, subjects }) {
     patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, dur: end - times[i].start } : r)) }))
   }
   const setStart = (text) => { const m = toMin(text); if (m != null) patch((t) => ({ ...t, start: fmt(m) })) }
-  const removeRow = (id) => patch((t) => ({ ...t, rows: t.rows.filter((r) => r.id !== id) }))
+  const removeRow = (id) => { patch((t) => (t.rows.length > 1 ? { ...t, rows: t.rows.filter((r) => r.id !== id) } : t)); setRowMenu(null) } // siempre queda al menos una franja
   const move = (from, to) => patch((t) => { const rows = [...t.rows]; if (to < 0 || to >= rows.length) return t; const [r] = rows.splice(from, 1); rows.splice(to, 0, r); return { ...t, rows } })
-  const addRow = (kind) => {
-    patch((t) => ({ ...t, rows: [...t.rows, { id: crypto.randomUUID(), kind, dur: kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK, ...(kind === 'class' ? {} : { label: 'Recreo' }) }] }))
-    setMenu(false)
+  const addRowAfter = (index, kind) => {
+    patch((t) => {
+      const row = { id: crypto.randomUUID(), kind, dur: kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK, ...(kind === 'class' ? {} : { label: 'Recreo' }) }
+      const rows = [...t.rows]
+      rows.splice(index + 1, 0, row)
+      return { ...t, rows }
+    })
+    setRowMenu(null)
   }
   const addLabel = ({ name, color }) => { patch((t) => ({ ...t, labels: [...t.labels, { id: crypto.randomUUID(), name, color }] })); setDialog(null) }
   const removeLabel = (id) => patch((t) => ({ ...t, labels: t.labels.filter((l) => l.id !== id), cells: Object.fromEntries(Object.entries(t.cells).filter(([, v]) => v !== `#${id}`)) }))
@@ -64,9 +69,20 @@ export default function Schedule({ data, update, subjects }) {
         </div>
         {tt.rows.map((row, i) => (
           <div key={row.id} className={`tt-row ${dragId === row.id ? 'is-drag' : ''}`} onDragOver={(e) => dragId && e.preventDefault()} onDrop={() => { if (dragId) { move(tt.rows.findIndex((r) => r.id === dragId), i); setDragId(null) } }}>
-            <button className="tt-grip" draggable onDragStart={(e) => { setDragId(row.id); e.dataTransfer.effectAllowed = 'move' }} onDragEnd={() => setDragId(null)}
-              onKeyDown={(e) => { if (e.key === 'ArrowUp') { e.preventDefault(); move(i, i - 1) } if (e.key === 'ArrowDown') { e.preventDefault(); move(i, i + 1) } }}
-              aria-label="Mover fila (arrastra o usa las flechas)" title="Arrastra para mover"><Icon name="grip" size={18} /></button>
+            <span className={`tt-hand ${rowMenu?.id === row.id ? 'open' : ''}`} ref={rowMenu?.id === row.id ? menuRef : null}>
+              <button className={`tt-h-btn ${rowMenu?.id === row.id && rowMenu.mode === 'add' ? 'on' : ''}`} onClick={() => setRowMenu(rowMenu?.id === row.id && rowMenu.mode === 'add' ? null : { id: row.id, mode: 'add' })} aria-label="Añadir una franja debajo" aria-haspopup="menu" title="Añadir debajo"><Icon name="plus" size={16} /></button>
+              <button className={`tt-h-btn tt-grip ${rowMenu?.id === row.id && rowMenu.mode === 'grip' ? 'on' : ''}`} draggable onDragStart={(e) => { setRowMenu(null); setDragId(row.id); e.dataTransfer.effectAllowed = 'move' }} onDragEnd={() => setDragId(null)}
+                onClick={() => setRowMenu(rowMenu?.id === row.id && rowMenu.mode === 'grip' ? null : { id: row.id, mode: 'grip' })}
+                onKeyDown={(e) => { if (e.key === 'ArrowUp') { e.preventDefault(); move(i, i - 1) } if (e.key === 'ArrowDown') { e.preventDefault(); move(i, i + 1) } }}
+                aria-label="Mover la franja (arrastra o usa las flechas) u opciones" aria-haspopup="menu" title="Arrastra para mover · pulsa para opciones"><Icon name="grip" size={16} /></button>
+              {rowMenu?.id === row.id && (
+                <div className="card tt-menu" role="menu">
+                  {rowMenu.mode === 'add'
+                    ? (<><button role="menuitem" onClick={() => addRowAfter(i, 'class')}>Franja vacía</button><button role="menuitem" onClick={() => addRowAfter(i, 'break')}>Recreo</button></>)
+                    : <button role="menuitem" disabled={tt.rows.length < 2} onClick={() => removeRow(row.id)}>Eliminar franja</button>}
+                </div>
+              )}
+            </span>
             <span className="tt-time">
               <span className="tt-times">
                 {i === 0
@@ -76,7 +92,6 @@ export default function Schedule({ data, update, subjects }) {
                 <input className="tt-in tt-end" key={`e${row.dur}${times[i].start}`} defaultValue={fmt(times[i].end)} onBlur={(e) => setEnd(i, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Hora de fin" maxLength={5} />
               </span>
               <span className="tt-dur">{row.dur} min</span>
-              <button className="prio-x tt-del" onClick={() => removeRow(row.id)} aria-label="Quitar fila"><Icon name="close" size={14} /></button>
             </span>
             {row.kind === 'break'
               ? <span className="tt-break"><Icon name="clock" size={16} /> {row.label}</span>
@@ -89,7 +104,6 @@ export default function Schedule({ data, update, subjects }) {
               })}
           </div>
         ))}
-        {tt.rows.length === 0 && <p className="muted">Pulsa + para añadir la primera franja.</p>}
       </div>
 
       <div className="tt-tools">
@@ -101,16 +115,7 @@ export default function Schedule({ data, update, subjects }) {
             <button className="seg-x" onClick={() => removeLabel(l.id)} aria-label={`Borrar la etiqueta ${l.name}`}><Icon name="close" size={12} /></button>
           </span>
         ))}
-        <span className="seg-wrap" ref={menuRef}>
-          <button className="seg-chip seg-add" onClick={() => setMenu(!menu)} aria-label="Añadir" aria-haspopup="menu" aria-expanded={menu} title="Añadir etiqueta, franja o recreo"><Icon name="plus" size={16} /></button>
-          {menu && (
-            <div className="card tt-menu" role="menu">
-              <button role="menuitem" onClick={() => { setMenu(false); setDialog('label') }}>Añadir etiqueta</button>
-              <button role="menuitem" onClick={() => addRow('class')}>Añadir franja vacía</button>
-              <button role="menuitem" onClick={() => addRow('break')}>Añadir recreo</button>
-            </div>
-          )}
-        </span>
+        <button className="seg-chip seg-add" onClick={() => setDialog('label')} aria-label="Crear etiqueta" title="Crear etiqueta (p. ej. Convalidada)"><Icon name="plus" size={16} /></button>
       </div>
 
       {dialog === 'label' && <LabelDialog onSubmit={addLabel} onClose={() => setDialog(null)} />}
