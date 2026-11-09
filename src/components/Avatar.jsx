@@ -185,13 +185,16 @@ function Glasses({ type }) {
   return null
 }
 
-function Accessory({ type }) {
+// Cuánto sube la corona para quedar apoyada encima de los peinados altos
+const CROWN_LIFT = { afro: -28, bun: -24, spiky: -12 }
+
+function Accessory({ type, hair }) {
   switch (type) {
     case 'earrings': return <circle cx="139" cy="108" r="3.2" {...shape('#F9DC5C')} strokeWidth={2} />
     case 'headband': return <path d="M64 80C74 60 126 58 136 80" {...line} stroke="#E84855" strokeWidth={6} />
     case 'flower': return <g>{[0, 72, 144, 216, 288].map((r) => <ellipse key={r} cx="130" cy="62" rx="4.5" ry="7" transform={`rotate(${r} 130 70)`} {...shape('#EFABFF')} strokeWidth={1.8} />)}<circle cx="130" cy="70" r="3.6" {...shape('#F9DC5C')} strokeWidth={1.8} /></g>
     case 'headphones': return <g><path d="M60 94C56 50 144 50 140 94" {...line} strokeWidth={5} /><rect x="54" y="86" width="12" height="22" rx="6" {...shape('#E84855')} /><rect x="132" y="84" width="12" height="22" rx="6" {...shape('#E84855')} /></g>
-    case 'crown': return <path d="M74 60L78 36L90 48L100 30L110 48L122 36L126 60C110 55 90 55 74 60Z" {...shape('#F9DC5C')} />
+    case 'crown': return <path d="M74 60L78 36L90 48L100 30L110 48L122 36L126 60C110 55 90 55 74 60Z" transform={`translate(0 ${CROWN_LIFT[hair] ?? 0})`} {...shape('#F9DC5C')} />
     case 'cap': return <g><path d="M64 84C62 60 80 46 102 46C124 46 138 60 137 82C120 74 84 74 64 84Z" {...shape('#3185FC')} /><path d="M64 84C52 84 42 88 40 92C52 94 66 92 78 86" {...shape('#3185FC')} /><path d="M100 46v-3" {...line} /></g>
     case 'beanie': return <g><path d="M62 86C60 58 78 44 100 44C122 44 140 58 138 86Z" {...shape('#E84855')} /><path d="M60 86C80 80 120 80 140 86L139 94C120 88 80 88 61 94Z" {...shape('#E84855')} /><circle cx="100" cy="40" r="6" {...shape('#E84855')} /></g>
     default: return null
@@ -239,7 +242,7 @@ export default function Avatar({ avatar = DEFAULT_AVATAR, size = 160, round = tr
   return (
     <svg viewBox={viewBox} width={size} height={size} role="img" aria-label="Avatar" className="avatar"
       style={{ borderRadius: round ? '50%' : 22, background: color('bg', a.bg) }}>
-      <HairBack style={(hatOn || a.accessory === 'crown') && ['afro', 'bun', 'spiky'].includes(a.hair) ? 'none' : a.hair} c={hair} />
+      <HairBack style={hatOn && ['afro', 'bun', 'spiky'].includes(a.hair) ? 'none' : a.hair} c={hair} />
       <Outfit type={a.outfit} c={color('outfitColor', a.outfitColor)} />
       {/* Cuello: relleno sin contorno + solo las dos líneas laterales (sin raya por abajo) */}
       <path d="M90 124V153C95 156 105 156 110 153V124Z" fill={skin} />
@@ -258,7 +261,7 @@ export default function Avatar({ avatar = DEFAULT_AVATAR, size = 160, round = tr
       <Mouth type={a.mouth} />
       {!(hatOn && (['afro', 'short', 'buzz', 'bangs', 'spiky'].includes(a.hair) || curlyOf(a.hair))) && <HairFront style={a.hair} c={hair} />}
       <Glasses type={a.glasses} />
-      <Accessory type={a.accessory} />
+      <Accessory type={a.accessory} hair={a.hair} />
     </svg>
   )
 }

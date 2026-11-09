@@ -1278,3 +1278,14 @@ button.subject-card:hover { transform: translateY(-3px); }
 .tt-times { gap: 4px; }
 .unit-edit { top: 8px; bottom: auto; right: 8px; }
 .unit-wrap .unit-btn > .w-row:first-child { padding-right: 38px; }
+.friends-ok { font-size: 14px; font-weight: 600; color: #1E8E5A; }
+.friend-requests { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; }
+.friend-requests li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid var(--blue); animation: rise .35s var(--ease) both; flex-wrap: wrap; }
+.friend-requests li > span { flex: 1; min-width: 140px; font-size: 15px; }
+.friends-list li.is-pending { opacity: .75; }
+.friends-wait { width: 72px; height: 72px; border-radius: 50%; border: 2px dashed var(--ring); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); }
+.friends-tag { font-size: 12px; font-weight: 600; }
+/* Globo de notificaciones (peticiones de amistad) */
+.notif-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #E84855; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; animation: pop .4s var(--ease) both; }
+.nv .ic { position: relative; }
+.m-avatar { overflow: visible; }
