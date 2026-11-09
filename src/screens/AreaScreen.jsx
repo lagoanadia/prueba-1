@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import useBoard from '../hooks/useBoard.js'
 import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
-import { formatToday } from '../lib/dates.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import { PAGES } from '../pages/index.js'
@@ -188,7 +187,7 @@ export default function AreaScreen({ area, showTitle = true }) {
   if (board?.isNew && !board.data.onboarded && FLOWS[area.id]) {
     return (
       <div className="area">
-        {showTitle && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span>{area.label}</h1></header>}
+        {showTitle && <header className="area-head"><h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1></header>}
         <Onboarding area={area} flow={FLOWS[area.id]} onDone={(answers) => updateData((d) => ({ ...d, ...answers }))} />
       </div>
     )
@@ -206,8 +205,7 @@ export default function AreaScreen({ area, showTitle = true }) {
       <header className={`area-head ${showTitle ? '' : 'area-head-floating'}`}>
         {showTitle && (
           <div>
-            <h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span>{area.label}</h1>
-            <p className="muted area-sub">Tu tablero personal · {formatToday().replace('Hoy, ', '')}</p>
+            <h1><span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span><span className="sr-only">{area.label}</span></h1>
           </div>
         )}
         {available.length > 0 && (

@@ -49,9 +49,9 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
         </section>
 
         <section className="m-page m-day" aria-label="Tu día">
-          <h2 className="m-day-title">Tu día</h2>
+          <h2 className="sr-only">Tu día</h2>
           <p className="muted">{formatToday()}</p>
-          <Donut entries={today} size={190} />
+          <Donut entries={today.filter((i) => !i.done)} size={190} />
           <TodayTasks items={today} compact />
         </section>
       </div>

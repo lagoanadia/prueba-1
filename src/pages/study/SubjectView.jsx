@@ -1,69 +1,87 @@
-import { formatShort, todayISO } from '../../lib/dates.js'
-import { progressOf } from '../../widgets/estudios/study.js'
-import ResourceCards from './ResourceCards.jsx'
-import TopicList from './TopicList.jsx'
-import { changeSubject, unitProgress } from './helpers.js'
+import { useState } from 'react'
+import Icon from '../../components/Icon.jsx'
+import { TOPIC_STATES } from '../../widgets/estudios/study.js'
+import Deliveries from './Deliveries.jsx'
+import ResourceFrames from './ResourceFrames.jsx'
+import { METRICS, changeSubject, metricsOf, progressFor, soft, unitProgress } from './helpers.js'
 
-/** Página de una asignatura: progreso, entregas, unidades con sus temas y recursos. */
-export default function SubjectView({ data, update, subject, back, openUnit }) {
-  const today = todayISO()
-  const { total, clear, pct } = progressOf(subject)
-  const exercises = subject.units.flatMap((u) => u.exercises ?? [])
-  const upcoming = (data.assignments ?? []).filter((a) => a.course === subject.short && !a.done).sort((a, b) => a.due.localeCompare(b.due))
-  const addUnit = () => changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name: `UD${s.units.length + 1}`, topics: [] }] }))
-  const rename = (unitId, name) => changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.map((u) => (u.id === unitId ? { ...u, name: name.trim() || u.name } : u)) }))
+/** Estado de una unidad según sus temas. */
+function unitState(u) {
+  const { clear, total } = unitProgress(u)
+  if (total && clear === total) return { label: 'Terminada', color: '#3DDC97' }
+  if (clear || u.topics.some((t) => t.state === 'doing')) return { label: 'En curso', color: '#3185FC' }
+  return { label: 'Sin empezar', color: '#DADCE0' }
+}
+
+/** Página de una asignatura: progreso a tu medida, entregas, unidades y recursos. */
+export default function SubjectView({ data, update, subject, back, openUnit, onDelete }) {
+  const [unitName, setUnitName] = useState('')
+  const subjects = data.subjects ?? []
+  const p = progressFor(subject, data.assignments)
+  const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
+  const addUnit = (e) => {
+    e.preventDefault()
+    changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name: unitName.trim() || `Bloque ${s.units.length + 1}`, topics: [] }] }))
+    setUnitName('')
+  }
+  const R = 46
+  const C = 2 * Math.PI * R
 
   return (
-    <div className="page study" style={{ '--c': subject.color }}>
-      <button className="back-link" onClick={back}>← Estudios</button>
+    <div className="page study">
       <header className="page-head">
-        <div>
+        <div className="head-line">
+          <button className="icon-btn" onClick={back} aria-label="Volver a Estudios" title="Volver"><Icon name="back" /></button>
           <h1>{subject.name}</h1>
-          <input className="desc-input muted" placeholder="Añade una descripción" defaultValue={subject.description ?? ''} maxLength={140}
-            onBlur={(e) => changeSubject(update, subject.id, (s) => ({ ...s, description: e.target.value.trim() }))} />
         </div>
+        <button className="icon-btn" onClick={() => { if (window.confirm(`¿Eliminar ${subject.short} con todo su contenido?`)) onDelete() }} aria-label="Eliminar asignatura" title="Eliminar asignatura"><Icon name="trash" /></button>
       </header>
 
-      <div className="study-mid">
-        <section className="card progress-card">
-          <span>Progreso general</span>
-          <span className="w-row"><b className="progress-big">{clear} de {total} temas claros</b><b className="progress-big">{pct} %</b></span>
-          <span className="bar"><span style={{ width: `${pct}%` }} /></span>
-          <span>Estado general: {pct === 100 && total ? 'completada' : clear ? 'en curso' : 'sin empezar'} · {subject.units.length} unidades · {exercises.length} prácticas</span>
+      <div className="study-mid subject-top">
+        <section className="card progress-card" style={{ background: soft(subject.color, 22), boxShadow: 'none' }}>
+          <svg className="ring-svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso ${p.pct} %`}>
+            <circle cx="60" cy="60" r={R} fill="none" stroke="#FFFFFF" strokeWidth="14" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke={subject.color} strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(p.pct / 100) * C} ${C}`} transform="rotate(-90 60 60)" />
+            <text x="60" y="68" textAnchor="middle" fontSize="24" fontWeight="700" fill="#202124">{p.pct} %</text>
+          </svg>
+          <div className="progress-def">
+            <span className="muted">¿Qué cuenta en tu progreso?</span>
+            <div className="metric-chips">
+              {Object.entries(METRICS).map(([k, m]) => (
+                <button key={k} className={`seg-chip ${p.on[k] ? 'on' : ''}`} aria-pressed={p.on[k]} onClick={() => toggleMetric(k)}>
+                  <Icon name={m.icon} size={16} />{m.label} {p.counts[k].done}/{p.counts[k].total}
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
-        <section>
-          <h2 className="page-h2">Próximas entregas</h2>
-          <ul className="card study-list">
-            {upcoming.map((a) => (
-              <li key={a.id}><span className="dot" style={{ background: subject.color }} /><b>{a.title}</b><span className="muted" style={{ marginLeft: 'auto' }}>{formatShort(a.due)}</span>{a.due < today && <span className="badge-late">Vencida</span>}</li>
-            ))}
-            {upcoming.length === 0 && <li className="muted">Nada pendiente</li>}
-          </ul>
-        </section>
+        <section className="card deliv-card"><Deliveries data={data} update={update} subjects={subjects} course={subject.short} /></section>
       </div>
 
       <div className="page-head page-head-sm">
         <h2 className="page-h2">Unidades</h2>
-        <button className="pill pill-soft" onClick={addUnit}>+ Unidad</button>
+        <form className="page-actions" onSubmit={addUnit}>
+          <input className="line-input" placeholder="Nombre del bloque (opcional)" value={unitName} onChange={(e) => setUnitName(e.target.value)} maxLength={40} />
+          <button className="icon-btn on" aria-label="Añadir unidad" title="Añadir unidad"><Icon name="plus" size={20} /></button>
+        </form>
       </div>
       <div className="unit-cards">
         {subject.units.map((u, i) => {
-          const p = unitProgress(u)
+          const up = unitProgress(u)
+          const st = unitState(u)
           return (
-            <section key={u.id} className="card unit-card" style={{ '--i': i }}>
-              <div className="w-row">
-                <input className="unit-name" defaultValue={u.name} maxLength={40} onBlur={(e) => rename(u.id, e.target.value)} aria-label="Nombre de la unidad" />
-                <span className="muted">{p.clear}/{p.total}</span>
-              </div>
-              <TopicList update={update} subjectId={subject.id} unit={u} />
-              <button className="text-link unit-enter" onClick={() => openUnit(u.id)}>Entrar en la unidad →</button>
-            </section>
+            <button key={u.id} className="card unit-card unit-btn" style={{ '--i': i }} onClick={() => openUnit(u.id)}>
+              <span className="w-row"><b className="unit-title">{u.name}</b><b>{up.clear} de {up.total}</b></span>
+              <span className="bar"><span style={{ width: `${up.total ? (up.clear / up.total) * 100 : 0}%`, background: soft(subject.color) }} /></span>
+              <span className="state-chip" style={{ background: soft(st.color, 35) }}>{st.label}</span>
+              {u.topics.slice(0, 4).map((t) => <span key={t.id} className="w-row unit-topic"><span className="w-ellipsis">{t.name}</span><Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={TOPIC_STATES.find((x) => x.id === t.state)?.id === 'clear' ? '#3DDC97' : '#9AA0A6'} /></span>)}
+            </button>
           )
         })}
       </div>
 
-      <h2 className="page-h2 page-gap">Recursos complementarios</h2>
-      <ResourceCards data={data} update={update} subjectId={subject.id} />
+      <h2 className="page-h2 page-gap">Recursos</h2>
+      <ResourceFrames data={data} update={update} subjectId={subject.id} />
     </div>
   )
 }

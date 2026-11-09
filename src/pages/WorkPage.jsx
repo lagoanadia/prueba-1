@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Icon from '../components/Icon.jsx'
 import { formatLong, formatShort, todayISO } from '../lib/dates.js'
 import { STATES, activeOf, progressOf, projectsOf, updateTask } from '../widgets/trabajo/projects.js'
 
@@ -14,7 +15,6 @@ export default function WorkPage({ data, update }) {
   const today = todayISO()
   const projects = projectsOf(data)
   const project = activeOf(data)
-  const pending = projects.reduce((s, p) => s + p.tasks.filter((t) => t.status !== 'done').length, 0)
   const [name, setName] = useState('')
   const [task, setTask] = useState('')
   const [due, setDue] = useState('')
@@ -41,17 +41,14 @@ export default function WorkPage({ data, update }) {
   return (
     <div className="page work">
       <header className="page-head">
-        <div>
-          <h1>Trabajo</h1>
-          <p className="muted page-sub">{projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'} · {pending} {pending === 1 ? 'tarea pendiente' : 'tareas pendientes'}</p>
-        </div>
+        <h1 className="sr-only">Trabajo</h1>
         <form className="page-actions" onSubmit={addProject}>
           <input className="pill-input" placeholder="Nombre del proyecto" value={name} onChange={(e) => setName(e.target.value)} maxLength={50} />
-          <button className="btn-solid" style={{ '--c': '#E84855' }} disabled={!name.trim()}>+ Nuevo proyecto</button>
+          <button className="icon-btn on" disabled={!name.trim()} aria-label="Nuevo proyecto" title="Nuevo proyecto"><Icon name="plus" size={22} /></button>
         </form>
       </header>
 
-      <h2 className="page-h2">Proyectos</h2>
+      <h2 className="sr-only">Proyectos</h2>
       {projects.length === 0 && <p className="muted">Crea tu primer proyecto arriba.</p>}
       <div className="project-cards">
         {projects.map((p, i) => {

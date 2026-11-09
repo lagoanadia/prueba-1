@@ -1,170 +1,113 @@
 import { useState } from 'react'
-import { formatToday, todayISO } from '../../lib/dates.js'
-import { progressOf, subjectsOf } from '../../widgets/estudios/study.js'
-import { cellColor, soft, unitProgress } from './helpers.js'
+import Icon from '../../components/Icon.jsx'
+import { progressFor, soft, SUBJECT_COLORS } from './helpers.js'
+import Deliveries from './Deliveries.jsx'
+import QuickNote from './QuickNote.jsx'
+import Schedule from './Schedule.jsx'
+import Tools from './Tools.jsx'
 
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
-const COLORS = ['#3185FC', '#E84855', '#3DDC97', '#EFABFF', '#F9DC5C', '#FF9F43', '#8E7CFF']
-const slotTime = (s) => (typeof s === 'string' ? s : s.time)
+const DEFAULT_BLOCKS = [
+  { id: 'entregas', type: 'entregas', span: 1 },
+  { id: 'tools', type: 'tools', span: 1 },
+  { id: 'note-1', type: 'note', span: 1 },
+  { id: 'schedule', type: 'schedule', span: 3 },
+]
+const LABELS = { entregas: 'Próximas entregas', tools: 'Herramientas', schedule: 'Horario' }
+const ICONS = { entregas: 'exam', tools: 'link', schedule: 'clock' }
 
-/** Planificador de estudios: asignaturas, tareas, herramientas, curriculum y horario. */
+/**
+ * Planificador de estudios: asignaturas arriba y debajo bloques que se pueden personalizar
+ * (mover, cambiar de tamaño, quitar, añadir notas). El botón del tablero activa el modo edición.
+ */
 export default function Planner({ data, update, openSubject }) {
-  const today = todayISO()
-  const subjects = subjectsOf(data)
-  const dayIdx = (new Date(`${today}T12:00:00`).getDay() + 6) % 7
-  const tt = data.timetable ?? { slots: [], cells: {} }
-  const [newSubject, setNewSubject] = useState({ short: '', name: '' })
-  const [task, setTask] = useState({ course: '', title: '', due: '' })
-  const [tool, setTool] = useState('')
-  const [cv, setCv] = useState('')
-  const [editing, setEditing] = useState(null)
+  const subjects = data.subjects ?? []
+  const blocks = data.planner?.blocks ?? DEFAULT_BLOCKS
+  const [editing, setEditing] = useState(false)
+  const [addMenu, setAddMenu] = useState(false)
+  const [short, setShort] = useState('')
 
-  const assignments = [...(data.assignments ?? [])].filter((a) => !a.done || a.doneAt === today).sort((a, b) => a.due.localeCompare(b.due))
-  const courseName = (c) => subjects.find((s) => s.short === c)?.name ?? c
-  const courseColor = (c) => subjects.find((s) => s.short === c)?.color ?? '#9AA0A6'
+  const setBlocks = (fn) => update((d) => ({ ...d, planner: { ...(d.planner ?? {}), blocks: fn(d.planner?.blocks ?? DEFAULT_BLOCKS) } }))
+  const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
+  const resize = (id) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span: (x.span % 3) + 1 } : x)))
+  const removeBlock = (blk) => {
+    setBlocks((b) => b.filter((x) => x.id !== blk.id))
+    if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
+  }
+  const addBlock = (type) => { setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'schedule' ? 3 : 1 }]); setAddMenu(false) }
+  const missing = Object.keys(LABELS).filter((t) => !blocks.some((b) => b.type === t))
 
   const addSubject = (e) => {
     e.preventDefault()
-    if (!newSubject.short.trim()) return
-    update((d) => { const list = d.subjects ?? []; return { ...d, subjects: [...list, { id: crypto.randomUUID(), short: newSubject.short.trim().toUpperCase(), name: newSubject.name.trim() || newSubject.short.trim(), color: COLORS[list.length % COLORS.length], units: [{ id: crypto.randomUUID(), name: 'UD1', topics: [] }] }] } })
-    setNewSubject({ short: '', name: '' })
+    const v = short.trim().toUpperCase()
+    if (!v) return
+    update((d) => { const list = d.subjects ?? []; return { ...d, subjects: [...list, { id: crypto.randomUUID(), short: v, name: v, color: SUBJECT_COLORS[list.length % SUBJECT_COLORS.length], units: [{ id: crypto.randomUUID(), name: 'Bloque 1', topics: [] }] }] } })
+    setShort('')
   }
-  const addTask = (e) => {
-    e.preventDefault()
-    if (!task.title.trim() || !task.due) return
-    update((d) => ({ ...d, assignments: [...(d.assignments ?? []), { id: crypto.randomUUID(), course: task.course || subjects[0]?.short || '', title: task.title.trim(), due: task.due, done: false }] }))
-    setTask({ ...task, title: '', due: '' })
+
+  const render = (b) => {
+    if (b.type === 'entregas') return <Deliveries data={data} update={update} subjects={subjects} />
+    if (b.type === 'tools') return <Tools data={data} update={update} />
+    if (b.type === 'schedule') return <Schedule data={data} update={update} subjects={subjects} />
+    const note = data.quickNotes?.[b.id] ?? { html: '' }
+    return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
   }
-  const toggleTask = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id !== id ? a : { ...a, done: !a.done, doneAt: a.done ? null : today })) }))
-  const addTo = (key, value, reset) => (e) => {
-    e.preventDefault()
-    if (!value.trim()) return
-    const [name, url] = value.split(/\s+(https?:\/\/\S+)$/)
-    update((d) => ({ ...d, [key]: [...(d[key] ?? []), { id: crypto.randomUUID(), name: name.trim(), url: url ?? '' }] }))
-    reset('')
-  }
-  const removeFrom = (key, id) => update((d) => ({ ...d, [key]: d[key].filter((x) => x.id !== id) }))
-  const setCell = (k, v) => update((d) => { const t = d.timetable ?? { slots: [], cells: {} }; return { ...d, timetable: { ...t, cells: { ...t.cells, [k]: v } } } })
-  const addSlot = (isBreak) => update((d) => {
-    const t = d.timetable ?? { slots: [], cells: {} }
-    const last = t.slots.length ? slotTime(t.slots[t.slots.length - 1]).split('-')[1] : '8:00'
-    const [h, m] = last.split(':').map(Number)
-    const end = h * 60 + m + (isBreak ? 20 : 55)
-    const time = `${last}-${Math.floor(end / 60)}:${String(end % 60).padStart(2, '0')}`
-    return { ...d, timetable: { ...t, slots: [...t.slots, isBreak ? { time, label: 'Recreo' } : time] } }
-  })
-  const removeSlot = (i) => update((d) => { const t = d.timetable; return { ...d, timetable: { ...t, slots: t.slots.filter((_, j) => j !== i) } } })
 
   return (
     <div className="page study">
       <header className="page-head">
-        <div>
-          <h1>Planificador de estudios</h1>
-          <p className="muted page-sub">{formatToday()}</p>
+        <h1 className="sr-only">Planificador de estudios</h1>
+        <span />
+        <div className="page-actions">
+          {editing && (
+            <div className="add-wrap">
+              <button className="icon-btn" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={22} /></button>
+              {addMenu && (
+                <div className="card add-menu" role="menu">
+                  <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
+                  {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{LABELS[t]}</button>)}
+                </div>
+              )}
+            </div>
+          )}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAddMenu(false) }}
+            aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
+            <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
+          </button>
         </div>
       </header>
 
-      <h2 className="page-h2">Progreso de las asignaturas</h2>
+      <h2 className="page-h2">Asignaturas</h2>
       <div className="subject-cards">
         {subjects.map((s, i) => {
-          const { total, clear, pct } = progressOf(s)
+          const p = progressFor(s, data.assignments)
           return (
-            <button key={s.id} className="card subject-card" style={{ '--i': i, '--c': s.color }} onClick={() => openSubject(s.id)}>
-              <span className="subject-card-head" style={{ background: soft(s.color, 30) }}>{s.short}</span>
-              <span className="subject-card-body">
-                <b>{s.name}</b>
-                {total ? <span className="w-row"><span className="muted">{clear} de {total} temas</span><b>{pct} %</b></span> : <span className="muted">Sin temas todavía</span>}
-                <span className="bar"><span style={{ width: `${pct}%`, background: s.color }} /></span>
-                <span className="unit-chips">{s.units.filter((u) => u.topics.length).map((u) => <span key={u.id}>{u.name.split(' ')[0]} · {unitProgress(u).total}</span>)}</span>
-              </span>
+            <button key={s.id} className="card subject-card" style={{ '--i': i, borderTop: `6px solid ${soft(s.color)}` }} onClick={() => openSubject(s.id)}>
+              <b>{s.short}</b>
+              <span className="bar"><span style={{ width: `${p.pct}%`, background: soft(s.color) }} /></span>
+              <span className="muted">{p.total ? `${p.done} de ${p.total}` : 'Sin nada todavía'}</span>
             </button>
           )
         })}
         <form className="card subject-card subject-add" onSubmit={addSubject}>
-          <input placeholder="Siglas" value={newSubject.short} onChange={(e) => setNewSubject({ ...newSubject, short: e.target.value })} maxLength={6} />
-          <input placeholder="Nombre de la asignatura" value={newSubject.name} onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })} maxLength={60} />
-          <button className="pill pill-soft" disabled={!newSubject.short.trim()}>+ Asignatura</button>
+          <input placeholder="Asignatura" value={short} onChange={(e) => setShort(e.target.value)} maxLength={14} aria-label="Nueva asignatura" />
+          <button className="icon-btn" disabled={!short.trim()} aria-label="Añadir asignatura"><Icon name="plus" size={20} /></button>
         </form>
       </div>
 
-      <div className="study-mid">
-        <section>
-          <h2 className="page-h2">Tareas</h2>
-          <div className="card study-table">
-            <table>
-              <thead><tr><th>Curso</th><th>Tarea</th><th>Plazo</th><th>Hecha</th></tr></thead>
-              <tbody>
-                {assignments.map((a) => (
-                  <tr key={a.id} className={a.done ? 'is-done' : ''}>
-                    <td><span className="dot" style={{ background: courseColor(a.course) }} /> {courseName(a.course)}</td>
-                    <td><b>{a.title}</b></td>
-                    <td>{a.due.split('-').reverse().join('/')}{!a.done && a.due < today && <span className="badge-late">Vencida</span>}</td>
-                    <td><input type="checkbox" checked={a.done} onChange={() => toggleTask(a.id)} aria-label={`Marcar «${a.title}»`} /></td>
-                  </tr>
-                ))}
-                {assignments.length === 0 && <tr><td colSpan={4} className="muted">Sin tareas pendientes</td></tr>}
-              </tbody>
-            </table>
-            <form className="w-form study-add" onSubmit={addTask}>
-              <select value={task.course} onChange={(e) => setTask({ ...task, course: e.target.value })} style={{ flex: 'none' }}>
-                {subjects.map((s) => <option key={s.id} value={s.short}>{s.short}</option>)}
-              </select>
-              <input placeholder="Nueva tarea" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} maxLength={60} />
-              <input type="date" value={task.due} onChange={(e) => setTask({ ...task, due: e.target.value })} style={{ flex: 'none' }} aria-label="Plazo" />
-              <button className="mini mini-primary" disabled={!task.title.trim() || !task.due} aria-label="Añadir tarea">+</button>
-            </form>
-          </div>
-        </section>
-        <aside className="study-side">
-          {[['tools', 'Herramientas de interés', tool, setTool, 'Vercel https://vercel.com'], ['cv', 'Añadir al curriculum', cv, setCv, 'Docker']].map(([key, title, value, setValue, ph]) => (
-            <section key={key}>
-              <h2 className="page-h2">{title}</h2>
-              <div className="card study-list">
-                <ul>
-                  {(data[key] ?? []).map((x) => (
-                    <li key={x.id}>
-                      <span className="dot" style={{ background: key === 'tools' ? '#8E7CFF' : '#3185FC' }} />
-                      {/^https?:\/\//.test(x.url) ? <a href={x.url} target="_blank" rel="noreferrer noopener">{x.name}</a> : <span>{x.name}</span>}
-                      <button className="prio-x" onClick={() => removeFrom(key, x.id)} aria-label="Quitar">×</button>
-                    </li>
-                  ))}
-                </ul>
-                <form onSubmit={addTo(key, value, setValue)}><input className="line-input" placeholder={`+ ${ph}`} value={value} onChange={(e) => setValue(e.target.value)} maxLength={120} /></form>
+      <div className={`plan-grid ${editing ? 'is-editing' : ''}`}>
+        {blocks.map((b, i) => (
+          <section key={b.id} className={`plan-block span-${b.span} ${b.type === 'note' ? 'is-note' : 'card'}`}>
+            {editing && (
+              <div className="block-tools">
+                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover antes"><Icon name="left" size={18} /></button>
+                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === blocks.length - 1} aria-label="Mover después"><Icon name="right" size={18} /></button>
+                <button className="icon-btn" onClick={() => resize(b.id)} aria-label="Cambiar tamaño" title={`Ancho ${b.span} de 3`}><Icon name="expand" size={18} /></button>
+                <button className="icon-btn" onClick={() => removeBlock(b)} aria-label="Quitar"><Icon name="close" size={18} /></button>
               </div>
-            </section>
-          ))}
-        </aside>
-      </div>
-
-      <h2 className="page-h2">Horario</h2>
-      <div className="timetable" style={{ '--rows': tt.slots.length }}>
-        <span />
-        {DAYS.map((d, i) => <span key={d} className={`tt-day ${i === dayIdx ? 'is-today' : ''}`}>{d}{i === dayIdx ? ' · hoy' : ''}</span>)}
-        {tt.slots.map((slot, r) => (typeof slot === 'object' ? (
-          <div key={r} className="tt-line">
-            <span className="tt-time">{slot.time}<button className="prio-x" onClick={() => removeSlot(r)} aria-label="Quitar franja">×</button></span>
-            <span className="tt-break">{slot.label}</span>
-          </div>
-        ) : (
-          <div key={r} className="tt-line">
-            <span className="tt-time">{slot}<button className="prio-x" onClick={() => removeSlot(r)} aria-label="Quitar franja">×</button></span>
-            {DAYS.map((_, c) => {
-              const k = `${c}-${r}`
-              const text = tt.cells[k] ?? ''
-              return editing === k ? (
-                <input key={k} className="tt-box tt-edit" autoFocus defaultValue={text} maxLength={24}
-                  onBlur={(e) => { setCell(k, e.target.value.trim().toUpperCase()); setEditing(null) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEditing(null) }} />
-              ) : (
-                <button key={k} className="tt-box" style={{ background: cellColor(text, subjects) ?? undefined }} onClick={() => setEditing(k)} title="Toca para editar">{text}</button>
-              )
-            })}
-          </div>
-        )))}
-      </div>
-      <div className="w-form tt-actions">
-        <button className="pill pill-sm" onClick={() => addSlot(false)}>+ Franja</button>
-        <button className="pill pill-sm" onClick={() => addSlot(true)}>+ Recreo</button>
+            )}
+            {render(b)}
+          </section>
+        ))}
       </div>
     </div>
   )

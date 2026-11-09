@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import NotesEditor from './NotesEditor.jsx'
 import Planner from './Planner.jsx'
 import SubjectView from './SubjectView.jsx'
-import UnitView from './UnitView.jsx'
+import UnitWorkspace from './UnitWorkspace.jsx'
 
 /**
- * Estudios (diseño oficial): cuatro pantallas encadenadas.
- * Planificador → Asignatura → Unidad → Editor de apuntes.
+ * Estudios: Planificador → Asignatura → Unidad (modo concentración con PDF y documento lado a lado).
  */
 export default function StudyPage({ data, update }) {
   const [route, setRoute] = useState({ view: 'planner' })
@@ -15,19 +13,17 @@ export default function StudyPage({ data, update }) {
   const go = (r) => setRoute(r)
 
   // Al cambiar de pantalla, volver arriba
-  useEffect(() => { document.querySelector('.sheet-body')?.scrollTo?.({ top: 0 }); window.scrollTo?.({ top: 0 }) }, [route.view, route.subjectId, route.unitId])
+  useEffect(() => { window.scrollTo?.({ top: 0 }) }, [route.view, route.subjectId])
 
   const props = { data, update }
-  if (route.view === 'notes' && unit && unit.topics.some((t) => t.id === route.topicId)) {
-    return <NotesEditor key={route.topicId} {...props} subject={subject} unit={unit} topicId={route.topicId}
-      back={() => go({ ...route, view: 'unit' })} openNotes={(topicId) => go({ ...route, topicId })} />
-  }
-  if ((route.view === 'unit' || route.view === 'notes') && unit) {
-    return <UnitView {...props} subject={subject} unit={unit} back={() => go({ view: 'subject', subjectId: subject.id })}
-      openNotes={(topicId) => go({ ...route, view: 'notes', topicId })} />
+  if (route.view === 'unit' && subject && unit) {
+    return <UnitWorkspace {...props} subject={subject} unit={unit} route={route} go={(r) => go({ ...r, view: 'unit' })} back={() => go({ view: 'subject', subjectId: subject.id })} />
   }
   if (subject) {
-    return <SubjectView {...props} subject={subject} back={() => go({ view: 'planner' })} openUnit={(unitId) => go({ view: 'unit', subjectId: subject.id, unitId })} />
+    return (
+      <SubjectView {...props} subject={subject} back={() => go({ view: 'planner' })} openUnit={(unitId) => go({ view: 'unit', subjectId: subject.id, unitId, tab: 'estudio' })}
+        onDelete={() => { update((d) => ({ ...d, subjects: d.subjects.filter((s) => s.id !== subject.id), assignments: (d.assignments ?? []).filter((a) => a.course !== subject.short) })); go({ view: 'planner' }) }} />
+    )
   }
   return <Planner {...props} openSubject={(subjectId) => go({ view: 'subject', subjectId })} />
 }

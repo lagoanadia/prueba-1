@@ -79,15 +79,15 @@ export const FLOWS = {
 
   estudios: {
     steps: [
-      { id: 'subjects', type: 'items', title: '¿Qué asignaturas tienes?', fields: [{ key: 'short', placeholder: 'PSP', width: 80 }, { key: 'name', placeholder: 'Programación de Servicios y Procesos' }] },
+      { id: 'subjects', type: 'items', title: '¿Qué asignaturas tienes?', fields: [{ key: 'short', placeholder: 'Asignatura' }] },
       { id: 'start', type: 'choice', title: '¿A qué hora empiezan tus clases?', options: ['8:00', '8:30', '9:00', '15:00'].map((v) => ({ value: v, label: v })), initial: '8:30' },
       { id: 'length', type: 'choice', title: '¿Cuánto dura cada clase?', options: [50, 55, 60].map((v) => ({ value: v, label: `${v} min` })), initial: 55 },
       { id: 'assignments', type: 'items', title: '¿Tienes alguna entrega pronto?', fields: [{ key: 'title', placeholder: 'Práctica UD1' }, { key: 'course', placeholder: 'PSP', width: 80 }, { key: 'due', type: 'date' }] },
     ],
     build: (a) => {
-      const subjects = (a.subjects ?? []).filter((s) => s.short || s.name).map((s, i) => ({
-        id: id(), short: (s.short || s.name).slice(0, 6).toUpperCase(), name: s.name || s.short, color: COLORS[i % COLORS.length],
-        units: [{ id: id(), name: 'UD1', topics: [] }],
+      const subjects = (a.subjects ?? []).filter((s) => s.short).map((s, i) => ({
+        id: id(), short: (s.short || s.name).slice(0, 14).toUpperCase(), name: s.short || s.name, color: COLORS[i % COLORS.length],
+        units: [{ id: id(), name: 'Bloque 1', topics: [] }],
       }))
       const [h, m] = (a.start ?? '8:30').split(':').map(Number)
       const len = a.length ?? 55

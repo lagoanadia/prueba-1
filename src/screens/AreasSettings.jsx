@@ -19,7 +19,7 @@ export default function AreasSettings({ settings, onSave }) {
   return (
     <div className="areas-set">
       <section>
-        <h2 className="page-h2">Mis áreas</h2>
+        <h2 className="sr-only">Mis áreas</h2>
         <ul className="area-rows">
           {mine.map((a) => {
             const on = settings.areas[a.id].active
@@ -40,7 +40,7 @@ export default function AreasSettings({ settings, onSave }) {
 
       {others.length > 0 && (
         <section>
-          <h2 className="page-h2">Añadir áreas</h2>
+          <h2 className="sr-only">Añadir áreas</h2>
           <ul className="area-rows">
             {others.map((a) => (
               <li key={a.id} className="card area-row is-off">
@@ -54,7 +54,7 @@ export default function AreasSettings({ settings, onSave }) {
       )}
 
       <section>
-        <h2 className="page-h2">Así queda tu barra lateral</h2>
+        <h2 className="sr-only">Así queda tu barra lateral</h2>
         <div className="side-preview" aria-label="Vista previa de la barra lateral">
           {preview.map((a) => <span key={a.id} className="side-chip"><i style={{ background: a.color }} />{a.label}</span>)}
           {preview.length === 0 && <span className="muted">Solo Inicio, Calendario y Perfil.</span>}
@@ -62,7 +62,7 @@ export default function AreasSettings({ settings, onSave }) {
       </section>
 
       <section>
-        <h2 className="page-h2">Tamaño del texto</h2>
+        <h2 className="sr-only">Tamaño del texto</h2>
         <div className="seg" role="group" aria-label="Tamaño del texto">
           <button className={`pill ${!settings.bigText ? 'pill-soft' : ''}`} aria-pressed={!settings.bigText} onClick={() => onSave({ ...settings, bigText: false })}>Normal</button>
           <button className={`pill ${settings.bigText ? 'pill-soft' : ''}`} aria-pressed={settings.bigText} onClick={() => onSave({ ...settings, bigText: true })}>Grande</button>

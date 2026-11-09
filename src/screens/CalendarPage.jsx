@@ -52,7 +52,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   if (loaded && calendar && calendar.layout == null && !calendar.data?.onboarded && Object.keys(calendar.data ?? {}).length === 0) {
     return (
       <div className="area">
-        <header className="area-head"><h1><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="calendario" /></span>Calendario</h1></header>
+        <header className="area-head"><h1><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="calendario" /></span><span className="sr-only">Calendario</span></h1></header>
         <Onboarding area={{ id: 'calendario', label: 'Calendario', color: '#F1F3F4' }} flow={FLOWS.calendario}
           onDone={(answers) => change('calendario', (d) => ({ ...d, ...answers }))} />
       </div>
@@ -69,7 +69,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
     <div className="area cal">
       <header className="area-head">
         <div>
-          <h1 className="cal-title">Calendario</h1>
+          <h1 className="sr-only">Calendario</h1>
           <div className="cal-nav">
             <button className="mini" onClick={() => move(-1)} aria-label="Anterior">‹</button>
             <span className="muted cal-range">{title}</span>

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { FocusCtx } from './focus.js'
 import Icon from '../components/Icon.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
@@ -15,10 +16,14 @@ import { formatToday } from '../lib/dates.js'
 /** Vista portátil: menú lateral + contenido. */
 export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [view, setView] = useState('inicio')
+  const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
+  const [navOpen, setNavOpen] = useState(true)
+  const focusCtx = useMemo(() => ({ setFocus: (v) => { setFocus(v); if (!v) setNavOpen(true) } }), [])
+  const pending = today.filter((i) => !i.done) // lo tachado sale de la lista y de la rueda
   const visible = AREAS.filter((a) => activeAreaIds(settings).includes(a.id)) // solo las activas, sin huecos
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
-    <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
+    <button className={`nv ${view === id ? 'on' : ''}`} onClick={() => { if (id === 'inicio' && focus) { setNavOpen(!navOpen); return } setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
       style={view === id && id !== 'inicio' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} 22%, #FFFFFF)` } : undefined}>
       <span className="ic" style={{ background: id === 'inicio' && view === id ? '#FFFFFF' : color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
@@ -30,15 +35,21 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   const area = visible.find((a) => a.id === view) // un área desactivada no se abre
 
   return (
+    <FocusCtx.Provider value={focusCtx}>
     <div className="d-app">
+      {focus && !navOpen ? (
+        <nav className="sidebar sidebar-slim" aria-label="Navegación">
+          <button className="nv nv-slim" onClick={() => setNavOpen(true)} aria-label="Mostrar menú" aria-expanded="false" title="Mostrar menú"><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="inicio" /></span></button>
+        </nav>
+      ) : (
       <nav className="sidebar" aria-label="Navegación">
-        <NavItem id="inicio" label="Inicio" color="#FFFFFF" />
-        <p className="eyebrow sidebar-title">Mis áreas</p>
+        <NavItem id="inicio" label={focus ? 'Ocultar menú' : 'Inicio'} color="#FFFFFF" />
         {visible.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
         <div style={{ flex: 1 }} />
         <NavItem id="calendario" label="Calendario" />
         <NavItem id="perfil" label="Perfil" />
       </nav>
+      )}
 
       {/* El main NO lleva key: así el botón de hablar no se vuelve a montar (ni a animar) al cambiar de sección */}
       <main className="d-main">
@@ -60,7 +71,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         {view === 'inicio' && (
           <div className="d-home">
             <h1 className="hello hello-xl rise">Hola, {firstName}</h1>
-            <div className="rise" style={{ '--i': 1, width: '100%', display: 'flex', justifyContent: 'center' }}><Donut entries={today} /></div>
+            <div className="rise" style={{ '--i': 1, width: '100%', display: 'flex', justifyContent: 'center' }}><Donut entries={pending} /></div>
             <p className="date rise" style={{ '--i': 2 }}>{formatToday()}</p>
             <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks items={today} /></div>
           </div>
@@ -76,5 +87,6 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         </div>
       </main>
     </div>
+    </FocusCtx.Provider>
   )
 }
