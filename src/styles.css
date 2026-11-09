@@ -1827,3 +1827,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
   .sv-col:not(.is-shown) { display: none; }
   .sv-dayname { display: none; }
 }
+.sv-hours span { transform: none; }
+.sv-block { padding: 5px 9px; }
+.sv-block:not(.is-double) { flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; }
+.sv-block.is-double b { font-size: 17px; }
+.sv-break { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); background: #ECEDEF; letter-spacing: .02em; }

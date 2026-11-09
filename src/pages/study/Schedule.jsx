@@ -150,11 +150,12 @@ function LabelDialog({ onSubmit, onClose }) {
   )
 }
 
-const PX = 1.15 // píxeles por minuto
+const ROW = 58 // alto de una franja de clase (todas iguales, duren lo que duren)
+const BREAK = 22 // alto del recreo
 
 /**
- * El horario para MIRAR: la semana como un calendario. Cada clase es un bloque del color de su asignatura
- * con su duración real; las horas seguidas de la misma asignatura se juntan. Sin casillas vacías.
+ * El horario para MIRAR: la semana como un calendario. Cada franja de clase tiene el mismo alto;
+ * solo cuando hay dos o más franjas seguidas de la misma asignatura se juntan en un bloque más grande.
  */
 function ScheduleView({ tt, times, look, onEdit }) {
   const [now, setNow] = useState(() => new Date())
@@ -162,29 +163,31 @@ function ScheduleView({ tt, times, look, onEdit }) {
   const today = (now.getDay() + 6) % 7
   const [day, setDay] = useState(today < 5 ? today : 0) // en móvil se ve un día
   if (!times.length) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2><button className="icon-btn sv-edit" onClick={onEdit} aria-label="Editar horario"><Icon name="pen" size={18} /></button></div><p className="muted">Pulsa el lápiz para crear tu horario.</p></div>
-  const first = times[0].start
-  const last = times[times.length - 1].end
-  const nowMin = now.getHours() * 60 + now.getMinutes()
-  const y = (m) => (m - first) * PX
 
-  // Bloques de cada día: juntar filas seguidas con lo mismo
+  // Posición de cada fila (en píxeles) según su tipo, no según sus minutos
+  const tops = []
+  let acc = 0
+  tt.rows.forEach((r) => { tops.push(acc); acc += r.kind === 'break' ? BREAK : ROW })
+  const total = acc
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  const nowRow = times.findIndex((t) => nowMin >= t.start && nowMin < t.end)
+  const nowY = nowRow === -1 ? null : tops[nowRow] + ((nowMin - times[nowRow].start) / (times[nowRow].end - times[nowRow].start)) * (tt.rows[nowRow].kind === 'break' ? BREAK : ROW)
+
+  // Bloques de cada día: se juntan solo filas de clase seguidas con la misma asignatura
   const blocksOf = (c) => {
     const out = []
     tt.rows.forEach((row, i) => {
       if (row.kind === 'break') return
       const v = tt.cells[`${row.id}:${c}`]
-      const prev = out[out.length - 1]
       if (!v) return
-      if (prev && prev.v === v && prev.end === times[i].start) prev.end = times[i].end
-      else out.push({ v, start: times[i].start, end: times[i].end, ...look(v) })
+      const prev = out[out.length - 1]
+      if (prev && prev.v === v && prev.lastRow === i - 1) { prev.lastRow = i; prev.end = times[i].end; prev.rows += 1 }
+      else out.push({ v, firstRow: i, lastRow: i, rows: 1, start: times[i].start, end: times[i].end, ...look(v) })
     })
     return out
   }
-  const breaks = tt.rows.map((r, i) => (r.kind === 'break' ? { ...times[i], label: r.label } : null)).filter(Boolean)
   const current = today < 5 ? blocksOf(today).find((b) => nowMin >= b.start && nowMin < b.end) : null
   const next = today < 5 ? blocksOf(today).find((b) => b.start > nowMin) : null
-  const hours = []
-  for (let h = Math.ceil(first / 60) * 60; h <= last; h += 60) hours.push(h)
 
   return (
     <div className="schedule sv">
@@ -197,22 +200,24 @@ function ScheduleView({ tt, times, look, onEdit }) {
       <div className="sv-days" role="tablist">
         {DAYS.map((d, i) => <button key={d} role="tab" aria-selected={day === i} className={`sv-daytab ${day === i ? 'on' : ''} ${i === today ? 'is-today' : ''}`} onClick={() => setDay(i)}>{d.slice(0, 3)}</button>)}
       </div>
-      <div className="sv-grid" style={{ '--h': `${(last - first) * PX}px` }}>
-        <div className="sv-hours">{hours.map((h) => <span key={h} style={{ top: y(h) }}>{fmt(h)}</span>)}</div>
+      <div className="sv-grid" style={{ '--h': `${total}px` }}>
+        <div className="sv-hours">{tt.rows.map((r, i) => r.kind === 'break' ? null : <span key={r.id} style={{ top: tops[i] + 6 }}>{fmt(times[i].start)}</span>)}</div>
         {DAYS.map((d, c) => (
           <div key={d} className={`sv-col ${c === today ? 'is-today' : ''} ${c === day ? 'is-shown' : ''}`}>
             <span className="sv-dayname">{d}</span>
             <div className="sv-track">
-              {breaks.map((b) => <span key={b.start} className="sv-break" style={{ top: y(b.start), height: (b.end - b.start) * PX }} title={b.label} />)}
+              {tt.rows.map((r, i) => r.kind === 'break' ? <span key={r.id} className="sv-break" style={{ top: tops[i], height: BREAK }}>{r.label || 'Recreo'}</span> : null)}
               {blocksOf(c).map((b) => {
+                const top = tops[b.firstRow]
+                const height = tops[b.lastRow] + ROW - top - 4
                 const isNow = c === today && nowMin >= b.start && nowMin < b.end
                 return (
-                  <div key={b.start} className={`sv-block ${isNow ? 'is-now' : ''}`} style={{ top: y(b.start), height: (b.end - b.start) * PX - 3, background: b.color }}>
+                  <div key={b.firstRow} className={`sv-block ${b.rows > 1 ? 'is-double' : ''} ${isNow ? 'is-now' : ''}`} style={{ top: top + 2, height, background: b.color }}>
                     <b>{b.name}</b><span>{fmt(b.start)}–{fmt(b.end)}</span>
                   </div>
                 )
               })}
-              {c === today && nowMin >= first && nowMin <= last && <span className="sv-line" style={{ top: y(nowMin) }} />}
+              {c === today && nowY != null && <span className="sv-line" style={{ top: nowY }} />}
             </div>
           </div>
         ))}
