@@ -46,7 +46,15 @@ export default function Schedule({ data, update, subjects }) {
     if (end == null || end <= times[i].start) return
     patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, dur: end - times[i].start } : r)) }))
   }
-  const setStart = (text) => { const m = toMin(text); if (m != null) patch((t) => ({ ...t, start: fmt(m) })) }
+  // Hora de inicio de una franja: la primera mueve todo el día; las demás pueden dejar un hueco antes
+  const setStartAt = (i, text) => {
+    const m = toMin(text)
+    if (m == null) return
+    if (i === 0) return patch((t) => ({ ...t, start: fmt(m) }))
+    const prevEnd = times[i - 1].end
+    patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, at: m > prevEnd ? fmt(m) : null } : r)) }))
+  }
+  const setDur = (i, dur) => { const d = Math.max(5, Math.min(240, Math.round(Number(dur) || 0))); if (d) patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, dur: d } : r)) })) }
   const removeRow = (id) => { patch((t) => (t.rows.length > 1 ? { ...t, rows: t.rows.filter((r) => r.id !== id) } : t)); setRowMenu(null) } // siempre queda al menos una franja
   const move = (from, to) => patch((t) => { const rows = [...t.rows]; if (to < 0 || to >= rows.length) return t; const [r] = rows.splice(from, 1); rows.splice(to, 0, r); return { ...t, rows } })
   const addRowAfter = (index, kind) => {
@@ -88,15 +96,18 @@ export default function Schedule({ data, update, subjects }) {
                 </div>
               )}
             </span>
-            <span className="tt-time">
+            <span className="tt-time tt-time-edit">
               <span className="tt-times">
-                {i === 0
-                  ? <input className="tt-in tt-start" key={`s${tt.start}`} defaultValue={fmt(times[0].start)} onBlur={(e) => setStart(e.target.value)} aria-label="Hora de inicio" maxLength={5} />
-                  : <span className="tt-start-text">{fmt(times[i].start)}</span>}
+                <input type="time" className="tt-in tt-start" key={`s${i}${times[i].start}`} defaultValue={fmt(times[i].start).padStart(5, '0')} onBlur={(e) => setStartAt(i, e.target.value)} aria-label="Hora de inicio" />
                 <span className="tt-dash">–</span>
-                <input className="tt-in tt-end" key={`e${row.dur}${times[i].start}`} defaultValue={fmt(times[i].end)} onBlur={(e) => setEnd(i, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Hora de fin" maxLength={5} />
+                <input type="time" className="tt-in tt-end" key={`e${row.dur}${times[i].start}`} defaultValue={fmt(times[i].end).padStart(5, '0')} onBlur={(e) => setEnd(i, e.target.value)} aria-label="Hora de fin" />
               </span>
-              <span className="tt-dur">{row.dur} min</span>
+              <span className="tt-dur-step">
+                <button type="button" className="mini" onClick={() => setDur(i, row.dur - 5)} aria-label="5 minutos menos">−</button>
+                <input className="tt-dur-in" key={`d${row.dur}`} defaultValue={row.dur} inputMode="numeric" onBlur={(e) => setDur(i, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Duración en minutos" />
+                <span className="muted">min</span>
+                <button type="button" className="mini" onClick={() => setDur(i, row.dur + 5)} aria-label="5 minutos más">+</button>
+              </span>
             </span>
             {row.kind === 'break'
               ? <label className="tt-break"><Icon name="clock" size={16} /><input className="tt-break-in" defaultValue={breakName(row.label)} maxLength={24} aria-label="Nombre del descanso"

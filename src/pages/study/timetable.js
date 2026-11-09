@@ -1,5 +1,5 @@
 // Modelo del horario: filas con duración; las horas se calculan en cadena a partir de la hora de inicio.
-// timetable = { start: '8:30', rows: [{ id, kind: 'class'|'break', label?, dur }], cells: { 'rowId:día': valor }, labels: [{ id, name, color }] }
+// timetable = { start: '8:30', rows: [{ id, kind: 'class'|'break', label?, dur, at? }], cells: { 'rowId:día': valor }, labels: [{ id, name, color }] }
 // Una casilla vale la sigla de una asignatura o «#idEtiqueta».
 export const toMin = (t) => {
   const m = /^(\d{1,2})[:.](\d{2})$/.exec(String(t).trim())
@@ -36,5 +36,11 @@ export function normalizeTimetable(tt, subjects = []) {
 /** Hora de inicio y fin de cada fila. */
 export function spans(tt) {
   let t = toMin(tt.start) ?? 510
-  return tt.rows.map((r) => { const start = t; t += r.dur; return { start, end: t } })
+  return tt.rows.map((r, i) => {
+    // Una franja puede empezar más tarde que la anterior (un hueco): «at» es su hora de inicio
+    const at = i > 0 && r.at ? toMin(r.at) : null
+    const start = at != null && at > t ? at : t
+    t = start + r.dur
+    return { start, end: t }
+  })
 }
