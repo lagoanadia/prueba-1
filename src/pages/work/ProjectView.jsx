@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BlockEdit from '../../components/BlockEdit.jsx'
 import Icon from '../../components/Icon.jsx'
 import TopActions from '../../components/TopActions.jsx'
 import { daysUntil, formatShort, lastDays, todayISO } from '../../lib/dates.js'
@@ -42,7 +43,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const blocks = data.projectBlocks ?? DEFAULT_BLOCKS
   const setBlocks = (fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
-  const resize = (id) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span: (x.span % 3) + 1 } : x)))
+  const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (id) => setBlocks((b) => b.filter((x) => x.id !== id))
   const addBlock = (type) => { setBlocks((b) => [...b, DEFAULT_BLOCKS.find((x) => x.type === type)]); setMenu(false) }
   const missing = DEFAULT_BLOCKS.map((b) => b.type).filter((t) => !blocks.some((b) => b.type === t))
@@ -176,14 +177,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.filter((b) => PARTS[b.type]).map((b, i) => (
           <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls}`} aria-label={PARTS[b.type].label}>
-            {editing && (
-              <div className="block-tools">
-                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover antes"><Icon name="left" size={18} /></button>
-                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === blocks.length - 1} aria-label="Mover después"><Icon name="right" size={18} /></button>
-                <button className="icon-btn" onClick={() => resize(b.id)} aria-label="Cambiar tamaño" title={`Ancho ${b.span} de 3`}><Icon name="expand" size={18} /></button>
-                <button className="icon-btn" onClick={() => removeBlock(b.id)} aria-label="Quitar"><Icon name="close" size={18} /></button>
-              </div>
-            )}
+            {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b.id)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {PARTS[b.type].render()}
           </section>
         ))}

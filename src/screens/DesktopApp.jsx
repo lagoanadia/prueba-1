@@ -13,11 +13,12 @@ import { AREAS } from '../data/areas.js'
 import { activeAreaIds } from '../data/settings.js'
 import { formatToday } from '../lib/dates.js'
 import useFriendRequests from '../hooks/useFriendRequests.js'
+import FriendToast from '../components/FriendToast.jsx'
 
 /** Vista portátil: menú lateral + contenido. */
 export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [view, setView] = useState('inicio')
-  const requests = useFriendRequests() // peticiones de amistad sin responder
+  const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
   const [navOpen, setNavOpen] = useState(true)
   const [panelOpen, setPanelOpen] = useState(true) // panel de unidades (modo concentración)
@@ -42,6 +43,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   return (
     <FocusCtx.Provider value={focusCtx}>
     <div className="d-app">
+      <FriendToast toast={toast} onOpen={() => setView('perfil')} onClose={dismiss} />
       {focus && !navOpen ? (
         <nav className="sidebar sidebar-slim" aria-label="Navegación">
           <button className="nv nv-slim" onClick={() => setNavOpen(true)} aria-label="Mostrar menú" aria-expanded="false" title="Mostrar menú"><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="inicio" /></span></button>
