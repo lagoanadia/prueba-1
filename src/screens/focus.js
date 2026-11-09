@@ -12,3 +12,4 @@ export function useFocusMode(on) {
   }, [on, setFocus])
 }
 export const usePanelOpen = () => useContext(FocusCtx).panelOpen
+export const usePanel = () => { const c = useContext(FocusCtx); return [c.panelOpen, c.setPanelOpen] }

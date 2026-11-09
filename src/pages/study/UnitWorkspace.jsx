@@ -1,78 +1,144 @@
-import ShareButton from '../../components/ShareButton.jsx'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
-import { toDoc } from '../../lib/docModel.js'
-import { useFocusMode, usePanelOpen } from '../../screens/focus.js'
+import ShareButton from '../../components/ShareButton.jsx'
+import { useFocusMode, usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
 import { changeSubject, changeUnit, practicesOf, soft } from './helpers.js'
 
-const NEXT = { todo: 'doing', doing: 'clear', clear: 'todo' }
 // Orden de las pestañas: Temario y apuntes · Prácticas · Recursos (al final)
 const TABS = [['estudio', 'split', 'Temario y apuntes'], ['practicas', 'code', 'Prácticas'], ['recursos', 'link', 'Recursos']]
-const LAYOUTS = [['pdf', 'pdf', 'PDF grande'], ['split', 'split', 'PDF y apuntes'], ['doc', 'doc', 'Apuntes grandes']]
+
+/** Libro abierto: hoja izquierda = PDF del profe, hoja derecha = mis apuntes. La hoja marcada va rellena. */
+function Book({ left, right }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#202124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 6C10 4.6 7 4.2 3.5 4.6V18.6C7 18.2 10 18.6 12 20Z" fill={left ? '#202124' : 'none'} />
+      <path d="M12 6C14 4.6 17 4.2 20.5 4.6V18.6C17 18.2 14 18.6 12 20Z" fill={right ? '#202124' : 'none'} />
+    </svg>
+  )
+}
+const LAYOUTS = [['pdf', true, false, 'Solo el PDF del profe'], ['split', true, true, 'PDF y mis apuntes'], ['doc', false, true, 'Solo mis apuntes']]
 
 /**
- * Unidad en modo concentración. El panel de la izquierda solo sirve para cambiar de unidad;
- * los temas y las prácticas se crean y cambian aquí, en la pantalla de Temario y apuntes / Prácticas.
+ * Unidad en modo concentración. El panel de la izquierda muestra las unidades y, al desplegarlas, sus temas y prácticas
+ * (con una casilla para marcar lo estudiado). Arriba, la ruta Asignatura › Unidad para volver atrás.
  */
 export default function UnitWorkspace({ data, update, subject, unit, route, go, back }) {
   useFocusMode(true)
-  const panel = usePanelOpen()
+  const [panel, setPanel] = usePanel()
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
+  const [addMenu, setAddMenu] = useState(false)
   const [layout, setLayout] = useState('split')
+  const [open, setOpen] = useState(() => new Set([unit.id])) // unidades desplegadas
+  const menuRef = useRef(null)
   const tab = route.tab ?? 'estudio'
   const practices = practicesOf(unit)
+  const topicIndex = Math.max(0, unit.topics.findIndex((t) => t.id === route.itemId))
   const topic = unit.topics.find((t) => t.id === route.itemId) ?? unit.topics[0]
   const practice = practices.find((p) => p.id === route.itemId) ?? practices[0]
+
+  useEffect(() => { setOpen((s) => (s.has(unit.id) ? s : new Set([...s, unit.id]))) }, [unit.id])
+  useEffect(() => {
+    if (!addMenu) return
+    const close = (e) => { if (!menuRef.current?.contains(e.target)) setAddMenu(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [addMenu])
 
   const changeU = (fn) => changeUnit(update, subject.id, unit.id, fn)
   const setPractices = (fn) => changeU((u) => ({ ...u, practices: fn(practicesOf(u)) }))
   const patchPractice = (id, patch) => setPractices((l) => l.map((p) => (p.id === id ? { ...p, ...patch } : p)))
-  const cycle = (topicId) => changeU((u) => ({ ...u, topics: u.topics.map((t) => (t.id === topicId ? { ...t, state: NEXT[t.state] } : t)) }))
+  const toggleTopic = (uid, tid) => changeUnit(update, subject.id, uid, (u) => ({ ...u, topics: u.topics.map((t) => (t.id === tid ? { ...t, state: t.state === 'clear' ? 'todo' : 'clear' } : t)) }))
+  const togglePractice = (uid, pid) => changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).map((p) => (p.id === pid ? { ...p, done: !p.done } : p)) }))
   const addTopic = (name) => { const id = crypto.randomUUID(); changeU((u) => ({ ...u, topics: [...u.topics, { id, name, state: 'todo' }] })); setDialog(null); go({ ...route, tab: 'estudio', itemId: id }) }
   const addPractice = (name) => { const id = crypto.randomUUID(); setPractices((l) => [...l, { id, name, done: false }]); setDialog(null); go({ ...route, tab: 'practicas', itemId: id }) }
   const addUnit = (name) => { const id = crypto.randomUUID(); changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id, name, topics: [] }] })); setDialog(null); go({ ...route, unitId: id, tab: 'estudio', itemId: null }) }
   const renameUnit = (id, name) => { changeUnit(update, subject.id, id, (u) => ({ ...u, name })); setDialog(null) }
-  const removeTopic = (id) => { if (!window.confirm('¿Quitar este tema y sus apuntes?')) return; changeU((u) => ({ ...u, topics: u.topics.filter((t) => t.id !== id) })); go({ ...route, itemId: null }) }
-  const removePractice = (id) => { if (!window.confirm('¿Quitar esta práctica?')) return; setPractices((l) => l.filter((p) => p.id !== id)); go({ ...route, itemId: null }) }
+  const removeTopic = (uid, id) => { if (!window.confirm('¿Quitar este tema y sus apuntes?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, topics: u.topics.filter((t) => t.id !== id) })); go({ ...route, itemId: null }) }
+  const removePractice = (uid, id) => { if (!window.confirm('¿Quitar esta práctica?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).filter((p) => p.id !== id) })); go({ ...route, itemId: null }) }
+  const toggleOpen = (id) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
-  // Son funciones (no componentes): así React no vuelve a montar el editor cada vez que se pinta
+  // PDF por tema. El PDF que antes se guardaba en la unidad se queda en el primer tema.
+  const topicPdf = topic ? (topic.pdf !== undefined ? topic.pdf : topicIndex === 0 ? unit.temario ?? null : null) : null
+  const setTopicPdf = (f) => changeU((u) => ({ ...u, ...(topicIndex === 0 ? { temario: undefined } : {}), topics: u.topics.map((t) => (t.id === topic.id ? { ...t, pdf: f } : t)) }))
+
   const layouts = () => (
-    <div className="layouts" role="radiogroup" aria-label="Tamaño de las ventanas">
-      {LAYOUTS.map(([id, icon, label]) => (
-        <button key={id} role="radio" aria-checked={layout === id} className={`icon-btn ${layout === id ? 'on' : ''}`} title={label} aria-label={label} onClick={() => setLayout(id)}><Icon name={icon} size={18} /></button>
+    <div className="layouts" role="radiogroup" aria-label="Qué hojas ver">
+      {LAYOUTS.map(([id, l, r, label]) => (
+        <button key={id} role="radio" aria-checked={layout === id} className={`icon-btn ${layout === id ? 'on' : ''}`} title={label} aria-label={label} onClick={() => setLayout(id)}><Book left={l} right={r} /></button>
       ))}
     </div>
   )
+  // Son funciones (no componentes): así React no vuelve a montar el editor cada vez que se pinta
   const split = (left, right) => (
     <div className={`ws-split ws-${layout}`}>
       {layout !== 'doc' && left}
       {layout !== 'pdf' && right}
     </div>
   )
+  const row = (selected, done, onCheck, icon, name, onPick, onRemove, doneLabel) => (
+    <div className={`tp-row ${selected ? 'sel' : ''}`}>
+      <button className={`chk ${done ? 'on' : ''}`} onClick={onCheck} aria-pressed={done} aria-label={doneLabel} title={done ? 'Estudiado' : 'Marcar como estudiado'}>{done && <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3.4} />}</button>
+      {icon && <Icon name={icon} size={14} color="#9AA0A6" />}
+      <button className="tp-name" onClick={onPick}>{name}</button>
+      <button className="prio-x tp-del" onClick={onRemove} aria-label={`Quitar «${name}»`}><Icon name="trash" size={14} /></button>
+    </div>
+  )
 
   return (
     <div className="ws">
+      <nav className="crumbs" aria-label="Ruta">
+        <button className="crumb" onClick={back}><i style={{ background: subject.color }} />{subject.short}</button>
+        <Icon name="right" size={14} color="#9AA0A6" />
+        <span className="crumb is-current" aria-current="page">{unit.name}</span>
+      </nav>
+
       <div className="ws-body">
         {panel && (
-          <aside className="card ws-panel" aria-label="Unidades">
+          <aside className="card ws-panel" aria-label="Unidades y temas">
             <b className="ws-subject" style={{ borderColor: soft(subject.color) }}>{subject.short}</b>
-            {subject.units.map((u) => (
-              <div key={u.id} className={`ws-unit-row ${u.id === unit.id ? 'is-on' : ''}`}>
-                <button className="ws-unit-btn w-ellipsis" aria-current={u.id === unit.id ? 'true' : undefined} onClick={() => go({ ...route, unitId: u.id, itemId: null })}>{u.name}</button>
-                <button className="prio-x" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`}><Icon name="pen" size={14} /></button>
-              </div>
-            ))}
-            <button className="ws-new" onClick={() => setDialog('unit')}><Icon name="plus" size={16} /><span>Nueva unidad</span></button>
+            {subject.units.map((u) => {
+              const on = u.id === unit.id
+              const isOpen = open.has(u.id)
+              const ps = practicesOf(u)
+              return (
+                <div key={u.id} className="tp-unit-wrap">
+                  <div className={`tp-unit ${on ? 'on' : ''}`}>
+                    <button className="tp-chev" onClick={() => toggleOpen(u.id)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Plegar' : 'Desplegar'} ${u.name}`}><Icon name={isOpen ? 'down' : 'right'} size={16} /></button>
+                    <button className="tp-uname w-ellipsis" onClick={() => { go({ ...route, unitId: u.id, itemId: null }); setOpen((s) => new Set([...s, u.id])) }}>{u.name}</button>
+                    <button className="prio-x tp-pen" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`}><Icon name="pen" size={14} /></button>
+                  </div>
+                  {isOpen && (
+                    <div className="tp-children">
+                      {u.topics.map((t) => row(on && tab === 'estudio' && topic?.id === t.id, t.state === 'clear', () => toggleTopic(u.id, t.id), null, t.name,
+                        () => go({ ...route, unitId: u.id, tab: 'estudio', itemId: t.id }), () => removeTopic(u.id, t.id), `Marcar «${t.name}» como estudiado`))}
+                      {ps.map((p) => row(on && tab === 'practicas' && practice?.id === p.id, !!p.done, () => togglePractice(u.id, p.id), 'code', p.name,
+                        () => go({ ...route, unitId: u.id, tab: 'practicas', itemId: p.id }), () => removePractice(u.id, p.id), `Marcar «${p.name}» como hecha`))}
+                      {!u.topics.length && !ps.length && <span className="tp-empty">Sin temas todavía</span>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            <div className="tp-add" ref={menuRef}>
+              <button className="tp-plus" onClick={() => setAddMenu(!addMenu)} aria-label="Añadir" aria-haspopup="menu" aria-expanded={addMenu} title="Añadir"><Icon name="plus" size={18} /></button>
+              {addMenu && (
+                <div className="card tp-menu" role="menu">
+                  <button role="menuitem" onClick={() => { setAddMenu(false); setDialog('topic') }}>Tema</button>
+                  <button role="menuitem" onClick={() => { setAddMenu(false); setDialog('practice') }}>Práctica</button>
+                  <button role="menuitem" onClick={() => { setAddMenu(false); setDialog('unit') }}>Unidad</button>
+                </div>
+              )}
+            </div>
           </aside>
         )}
 
         <div className="ws-main">
           <div className="ws-tabs" role="tablist">
-            <button className="icon-btn" onClick={back} aria-label="Volver a la asignatura" title="Volver"><Icon name="back" size={20} /></button>
+            <button className="icon-btn ws-toggle" onClick={() => setPanel(!panel)} aria-label={panel ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panel} title={panel ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
             {TABS.map(([id, icon, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} className={`ws-tab ${tab === id ? 'on' : ''}`} onClick={() => go({ ...route, tab: id, itemId: null })}>
                 <Icon name={icon} size={18} />{label}
@@ -82,44 +148,19 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
           </div>
 
           {tab === 'estudio' && (
-            <>
-              <div className="chip-strip" aria-label="Temas">
-                {unit.topics.map((t) => (
-                  <span key={t.id} className={`topic-chip ${topic?.id === t.id ? 'is-sel' : ''}`}>
-                    <button className="state-btn" onClick={() => cycle(t.id)} aria-label={`Estado de «${t.name}»: ${t.state === 'clear' ? 'claro' : t.state === 'doing' ? 'en curso' : 'sin empezar'}`} title="Cambiar estado">
-                      <Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={t.state === 'clear' ? '#3DDC97' : t.state === 'doing' ? '#3185FC' : '#9AA0A6'} />
-                    </button>
-                    <button className="chip-name" onClick={() => go({ ...route, itemId: t.id })}>{t.name}</button>
-                    {topic?.id === t.id && <button className="prio-x" onClick={() => removeTopic(t.id)} aria-label={`Quitar «${t.name}»`}><Icon name="trash" size={14} /></button>}
-                  </span>
-                ))}
-                {topic && data.notes?.[topic.id] && <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} />}
-                <button className="topic-chip chip-add" onClick={() => setDialog('topic')} aria-label="Añadir tema" title="Añadir tema"><Icon name="plus" size={16} /><span>Tema</span></button>
-              </div>
-              {topic
-                ? split(<FileFrame key="pdf" file={unit.temario ?? null} onChange={(f) => changeU((u) => ({ ...u, temario: f }))} label="Subir el temario (PDF)" />,
-                    <BlockEditor key={topic.id} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]} onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
-                : <p className="muted ws-empty">Añade un tema con + para empezar a tomar apuntes.</p>}
-            </>
+            topic
+              ? split(<FileFrame key={`pdf-${topic.id}`} file={topicPdf} onChange={setTopicPdf} label="Subir el PDF de este tema" />,
+                  <BlockEditor key={topic.id} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
+                    bar={data.notes?.[topic.id] ? <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} /> : null}
+                    onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
+              : <p className="muted ws-empty">Añade un tema con + en el panel para empezar a tomar apuntes.</p>
           )}
 
           {tab === 'practicas' && (
-            <>
-              <div className="chip-strip" aria-label="Prácticas">
-                {practices.map((p) => (
-                  <span key={p.id} className={`topic-chip ${practice?.id === p.id ? 'is-sel' : ''}`}>
-                    <button className="state-btn" onClick={() => patchPractice(p.id, { done: !p.done })} aria-pressed={p.done} aria-label={`«${p.name}» hecha`} title="Marcar como hecha"><Icon name={p.done ? 'check' : 'clock'} size={16} color={p.done ? '#3DDC97' : '#9AA0A6'} /></button>
-                    <button className="chip-name" onClick={() => go({ ...route, itemId: p.id })}>{p.name}</button>
-                    {practice?.id === p.id && <button className="prio-x" onClick={() => removePractice(p.id)} aria-label={`Quitar «${p.name}»`}><Icon name="trash" size={14} /></button>}
-                  </span>
-                ))}
-                <button className="topic-chip chip-add" onClick={() => setDialog('practice')} aria-label="Añadir práctica" title="Añadir práctica"><Icon name="plus" size={16} /><span>Práctica</span></button>
-              </div>
-              {practice
-                ? split(<FileFrame key="pdf" file={practice.statement ?? null} onChange={(f) => patchPractice(practice.id, { statement: f })} label="Subir el enunciado (PDF)" />,
-                    <BlockEditor key={practice.id} label={`Solución de ${practice.name}`} value={practice.doc} onChange={(doc) => patchPractice(practice.id, { doc })} />)
-                : <p className="muted ws-empty">Añade una práctica con +: el enunciado en PDF a un lado y tu solución al otro.</p>}
-            </>
+            practice
+              ? split(<FileFrame key={`st-${practice.id}`} file={practice.statement ?? null} onChange={(f) => patchPractice(practice.id, { statement: f })} label="Subir el enunciado (PDF)" />,
+                  <BlockEditor key={practice.id} label={`Solución de ${practice.name}`} value={practice.doc} onChange={(doc) => patchPractice(practice.id, { doc })} />)
+              : <p className="muted ws-empty">Añade una práctica con + en el panel: el enunciado en PDF a un lado y tu solución al otro.</p>
           )}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}

@@ -12,6 +12,13 @@ export default function StudyPage({ data, update }) {
   const unit = subject?.units.find((u) => u.id === route.unitId)
   const go = (r) => setRoute(r)
 
+  // Pulsar «Área de Estudios» (arriba) vuelve al inicio de Estudios
+  useEffect(() => {
+    const home = () => setRoute({ view: 'planner' })
+    window.addEventListener('study-home', home)
+    return () => window.removeEventListener('study-home', home)
+  }, [])
+
   // Al cambiar de pantalla, volver arriba
   useEffect(() => { window.scrollTo?.({ top: 0 }) }, [route.view, route.subjectId])
 

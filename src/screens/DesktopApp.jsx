@@ -70,13 +70,14 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
           <div className="d-top-left">
             {view === 'perfil' && <h1 className="perfil-title">Perfil</h1>}
             {(area || view === 'calendario' || view === 'amigos') && (
-              <h1 className="d-title" key={view}>{area ? `Área de ${area.label}` : view === 'amigos' ? 'Amigos' : 'Calendario'}</h1>
+              <h1 className="d-title" key={view}>
+                {area?.id === 'estudios'
+                  ? <button className="d-title-btn" onClick={() => window.dispatchEvent(new Event('study-home'))} title="Ir al inicio de Estudios">Área de Estudios</button>
+                  : (area ? `Área de ${area.label}` : view === 'amigos' ? 'Amigos' : 'Calendario')}
+              </h1>
             )}
             {/* botón de personalizar (lo coloca cada pantalla con <TopActions>), junto al título */}
             <div id="top-actions" className="d-top-actions" />
-            {focus && view === 'estudios' && (
-              <button className="icon-btn ws-toggle" onClick={() => setPanelOpen(!panelOpen)} aria-label={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panelOpen} title={panelOpen ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
-            )}
           </div>
           <button className="talk-circle" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
             <span className="talk-circle-inner">

@@ -232,12 +232,10 @@ function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
         {DAYS.map((d, i) => <button key={d} role="tab" aria-selected={day === i} className={`sv-daytab ${day === i ? 'on' : ''} ${i === today ? 'is-today' : ''}`} onClick={() => setDay(i)}>{d.slice(0, 3)}</button>)}
       </div>
       <div className="sv-grid" style={{ '--h': `${total}px` }}>
-        <div className="sv-hours">{tt.rows.map((r, i) => r.kind === 'break' ? null : <span key={r.id} style={{ top: tops[i] + 6 }}>{fmt(times[i].start)}</span>)}</div>
         {DAYS.map((d, c) => (
           <div key={d} className={`sv-col ${c === today ? 'is-today' : ''} ${c === day ? 'is-shown' : ''}`}>
             <span className="sv-dayname">{d}</span>
             <div className="sv-track">
-              {tt.rows.map((r, i) => r.kind === 'break' ? <span key={r.id} className="sv-break" style={{ top: tops[i], height: BREAK }}>{breakName(r.label)}</span> : null)}
               {blocksOf(c).map((b) => {
                 const top = tops[b.firstRow]
                 const height = tops[b.lastRow] + ROW - top - 4
@@ -252,6 +250,7 @@ function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
             </div>
           </div>
         ))}
+        {tt.rows.map((r, i) => r.kind === 'break' ? <div key={r.id} className="sv-break-full" style={{ top: `calc(var(--pt) + ${tops[i]}px)`, height: BREAK }}>{breakName(r.label)}</div> : null)}
       </div>
     </div>
   )

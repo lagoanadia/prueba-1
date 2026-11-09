@@ -12,16 +12,27 @@ export const BLOCK_TYPES = [
   { type: 'todo', label: 'Tareas', icon: 'check', hint: 'tareas casillas checklist []' },
   { type: 'quote', label: 'Cita', icon: 'note', hint: 'cita quote >' },
   { type: 'callout', label: 'Destacado', icon: 'marker', hint: 'destacado idea clave aviso' },
-  { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code' },
+  { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code programa' },
+  { type: 'table', label: 'Tabla', icon: 'table', hint: 'tabla table filas columnas' },
+  { type: 'image', label: 'Foto', icon: 'img', hint: 'foto imagen image picture' },
   { type: 'divider', label: 'Divisor', icon: 'close', hint: 'divisor linea separador ---' },
 ]
-export const newBlock = (type = 'text', html = '') => ({ id: crypto.randomUUID(), type, html, ...(type === 'todo' ? { checked: false } : {}) })
+const plain = (html) => String(html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+const savedTheme = () => { try { return localStorage.getItem('codeTheme') || 'noche' } catch { return 'noche' } }
+export const newBlock = (type = 'text', html = '') => ({
+  id: crypto.randomUUID(), type, html,
+  ...(type === 'todo' ? { checked: false } : {}),
+  ...(type === 'table' ? { rows: [['', '', ''], ['', '', '']] } : {}),
+  ...(type === 'image' ? { file: null } : {}),
+  ...(type === 'code' ? { code: '', lang: 'JavaScript', theme: savedTheme() } : {}),
+})
 
 const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 
 /** Cualquier formato guardado (bloques, HTML de la versión anterior, bloques antiguos) → lista de bloques. */
 export function toBlocks(value) {
-  if (value?.blocks) return value.blocks
+  // los bloques de código antiguos guardaban el texto en `html`
+  if (value?.blocks) return value.blocks.map((b) => (b.type === 'code' && b.code === undefined ? { ...b, code: plain(b.html), lang: 'Texto', theme: 'noche' } : b))
   if (Array.isArray(value)) { // apuntes antiguos: [{ type, text }]
     const out = value.filter((b) => b.type !== 'image' && b.text).flatMap((b) => {
       if (b.type === 'title') return [newBlock('h1', esc(b.text))]
