@@ -16,7 +16,7 @@ import Avatar from '../components/Avatar.jsx'
  *    El deslizamiento horizontal es CSS puro (scroll-snap), así se siente nativo.
  *  - Abajo: barras de color de las áreas. Al tocarlas (o deslizar hacia arriba) sube una hoja.
  */
-export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar }) {
+export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings }) {
   const [page, setPage] = useState(0)
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
@@ -70,7 +70,7 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
           const id = el?.closest('[data-area]')?.dataset.area
           if (id) setSheet(id)
         }}>
-        {AREAS.map((a) => (
+        {AREAS.filter((a) => settings.areas[a.id]?.active).map((a) => (
           <button key={a.id} data-area={a.id} className="m-bar" style={{ background: a.color }} onClick={() => setSheet(a.id)} aria-label={a.label}>
             <span className="m-bar-icon"><Icon name={a.id} size={18} /></span>
           </button>
