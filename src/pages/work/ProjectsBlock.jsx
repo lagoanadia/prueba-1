@@ -2,26 +2,14 @@ import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { formatShort, daysUntil } from '../../lib/dates.js'
 import { progressOf, projectsOf } from '../../widgets/trabajo/projects.js'
-import { PROJECT_COLORS, colorOf, selectedOf, soft } from './shared.js'
+import { PROJECT_COLORS, colorOf, soft } from './shared.js'
 
-/**
- * Proyectos: cada uno con su color, plazo y progreso. Tocar uno lo enciende o apaga en el tablero
- * (se pueden mezclar varios); si están todos encendidos, tocar uno deja SOLO ese.
- */
+/** Proyectos: cada uno con su color, plazo y progreso. Tocar uno lo abre por dentro. */
 export default function ProjectsBlock({ data, update, openProject }) {
   const projects = projectsOf(data)
-  const selected = selectedOf(data)
-  const all = selected.length === projects.length
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
 
-  const toggle = (id) => update((d) => {
-    const cur = selectedOf(d)
-    const allOn = cur.length === projectsOf(d).length
-    const next = allOn ? [id] : cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
-    return { ...d, selectedProjects: next.length === projectsOf(d).length ? [] : next }
-  })
-  const showAll = () => update((d) => ({ ...d, selectedProjects: [] }))
   const add = (e) => {
     e.preventDefault()
     if (!name.trim()) return
@@ -36,15 +24,13 @@ export default function ProjectsBlock({ data, update, openProject }) {
   return (
     <div className="wk-projects">
       <div className="wk-chips">
-        {projects.length > 1 && <button className={`seg-chip ${all ? 'on' : ''}`} onClick={showAll} aria-pressed={all}>Todos</button>}
         {projects.map((p, i) => {
           const c = colorOf(data, p.id)
           const { total, done, pct } = progressOf(p)
-          const on = selected.includes(p.id)
           const left = p.deadline ? daysUntil(p.deadline) : null
           return (
-            <div key={p.id} className={`wk-project ${on ? 'on' : ''}`} style={{ '--c': c, '--i': i }}>
-              <button className="wk-project-main" onClick={() => toggle(p.id)} aria-pressed={on} title={on ? 'Quitar del tablero' : 'Mostrar en el tablero'}>
+            <div key={p.id} className="wk-project on" style={{ '--c': c, '--i': i }}>
+              <button className="wk-project-main" onClick={() => openProject(p.id)} title="Abrir proyecto">
                 <span className="dot" style={{ background: c }} />
                 <b>{p.name}</b>
                 <span className="wk-pct">{pct}%</span>
@@ -55,7 +41,6 @@ export default function ProjectsBlock({ data, update, openProject }) {
                 <Icon name="calendario" size={14} />{p.deadline ? formatShort(p.deadline).replace(/^\S+ /, '') : '—'}
                 <input type="date" value={p.deadline ?? ''} onChange={(e) => setDeadline(p.id, e.target.value || null)} aria-label={`Fecha límite de ${p.name}`} />
               </label>
-              <button className="wk-open" onClick={() => openProject(p.id)} aria-label={`Abrir ${p.name}`} title="Abrir proyecto"><Icon name="arrow" size={16} /></button>
               <button className="wk-x" onClick={() => remove(p)} aria-label={`Borrar ${p.name}`}><Icon name="close" size={12} /></button>
             </div>
           )
