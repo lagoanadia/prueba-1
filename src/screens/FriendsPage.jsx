@@ -306,17 +306,13 @@ function StudySession({ state, friend, run, onClose }) {
 }
 
 // ---------- Edificio ----------
-function Building({ state, run }) {
-  const [msg, setMsg] = useState('')
-  const close = async () => { const r = await run('closeDay', { color: '#3185FC' }); setMsg(r.already ? 'Hoy ya está cerrado' : r.unlocked ? `¡Has encontrado algo! ${SECRETS[r.unlocked][0]}` : '+1 bloque') }
+function Building({ state }) {
   return (
     <div className="feed">
       <div className="card feed-card fp-tower">
         <Tower blocks={state.me.tower} />
         <b>{state.me.tower.length} días cerrados</b>
-        <span className="muted">Cada día que tachas todas tus tareas de Inicio se apila un bloque del color del área que más has movido. Si un día no abres la app no pasa nada: no hay racha que perder.</span>
-        <button className="pill" onClick={close}>Cerrar el día</button>
-        {msg && <span className="friends-ok">{msg}</span>}
+        <span className="w-hint">Tacha todo en Inicio y sube un bloque</span>
       </div>
       <div className="card feed-card">
         <b>Secretos</b>

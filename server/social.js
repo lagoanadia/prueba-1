@@ -5,6 +5,7 @@
 // Solo los amigos ven lo tuyo, y solo lo que tú compartes.
 import { getFriendIds, getUsername, findUserId, normalizeUsername } from './friends.js'
 import { getProfile } from './profile.js'
+import { listEntries } from './entries.js'
 
 export const EMOJIS = ['👏', '🔥', '❤️', '😂']
 export const KINDS = ['recipe', 'doc', 'good', 'note', 'achievement']
@@ -50,6 +51,34 @@ async function progress(env, uid, metric, weekStart) {
   if (metric === 'habits') return Object.values((await board(env, uid, 'journal')).data.pixels ?? {}).flat().filter(inWeek).length
   if (metric === 'focus') return Object.entries((await board(env, uid, 'trabajo')).data.focus ?? {}).filter(([k]) => inWeek(k)).reduce((s, [, n]) => s + n, 0)
   return 0
+}
+
+const AREA_COLORS = { estudios: '#3185FC', salud: '#3DDC97', journal: '#F9DC5C', trabajo: '#E84855', comida: '#EFABFF' }
+
+/**
+ * ¿Has tachado TODO lo de hoy? Lo comprueba el servidor con tus datos (lo mismo que enseña Inicio),
+ * así nadie puede apilar bloques sin hacer nada. Devuelve cuántas cosas había y el área que más has movido.
+ */
+async function dayStatus(env, uid, today) {
+  const b = {}
+  for (const a of Object.keys(AREA_COLORS)) b[a] = (await board(env, uid, a)).data ?? {}
+  const items = [] // { area, done }
+  for (const e of await listEntries(env, uid)) if (e.date === today || (e.date && e.date < today && !e.done)) items.push({ area: e.area, done: e.done })
+  for (const p of b.trabajo.projects ?? []) for (const t of p.tasks ?? []) {
+    if (!t.due || t.due > today || (t.status === 'done' && t.doneAt !== today)) continue
+    items.push({ area: 'trabajo', done: t.status === 'done' })
+  }
+  for (const m of b.trabajo.meetings ?? []) if (m.date === today) items.push({ area: 'trabajo', done: Boolean(m.done) })
+  const dayIdx = (new Date(`${today}T12:00:00Z`).getUTCDay() + 6) % 7
+  const session = b.salud.plan?.[dayIdx]
+  if (session && session !== 'Descanso') items.push({ area: 'salud', done: Boolean(b.salud.planDone?.[today]) })
+  for (const a of b.estudios.assignments ?? []) if (!(a.due > today || (a.done && a.doneAt !== today))) items.push({ area: 'estudios', done: Boolean(a.done) })
+  for (const h of b.journal.habits ?? []) items.push({ area: 'journal', done: (b.journal.pixels?.[h.id] ?? []).includes(today) })
+  for (const [meal, dish] of Object.entries(b.comida.menu?.[today] ?? {})) if (dish) items.push({ area: 'comida', done: Boolean(b.comida.mealsDone?.[today]?.[meal]) })
+  const count = {}
+  items.forEach((i) => { if (i.done) count[i.area] = (count[i.area] ?? 0) + 1 })
+  const top = Object.entries(count).sort((x, y) => y[1] - x[1])[0]?.[0]
+  return { total: items.length, done: items.filter((i) => i.done).length, color: AREA_COLORS[top] ?? '#3185FC' }
 }
 
 /** Todo lo que ve la pantalla de Amigos. `today` lo manda el navegador (fecha local). */
@@ -159,10 +188,14 @@ export async function act(env, me, body, today) {
     return { ok: true }
   }
   if (a === 'closeDay') {
+    // Solo hoy (con un día de margen por la zona horaria), y solo si de verdad está todo hecho
+    const server = new Date().toISOString().slice(0, 10)
+    if (today < addDays(server, -1) || today > addDays(server, 1)) return { error: 'Solo se puede cerrar el día de hoy' }
     const s = await getSocial(env, me)
     if (s.tower.some((b) => b.date === today)) return { ok: true, already: true }
-    const color = /^#[0-9A-Fa-f]{6}$/.test(body.color ?? '') ? body.color : '#3185FC'
-    s.tower = [...s.tower, { date: today, color }].slice(-400)
+    const st = await dayStatus(env, me, today)
+    if (!st.total || st.done < st.total) return { error: 'Aún te quedan cosas por hacer hoy', done: st.done, total: st.total }
+    s.tower = [...s.tower, { date: today, color: st.color }].slice(-400)
     let unlocked = null
     if (s.tower.length >= 3) unlocked = await unlock(env, me, 'halo', s)
     if (s.tower.length >= 10) unlocked = (await unlock(env, me, 'starclip', s)) ?? unlocked
