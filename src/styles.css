@@ -1862,3 +1862,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tt-dur-in { width: 24px; padding: 0; border: none; background: none; font-size: 11px; text-align: right; }
 .tt-dur-step .muted { padding: 0 2px 0 1px; font-size: 11px; }
 .tt-time .tt-dur-in { width: 24px; padding: 0; color: var(--text); font-weight: 700; }
+.cal-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gcal-btn { font-size: 14px; }
+.gcal-on { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 14px; background: #E0F8EC; }
+.gcal-on::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #3DDC97; }
+.gcal-error { width: 100%; font-size: 13px; }

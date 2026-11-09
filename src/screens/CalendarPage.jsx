@@ -1,11 +1,12 @@
 import { locale } from '../i18n/index.js'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import useAllBoards from '../hooks/useAllBoards.js'
 import { AREAS, AREA_IDS, getArea } from '../data/areas.js'
+import { connect, createEvent, disconnect, hasToken, isLinked, listEvents } from '../lib/googleCalendar.js'
 import { TYPES, calendarItems } from '../lib/calendarItems.js'
 import { addDays, dayShort, todayISO, weekStart } from '../lib/dates.js'
 
@@ -45,7 +46,19 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   const gridStart = weekStart(monthStart)
   const [from, to] = view === 'mes' ? [gridStart, addDays(gridStart, 41)] : view === 'semana' ? [weekStart(cursor), addDays(weekStart(cursor), 6)] : [cursor, cursor]
 
-  const all = calendarItems({ boards, change, entries, toggleEntry, from, to })
+  // Google Calendar: tus eventos de Google, si lo has conectado
+  const [gcal, setGcal] = useState({ linked: isLinked(), on: hasToken(), events: [], error: '' })
+  useEffect(() => {
+    if (!gcal.on) return
+    listEvents(from, to).then((events) => setGcal((g) => ({ ...g, events, error: '' }))).catch((e) => setGcal((g) => ({ ...g, on: !e.expired, error: e.message })))
+  }, [gcal.on, from, to])
+  const linkGoogle = async () => { try { await connect(); setGcal((g) => ({ ...g, linked: true, on: true, error: '' })) } catch (e) { setGcal((g) => ({ ...g, error: e.message })) } }
+  const unlinkGoogle = () => { disconnect(); setGcal({ linked: false, on: false, events: [], error: '' }) }
+  // Los eventos que creaste aquí y ya están en Google no se repiten
+  const mirrored = new Set((boards.calendario?.data?.events ?? []).map((e) => e.gcalId).filter(Boolean))
+  const googleItems = gcal.events.filter((e) => !mirrored.has(e.id)).map((e) => ({ key: 'g' + e.id, date: e.date, title: e.time ? `${e.time} ${e.title}` : e.title, type: 'evento', area: null, google: true, done: false }))
+
+  const all = [...calendarItems({ boards, change, entries, toggleEntry, from, to }), ...googleItems]
   const items = all.filter((i) => (filter === 'todo' ? true : filter === 'pendientes' ? !i.done : i.done))
   const byDay = (date) => items.filter((i) => i.date === date)
 
@@ -76,7 +89,13 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
             {cursor !== today && <button className="pill pill-sm" onClick={() => setCursor(today)}>Hoy</button>}
           </div>
         </div>
-        <button className="btn-primary cal-new" onClick={() => setAdding(cursor)}>+ Nuevo evento</button>
+        <div className="cal-actions">
+          {gcal.on
+            ? <span className="gcal-on" title="Tus eventos de Google Calendar se ven aquí y los nuevos se apuntan también allí">Google Calendar <button className="text-link" onClick={unlinkGoogle}>Desconectar</button></span>
+            : <button className="pill gcal-btn" onClick={linkGoogle}>{gcal.linked ? 'Reconectar Google Calendar' : 'Conectar Google Calendar'}</button>}
+          <button className="btn-primary cal-new" onClick={() => setAdding(cursor)}>+ Nuevo evento</button>
+        </div>
+        {gcal.error && <p className="error gcal-error">{gcal.error}</p>}
       </header>
 
       <div className="cal-toolbar">
@@ -134,7 +153,15 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
       )}
 
       {adding && createPortal(<NewEvent date={adding} onClose={() => setAdding(null)}
-        onSave={(ev) => { change('calendario', (d) => ({ ...d, events: [...(d.events ?? []), { id: crypto.randomUUID(), ...ev }] })); setAdding(null) }} />, document.body)}
+        onSave={(ev) => {
+          const id = crypto.randomUUID()
+          change('calendario', (d) => ({ ...d, events: [...(d.events ?? []), { id, ...ev }] }))
+          // Conectado a Google: el evento también se crea en tu Google Calendar (y recordamos su id para no verlo dos veces)
+          if (gcal.on) createEvent({ title: ev.title, date: ev.date })
+            .then((g) => change('calendario', (d) => ({ ...d, events: (d.events ?? []).map((x) => (x.id === id ? { ...x, gcalId: g.id } : x)) })))
+            .catch((e) => setGcal((g) => ({ ...g, error: e.message })))
+          setAdding(null)
+        }} />, document.body)}
     </div>
   )
 }

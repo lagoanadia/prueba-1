@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 const GIS_SCRIPT = 'https://accounts.google.com/gsi/client'
 let scriptPromise = null // una sola carga del script aunque el componente se monte varias veces
 
-function loadGoogleScript() {
+export function loadGoogleScript() {
   scriptPromise ??= new Promise((resolve, reject) => {
     const script = document.createElement('script')
     script.src = GIS_SCRIPT
