@@ -4,6 +4,8 @@ import Icon from '../../components/Icon.jsx'
 import { DEFAULT_BREAK, DEFAULT_CLASS, fmt, normalizeTimetable, spans, toMin } from './timetable.js'
 import { SUBJECT_COLORS, soft } from './helpers.js'
 
+// «Recreo» de horarios antiguos se ve como «Descanso»
+const breakName = (l) => (!l || l === 'Recreo' ? 'Descanso' : l)
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 
 /**
@@ -49,7 +51,7 @@ export default function Schedule({ data, update, subjects }) {
   const move = (from, to) => patch((t) => { const rows = [...t.rows]; if (to < 0 || to >= rows.length) return t; const [r] = rows.splice(from, 1); rows.splice(to, 0, r); return { ...t, rows } })
   const addRowAfter = (index, kind) => {
     patch((t) => {
-      const row = { id: crypto.randomUUID(), kind, dur: kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK, ...(kind === 'class' ? {} : { label: 'Recreo' }) }
+      const row = { id: crypto.randomUUID(), kind, dur: kind === 'class' ? DEFAULT_CLASS : DEFAULT_BREAK, ...(kind === 'class' ? {} : { label: 'Descanso' }) }
       const rows = [...t.rows]
       rows.splice(index + 1, 0, row)
       return { ...t, rows }
@@ -81,7 +83,7 @@ export default function Schedule({ data, update, subjects }) {
               {rowMenu?.id === row.id && (
                 <div className="card tt-menu" role="menu">
                   {rowMenu.mode === 'add'
-                    ? (<><button role="menuitem" onClick={() => addRowAfter(i, 'class')}>Franja vacía</button><button role="menuitem" onClick={() => addRowAfter(i, 'break')}>Recreo</button></>)
+                    ? (<><button role="menuitem" onClick={() => addRowAfter(i, 'class')}>Franja vacía</button><button role="menuitem" onClick={() => addRowAfter(i, 'break')}>Descanso</button></>)
                     : <button role="menuitem" disabled={tt.rows.length < 2} onClick={() => removeRow(row.id)}>Eliminar franja</button>}
                 </div>
               )}
@@ -97,7 +99,8 @@ export default function Schedule({ data, update, subjects }) {
               <span className="tt-dur">{row.dur} min</span>
             </span>
             {row.kind === 'break'
-              ? <span className="tt-break"><Icon name="clock" size={16} /> {row.label}</span>
+              ? <label className="tt-break"><Icon name="clock" size={16} /><input className="tt-break-in" defaultValue={breakName(row.label)} maxLength={24} aria-label="Nombre del descanso"
+                  onBlur={(e) => patch((t) => ({ ...t, rows: t.rows.map((r) => (r.id === row.id ? { ...r, label: e.target.value.trim() || 'Descanso' } : r)) }))} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /></label>
               : DAYS.map((_, c) => {
                 const k = `${row.id}:${c}`
                 const v = look(tt.cells[k])
@@ -151,7 +154,7 @@ function LabelDialog({ onSubmit, onClose }) {
 }
 
 const ROW = 58 // alto de una franja de clase (todas iguales, duren lo que duren)
-const BREAK = 22 // alto del recreo
+const BREAK = 22 // alto del descanso
 
 /**
  * El horario para MIRAR: la semana como un calendario. Cada franja de clase tiene el mismo alto;
@@ -206,7 +209,7 @@ function ScheduleView({ tt, times, look, onEdit }) {
           <div key={d} className={`sv-col ${c === today ? 'is-today' : ''} ${c === day ? 'is-shown' : ''}`}>
             <span className="sv-dayname">{d}</span>
             <div className="sv-track">
-              {tt.rows.map((r, i) => r.kind === 'break' ? <span key={r.id} className="sv-break" style={{ top: tops[i], height: BREAK }}>{r.label || 'Recreo'}</span> : null)}
+              {tt.rows.map((r, i) => r.kind === 'break' ? <span key={r.id} className="sv-break" style={{ top: tops[i], height: BREAK }}>{breakName(r.label)}</span> : null)}
               {blocksOf(c).map((b) => {
                 const top = tops[b.firstRow]
                 const height = tops[b.lastRow] + ROW - top - 4

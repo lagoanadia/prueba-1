@@ -26,7 +26,7 @@ export function normalizeTimetable(tt, subjects = []) {
     const [a, b] = String(time).split('-')
     if (i === 0 && toMin(a) != null) start = fmt(toMin(a))
     const dur = toMin(a) != null && toMin(b) != null && toMin(b) > toMin(a) ? toMin(b) - toMin(a) : DEFAULT_CLASS
-    const row = { id: crypto.randomUUID(), kind: typeof slot === 'string' ? 'class' : 'break', dur, ...(typeof slot === 'string' ? {} : { label: slot.label || 'Recreo' }) }
+    const row = { id: crypto.randomUUID(), kind: typeof slot === 'string' ? 'class' : 'break', dur, ...(typeof slot === 'string' ? {} : { label: slot.label && slot.label !== 'Recreo' ? slot.label : 'Descanso' }) }
     rows.push(row)
     if (row.kind === 'class') for (let c = 0; c < 5; c++) { const v = tt.cells?.[`${c}-${i}`]; if (shorts.has(v)) cells[`${row.id}:${c}`] = v }
   })
