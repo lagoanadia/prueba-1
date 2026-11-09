@@ -54,7 +54,7 @@ export default function Good({ size, data, update }) {
 
   if (size === 'S') {
     return (
-      <form className="w-form w-form-col w-grow" onSubmit={save}>
+      <form className="w-form w-form-col w-grow" onSubmit={save} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) save(e); if (e.key === 'Escape' && saved) cancel() }}>
         <textarea autoFocus={Boolean(saved)} placeholder="¿Algo bueno hoy?" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} />
       </form>
     )

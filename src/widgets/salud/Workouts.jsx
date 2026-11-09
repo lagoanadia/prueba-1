@@ -60,7 +60,7 @@ export default function Workouts({ size, data, update }) {
     </form>
   )
 
-  if (size === 'T') return <>{history}<b className="big">{minutes}<small> min hoy</small></b>{list}</>
+  if (size === 'T') return <>{history}<b className="big">{minutes}<small> min hoy</small></b>{form}{list}</>
   if (size === 'M') return <>{history}{form}{list}</>
   return <>{history}{form}{list}</>
 }

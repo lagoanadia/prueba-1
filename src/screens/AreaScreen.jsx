@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import TopActions from '../components/TopActions.jsx'
 import useBoard from '../hooks/useBoard.js'
-import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
+import { WIDGETS, SIZES, fitSize, sizesOf, widgetsFor } from '../widgets/registry.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import { PAGES } from '../pages/index.js'
@@ -244,9 +244,10 @@ export default function AreaScreen({ area, showTitle = true }) {
 }
 
 /** Título + contenido del widget (sin los controles de edición). */
-function WidgetView({ w, data, update = () => {} }) {
-  const def = WIDGETS[w.type]
+function WidgetView({ w: raw, data, update = () => {} }) {
+  const def = WIDGETS[raw.type]
   if (!def) return null
+  const w = { ...raw, size: fitSize(raw.type, raw.size) }
   const Widget = def.component
   return (
     <article className={`widget w-${w.size}`}>
@@ -257,11 +258,11 @@ function WidgetView({ w, data, update = () => {} }) {
 }
 
 /** Dock de tamaños: tres formas (cuadrado, rectángulo, cuadrado grande) y un indicador que se desliza. */
-function SizeDock({ size, onPick, name }) {
+function SizeDock({ size, onPick, name, sizes = SIZES }) {
   return (
-    <div className="size-dock" style={{ '--idx': SIZES.indexOf(size) }} role="radiogroup" aria-label={`Tamaño de ${name}`}>
+    <div className="size-dock" style={{ '--idx': sizes.indexOf(size) }} role="radiogroup" aria-label={`Tamaño de ${name}`}>
       <span className="size-dock-pill" aria-hidden="true" />
-      {SIZES.map((s) => (
+      {sizes.map((s) => (
         <button key={s} role="radio" aria-checked={size === s} aria-label={{ S: 'Pequeño', T: 'Vertical', M: 'Ancho', L: 'Grande' }[s]}
           className={size === s ? 'on' : ''} onClick={() => size !== s && onPick(s)}>
           <span className={`shape shape-${s}`} />
@@ -272,9 +273,10 @@ function SizeDock({ size, onPick, name }) {
 }
 
 // memo: solo se repinta si cambian sus datos (no cada vez que se mueve el fantasma o cambia otro widget)
-const WidgetCard = memo(function WidgetCard({ w, i, data, editing, isDragged, api }) {
-  const def = WIDGETS[w.type]
+const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragged, api }) {
+  const def = WIDGETS[raw.type]
   if (!def) return null
+  const w = { ...raw, size: fitSize(raw.type, raw.size) } // tamaños antiguos que ya no valen → el más parecido
   const Widget = def.component
   return (
     <article ref={(el) => api.setRef(w.id, el)} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
@@ -285,7 +287,7 @@ const WidgetCard = memo(function WidgetCard({ w, i, data, editing, isDragged, ap
       {editing && (
         <>
           <button className="w-remove" onClick={() => api.remove(w.id)} aria-label={`Quitar ${def.name}`}>×</button>
-          <SizeDock size={w.size} name={def.name} onPick={(s) => api.resize(w.id, s)} />
+          <SizeDock size={w.size} sizes={sizesOf(w.type)} name={def.name} onPick={(s) => api.resize(w.id, s)} />
         </>
       )}
     </article>
@@ -303,7 +305,7 @@ function Gallery({ widgets, data, onAdd, onDragStart, onClose }) {
         <p className="w-hint gallery-tip">Arrastra un widget a tu tablero</p>
         <div className="gallery-list">
           {widgets.map((w) => {
-            const size = sizes[w.type] ?? 'M'
+            const size = fitSize(w.type, sizes[w.type] ?? 'M')
             return (
               <div key={w.type} className="gallery-item">
                 <div className={`preview p-${size}`} onPointerDown={(e) => onDragStart(e, w.type, size)}>
@@ -311,7 +313,7 @@ function Gallery({ widgets, data, onAdd, onDragStart, onClose }) {
                 </div>
                 <div className="gallery-ctrl">
                   <b>{w.name}</b>
-                  <div className="seg">{SIZES.map((s) => <button key={s} className={size === s ? 'on' : ''} onClick={() => setSizes({ ...sizes, [w.type]: s })}>{s}</button>)}</div>
+                  <div className="seg">{sizesOf(w.type).map((s) => <button key={s} className={size === s ? 'on' : ''} onClick={() => setSizes({ ...sizes, [w.type]: s })}>{s}</button>)}</div>
                   <button className="pill pill-on" onClick={() => onAdd(w.type, size)}>Añadir</button>
                 </div>
               </div>

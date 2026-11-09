@@ -29,30 +29,30 @@ export default function Menu({ size, data, update }) {
     )
   }
 
+  // Una celda: un desplegable para elegir plato (en todos los tamaños)
+  function Cell({ d, m }) {
+    const v = menu[d]?.[m] ?? ''
+    const cls = `menu-cell ${v === OUT ? 'is-out' : ''} ${d === today ? 'is-today' : ''}`
+    return (
+      <select className={cls} value={v} onChange={(e) => set(d, m, e.target.value)} aria-label={`${MEALS[m]} del ${dayShort(d)}`}>
+        <option value="">—</option>
+        {dishes.filter((x) => x.for.includes(m)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        <option value={OUT}>Comer fuera</option>
+      </select>
+    )
+  }
+
   if (size === 'T') {
     return (
       <ul className="menu-list">
         {days.filter((d) => d >= today).map((d) => (
           <li key={d} className={d === today ? 'is-today' : ''}>
             <span className="week-day">{dayShort(d)} {Number(d.slice(8))}</span>
-            {meals.map((m) => <span key={m} className="w-ellipsis menu-dish">{cell(d, m)}</span>)}
+            {meals.map((m) => <Cell key={m} d={d} m={m} />)}
           </li>
         ))}
       </ul>
     )
-  }
-
-  // Una celda: en L se puede elegir plato; en M solo se lee
-  const Cell = ({ d, m }) => {
-    const v = menu[d]?.[m] ?? ''
-    const cls = `menu-cell ${v === OUT ? 'is-out' : ''} ${d === today ? 'is-today' : ''}`
-    return size === 'L' ? (
-      <select className={cls} value={v} onChange={(e) => set(d, m, e.target.value)} aria-label={`${MEALS[m]} del ${dayShort(d)}`}>
-        <option value="">—</option>
-        {dishes.filter((x) => x.for.includes(m)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-        <option value={OUT}>Comer fuera</option>
-      </select>
-    ) : <span className={cls} title={cell(d, m)}>{cell(d, m)}</span>
   }
 
   return (

@@ -1,3 +1,4 @@
+import AddPopup from '../AddPopup.jsx'
 import { useState } from 'react'
 import MonthGrid from '../MonthGrid.jsx'
 import YearGrid from '../YearGrid.jsx'
@@ -36,6 +37,14 @@ export default function Pixels({ size, data, update }) {
     setAdding(false)
   }
 
+  const addBtn = size !== 'L' && (
+    <AddPopup label="Nuevo hábito">{(close) => (
+      <form className="w-form" onSubmit={(e) => { add(e); close() }}>
+        <input autoFocus placeholder="Leer, meditar…" value={name} onChange={(e) => setName(e.target.value)} maxLength={30} />
+        <button className="pill pill-on" disabled={!name.trim()}>Añadir</button>
+      </form>
+    )}</AddPopup>
+  )
   const addForm = adding
     ? <form className="w-form" onSubmit={add}><input autoFocus placeholder="Nuevo hábito" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => !name && setAdding(false)} maxLength={30} /></form>
     : null
@@ -53,7 +62,7 @@ export default function Pixels({ size, data, update }) {
   if (!habit) {
     return size === 'L'
       ? <>{addForm ?? <button className="pill pill-soft" onClick={() => setAdding(true)}>Añadir hábito</button>}</>
-      : <p className="w-hint w-center">Sin hábitos</p>
+      : <>{addBtn}<p className="w-hint w-center">Sin hábitos</p></>
   }
 
   const days = pixels[habit.id] ?? []
@@ -61,15 +70,16 @@ export default function Pixels({ size, data, update }) {
 
   if (size === 'S') {
     return (
-      <div className="w-center">
+      <>{addBtn}<button className="w-center px-s-btn" onClick={() => toggle(today)} aria-label={`Marcar hoy: ${habit.name}`} title="Toca para marcar hoy">
         <span className="w-hint">{habit.name}</span>
-        <b className="big">{streak(days, today)}<small> d</small></b>
+        <b className="big" style={{ color: days.includes(today) ? habit.color : undefined }}>{streak(days, today)}<small> d</small></b>
         <div className="px-row px-row-sm">{lastDays(7).map((d) => <span key={d} className="px" style={{ background: color(d) }} />)}</div>
-      </div>
+      </button></>
     )
   }
   return (
     <>
+      {addBtn}
       {tabs}
       {addForm}
       {size === 'T' ? (

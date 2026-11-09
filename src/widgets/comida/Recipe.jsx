@@ -32,17 +32,17 @@ export default function Recipe({ size, data, update }) {
         <div>
           <span className="kb-head">Ingredientes</span>
           <ul className="ingredients">
-            {dish.ingredients.map((x, i) => <li key={x + i}>{x}{size === 'L' && <button className="prio-x" onClick={() => removeLine('ingredients', i)} aria-label="Quitar">×</button>}</li>)}
+            {dish.ingredients.map((x, i) => <li key={x + i}>{x}{<button className="prio-x" onClick={() => removeLine('ingredients', i)} aria-label="Quitar">×</button>}</li>)}
           </ul>
-          {size === 'L' && <form onSubmit={addLine('ingredients', ing, setIng)}><input className="line-input" placeholder="+ ingrediente" value={ing} onChange={(e) => setIng(e.target.value)} maxLength={40} /></form>}
+          {<form onSubmit={addLine('ingredients', ing, setIng)}><input className="line-input" placeholder="+ ingrediente" value={ing} onChange={(e) => setIng(e.target.value)} maxLength={40} /></form>}
         </div>
         {size !== 'M' && (
           <div>
             <span className="kb-head">Preparación</span>
             <ol className="steps">
-              {dish.steps.map((x, i) => <li key={x + i}>{x}{size === 'L' && <button className="prio-x" onClick={() => removeLine('steps', i)} aria-label="Quitar">×</button>}</li>)}
+              {dish.steps.map((x, i) => <li key={x + i}>{x}{<button className="prio-x" onClick={() => removeLine('steps', i)} aria-label="Quitar">×</button>}</li>)}
             </ol>
-            {size === 'L' && <form onSubmit={addLine('steps', step, setStep)}><input className="line-input" placeholder="+ paso" value={step} onChange={(e) => setStep(e.target.value)} maxLength={120} /></form>}
+            {<form onSubmit={addLine('steps', step, setStep)}><input className="line-input" placeholder="+ paso" value={step} onChange={(e) => setStep(e.target.value)} maxLength={120} /></form>}
           </div>
         )}
       </div>
