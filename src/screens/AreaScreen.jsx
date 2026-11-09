@@ -6,6 +6,7 @@ import { WIDGETS, SIZES, widgetsFor } from '../widgets/registry.js'
 import { formatToday } from '../lib/dates.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
+import { PAGES } from '../pages/index.js'
 
 const DRAG_THRESHOLD = 6 // px que hay que mover antes de que cuente como arrastre (si no, es un toque)
 const SWAP_COOLDOWN = 280 // ms sin recolocar tras un cambio: evita que dos widgets "boten" entre sí
@@ -191,6 +192,13 @@ export default function AreaScreen({ area, showTitle = true }) {
         <Onboarding area={area} flow={FLOWS[area.id]} onDone={(answers) => updateData((d) => ({ ...d, ...answers }))} />
       </div>
     )
+  }
+
+  // Áreas con página propia: misma carga/guardado de datos, pero sin el tablero de widgets
+  const Page = PAGES[area.id]
+  if (Page) {
+    if (!board) return <div className="area">{error ? <p className="error">{error}</p> : <div className="spinner" aria-label="Cargando" />}</div>
+    return <Page area={area} data={board.data} update={updateData} />
   }
 
   return (

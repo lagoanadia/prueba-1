@@ -762,3 +762,52 @@ a.res:hover { background: var(--soft); }
   .cal-col { min-height: 0; }
   .sheet .area-head .cal-title { display: none; }
 }
+
+/* ===== Páginas propias (Trabajo, Estudios) ===== */
+.page { animation: rise .4s var(--ease) both; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.page-head h1 { font-size: 40px; font-weight: 600; line-height: 1.1; }
+.page-head-sm { align-items: center; margin: 32px 0 6px; }
+.page-sub { font-size: 20px; margin-top: 6px; }
+.page-h2 { font-size: 28px; font-weight: 600; margin-bottom: 16px; }
+.page-head-sm .page-h2 { margin: 0; }
+.page-hint { margin-bottom: 16px; font-size: 16px; }
+.page-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pill-input { font: inherit; font-size: 16px; border: 2px solid var(--line); border-radius: 24px; padding: 10px 20px; min-width: 240px; outline: none; transition: border-color .2s; }
+.pill-input:focus { border-color: var(--blue); }
+.pill-date { min-width: 0; }
+.btn-solid { border: none; border-radius: 24px; padding: 12px 22px; font: inherit; font-size: 16px; font-weight: 700; background: var(--c); color: var(--text); cursor: pointer; transition: transform .15s var(--ease), filter .2s; }
+.btn-solid:hover { filter: brightness(1.05); }
+.btn-solid:active { transform: scale(.96); }
+.btn-solid:disabled { opacity: .5; cursor: default; }
+.pill-red { background: #FCE4E4; border-color: #E84855; font-size: 16px; padding: 10px 20px; }
+/* Trabajo */
+.project-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.project-card { text-align: left; border: 2.5px solid transparent; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; font: inherit; font-size: 17px; cursor: pointer; animation: rise .4s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); transition: transform .2s var(--ease), border-color .2s; }
+.project-card:hover { transform: translateY(-3px); }
+.project-card.is-active { border-color: #E84855; }
+.project-card-name { font-size: 20px; }
+.project-deadline { position: relative; font-size: 15px; cursor: pointer; }
+.project-deadline input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.project-pct { font-size: 22px; }
+.bar-red span { background: #E84855; }
+.kanban-page { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.kcol { border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 120px; }
+.kcol h3 { font-size: 18px; font-weight: 700; padding: 0 4px; }
+.kcol-todo { background: #F1F3F4; }
+.kcol-doing { background: #E3EEFF; }
+.kcol-done { background: #E0F8EC; }
+.ktask { background: #FFFFFF; border-radius: 14px; box-shadow: 0 1px 3px rgba(60, 64, 67, .2); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; animation: rise .35s var(--ease) both; transition: transform .15s var(--ease), box-shadow .2s; }
+.ktask:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.ktask-title { font-size: 17px; }
+.kcol-done .ktask-title { text-decoration: line-through; }
+.prio-badge { border: none; border-radius: 8px; padding: 3px 10px; font: inherit; font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--c) 30%, #FFFFFF); cursor: pointer; }
+.ktask-due { font-size: 15px; }
+@media (max-width: 899px) {
+  .page-head h1 { font-size: 30px; }
+  .page-sub { font-size: 16px; }
+  .page-h2 { font-size: 22px; }
+  .pill-input { min-width: 0; flex: 1; }
+  .kanban-page { grid-template-columns: 1fr; }
+}
+.sheet .page-head h1 { display: none; } /* en móvil el título ya está en la cabecera de color */
