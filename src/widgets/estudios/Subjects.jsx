@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useStudyNav } from './nav.js'
 import { activeSubjectOf, progressOf, subjectsOf } from './study.js'
 
 const COLORS = ['#3185FC', '#E84855', '#3DDC97', '#EFABFF', '#F9DC5C', '#FF9F43', '#8E7CFF']
@@ -10,6 +11,7 @@ const COLORS = ['#3185FC', '#E84855', '#3DDC97', '#EFABFF', '#F9DC5C', '#FF9F43'
 export default function Subjects({ size, data, update }) {
   const subjects = subjectsOf(data)
   const active = activeSubjectOf(data)
+  const studyNav = useStudyNav()
   const [short, setShort] = useState('')
   const [name, setName] = useState('')
 
@@ -49,6 +51,7 @@ export default function Subjects({ size, data, update }) {
                   {size !== 'M' && <span className="w-hint">{total ? `${clear} de ${total} temas` : 'Sin temas todavía'}</span>}
                 </span>
               </button>
+              {size !== 'M' && studyNav && <button className="pill pill-sm" onClick={() => studyNav.open(s.id)} aria-label={`Abrir ${s.name}`}>Abrir</button>}
             </li>
           )
         })}

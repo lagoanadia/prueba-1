@@ -7,6 +7,9 @@ import { formatToday } from '../lib/dates.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import { PAGES } from '../pages/index.js'
+import { StudyNav } from '../widgets/estudios/nav.js'
+import { SubjectPage, UnitPage, EditorPage } from './StudyPages.jsx'
+import { subjectsOf } from '../widgets/estudios/study.js'
 
 const DRAG_THRESHOLD = 6 // px que hay que mover antes de que cuente como arrastre (si no, es un toque)
 const SWAP_COOLDOWN = 280 // ms sin recolocar tras un cambio: evita que dos widgets "boten" entre sí
@@ -36,6 +39,7 @@ const arrayMove = (list, from, to) => {
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
   const [editing, setEditing] = useState(false)
+  const [study, setStudy] = useState(null) // pantalla de detalle de Estudios: { subject, unit?, topic? }
   const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
   const gridRef = useRef(null)
@@ -201,7 +205,26 @@ export default function AreaScreen({ area, showTitle = true }) {
     return <Page area={area} data={board.data} update={updateData} />
   }
 
+  // Estudios: pantallas de asignatura, unidad y editor de apuntes
+  const nav = {
+    open: (subject) => setStudy({ subject }),
+    close: () => setStudy(null),
+    subject: () => setStudy((s) => ({ subject: s.subject })),
+    unit: (unit) => setStudy((s) => ({ subject: s.subject, unit })),
+    editor: (topic) => setStudy((s) => ({ subject: s.subject, unit: s.unit, topic })),
+  }
+  if (area.id === 'estudios' && study && board) {
+    const subject = subjectsOf(board.data).find((x) => x.id === study.subject)
+    const unit = subject?.units.find((u) => u.id === study.unit)
+    const props = { subject, data: board.data, update: updateData, nav }
+    if (!subject) { /* asignatura borrada: se muestra el tablero */ }
+    else if (study.topic !== undefined && unit) return <EditorPage key={study.topic} {...props} unit={unit} topicId={study.topic} />
+    else if (unit) return <UnitPage key={unit.id} {...props} unit={unit} />
+    else return <SubjectPage key={subject.id} {...props} />
+  }
+
   return (
+    <StudyNav.Provider value={nav}>
     <div className="area">
       <header className={`area-head ${showTitle ? '' : 'area-head-floating'}`}>
         {showTitle && (
@@ -246,6 +269,7 @@ export default function AreaScreen({ area, showTitle = true }) {
         document.body
       )}
     </div>
+    </StudyNav.Provider>
   )
 }
 
