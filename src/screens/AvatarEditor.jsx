@@ -20,7 +20,7 @@ const ZOOM = {
 }
 
 /** Editor de avatar: escenario arriba, pestañas y opciones. Guarda al pulsar «Hecho». */
-export default function AvatarEditor({ avatar, onSave, onSignOut }) {
+export default function AvatarEditor({ avatar, onSave, onSignOut, withFriends = true }) {
   const [draft, setDraft] = useState(avatar)
   const [tab, setTab] = useState('cara')
   const [saving, setSaving] = useState(false)
@@ -66,7 +66,7 @@ export default function AvatarEditor({ avatar, onSave, onSignOut }) {
           </div>
         ))}
       </div>
-      <Friends />
+      {withFriends && <Friends />}
       {onSignOut && <button className="btn-secondary avatar-signout" onClick={onSignOut}>Cerrar sesión</button>}
     </div>
   )

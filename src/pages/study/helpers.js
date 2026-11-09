@@ -13,7 +13,7 @@ export const practicesOf = (u) => u.practices ?? (u.exercises ?? []).map((x) => 
 export const KINDS = { practica: { label: 'Práctica', icon: 'code' }, examen: { label: 'Examen', icon: 'exam' }, trabajo: { label: 'Trabajo', icon: 'doc' }, proyecto: { label: 'Proyecto', icon: 'star' } }
 
 // Qué cuenta para el progreso de una asignatura (lo decide el usuario)
-export const METRICS = { topics: { label: 'Temas', icon: 'check' }, practices: { label: 'Prácticas', icon: 'code' }, assignments: { label: 'Entregas', icon: 'exam' } }
+export const METRICS = { topics: { label: 'Teoría' }, practices: { label: 'Prácticas' }, assignments: { label: 'Entregas' } }
 export const metricsOf = (s) => ({ topics: true, practices: true, assignments: false, ...(s.metrics ?? {}) })
 
 export function progressFor(subject, assignments = []) {
@@ -41,3 +41,20 @@ export function cleanUrl(text) {
   } catch { return null }
 }
 export const faviconOf = (url) => `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`
+
+/** Enlaces que se pueden mostrar dentro de la app (iframe): YouTube, Vimeo y Google Drive tienen una dirección «embed». */
+export function embedOf(url) {
+  try {
+    const u = new URL(url)
+    const h = u.hostname.replace(/^www\./, '')
+    if (h === 'youtu.be') return { src: `https://www.youtube.com/embed/${u.pathname.slice(1)}`, kind: 'video' }
+    if (h === 'youtube.com' || h === 'm.youtube.com' || h === 'music.youtube.com') {
+      const id = u.searchParams.get('v') ?? u.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/)?.[1]
+      if (id) return { src: `https://www.youtube.com/embed/${id}`, kind: 'video' }
+    }
+    if (h === 'vimeo.com') { const id = u.pathname.match(/\/(\d+)/)?.[1]; if (id) return { src: `https://player.vimeo.com/video/${id}`, kind: 'video' } }
+    if (h === 'drive.google.com') { const id = u.pathname.match(/\/file\/d\/([\w-]+)/)?.[1]; if (id) return { src: `https://drive.google.com/file/d/${id}/preview`, kind: 'page' } }
+    if (h === 'docs.google.com') return { src: url.replace(/\/(edit|view)(\?.*)?$/, '/preview'), kind: 'page' }
+  } catch { /* enlace no válido */ }
+  return { src: url, kind: 'page' }
+}

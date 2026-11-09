@@ -82,9 +82,8 @@ export default function Planner({ data, update, openSubject }) {
           const p = progressFor(s, data.assignments)
           return (
             <button key={s.id} className="card subject-card" style={{ '--i': i, borderTop: `6px solid ${soft(s.color)}` }} onClick={() => openSubject(s.id)}>
-              <b>{s.short}</b>
-              <span className="bar"><span style={{ width: `${p.pct}%`, background: soft(s.color) }} /></span>
-              <span className="muted">{p.total ? `${p.done} de ${p.total}` : 'Sin nada todavía'}</span>
+              <span className="w-row"><b>{s.short}</b><b className={p.pct ? '' : 'pct-zero'}>{p.pct} %</b></span>
+              <span className="bar bar-track"><span style={{ width: `${p.pct}%`, background: soft(s.color) }} /></span>
             </button>
           )
         })}

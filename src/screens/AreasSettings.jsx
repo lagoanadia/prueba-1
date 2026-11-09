@@ -9,65 +9,39 @@ const DESC = {
   comida: 'Menú semanal, recetario y compra',
 }
 
-/** Gestión de áreas: activar, quitar y volver a añadir. Nada es obligatorio. */
+/** Ajustes de la barra lateral: cada área se activa o desactiva con su interruptor (gris = desactivada). */
 export default function AreasSettings({ settings, onSave }) {
-  const set = (id, patch) => onSave({ ...settings, areas: { ...settings.areas, [id]: { ...settings.areas[id], ...patch } } })
-  const mine = AREAS.filter((a) => settings.areas[a.id].added)
-  const others = AREAS.filter((a) => !settings.areas[a.id].added)
-  const preview = mine.filter((a) => settings.areas[a.id].active)
+  const toggle = (id) => onSave({ ...settings, areas: { ...settings.areas, [id]: { added: true, active: !settings.areas[id].active } } })
+  const preview = AREAS.filter((a) => settings.areas[a.id].active)
+
+  const Switch = ({ on, label, onClick }) => (
+    <button className="switch" role="switch" aria-checked={on} aria-label={label} onClick={onClick}><span className="switch-knob" /></button>
+  )
 
   return (
     <div className="areas-set">
-      <section>
-        <h2 className="sr-only">Mis áreas</h2>
-        <ul className="area-rows">
-          {mine.map((a) => {
-            const on = settings.areas[a.id].active
-            return (
-              <li key={a.id} className="card area-row">
-                <span className="ic" style={{ background: a.color }}><Icon name={a.id} /></span>
-                <span className="area-row-text"><b>{a.label}</b><span className="muted">{DESC[a.id]}</span></span>
-                <button className="switch" role="switch" aria-checked={on} aria-label={`${on ? 'Desactivar' : 'Activar'} ${a.label}`} onClick={() => set(a.id, { active: !on })}>
-                  <span className="switch-knob" />
-                </button>
-                <button className="pill" onClick={() => set(a.id, { added: false, active: false })}>Quitar</button>
-              </li>
-            )
-          })}
-          {mine.length === 0 && <li className="muted">No tienes ninguna área. Añade alguna abajo.</li>}
-        </ul>
-      </section>
+      <ul className="area-rows">
+        {AREAS.map((a) => {
+          const on = settings.areas[a.id].active
+          return (
+            <li key={a.id} className={`card area-row ${on ? '' : 'is-off'}`}>
+              <span className="ic" style={{ background: on ? a.color : '#E8EAED' }}><Icon name={a.id} /></span>
+              <span className="area-row-text"><b>{a.label}</b><span className="muted">{DESC[a.id]}</span></span>
+              <Switch on={on} label={`${on ? 'Desactivar' : 'Activar'} ${a.label}`} onClick={() => toggle(a.id)} />
+            </li>
+          )
+        })}
+        <li className="card area-row">
+          <span className="ic" style={{ background: '#F1F3F4' }}><Icon name="eye" /></span>
+          <span className="area-row-text"><b>Ocultar nombres de la barra lateral</b><span className="muted">Solo se ven los iconos</span></span>
+          <Switch on={settings.iconsOnly} label="Ocultar nombres de la barra lateral" onClick={() => onSave({ ...settings, iconsOnly: !settings.iconsOnly })} />
+        </li>
+      </ul>
 
-      {others.length > 0 && (
-        <section>
-          <h2 className="sr-only">Añadir áreas</h2>
-          <ul className="area-rows">
-            {others.map((a) => (
-              <li key={a.id} className="card area-row is-off">
-                <span className="ic" style={{ background: '#E8EAED' }}><Icon name={a.id} /></span>
-                <span className="area-row-text"><b>{a.label}</b><span className="muted">{DESC[a.id]}</span></span>
-                <button className="pill pill-on" onClick={() => set(a.id, { added: true, active: true })}>Añadir</button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section>
-        <h2 className="sr-only">Así queda tu barra lateral</h2>
-        <div className="side-preview" aria-label="Vista previa de la barra lateral">
-          {preview.map((a) => <span key={a.id} className="side-chip"><i style={{ background: a.color }} />{a.label}</span>)}
-          {preview.length === 0 && <span className="muted">Solo Inicio, Calendario y Perfil.</span>}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="sr-only">Tamaño del texto</h2>
-        <div className="seg" role="group" aria-label="Tamaño del texto">
-          <button className={`pill ${!settings.bigText ? 'pill-soft' : ''}`} aria-pressed={!settings.bigText} onClick={() => onSave({ ...settings, bigText: false })}>Normal</button>
-          <button className={`pill ${settings.bigText ? 'pill-soft' : ''}`} aria-pressed={settings.bigText} onClick={() => onSave({ ...settings, bigText: true })}>Grande</button>
-        </div>
-      </section>
+      <div className="side-preview" role="img" aria-label="Así queda tu barra lateral">
+        {preview.map((a) => <span key={a.id} className="side-chip"><i style={{ background: a.color }} />{a.label}</span>)}
+        {preview.length === 0 && <span className="muted">Solo Inicio, Calendario y Perfil.</span>}
+      </div>
     </div>
   )
 }

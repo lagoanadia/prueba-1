@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import { deleteFile, saveFile } from '../../lib/fileStore.js'
-import { cleanUrl } from './helpers.js'
+import { cleanUrl, embedOf } from './helpers.js'
 
 /**
  * Recursos de una asignatura (o de una unidad si llega unitId): enlaces o archivos subidos,
@@ -43,20 +43,29 @@ export default function ResourceFrames({ data, update, subjectId, unitId = null 
       <div className="res-grid">
         {list.map((r) => (r.file
           ? <FileFrame key={r.id} file={r.file} onChange={(f) => { if (!f) remove(r) }} />
-          : (
-            <div key={r.id} className="card file-frame">
-              <div className="file-bar">
-                <Icon name="link" size={20} color="#3185FC" />
-                <b className="w-ellipsis">{r.title}</b>
-                <span style={{ flex: 1 }} />
-                <a className="icon-btn" href={r.url} target="_blank" rel="noreferrer noopener" aria-label={`Abrir ${r.title}`} title="Abrir en otra pestaña"><Icon name="arrow" size={20} /></a>
-                <button className="icon-btn" onClick={() => remove(r)} aria-label="Quitar" title="Quitar"><Icon name="trash" size={20} /></button>
-              </div>
-              <iframe className="file-view" src={r.url} title={r.title} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" loading="lazy" />
-            </div>
-          )))}
+          : <LinkFrame key={r.id} r={r} onRemove={() => remove(r)} />))}
         {list.length === 0 && <p className="muted">Sin recursos todavía.</p>}
       </div>
+    </div>
+  )
+}
+
+/** Enlace mostrado dentro de la app. Los vídeos (YouTube, Vimeo) se ven en 16:9; el resto, como página. */
+function LinkFrame({ r, onRemove }) {
+  const { src, kind } = embedOf(r.url)
+  const video = kind === 'video'
+  return (
+    <div className="card file-frame">
+      <div className="file-bar">
+        <Icon name={video ? 'eye' : 'link'} size={20} color={video ? '#E84855' : '#3185FC'} />
+        <b className="w-ellipsis">{r.title}</b>
+        <span style={{ flex: 1 }} />
+        <a className="icon-btn" href={r.url} target="_blank" rel="noreferrer noopener" aria-label={`Abrir ${r.title} en otra pestaña`} title="Abrir en otra pestaña"><Icon name="arrow" size={20} /></a>
+        <button className="icon-btn" onClick={onRemove} aria-label="Quitar" title="Quitar"><Icon name="trash" size={20} /></button>
+      </div>
+      <iframe className={`file-view ${video ? 'file-video' : ''}`} src={src} title={r.title} loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; picture-in-picture; encrypted-media; clipboard-write"
+        allowFullScreen sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation" />
     </div>
   )
 }
