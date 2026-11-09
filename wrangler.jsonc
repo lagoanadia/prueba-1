@@ -10,7 +10,9 @@
     // Cualquier URL desconocida devuelve index.html (lo normal en una SPA).
     "not_found_handling": "single-page-application",
     // Las URLs /api/* van SIEMPRE al Worker, nunca a los archivos estáticos.
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/assets/*"],
+    // El Worker sirve /assets/* para devolver 404 (y no index.html) cuando piden un archivo de una versión anterior.
+    "binding": "ASSETS"
   },
   // Variables NO secretas: van en el código para que ningún deploy las borre.
   // El Client ID de Google es público (también va dentro del JavaScript del frontend).
