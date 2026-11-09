@@ -1867,3 +1867,61 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .gcal-on { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 14px; background: #E0F8EC; }
 .gcal-on::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #3DDC97; }
 .gcal-error { width: 100%; font-size: 13px; }
+/* ===== Juegos ===== */
+.sdk, .bee, .cwd { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; outline: none; }
+.sdk-grid { flex: 1; min-height: 0; aspect-ratio: 1; max-width: 100%; align-self: center; display: grid; grid-template-columns: repeat(9, 1fr); border: 2px solid var(--text); border-radius: 10px; overflow: hidden; height: min(100%, 72cqh); }
+.sdk-cell { border: none; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #FFFFFF; font: inherit; font-size: min(3.4cqh, 18px); font-weight: 600; color: var(--blue); cursor: pointer; padding: 0; min-width: 0; min-height: 0; }
+.sdk-cell.given { color: var(--text); font-weight: 700; }
+.sdk-cell.br { border-right: 2px solid var(--text); }
+.sdk-cell.bb { border-bottom: 2px solid var(--text); }
+.sdk-cell.peer { background: #F3F6FB; }
+.sdk-cell.same { background: #DCE8FF; }
+.sdk-cell.sel { background: #FFE7A8; }
+.sdk-cell.wrong { color: #E84855; }
+.sdk-pad { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.sdk-pad button { border: none; border-radius: 8px; background: var(--soft); font: inherit; font-weight: 700; padding: 6px 0; cursor: pointer; }
+.sdk-pad button:active { transform: scale(.92); }
+.bee-rank { font-size: 15px; }
+.bee-word { min-height: 32px; text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+.bee-word .c { color: #C9A400; }
+.bee-msg { font-size: 15px; background: var(--soft); border-radius: 12px; padding: 3px 12px; }
+.hive { position: relative; width: 186px; height: 172px; align-self: center; flex-shrink: 0; }
+.hex { position: absolute; width: 62px; height: 56px; border: none; background: #ECEDEF; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); font: inherit; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform .12s var(--ease); }
+.hex:active { transform: scale(.9); }
+.hex.center { background: #F9DC5C; left: 62px; top: 58px; }
+.hex.h0 { left: 62px; top: 0; } .hex.h1 { left: 115px; top: 29px; } .hex.h2 { left: 115px; top: 87px; } .hex.h3 { left: 62px; top: 116px; } .hex.h4 { left: 9px; top: 87px; } .hex.h5 { left: 9px; top: 29px; }
+.bee-actions { display: flex; justify-content: center; gap: 8px; }
+.bee-found { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 13px; overflow: auto; margin: 0; }
+.bee-found .pan { font-weight: 700; color: #B08A00; }
+.cwd-clue { background: #EEF4FF; border-radius: 12px; padding: 8px 10px; font-size: 14px; min-height: 38px; }
+.cwd-grid { display: grid; grid-template-columns: repeat(var(--w), minmax(0, 1fr)); gap: 0; align-self: center; width: min(100%, calc(var(--w) * 48px)); border: 2px solid var(--text); border-radius: 8px; overflow: hidden; background: var(--text); }
+.cwd-cell, .cwd-block { aspect-ratio: 1; }
+.cwd-cell { position: relative; border: 1px solid #C9CDD2; background: #FFFFFF; font: inherit; font-size: 20px; font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 0; }
+.cwd-cell i { position: absolute; top: 1px; left: 3px; font-style: normal; font-size: 9px; font-weight: 600; color: var(--muted); }
+.cwd-cell.word { background: #DCE8FF; }
+.cwd-cell.sel { background: #FFE7A8; }
+.cwd-cell.ok { background: #E0F8EC; }
+.cwd-block { background: var(--text); }
+.cwd-input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.cwd-list { margin: 0; padding: 0; list-style: none; font-size: 13px; overflow: auto; display: flex; flex-direction: column; gap: 3px; }
+.cwd-list li { cursor: pointer; border-radius: 8px; padding: 2px 6px; }
+.cwd-list li.on { background: #EEF4FF; }
+/* Ranking de juegos (Amigos) */
+.rank-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.rank-game { background: var(--soft); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.rank-row { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rank-row b:last-child { margin-left: auto; }
+.rank-row.me span { font-weight: 700; }
+.rank-pos { width: 18px; color: var(--muted); font-weight: 700; }
+/* Portada de juego (widget) y juego en grande */
+.game-cover { flex: 1; min-height: 0; width: 100%; border: none; border-radius: 16px; background: color-mix(in srgb, var(--c) 18%, #FFFFFF); font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: transform .2s var(--ease); }
+.game-cover:hover { transform: scale(1.02); }
+.game-art { font-size: min(34cqh, 48px); font-weight: 800; line-height: 1; color: var(--text); }
+.game-status { font-size: 13px; font-weight: 600; color: var(--muted); }
+.game-play { pointer-events: none; }
+.game-S .game-play { padding: 2px 10px; font-size: 12px; }
+.game-panel { max-width: 560px; height: min(92dvh, 780px); max-height: none; display: flex; flex-direction: column; gap: 10px; container-type: size; }
+.game-panel > .sdk, .game-panel > .bee, .game-panel > .cwd { min-height: 0; }
+.game-panel .sdk-grid { height: auto; width: min(100%, 62cqh); }
+.game-panel .sdk-cell { font-size: min(4.6cqw, 26px); }
+.game-panel .hive { transform: scale(1.15); margin: 14px 0; }

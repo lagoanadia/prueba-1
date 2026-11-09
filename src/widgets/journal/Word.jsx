@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import useBox from '../../hooks/useBox.js'
 import { todayISO } from '../../lib/dates.js'
+import { getLang } from '../../i18n/index.js'
+import { sendScore } from '../games/common.js'
 
 /*
  * PALABRA DEL DÍA (tipo Wordle)
@@ -27,9 +29,22 @@ const WORDS = [
 ]
 const TRIES = 6
 const LEN = 5
-const KEYS = ['QWERTYUIOP', 'ASDFGHJKLÑ', '↵ZXCVBNM⌫']
+// En inglés: otra lista de palabras y teclado sin Ñ (según el idioma de la app)
+const WORDS_EN = [
+  ['BRAVE', 'Ready to face danger or pain.'], ['CHARM', 'The power of delighting others.'], ['DREAM', 'Images in the mind while sleeping; a hope.'],
+  ['EARTH', 'The planet we live on.'], ['FLAME', 'Hot glowing gas from a fire.'], ['GRACE', 'Elegance of movement; kindness.'],
+  ['HONEY', 'Sweet food made by bees.'], ['IVORY', 'Hard white material; a creamy white.'], ['JOLLY', 'Happy and cheerful.'],
+  ['KNEEL', 'To go down on your knees.'], ['LEMON', 'A sour yellow citrus fruit.'], ['MAPLE', 'A tree with sweet sap.'],
+  ['NOBLE', 'Having fine personal qualities.'], ['OCEAN', 'A very large body of salt water.'], ['PIANO', 'An instrument with black and white keys.'],
+  ['QUIET', 'Making little or no noise.'], ['RIVER', 'A large natural stream of water.'], ['SPARK', 'A tiny bit of fire; the start of something.'],
+  ['TIGER', 'A large striped wild cat.'], ['UNITY', 'Being joined together as one.'], ['VIVID', 'Bright and intense.'],
+  ['WHEAT', 'A grain used to make flour.'], ['YOUTH', 'The time of being young.'], ['ZEBRA', 'A striped African horse.'],
+  ['BLOOM', 'A flower; to flourish.'], ['CLOUD', 'Visible water vapour in the sky.'], ['FROST', 'Ice crystals on cold surfaces.'], ['GLOBE', 'A sphere showing a map of the world.'],
+]
+const KEYS_ES = ['QWERTYUIOP', 'ASDFGHJKLÑ', '↵ZXCVBNM⌫']
+const KEYS_EN = ['QWERTYUIOP', 'ASDFGHJKL', '↵ZXCVBNM⌫']
 
-const wordOfDay = (today) => WORDS[Math.floor(new Date(`${today}T12:00:00`).getTime() / 86400000) % WORDS.length]
+const wordOfDay = (today) => { const list = getLang() === 'en' ? WORDS_EN : WORDS; return list[Math.floor(new Date(`${today}T12:00:00`).getTime() / 86400000) % list.length] }
 
 /** Compara un intento con la solución. Tiene en cuenta letras repetidas (como el Wordle original). */
 export function score(guess, answer) {
@@ -73,8 +88,12 @@ export default function Word({ size, data, update }) {
     if (k === '⌫') return setCurrent((c) => c.slice(0, -1))
     if (k === '↵') {
       if (current.length < LEN) { setShake(true); setTimeout(() => setShake(false), 400); return }
-      update((d) => ({ ...d, wordle: { date: today, guesses: [...game.guesses, current] } }))
+      const guesses = [...game.guesses, current]
+      update((d) => ({ ...d, wordle: { date: today, guesses } }))
       setCurrent('')
+      // Al terminar, puntos para el ranking con amigos: 6 si aciertas a la primera … 1 a la sexta, 0 si no
+      if (current === answer) sendScore('wordle', TRIES + 1 - guesses.length)
+      else if (guesses.length >= TRIES) sendScore('wordle', 0)
       return
     }
     if (current.length < LEN) setCurrent((c) => c + k)
@@ -129,7 +148,7 @@ export default function Word({ size, data, update }) {
         </div>
       ) : (size === 'L' || size === 'T') ? (
         <div className="keyboard">
-          {KEYS.map((row) => (
+          {(getLang() === 'en' ? KEYS_EN : KEYS_ES).map((row) => (
             <div key={row} className="kb-row">
               {[...row].map((k) => (
                 <button key={k} className={`key ${keyState[k] ?? ''} ${k === '↵' || k === '⌫' ? 'key-wide' : ''}`} onClick={() => press(k)}

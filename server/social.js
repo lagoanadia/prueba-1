@@ -9,6 +9,8 @@ import { listEntries } from './entries.js'
 
 export const EMOJIS = ['👏', '🔥', '❤️', '😂']
 export const KINDS = ['recipe', 'doc', 'good', 'note', 'achievement']
+// Juegos con ranking semanal: puntos máximos por partida (para que nadie mande números imposibles)
+export const GAMES = { wordle: 6, sudoku: 1000, bee: 400, crossword: 1000 }
 export const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }
 // Accesorios exclusivos: se consiguen con secretos, por tu cumpleaños o como regalo
 export const SECRETS = { halo: 'Cerrar 3 días', starclip: 'Cerrar 10 días', partyhat: 'Tu cumpleaños', sprout: 'Compartir algo por primera vez' }
@@ -124,10 +126,25 @@ export async function socialState(env, me, today) {
     challenges.push({ id: c.id, title: c.title, metric: c.metric, target: c.target, owner: (await publicUser(env, c.owner, cache)).username, members, accepted: c.accepted.includes(me) })
   }
 
+  // Ranking semanal de juegos (tú y tus amigos): suma de los puntos de cada día de esta semana
+  const ws = weekStartOf(today)
+  const ranking = {}
+  for (const uid of [me, ...friends]) {
+    const sc = await get(env, `scores:${uid}`, {})
+    const u = await publicUser(env, uid, cache)
+    if (!u.username && uid !== me) continue
+    for (const g of Object.keys(GAMES)) {
+      const days = Object.entries(sc[g] ?? {}).filter(([d]) => d >= ws && d < addDays(ws, 7))
+      if (!days.length) continue
+      ;(ranking[g] ??= []).push({ ...u, me: uid === me, points: days.reduce((a, [, v]) => a + v, 0), today: sc[g]?.[today] ?? null })
+    }
+  }
+  Object.values(ranking).forEach((l) => l.sort((a, b) => b.points - a.points))
+
   const gifts = await Promise.all(mine.gifts.filter((g) => !g.seen).map(async (g) => ({ ...g, from: await publicUser(env, g.from, cache) })))
   return {
     me: { birthday: mine.birthday, shareMood: mine.shareMood, shareTower: mine.shareTower, tower: mine.tower, unlocks: mine.unlocks, session: mine.session && mine.session.endsAt > Date.now() ? mine.session : null, isBirthday: mine.birthday === mmdd },
-    friends: people, feed: feed.slice(0, 80), challenges, gifts,
+    friends: people, feed: feed.slice(0, 80), challenges, gifts, ranking,
   }
 }
 
@@ -155,6 +172,17 @@ export async function act(env, me, body, today) {
     const unlocked = await unlock(env, me, 'sprout', s)
     if (unlocked) await saveSocial(env, me, s)
     return { ok: true, unlocked }
+  }
+  if (a === 'score') {
+    // Una puntuación por juego y día (la primera: no se puede repetir para mejorarla)
+    if (!(body.game in GAMES)) return { error: 'Juego no válido' }
+    const value = Math.max(0, Math.min(GAMES[body.game], Math.round(Number(body.value) || 0)))
+    const sc = await get(env, `scores:${me}`, {})
+    // En el Spelling Bee se va sumando a lo largo del día (cuenta la mejor); en los demás, la primera partida
+    if (sc[body.game]?.[today] != null && (body.game !== 'bee' || value <= sc[body.game][today])) return { ok: true, already: true, value: sc[body.game][today] }
+    sc[body.game] = Object.fromEntries(Object.entries({ ...(sc[body.game] ?? {}), [today]: value }).sort().slice(-60))
+    await put(env, `scores:${me}`, sc)
+    return { ok: true, value }
   }
   if (a === 'unpost') {
     const list = await get(env, `posts:${me}`, [])

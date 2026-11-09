@@ -14,6 +14,7 @@ import Word from './journal/Word.jsx'
 import Bottle from './journal/Bottle.jsx'
 import Good from './journal/Good.jsx'
 import Pixels from './journal/Pixels.jsx'
+import { BeeWidget, CrosswordWidget, SudokuWidget } from './games/GameLauncher.jsx'
 import Plan from './salud/Plan.jsx'
 import Workouts from './salud/Workouts.jsx'
 import Progress from './salud/Progress.jsx'
@@ -43,6 +44,9 @@ export const WIDGETS = {
   pixels: { area: 'journal', name: 'Pixels', color: '#3DDC97', component: Pixels },
   word: { sizes: ['T', 'L'], area: 'journal', name: 'Palabra del día', color: '#F9DC5C', component: Word },
   bottle: { area: 'journal', name: 'Cápsulas del tiempo', color: '#EFABFF', component: Bottle },
+  sudoku: { area: 'journal', name: 'Sudoku', color: '#3185FC', component: SudokuWidget },
+  bee: { area: 'journal', name: 'Spelling Bee', color: '#F9DC5C', component: BeeWidget },
+  crossword: { area: 'journal', name: 'Mini crucigrama', color: '#E84855', component: CrosswordWidget },
   good: { area: 'journal', name: 'Una cosa buena del día', color: '#3DDC97', component: Good },
   plan: { area: 'salud', name: 'Plan semanal', color: '#3DDC97', component: Plan },
   workouts: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },

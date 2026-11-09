@@ -17,6 +17,7 @@ import profile from './routes/profile.js'
 import friends from './routes/friends.js'
 import shares from './routes/shares.js'
 import social from './routes/social.js'
+import games from './routes/games.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -30,6 +31,7 @@ const ROUTES = {
   '/api/friends': friends,
   '/api/shares': shares,
   '/api/social': social,
+  '/api/games': games,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }

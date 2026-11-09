@@ -205,9 +205,25 @@ function FriendProfile({ f, back, onSheet }) {
 }
 
 // ---------- Retos ----------
+const GAME_NAMES = { wordle: 'Palabra del día', sudoku: 'Sudoku', bee: 'Spelling Bee', crossword: 'Mini crucigrama' }
+
 function Challenges({ state, run, onNew }) {
+  const ranking = state.ranking ?? {}
   return (
     <div className="feed">
+      <div className="card feed-card">
+        <b>Ranking de juegos de la semana</b>
+        {Object.keys(ranking).length ? (
+          <div className="rank-games">
+            {Object.entries(GAME_NAMES).filter(([g]) => ranking[g]?.length).map(([g, name]) => (
+              <div key={g} className="rank-game">
+                <b>{name}</b>
+                {ranking[g].slice(0, 5).map((p, i) => <div key={p.username ?? i} className={`rank-row ${p.me ? 'me' : ''}`}><span className="rank-pos">{i + 1}</span><Avatar avatar={p.avatar} size={24} /><span>{p.me ? 'Tú' : '@' + p.username}</span><b>{p.points}</b></div>)}
+              </div>
+            ))}
+          </div>
+        ) : <span className="muted">Juega a los juegos del Journal (Palabra del día, Sudoku, Spelling Bee, Mini crucigrama) y compite con tus amigos.</span>}
+      </div>
       {state.challenges.map((c) => (
         <div key={c.id} className="card feed-card">
           <div className="w-row"><b>{c.title}</b><span className="muted">{c.target} esta semana</span></div>
