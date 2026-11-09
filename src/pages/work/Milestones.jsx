@@ -44,7 +44,11 @@ export default function Milestones({ project, change, color }) {
   const start = project.createdAt ?? [...project.tasks.map((t) => t.due).filter(Boolean), ...list.map((m) => m.date), today].sort()[0]
   const end = [project.deadline ?? addDays(today, 30), ...list.map((m) => m.date)].sort().at(-1)
   const span = Math.max(1, daysUntil(end, start))
-  const at = (iso) => `${Math.min(100, Math.max(0, (daysUntil(iso, start) / span) * 100))}%`
+  const pos = (iso) => Math.min(100, Math.max(0, (daysUntil(iso, start) / span) * 100))
+  const at = (iso) => `${pos(iso)}%`
+  // Las fechas de los extremos se esconden si un hito cae encima
+  const crowdStart = list.some((m) => pos(m.date) < 9)
+  const crowdEnd = list.some((m) => pos(m.date) > 91)
 
   const save = (m) => {
     change((p) => {
@@ -70,14 +74,14 @@ export default function Milestones({ project, change, color }) {
         <span className="pv-line"><span style={{ width: at(today), background: color }} /></span>
         <span className="pv-today" style={{ left: at(today) }} title={`Hoy, ${short(today)}`} />
         {list.map((m, i) => (
-          <button key={m.id} className={`pv-mile ${i % 2 ? 'below' : ''} ${m.done ? 'done' : ''} ${m.date < today && !m.done ? 'late' : ''} ${m === next ? 'next' : ''}`} style={{ left: at(m.date) }}
+          <button key={m.id} className={`pv-mile ${i % 2 ? 'below' : ''} ${pos(m.date) > 88 ? 'edge-r' : pos(m.date) < 12 ? 'edge-l' : ''} ${m.done ? 'done' : ''} ${m.date < today && !m.done ? 'late' : ''} ${m === next ? 'next' : ''}`} style={{ left: at(m.date) }}
             onClick={() => setEditing(m)} title={`${m.title} · ${formatShort(m.date)}`}>
             <span className="pv-mile-label"><b>{m.title}</b><span>{short(m.date)}</span></span>
             <span className="pv-dot" />
           </button>
         ))}
-        <span className="pv-edge pv-edge-start">{short(start)}</span>
-        <span className="pv-edge pv-edge-end">{project.deadline ? short(project.deadline) : '—'}</span>
+        {!crowdStart && <span className="pv-edge pv-edge-start">{short(start)}</span>}
+        {!crowdEnd && <span className="pv-edge pv-edge-end">{project.deadline ? short(project.deadline) : '—'}</span>}
       </div>
 
       {editing && (
