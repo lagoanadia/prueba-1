@@ -3,8 +3,13 @@ import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import { TOPIC_STATES } from '../../widgets/estudios/study.js'
 import Deliveries from './Deliveries.jsx'
+import OrganizeDrop from './OrganizeDrop.jsx'
+import OrganizeReview from './OrganizeReview.jsx'
 import ResourceFrames from './ResourceFrames.jsx'
-import { METRICS, changeSubject, metricsOf, progressFor, soft, unitProgress } from './helpers.js'
+import { applyReview, buildReview, countReview, fallbackProposal } from './organize.js'
+import { deleteFile } from '../../lib/fileStore.js'
+import { proposeOrganization } from '../../services/organizeService.js'
+import { METRICS, changeSubject, metricsOf, practicesOf, progressFor, soft, unitProgress } from './helpers.js'
 
 /** Estado de una unidad según sus temas. */
 function unitState(u) {
@@ -17,11 +22,38 @@ function unitState(u) {
 /** Página de una asignatura: progreso a tu medida, entregas, unidades y recursos. */
 export default function SubjectView({ data, update, subject, back, openUnit, onDelete }) {
   const [dialog, setDialog] = useState(null) // null | 'new' | { rename: unitId }
+  const [review, setReview] = useState(null) // propuesta de organización en revisión
+  const [reviewMsg, setReviewMsg] = useState('')
+  const [docsText, setDocsText] = useState([]) // lo leído de cada documento (para «Rehacer propuesta»)
+  const [busy, setBusy] = useState(false)
+  const [banner, setBanner] = useState('')
   const subjects = data.subjects ?? []
   const p = progressFor(subject, data.assignments)
   const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
   const addUnit = (name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name, topics: [] }] })); setDialog(null) }
   const renameUnit = (id, name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, name } : u)) })); setDialog(null) }
+  const startReview = (r, msg, docs) => { setReview(r); setReviewMsg(msg); setDocsText(docs) }
+  const cancelReview = () => { Object.values(review.docs).forEach((d) => deleteFile(d.file.id).catch(() => {})); setReview(null) }
+  const redo = async () => {
+    setBusy(true)
+    const docs = docsText.filter((d) => review.docs[d.id])
+    let result
+    let msg = ''
+    try { result = await proposeOrganization(subject.name, docs.map((d) => ({ id: d.id, name: d.file.name, pages: d.pages, text: d.text }))); if (!result?.units) throw new Error('bad') } catch { result = fallbackProposal(docs); msg = 'La IA no está disponible ahora: organización básica por los nombres de los archivos.' }
+    setReview(buildReview(result, docs)); setReviewMsg(msg); setBusy(false)
+  }
+  const create = () => {
+    const { units, resources } = applyReview(review, subject.id)
+    const c = countReview(review)
+    changeSubject(update, subject.id, (s) => {
+      const empty = s.units.every((u) => !u.topics.length && !practicesOf(u).length && !u.temario) // solo unidades vacías: se sustituyen
+      return units.length ? { ...s, units: empty ? units : [...s.units, ...units] } : s
+    })
+    if (resources.length) update((d) => ({ ...d, resources: [...(d.resources ?? []), ...resources] }))
+    setReview(null)
+    setBanner(`Creado: ${c.units} unidades, ${c.topics} temas y ${c.docs} documentos${c.loose ? ` (+ ${c.loose} en Recursos)` : ''}.`)
+    setTimeout(() => setBanner(''), 9000)
+  }
   const R = 46
   const C = 2 * Math.PI * R
 
@@ -35,6 +67,8 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
         <button className="icon-btn" onClick={() => { if (window.confirm(`¿Eliminar ${subject.short} con todo su contenido?`)) onDelete() }} aria-label="Eliminar asignatura" title="Eliminar asignatura"><Icon name="trash" /></button>
       </header>
 
+      {banner && <p className="og-banner" role="status"><Icon name="check" size={20} color="#0F6B45" strokeWidth={3} />{banner}</p>}
+      {review ? <OrganizeReview review={review} setReview={setReview} message={reviewMsg} busy={busy} onCreate={create} onRedo={redo} onCancel={cancelReview} /> : (<>
       <div className="study-mid subject-top">
         <section className="card progress-card" style={{ background: soft(subject.color, 22), boxShadow: 'none' }}>
           <svg className="ring-svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso ${p.pct} %`}>
@@ -53,6 +87,8 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
         </section>
         <section className="card deliv-card"><Deliveries data={data} update={update} subjects={subjects} course={subject.short} /></section>
       </div>
+
+      <OrganizeDrop subjectName={subject.name} onReview={startReview} />
 
       <div className="head-line unit-head">
         <h2 className="page-h2">Unidades</h2>
@@ -80,6 +116,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
 
       <h2 className="page-h2 page-gap">Recursos</h2>
       <ResourceFrames data={data} update={update} subjectId={subject.id} />
+      </>)}
     </div>
   )
 }

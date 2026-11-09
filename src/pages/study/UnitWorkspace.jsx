@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { saveFile } from '../../lib/fileStore.js'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -61,9 +62,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const removePractice = (uid, id) => { if (!window.confirm('¿Quitar esta práctica?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).filter((p) => p.id !== id) })); go({ ...route, itemId: null }) }
   const toggleOpen = (id) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
-  // PDF por tema. El PDF que antes se guardaba en la unidad se queda en el primer tema.
-  const topicPdf = topic ? (topic.pdf !== undefined ? topic.pdf : topicIndex === 0 ? unit.temario ?? null : null) : null
-  const setTopicPdf = (f) => changeU((u) => ({ ...u, ...(topicIndex === 0 ? { temario: undefined } : {}), topics: u.topics.map((t) => (t.id === topic.id ? { ...t, pdf: f } : t)) }))
+  // PDF por tema (puede haber varios). El PDF que antes se guardaba en la unidad se queda en el primer tema.
+  const topicFiles = topic ? (topic.pdfs ?? (topic.pdf ? [topic.pdf] : topicIndex === 0 && unit.temario ? [unit.temario] : [])) : []
+  const setTopicFiles = (list) => changeU((u) => ({ ...u, ...(topicIndex === 0 ? { temario: undefined } : {}), topics: u.topics.map((t) => (t.id === topic.id ? { ...t, pdfs: list, pdf: undefined } : t)) }))
 
   const layouts = () => (
     <div className="layouts" role="radiogroup" aria-label="Qué hojas ver">
@@ -149,7 +150,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
           {tab === 'estudio' && (
             topic
-              ? split(<FileFrame key={`pdf-${topic.id}`} file={topicPdf} onChange={setTopicPdf} label="Subir el PDF de este tema" />,
+              ? split(<FilesPane key={`pdf-${topic.id}`} files={topicFiles} onChange={setTopicFiles} label="Subir el PDF de este tema" />,
                   <BlockEditor key={topic.id} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
                     bar={data.notes?.[topic.id] ? <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
@@ -171,6 +172,33 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       {dialog === 'practice' && <NameDialog title="Nombre de la práctica" placeholder="Práctica 1" onSubmit={addPractice} onClose={() => setDialog(null)} />}
       {dialog === 'unit' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onClose={() => setDialog(null)} />}
+    </div>
+  )
+}
+
+/** Los PDF de un tema: pestañas con sus nombres, el visor del que elijas y un + para añadir otro. */
+function FilesPane({ files, onChange, label }) {
+  const [idx, setIdx] = useState(0)
+  const input = useRef(null)
+  const i = Math.min(idx, Math.max(files.length - 1, 0))
+  const addOther = async (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    onChange([...files, await saveFile(f)])
+    setIdx(files.length)
+  }
+  return (
+    <div className="files-pane">
+      {files.length > 0 && (
+        <div className="file-tabs" role="tablist" aria-label="PDF de este tema">
+          {files.map((f, k) => <button key={f.id} role="tab" aria-selected={k === i} className={`file-tab ${k === i ? 'on' : ''}`} onClick={() => setIdx(k)} title={f.name}><Icon name="pdf" size={14} color="#E84855" /><span className="w-ellipsis">{f.name}</span></button>)}
+          <button className="file-tab file-tab-add" onClick={() => input.current?.click()} aria-label="Añadir otro PDF a este tema" title="Añadir otro PDF"><Icon name="plus" size={14} /></button>
+          <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
+        </div>
+      )}
+      <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label}
+        onChange={(f) => onChange(f ? (files.length ? files.map((x, k) => (k === i ? f : x)) : [f]) : files.filter((_, k) => k !== i))} />
     </div>
   )
 }

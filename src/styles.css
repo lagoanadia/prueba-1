@@ -2107,3 +2107,65 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .d-title-btn { border: none; background: none; font: inherit; color: inherit; padding: 0; cursor: pointer; border-radius: 10px; }
 .d-title-btn:hover { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 3px; text-decoration-color: #DDEBFE; }
 .d-title-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+
+/* ===== Organizar una asignatura con sus documentos ===== */
+.og-drop { display: flex; align-items: center; gap: 22px; border: 2px dashed #BDC1C6; border-radius: 24px; padding: 22px 26px; background: #FFFFFF; margin: 4px 0 8px; transition: border-color .2s, background .2s; }
+.og-drop.is-over { border-color: var(--blue); background: #F4F8FF; }
+.og-drop-ic { width: 68px; height: 68px; border-radius: 50%; border: none; background: #DDEBFE; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+.og-drop-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.og-drop-title { font-size: 19px; }
+.og-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.og-fchip { display: inline-flex; align-items: center; gap: 8px; border: 2px solid var(--line); border-radius: 16px; padding: 4px 8px 4px 8px; font-size: 14px; font-weight: 600; background: #FFFFFF; }
+.og-fchip button { border: none; background: none; cursor: pointer; padding: 2px; display: flex; border-radius: 50%; }
+.og-fchip button:hover { background: var(--soft); }
+.og-prog { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; font-size: 13px; }
+.og-prog-bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; display: block; }
+.og-prog-bar i { display: block; height: 100%; background: var(--blue); transition: width .4s var(--ease); }
+.og-note { font-size: 14px; padding: 8px 14px; border-radius: 14px; background: #FDF5CE; color: #5A4500; margin: 0; }
+.og-go { display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 24px; padding: 12px 22px; font: inherit; font-weight: 700; font-size: 16px; background: #DDEBFE; color: #174EA6; cursor: pointer; flex-shrink: 0; }
+.og-go:disabled { opacity: .45; cursor: default; } .og-go:not(:disabled):hover { background: #CFE2FE; }
+.og-go svg { stroke: #174EA6; }
+.og-review { display: flex; flex-direction: column; gap: 14px; }
+.og-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.og-main { display: flex; flex-direction: column; gap: 16px; }
+.og-unit { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+.og-uhead, .og-thead { display: flex; align-items: center; gap: 6px; }
+.og-input { border: 2px solid transparent; border-radius: 12px; background: none; font: inherit; padding: 3px 8px; min-width: 0; flex: 1; }
+.og-input:hover { border-color: var(--line); } .og-input:focus { border-color: var(--blue); background: #F8FBFF; outline: none; }
+.og-uname { font-size: 20px; font-weight: 700; } .og-tname { font-size: 16px; font-weight: 600; }
+.og-topic { border: 2px solid #F1F3F4; border-radius: 18px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background: #FBFCFD; }
+.og-doc { display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 12px; cursor: grab; }
+.og-doc.is-drag { opacity: .4; }
+.og-doc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.og-doc-body b { font-size: 14px; } .og-why { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.og-tag { font-size: 12px; font-weight: 700; border-radius: 10px; padding: 2px 8px; background: #DDF8EC; color: #0F6B45; flex-shrink: 0; }
+.og-tag.is-check { background: #FDF5CE; color: #7A5B00; }
+.og-doc .icon-btn { width: 32px; height: 32px; }
+.og-move { position: relative; }
+.og-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; padding: 6px; width: 250px; max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; }
+.og-menu button { border: none; background: none; font: inherit; font-size: 14px; text-align: left; padding: 7px 10px; border-radius: 10px; cursor: pointer; }
+.og-menu button:hover { background: var(--soft); }
+.og-menu-h { display: block; font-size: 12px; font-weight: 700; color: #9AA0A6; padding: 6px 10px 2px; text-transform: uppercase; letter-spacing: .04em; }
+.og-empty { font-size: 13px; color: var(--muted); padding: 2px 4px; }
+.og-add { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; border: 2px dashed var(--ring); background: #FFFFFF; border-radius: 18px; font: inherit; font-weight: 600; font-size: 14px; padding: 5px 14px 5px 10px; cursor: pointer; color: var(--muted); }
+.og-add:hover { color: var(--text); border-color: #9AA0A6; }
+.og-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 8px; }
+.og-sum { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.og-stats { display: flex; gap: 8px; } .og-stats div { flex: 1; background: var(--soft); border-radius: 16px; padding: 8px; text-align: center; font-size: 12px; color: var(--muted); } .og-stats b { display: block; font-size: 22px; color: var(--text); }
+.og-create { display: flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 24px; padding: 12px; font: inherit; font-weight: 700; font-size: 16px; background: var(--blue); color: #FFFFFF; cursor: pointer; }
+.og-create:disabled, .og-sec:disabled { opacity: .5; cursor: default; }
+.og-sec { display: flex; align-items: center; justify-content: center; gap: 8px; border: 2px solid var(--ring); border-radius: 24px; padding: 9px; font: inherit; font-weight: 600; background: #FFFFFF; cursor: pointer; }
+.og-cancel { border-color: transparent; color: var(--muted); }
+.og-loose { border: 2px dashed var(--ring); border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.og-loose-hint { font-size: 12.5px; }
+.og-banner { display: flex; align-items: center; gap: 10px; border-radius: 18px; padding: 12px 18px; background: #DDF8EC; color: #0F6B45; font-weight: 600; margin: 0 0 14px; }
+@media (max-width: 899px) { .og-cols { grid-template-columns: 1fr; } .og-drop { flex-direction: column; align-items: flex-start; } }
+
+/* Varios PDF por tema */
+.files-pane { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; min-width: 0; }
+.files-pane .file-frame { flex: 1; min-height: 0; height: auto; }
+.file-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.file-tab { display: inline-flex; align-items: center; gap: 6px; max-width: 220px; border: 2px solid var(--line); border-radius: 16px; background: #FFFFFF; padding: 4px 12px 4px 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.file-tab.on { background: #DDEBFE; border-color: var(--blue); }
+.file-tab-add { border-style: dashed; padding: 4px 10px; }
+.og-loose .og-doc { flex-wrap: wrap; row-gap: 6px; } .og-loose .og-doc-body { flex: 1 1 130px; }
