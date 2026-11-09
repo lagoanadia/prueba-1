@@ -6,6 +6,7 @@ import { SUBJECT_COLORS, soft } from './helpers.js'
 
 // «Recreo» de horarios antiguos se ve como «Descanso»
 const breakName = (l) => (!l || l === 'Recreo' ? 'Descanso' : l)
+const ERASE = '__erase' // pincel que vacía casillas
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 
 /**
@@ -35,12 +36,14 @@ export default function Schedule({ data, update, subjects }) {
   const look = (v) => (bySubject[v] ? { name: v, color: soft(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: soft(byLabel[v].color, 40) } : null)
 
   const patch = (fn) => update((d) => ({ ...d, timetable: fn(normalizeTimetable(d.timetable, d.subjects ?? [])) }))
-  const setCell = (k, v) => patch((t) => ({ ...t, cells: { ...t.cells, [k]: v } }))
+  // Vacío = se quita la casilla
+  const setCell = (k, v) => patch((t) => { const cells = { ...t.cells }; if (v) cells[k] = v; else delete cells[k]; return { ...t, cells } })
   const click = (k) => {
-    if (brush) return setCell(k, brush)
-    if (!options.length) return
-    setCell(k, options[(options.indexOf(tt.cells[k]) + 1) % options.length]) // nunca queda en blanco
+    if (brush) return setCell(k, brush === ERASE ? '' : brush)
+    const cycle = [...options, ''] // tras la última asignatura, la casilla vuelve a quedar vacía
+    setCell(k, cycle[(cycle.indexOf(tt.cells[k] ?? '') + 1) % cycle.length])
   }
+  const clearAll = () => { if (window.confirm('¿Vaciar todo el horario?')) patch((t) => ({ ...t, rows: [], cells: {} })) }
   const setEnd = (i, text) => {
     const end = toMin(text)
     if (end == null || end <= times[i].start) return
@@ -55,7 +58,8 @@ export default function Schedule({ data, update, subjects }) {
     patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, at: m > prevEnd ? fmt(m) : null } : r)) }))
   }
   const setDur = (i, dur) => { const d = Math.max(5, Math.min(240, Math.round(Number(dur) || 0))); if (d) patch((t) => ({ ...t, rows: t.rows.map((r, k) => (k === i ? { ...r, dur: d } : r)) })) }
-  const removeRow = (id) => { patch((t) => (t.rows.length > 1 ? { ...t, rows: t.rows.filter((r) => r.id !== id) } : t)); setRowMenu(null) } // siempre queda al menos una franja
+  // Al quitar una franja, las de abajo suben y sus casillas se borran
+  const removeRow = (id) => { patch((t) => ({ ...t, rows: t.rows.filter((r) => r.id !== id), cells: Object.fromEntries(Object.entries(t.cells).filter(([k]) => !k.startsWith(`${id}:`))) })); setRowMenu(null) }
   const move = (from, to) => patch((t) => { const rows = [...t.rows]; if (to < 0 || to >= rows.length) return t; const [r] = rows.splice(from, 1); rows.splice(to, 0, r); return { ...t, rows } })
   const addRowAfter = (index, kind) => {
     patch((t) => {
@@ -92,7 +96,7 @@ export default function Schedule({ data, update, subjects }) {
                 <div className="card tt-menu" role="menu">
                   {rowMenu.mode === 'add'
                     ? (<><button role="menuitem" onClick={() => addRowAfter(i, 'class')}>Franja vacía</button><button role="menuitem" onClick={() => addRowAfter(i, 'break')}>Descanso</button></>)
-                    : <button role="menuitem" disabled={tt.rows.length < 2} onClick={() => removeRow(row.id)}>Eliminar franja</button>}
+                    : <button role="menuitem" onClick={() => removeRow(row.id)}>Eliminar franja</button>}
                 </div>
               )}
             </span>
@@ -132,7 +136,13 @@ export default function Schedule({ data, update, subjects }) {
             <button className="seg-x" onClick={() => removeLabel(l.id)} aria-label={`Borrar la etiqueta ${l.name}`}><Icon name="close" size={12} /></button>
           </span>
         ))}
+        <button className={`seg-chip seg-erase ${brush === ERASE ? 'on' : ''}`} aria-pressed={brush === ERASE} onClick={() => setBrush(brush === ERASE ? null : ERASE)} title="Goma: toca casillas para vaciarlas">Goma</button>
         <button className="seg-chip seg-add" onClick={() => setDialog('label')} aria-label="Crear etiqueta" title="Crear etiqueta (p. ej. Convalidada)"><Icon name="plus" size={16} /></button>
+      </div>
+
+      <div className="tt-foot">
+        <button className="pill" onClick={() => addRowAfter(tt.rows.length - 1, 'class')}>+ Franja</button>
+        {(tt.rows.length > 0 || Object.keys(tt.cells).length > 0) && <button className="text-link" onClick={clearAll}>Vaciar horario</button>}
       </div>
 
       {dialog === 'label' && <LabelDialog onSubmit={addLabel} onClose={() => setDialog(null)} />}
@@ -171,7 +181,9 @@ const BREAK = 22 // alto del descanso
  * El horario para MIRAR: la semana como un calendario. Cada franja de clase tiene el mismo alto;
  * solo cuando hay dos o más franjas seguidas de la misma asignatura se juntan en un bloque más grande.
  */
-function ScheduleView({ tt, times, look, onEdit }) {
+function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
+  let tt = rawTt
+  let times = rawTimes
   const [now, setNow] = useState(() => new Date())
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(id) }, [])
   const today = (now.getDay() + 6) % 7
@@ -179,6 +191,10 @@ function ScheduleView({ tt, times, look, onEdit }) {
   // Vacío (sin franjas o sin ninguna asignatura puesta): un lápiz grande con el texto girando alrededor
   if (!times.length || !Object.values(tt.cells).some(Boolean)) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2></div><EmptySchedule onEdit={onEdit} /></div>
 
+  // Franjas de clase vacías todos los días no se dibujan: lo de abajo sube
+  const used = tt.rows.map((r) => r.kind === 'break' || [0, 1, 2, 3, 4].some((c) => tt.cells[`${r.id}:${c}`]))
+  tt = { ...tt, rows: tt.rows.filter((_, i) => used[i]) }
+  times = times.filter((_, i) => used[i])
   // Posición de cada fila (en píxeles) según su tipo, no según sus minutos
   const tops = []
   let acc = 0
