@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Icon from '../components/Icon.jsx'
-import RingArcs from '../components/RingArcs.jsx'
 import Donut from '../components/Donut.jsx'
 import TodayTasks from '../components/TodayTasks.jsx'
 import BlankPage from './BlankPage.jsx'
@@ -41,7 +40,6 @@ export default function DesktopApp({ firstName, today, onHome, onTalk, onSignOut
       <main className="d-main">
         <div className="d-top">
           <button className="talk-circle" onClick={onTalk} aria-label="Hablar con el asistente" title="Hablar con el asistente">
-            <RingArcs size={68} stroke={4} />
             <span className="talk-circle-inner">
               {/* Ondas de sonido: se mueven una vez al abrir la app y se quedan quietas */}
               <svg aria-hidden="true" width="34" height="24" viewBox="0 0 112 72" fill="none" strokeWidth="7" strokeLinecap="round">

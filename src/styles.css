@@ -352,9 +352,9 @@ button.px:not(:disabled):hover { transform: scale(1.15); }
 .nv .ic .avatar { width: 40px; height: 40px; }
 
 /* ===== Botón del asistente (portátil): el círculo del móvil con ondas de sonido dentro ===== */
-.talk-circle { position: relative; width: 68px; height: 68px; border: none; padding: 0; background: none; cursor: pointer; transition: transform .2s var(--ease); }
+.talk-circle { position: relative; width: 60px; height: 60px; border: none; padding: 0; background: none; cursor: pointer; transition: transform .2s var(--ease); }
 .talk-circle > svg { position: absolute; inset: 0; }
-.talk-circle-inner { position: absolute; inset: 10px; border-radius: 50%; background: #FFFFFF; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; transition: box-shadow .2s; }
+.talk-circle-inner { position: absolute; inset: 0; /* solo el círculo con las ondas, sin los arcos de fuera */ border-radius: 50%; background: #FFFFFF; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; transition: box-shadow .2s; }
 .talk-circle:hover { transform: scale(1.06); }
 .talk-circle:hover .talk-circle-inner { box-shadow: var(--shadow-lg); }
 .talk-circle:active { transform: scale(.95); }
