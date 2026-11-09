@@ -1644,3 +1644,18 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .capsule-to { align-items: center; }
 .capsule-to .sel { flex: 1; }
 .capsule-sent { color: #A12CB3; font-weight: 600; cursor: pointer; }
+/* Formulario de meta */
+.goal-form { display: flex; flex-direction: column; gap: 14px; }
+.gf-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.gf-field > span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.gf-field input { font: inherit; font-size: 16px; border: 2px solid var(--line); border-radius: 14px; padding: 9px 12px; outline: none; background: #FFFFFF; transition: border-color .2s; min-width: 0; }
+.gf-field input:focus { border-color: var(--blue); }
+.gf-row { display: flex; gap: 12px; }
+.gf-step { display: flex; align-items: center; gap: 6px; }
+.gf-step input { width: 72px; text-align: center; font-weight: 700; -moz-appearance: textfield; }
+.gf-step input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.gf-step .mini { width: 34px; height: 34px; font-size: 18px; }
+.gf-examples { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gf-examples .chip { font-size: 12px; }
+.gf-preview { border-radius: 16px; background: var(--soft); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.gf-save { align-self: stretch; text-align: center; padding: 10px; font-size: 15px; }

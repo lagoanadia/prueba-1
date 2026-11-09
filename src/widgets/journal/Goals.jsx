@@ -8,27 +8,10 @@ const unitOf = (name) => name.match(/\d+\s+(\p{L}+)/u)?.[1] ?? ''
 /** Metas. S: la primera · T: lista vertical · M: hasta 2 · L: todas, con − / + / Quitar y añadir. */
 export default function Goals({ size, data, update }) {
   const goals = data.goals ?? []
-  const [name, setName] = useState('')
-  const [target, setTarget] = useState('')
-
   const change = (id, delta) => update((d) => ({ ...d, goals: d.goals.map((g) => (g.id === id ? { ...g, current: Math.max(0, Math.min(g.target, g.current + delta)) } : g)) }))
   const remove = (id) => update((d) => ({ ...d, goals: d.goals.filter((g) => g.id !== id) }))
-  const add = (e) => {
-    e.preventDefault()
-    if (!name.trim() || !(Number(target) > 0)) return
-    update((d) => ({ ...d, goals: [...(d.goals ?? []), { id: crypto.randomUUID(), name: name.trim(), current: 0, target: Number(target) }] }))
-    setName('')
-    setTarget('')
-  }
-
-  const form = (close) => (
-    <form className="w-form" onSubmit={(e) => { add(e); if (name.trim() && Number(target) > 0) close?.() }}>
-      <input autoFocus={Boolean(close)} placeholder="Nueva meta" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-      <input type="number" min="1" placeholder="10" value={target} onChange={(e) => setTarget(e.target.value)} style={{ width: 64, flex: 'none' }} aria-label="Objetivo" />
-      <button className="pill pill-soft">Añadir meta</button>
-    </form>
-  )
-  const addBtn = size !== 'L' && <AddPopup label="Nueva meta">{form}</AddPopup>
+  const add = (g) => update((d) => ({ ...d, goals: [...(d.goals ?? []), { id: crypto.randomUUID(), current: 0, ...g }] }))
+  const addBtn = <AddPopup label="Nueva meta">{(close) => <GoalForm onSave={(g) => { add(g); close() }} />}</AddPopup>
 
   // S: la primera meta; tocar el anillo suma uno
   if (size === 'S') {
@@ -52,14 +35,14 @@ export default function Goals({ size, data, update }) {
             <div className="bar"><span style={{ width: `${pct(g)}%` }} /></div>
             {size !== 'L' && (
               <div className="goal-ctrl">
-                <span className="w-hint">{g.current}/{g.target}</span>
+                <span className="w-hint">{g.current}/{g.target} {g.unit ?? unitOf(g.name)}</span>
                 <button className="mini" onClick={() => change(g.id, -1)} aria-label="Menos">−</button>
                 <button className="mini" onClick={() => change(g.id, 1)} aria-label="Más">+</button>
               </div>
             )}
             {size === 'L' && (
               <div className="goal-ctrl">
-                <span className="w-hint">{g.current} de {g.target} {unitOf(g.name)}</span>
+                <span className="w-hint">{g.current} de {g.target} {g.unit ?? unitOf(g.name)}</span>
                 <button className="mini" onClick={() => change(g.id, -1)} aria-label="Menos">−</button>
                 <button className="mini" onClick={() => change(g.id, 1)} aria-label="Más">+</button>
                 <button className="pill pill-sm" onClick={() => remove(g.id)}>Quitar</button>
@@ -70,7 +53,48 @@ export default function Goals({ size, data, update }) {
         {goals.length === 0 && <li className="w-hint">Sin metas</li>}
       </ul>
       {addBtn}
-      {size === 'L' && form()}
     </>
+  )
+}
+
+// Ejemplos que rellenan el formulario de un toque
+const EXAMPLES = [['Leer', 12, 'libros'], ['Correr', 100, 'km'], ['Ir al gimnasio', 50, 'veces'], ['Ahorrar', 500, '€'], ['Aprender palabras', 300, 'palabras']]
+
+/** Formulario de meta: qué quieres conseguir, cuánto (con − y +) y en qué se cuenta, con vista previa. */
+function GoalForm({ onSave }) {
+  const [name, setName] = useState('')
+  const [target, setTarget] = useState(10)
+  const [unit, setUnit] = useState('')
+  const step = target >= 100 ? 10 : 1
+  const ok = name.trim() && target > 0
+  const save = (e) => { e.preventDefault(); if (ok) onSave({ name: name.trim(), target, unit: unit.trim() }) }
+  return (
+    <form className="goal-form" onSubmit={save}>
+      <label className="gf-field"><span>¿Qué quieres conseguir?</span>
+        <input autoFocus placeholder="Leer, correr, ahorrar…" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
+      </label>
+      <div className="gf-row">
+        <div className="gf-field"><span>¿Cuánto?</span>
+          <div className="gf-step">
+            <button type="button" className="mini" onClick={() => setTarget(Math.max(1, target - step))} aria-label="Menos">−</button>
+            <input type="number" min="1" value={target} onChange={(e) => setTarget(Math.max(1, Number(e.target.value) || 1))} aria-label="Objetivo" />
+            <button type="button" className="mini" onClick={() => setTarget(target + step)} aria-label="Más">+</button>
+          </div>
+        </div>
+        <label className="gf-field"><span>¿De qué?</span>
+          <input placeholder="libros, km, veces…" value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={15} />
+        </label>
+      </div>
+      <div className="gf-examples">
+        <span className="w-hint">Ideas</span>
+        {EXAMPLES.map(([n, t, u]) => <button type="button" key={n} className="chip" onClick={() => { setName(n); setTarget(t); setUnit(u) }}>{n} · {t} {u}</button>)}
+      </div>
+      <div className="gf-preview" aria-hidden={!ok}>
+        <div className="goal-top"><b className="w-ellipsis">{name.trim() || 'Tu meta'}</b><b>0 %</b></div>
+        <div className="bar"><span style={{ width: '4%' }} /></div>
+        <span className="w-hint">0 de {target} {unit}</span>
+      </div>
+      <button className="pill pill-on gf-save" disabled={!ok}>Crear meta</button>
+    </form>
   )
 }
