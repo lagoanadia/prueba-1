@@ -3,7 +3,8 @@ import { json, readJson, rejectMethod } from '../../server/http.js'
 import { getSessionUser } from '../../server/session.js'
 import { getProfile, saveProfile } from '../../server/profile.js'
 import { normalizeSettings } from '../../src/data/settings.js'
-import { AVATAR_OPTIONS, DEFAULT_AVATAR, isValidAvatar } from '../../src/data/avatar.js'
+import { AVATAR_OPTIONS, DEFAULT_AVATAR, EXCLUSIVE, isValidAvatar } from '../../src/data/avatar.js'
+import { getSocial } from '../../server/social.js'
 
 export default async function handler({ request, env }) {
   const notAllowed = rejectMethod(request, ['GET', 'PUT'])
@@ -26,6 +27,8 @@ export default async function handler({ request, env }) {
     avatar = Object.fromEntries(Object.keys(AVATAR_OPTIONS).map((k) => [k, body.avatar[k] ?? DEFAULT_AVATAR[k]]))
     // El servidor también valida: no basta con que la UI solo ofrezca opciones correctas.
     if (!isValidAvatar(avatar)) return json({ error: 'Avatar no válido' }, 400)
+    // Un accesorio exclusivo solo si lo has conseguido
+    if (EXCLUSIVE.includes(avatar.accessory) && !(await getSocial(env, user.id)).unlocks.includes(avatar.accessory)) return json({ error: 'Ese accesorio aún no lo tienes' }, 400)
   }
   if (body?.settings !== undefined) {
     if (!body.settings || typeof body.settings !== 'object') return json({ error: 'Ajustes no válidos' }, 400)

@@ -1,3 +1,4 @@
+import ShareButton from '../../components/ShareButton.jsx'
 import { useState } from 'react'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
@@ -92,6 +93,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                     {topic?.id === t.id && <button className="prio-x" onClick={() => removeTopic(t.id)} aria-label={`Quitar «${t.name}»`}><Icon name="trash" size={14} /></button>}
                   </span>
                 ))}
+                {topic && data.notes?.[topic.id] && <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} />}
                 <button className="topic-chip chip-add" onClick={() => setDialog('topic')} aria-label="Añadir tema" title="Añadir tema"><Icon name="plus" size={16} /><span>Tema</span></button>
               </div>
               {topic

@@ -21,6 +21,8 @@ export const AVATAR_OPTIONS = {
   accessory: [
     { id: 'none', label: 'Nada' }, { id: 'earrings', label: 'Pendientes' }, { id: 'headband', label: 'Diadema' }, { id: 'flower', label: 'Flor' },
     { id: 'cap', label: 'Gorra' }, { id: 'beanie', label: 'Gorro' }, { id: 'headphones', label: 'Cascos' }, { id: 'crown', label: 'Corona' },
+    // Exclusivos: solo si los has conseguido (secretos, cumpleaños o regalos)
+    { id: 'halo', label: 'Aureola', exclusive: true }, { id: 'starclip', label: 'Estrella', exclusive: true }, { id: 'partyhat', label: 'Gorro de fiesta', exclusive: true }, { id: 'sprout', label: 'Brote', exclusive: true },
   ],
   outfit: [
     { id: 'tee', label: 'Camiseta' }, { id: 'vneck', label: 'Pico' }, { id: 'turtleneck', label: 'Cuello alto' }, { id: 'shirt', label: 'Camisa' },
@@ -43,6 +45,9 @@ export function isValidAvatar(a) {
 }
 
 export function randomAvatar() {
-  const pick = (opts) => opts[Math.floor(Math.random() * opts.length)].id
+  const pick = (opts) => { const ok = opts.filter((o) => !o.exclusive); return ok[Math.floor(Math.random() * ok.length)].id }
   return Object.fromEntries(Object.entries(AVATAR_OPTIONS).map(([k, opts]) => [k, pick(opts)]))
 }
+
+/** Ids de los accesorios que no se pueden elegir sin haberlos conseguido. */
+export const EXCLUSIVE = AVATAR_OPTIONS.accessory.filter((o) => o.exclusive).map((o) => o.id)

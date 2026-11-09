@@ -16,6 +16,7 @@ import board from './routes/board.js'
 import profile from './routes/profile.js'
 import friends from './routes/friends.js'
 import shares from './routes/shares.js'
+import social from './routes/social.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 
@@ -28,6 +29,7 @@ const ROUTES = {
   '/api/profile': profile,
   '/api/friends': friends,
   '/api/shares': shares,
+  '/api/social': social,
   '/api/transcribe': transcribe,
   '/api/command': command,
 }

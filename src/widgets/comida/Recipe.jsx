@@ -1,3 +1,4 @@
+import ShareButton from '../../components/ShareButton.jsx'
 import { useState } from 'react'
 import { activeDishOf, dishesOf } from './food.js'
 
@@ -27,7 +28,8 @@ export default function Recipe({ size, data, update }) {
 
   return (
     <>
-      <div className="w-row"><b className="w-ellipsis recipe-name">{dish.name}</b>{dish.time && <span className="w-hint">{dish.time} min</span>}</div>
+      <div className="w-row"><b className="w-ellipsis recipe-name">{dish.name}</b>{dish.time && <span className="w-hint">{dish.time} min</span>}
+        <ShareButton kind="recipe" title={dish.name} className="pill pill-sm" data={{ name: dish.name, for: dish.for, time: dish.time, ingredients: dish.ingredients, steps: dish.steps }} /></div>
       <div className={`recipe recipe-${size}`}>
         <div>
           <span className="kb-head">Ingredientes</span>

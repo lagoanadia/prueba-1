@@ -67,14 +67,13 @@ export function FriendsBox() {
         </ul>
       )}
 
-      <h3 className="friends-h">Amigos</h3>
       {state.username ? (
         <form className="friends-row" onSubmit={run(() => addFriend(friend), sent)}>
           <span className="friends-at">@</span>
           <input value={friend} onChange={(e) => setFriend(clean(e.target.value))} placeholder="nombre de tu amigo" maxLength={20} aria-label="Nombre de usuario del amigo" />
           <button className="pill pill-soft" disabled={busy || friend.length < 3}>Añadir</button>
         </form>
-      ) : <p className="muted friends-hint">Elige tu nombre para añadir amigos</p>}
+      ) : <p className="muted friends-hint">Elige tu nombre de usuario en Perfil para añadir amigos</p>}
       {msg && <p className={msg.ok ? 'friends-ok' : 'friends-error'} role={msg.ok ? 'status' : 'alert'}>{msg.text}</p>}
 
       <ul className="friends-list">

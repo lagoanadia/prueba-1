@@ -1,3 +1,5 @@
+import ShareButton from '../../components/ShareButton.jsx'
+import { docTitle } from './docs.js'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import Icon from '../../components/Icon.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
@@ -17,6 +19,7 @@ export default function DocView({ project, docId, change, back }) {
       <div className="doc-bar">
         <button className="back-link" onClick={back}><Icon name="back" size={18} /> {project.name}</button>
         <span className="doc-kind" style={{ background: soft(k.color, 40) }}>{k.label}</span>
+        <ShareButton kind="doc" title={docTitle(d)} data={{ title: docTitle(d), subtitle: `${k.label} · ${project.name}`, blocks: d.doc?.blocks ?? [] }} />
         <span className="muted doc-date">Editado {formatShort(d.updatedAt ?? todayISO())}</span>
         <button className="icon-btn" onClick={remove} aria-label="Borrar documento" title="Borrar"><Icon name="trash" size={18} /></button>
       </div>

@@ -4,7 +4,7 @@ const EN = {
   // ---- Navegación y general
   'Inicio': 'Home', 'Estudios': 'Studies', 'Salud': 'Health', 'Journal': 'Journal', 'Trabajo': 'Work', 'Comida': 'Food', 'Calendario': 'Calendar', 'Perfil': 'Profile',
   'Ajustes del perfil': 'Profile settings', 'Navegación': 'Navigation', 'Mostrar menú': 'Show menu', 'Ocultar menú': 'Hide menu',
-  'Hola': 'Hi', 'Organiza tu día hablando.': 'Organise your day by talking.', 'Cerrar sesión': 'Sign out', 'Cargando': 'Loading',
+  'Hola': 'Hi', 'Hola,': 'Hi,', 'Organiza tu día hablando.': 'Organise your day by talking.', 'Cerrar sesión': 'Sign out', 'Cargando': 'Loading',
   'Algo ha fallado': 'Something went wrong', 'No se ha podido cargar el login de Google': 'Google sign-in could not load',
   'Hoy': 'Today', 'hoy': 'today', 'mañana': 'tomorrow', 'ayer': 'yesterday', 'anoche': 'last night', 'Ayer': 'Yesterday', 'Mañana': 'Tomorrow',
   'Guardar': 'Save', 'Cancelar': 'Cancel', 'Cerrar': 'Close', 'Borrar': 'Delete', 'Eliminar': 'Delete', 'Quitar': 'Remove', 'Añadir': 'Add', 'Crear': 'Create', 'Editar': 'Edit',
@@ -133,6 +133,18 @@ const EN = {
   'sesiones': 'sessions', '{0} sesiones hoy': '{0} sessions today', '{0} sesión hoy': '{0} session today', 'raciones para lo que queda de semana': 'portions for the rest of the week', 'vasos': 'glasses', 'de': 'of', 'toca para pausar': 'tap to pause',
   'Falta VITE_GOOGLE_CLIENT_ID (mira .env.example)': 'VITE_GOOGLE_CLIENT_ID is missing (see .env.example)',
   'libros': 'books', 'veces': 'times', 'palabras': 'words', 'Ahorrar': 'Save', 'Aprender palabras': 'Learn words', '{0} de': '{0} of', 'de {0}': 'of {0}', '·': '·',
+  'Elige tu nombre de usuario en Perfil para añadir amigos': 'Pick your username in Profile to add friends', 'Añadir amigos': 'Add friends', 'Avatar': 'Avatar',
+  'Amigos': 'Friends', 'Feed': 'Feed', 'Retos': 'Challenges', 'Edificio': 'Building', 'Ajustes': 'Settings', 'Ver todo': 'See all', 'Tus amigos hoy': 'Your friends today', 'Comentar': 'Comment', '1 comentario': '1 comment', '{0} comentarios': '{0} comments',
+  'Dejar de compartir': 'Stop sharing', 'privado': 'private', 'para ti': 'for you', 'ahora': 'now', 'hace {0} min': '{0} min ago', 'hace {0} h': '{0} h ago', 'Escribe un comentario…': 'Write a comment…', 'Gracias': 'Thanks',
+  'Guardar en mis platos': 'Save to my dishes', 'Guardada en tus platos': 'Saved to your dishes', 'El feed está tranquilo': 'The feed is quiet', 'Compartir': 'Share', 'En el feed': 'In the feed', 'Lo ven todos tus amigos y pueden reaccionar': 'All your friends see it and can react',
+  'O solo a': 'Or only to', 'Añade un mensaje (opcional)': 'Add a message (optional)', 'Compartir en el feed': 'Share in the feed', 'Elige a quién': 'Choose who', 'Compartido en el feed': 'Shared in the feed', 'Añade amigos en Amigos para compartir con ellos': 'Add friends in Friends to share with them',
+  'Retar': 'Challenge', 'Estudiar juntos': 'Study together', 'Regalar': 'Gift', 'Su edificio': 'Their building', 'Aún sin bloques': 'No blocks yet', '{0} días cerrados': '{0} days closed', 'Cerrar el día': 'Close the day', 'Secretos': 'Secrets',
+  'Sin retos': 'No challenges', '+ Nuevo reto': '+ New challenge', 'Nuevo reto': 'New challenge', 'Aceptar el reto': 'Accept the challenge', 'Salir': 'Leave', 'Se cuenta solo con lo que apuntas': 'It counts automatically from what you log', 'Con quién': 'With whom', '¿Cuántos esta semana?': 'How many this week?', '{0} esta semana': '{0} this week',
+  'Entrenos': 'Workouts', 'Días con el agua cumplida': 'Days hitting your water goal', 'Hábitos cumplidos': 'Habits done', 'Sesiones de foco': 'Focus sessions', 'Tú': 'You',
+  'Brote': 'Sprout', 'Aureola': 'Halo', 'Estrella': 'Star', 'Gorro de fiesta': 'Party hat', 'Comparte algo por primera vez': 'Share something for the first time', 'Cierra 3 días': 'Close 3 days', 'Cierra 10 días': 'Close 10 days', 'Llega con tu cumpleaños': 'Comes with your birthday',
+  'Compartir automáticamente': 'Share automatically', 'Cómo me siento hoy': 'How I feel today', 'Mi edificio': 'My building', 'Mi cumpleaños': 'My birthday', 'Lo que has compartido': "What you've shared", 'Nada todavía': 'Nothing yet',
+  'Terminar': 'Finish', 'Unirme': 'Join', 'Empezar 25 min': 'Start 25 min', 'cuando quieras': 'whenever you like', 'Tus amigos ven que estás estudiando y cuánto te queda.': "Your friends see you're studying and how long is left.", '¡Regalado!': 'Gifted!',
+  'Añade amigos en Ajustes y aparecerán aquí': "Add friends in Settings and they'll show up here", 'Bien': 'Good', 'Regular': 'Okay', 'Mal': 'Bad',
   // ---- Calendario: tipos y filtros
   'Tareas, entregas y eventos': 'Tasks, deadlines and events', 'Filtros': 'Filters',
 }
@@ -140,6 +152,12 @@ const EN = {
 // Frases con una parte variable (nombres, días…): [patrón, traducción]. Se prueban si no hay coincidencia exacta.
 const MEALS = { Desayuno: 'Breakfast', 'Media mañana': 'Mid-morning', Comida: 'Lunch', Merienda: 'Snack', Cena: 'Dinner' }
 export const RULES = [
+  [/^Área de (.+)$/, (m, x, tr) => tr(x)],
+  [/^Hoy: (.+)$/, (m, x, tr) => `Today: ${tr(x)}`],
+  [/^Compartir «(.+)»$/, (m, x) => `Share "${x}"`],
+  [/^Regalar a @(\S+)$/, (m, u) => `Gift to @${u}`],
+  [/^Enviar a (.+)$/, (m, x) => `Send to ${x.replace(' amigos', ' friends')}`],
+  [/^Enviado a (.+)$/, (m, x) => `Sent to ${x}`],
   [/^Hola, (.+)$/, (m, n) => `Hi, ${n}`],
   [/^(Desayuno|Media mañana|Comida|Merienda|Cena) del (.+)$/, (m, meal, day) => `${MEALS[meal]} on ${day}`],
   [/^Deporte del (.+)$/, (m, day) => `Sport for ${day}`],

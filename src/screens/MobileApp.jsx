@@ -6,9 +6,12 @@ import TodayTasks from '../components/TodayTasks.jsx'
 import { AREAS, getArea } from '../data/areas.js'
 import { formatToday } from '../lib/dates.js'
 import AreaScreen from './AreaScreen.jsx'
-import AvatarEditor from './AvatarEditor.jsx'
 import CalendarPage from './CalendarPage.jsx'
 import useFriendRequests from '../hooks/useFriendRequests.js'
+import useCloseDay from '../hooks/useCloseDay.js'
+import FriendsPage from './FriendsPage.jsx'
+import ProfilePage from './ProfilePage.jsx'
+import FriendsStrip from '../components/FriendsStrip.jsx'
 import FriendToast from '../components/FriendToast.jsx'
 import Avatar from '../components/Avatar.jsx'
 
@@ -18,8 +21,9 @@ import Avatar from '../components/Avatar.jsx'
  *    El deslizamiento horizontal es CSS puro (scroll-snap), así se siente nativo.
  *  - Abajo: barras de color de las áreas. Al tocarlas (o deslizar hacia arriba) sube una hoja.
  */
-export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings }) {
+export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [page, setPage] = useState(0)
+  const closed = useCloseDay(today)
   const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
@@ -32,11 +36,12 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
 
   return (
     <div className="m-app">
-      <FriendToast toast={toast} onOpen={() => setSheet('perfil')} onClose={dismiss} />
+      <FriendToast toast={toast} onOpen={() => setSheet('amigos')} onClose={dismiss} />
+      {closed && <div className="toast" role="status"><span className="toast-block" />{closed}</div>}
+      <button className="m-friends" onClick={() => setSheet('amigos')} aria-label="Amigos"><Icon name="amigos" size={22} />{requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}</button>
       <button className="m-cal" onClick={() => setSheet('calendario')} aria-label="Calendario"><Icon name="calendario" size={22} /></button>
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
         <Avatar avatar={avatar} size={40} />
-        {requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </button>
 
       <div className="m-pager" ref={pagerRef} onScroll={onScroll}>
@@ -58,6 +63,7 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
           <p className="muted">{formatToday()}</p>
           <Donut entries={today.filter((i) => !i.done)} size={190} />
           <TodayTasks items={today} compact />
+          <FriendsStrip onOpen={() => setSheet('amigos')} />
         </section>
       </div>
 
@@ -87,12 +93,13 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
           <>
             <header className="sheet-head" style={{ background: area?.color ?? '#F1F3F4' }}>
               <span className="ic" style={{ background: '#FFFFFF' }}><Icon name={area?.id ?? sheet} /></span>
-              <h2>{area?.label ?? (sheet === 'calendario' ? 'Calendario' : 'Perfil')}</h2>
+              <h2>{area?.label ?? (sheet === 'calendario' ? 'Calendario' : sheet === 'amigos' ? 'Amigos' : 'Perfil')}</h2>
               <button className="icon-btn" onClick={() => setSheet(null)} aria-label="Cerrar"><Icon name="close" /></button>
             </header>
             <div className="sheet-body">
               {sheet === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
-              {sheet === 'perfil' && <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />}
+              {sheet === 'amigos' && <FriendsPage />}
+              {sheet === 'perfil' && <ProfilePage avatar={avatar} onSaveAvatar={onSaveAvatar} settings={settings} onSaveSettings={onSaveSettings} onSignOut={onSignOut} />}
               {area && <AreaScreen area={area} key={area.id} showTitle={false} />}
             </div>
           </>
