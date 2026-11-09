@@ -1,3 +1,4 @@
+import ShareButton from '../../components/ShareButton.jsx'
 import { useEffect, useState } from 'react'
 import History from '../../components/History.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
@@ -48,6 +49,7 @@ export default function Good({ size, data, update }) {
         <button className={`good-read good-${size}`} onClick={edit} aria-label="Editar la cosa buena de hoy" title="Toca para editar">
           <span className="good-quote">{saved}</span>
         </button>
+        {size !== 'S' && <span className="good-share"><ShareButton kind="good" title="una cosa buena de hoy" className="pill pill-sm" data={{ text: saved }} /></span>}
       </>
     )
   }

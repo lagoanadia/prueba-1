@@ -1,3 +1,4 @@
+import useSocial from '../hooks/useSocial.js'
 import { useState } from 'react'
 import Avatar from '../components/Avatar.jsx'
 import Friends from '../components/Friends.jsx'
@@ -22,8 +23,10 @@ const ZOOM = {
 }
 
 /** Editor de avatar: escenario arriba, pestañas y opciones. Guarda al pulsar «Hecho». */
-export default function AvatarEditor({ avatar, onSave, onSignOut, withFriends = true }) {
+export default function AvatarEditor({ unlocks: unlocksProp, avatar, onSave, onSignOut, withFriends = true }) {
   const [draft, setDraft] = useState(avatar)
+  const { state: socialState } = useSocial()
+  const unlocks = unlocksProp ?? socialState?.me?.unlocks ?? [] // accesorios especiales conseguidos
   const [tab, setTab] = useState('cara')
   const [saving, setSaving] = useState(false)
   const changed = JSON.stringify(draft) !== JSON.stringify(avatar)
@@ -56,7 +59,7 @@ export default function AvatarEditor({ avatar, onSave, onSignOut, withFriends = 
           <section key={key} className={`opt-group ${tab === 'cara' ? 'opt-compact' : ''}`}>
           {tab === 'cara' && <h4 className="opt-label">{GROUP_LABELS[key]}</h4>}
           <div className={SWATCH_KEYS.includes(key) ? 'swatches' : 'thumbs'}>
-            {AVATAR_OPTIONS[key].map((opt, i) => {
+            {AVATAR_OPTIONS[key].filter((o) => !o.exclusive || unlocks.includes(o.id) || draft[key] === o.id).map((opt, i) => {
               const on = draft[key] === opt.id
               return SWATCH_KEYS.includes(key) ? (
                 <button key={opt.id} className={`swatch ${on ? 'on' : ''}`} style={{ background: opt.color, '--i': i }} onClick={() => pick(key, opt)} aria-label={opt.id} aria-pressed={on} />

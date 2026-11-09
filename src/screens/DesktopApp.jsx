@@ -13,11 +13,15 @@ import { AREAS } from '../data/areas.js'
 import { activeAreaIds } from '../data/settings.js'
 import { formatToday } from '../lib/dates.js'
 import useFriendRequests from '../hooks/useFriendRequests.js'
+import useCloseDay from '../hooks/useCloseDay.js'
+import FriendsPage from './FriendsPage.jsx'
+import FriendsStrip from '../components/FriendsStrip.jsx'
 import FriendToast from '../components/FriendToast.jsx'
 
 /** Vista portátil: menú lateral + contenido. */
 export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
   const [view, setView] = useState('inicio')
+  const closed = useCloseDay(today) // al tachar todo: +1 bloque en tu edificio
   const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
   const [navOpen, setNavOpen] = useState(true)
@@ -44,6 +48,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
     <FocusCtx.Provider value={focusCtx}>
     <div className="d-app">
       <FriendToast toast={toast} onOpen={() => setView('perfil')} onClose={dismiss} />
+      {closed && <div className="toast" role="status"><span className="toast-block" />{closed}<button className="pill" onClick={() => setView('amigos')}>Ver</button></div>}
       {focus && !navOpen ? (
         <nav className="sidebar sidebar-slim" aria-label="Navegación">
           <button className="nv nv-slim" onClick={() => setNavOpen(true)} aria-label="Mostrar menú" aria-expanded="false" title="Mostrar menú"><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="inicio" /></span></button>
@@ -55,6 +60,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         {visible.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
         <div style={{ flex: 1 }} />
         <hr className="side-sep" />
+        <NavItem id="amigos" label="Amigos" color="#FFFFFF" />
         <NavItem id="calendario" label="Calendario" color="#FFFFFF" />
         <NavItem id="perfil" label="Perfil" />
       </nav>
@@ -65,8 +71,8 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         <div className="d-top">
           <div className="d-top-left">
             {view === 'perfil' && <h1 className="perfil-title">Ajustes del perfil</h1>}
-            {(area || view === 'calendario') && (
-              <h1 className="d-title" key={view}>{area ? `Área de ${area.label}` : 'Calendario'}</h1>
+            {(area || view === 'calendario' || view === 'amigos') && (
+              <h1 className="d-title" key={view}>{area ? `Área de ${area.label}` : view === 'amigos' ? 'Amigos' : 'Calendario'}</h1>
             )}
             {/* botón de personalizar (lo coloca cada pantalla con <TopActions>), junto al título */}
             <div id="top-actions" className="d-top-actions" />
@@ -94,10 +100,12 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
             <div className="rise" style={{ '--i': 1, width: '100%', display: 'flex', justifyContent: 'center' }}><Donut entries={pending} /></div>
             <p className="date rise" style={{ '--i': 2 }}>{formatToday()}</p>
             <div className="rise" style={{ '--i': 3, width: '100%', maxWidth: 860 }}><TodayTasks items={today} /></div>
+            <div className="rise" style={{ '--i': 4, width: '100%', maxWidth: 860 }}><FriendsStrip onOpen={() => setView('amigos')} /></div>
           </div>
         )}
         {area && <AreaScreen area={area} key={area.id} />}
         {view === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
+        {view === 'amigos' && <FriendsPage />}
         {view === 'perfil' && (
           <FriendsProvider>
             <div className="perfil-cols">

@@ -9,6 +9,9 @@ import AreaScreen from './AreaScreen.jsx'
 import AvatarEditor from './AvatarEditor.jsx'
 import CalendarPage from './CalendarPage.jsx'
 import useFriendRequests from '../hooks/useFriendRequests.js'
+import useCloseDay from '../hooks/useCloseDay.js'
+import FriendsPage from './FriendsPage.jsx'
+import FriendsStrip from '../components/FriendsStrip.jsx'
 import FriendToast from '../components/FriendToast.jsx'
 import Avatar from '../components/Avatar.jsx'
 
@@ -20,6 +23,7 @@ import Avatar from '../components/Avatar.jsx'
  */
 export default function MobileApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings }) {
   const [page, setPage] = useState(0)
+  const closed = useCloseDay(today)
   const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [sheet, setSheet] = useState(null) // id de área o 'perfil'
   const pagerRef = useRef(null)
@@ -33,6 +37,8 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
   return (
     <div className="m-app">
       <FriendToast toast={toast} onOpen={() => setSheet('perfil')} onClose={dismiss} />
+      {closed && <div className="toast" role="status"><span className="toast-block" />{closed}</div>}
+      <button className="m-friends" onClick={() => setSheet('amigos')} aria-label="Amigos"><Icon name="amigos" size={22} /></button>
       <button className="m-cal" onClick={() => setSheet('calendario')} aria-label="Calendario"><Icon name="calendario" size={22} /></button>
       <button className="m-avatar" onClick={() => setSheet('perfil')} aria-label="Perfil">
         <Avatar avatar={avatar} size={40} />
@@ -58,6 +64,7 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
           <p className="muted">{formatToday()}</p>
           <Donut entries={today.filter((i) => !i.done)} size={190} />
           <TodayTasks items={today} compact />
+          <FriendsStrip onOpen={() => setSheet('amigos')} />
         </section>
       </div>
 
@@ -87,11 +94,12 @@ export default function MobileApp({ firstName, today, onHome, entries, toggleEnt
           <>
             <header className="sheet-head" style={{ background: area?.color ?? '#F1F3F4' }}>
               <span className="ic" style={{ background: '#FFFFFF' }}><Icon name={area?.id ?? sheet} /></span>
-              <h2>{area?.label ?? (sheet === 'calendario' ? 'Calendario' : 'Perfil')}</h2>
+              <h2>{area?.label ?? (sheet === 'calendario' ? 'Calendario' : sheet === 'amigos' ? 'Amigos' : 'Perfil')}</h2>
               <button className="icon-btn" onClick={() => setSheet(null)} aria-label="Cerrar"><Icon name="close" /></button>
             </header>
             <div className="sheet-body">
               {sheet === 'calendario' && <CalendarPage entries={entries} toggleEntry={toggleEntry} />}
+              {sheet === 'amigos' && <FriendsPage />}
               {sheet === 'perfil' && <AvatarEditor avatar={avatar} onSave={onSaveAvatar} onSignOut={onSignOut} />}
               {area && <AreaScreen area={area} key={area.id} showTitle={false} />}
             </div>

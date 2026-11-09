@@ -194,6 +194,10 @@ function Accessory({ type, hair }) {
     case 'headband': return <path d="M64 80C74 60 126 58 136 80" {...line} stroke="#E84855" strokeWidth={6} />
     case 'flower': return <g>{[0, 72, 144, 216, 288].map((r) => <ellipse key={r} cx="130" cy="62" rx="4.5" ry="7" transform={`rotate(${r} 130 70)`} {...shape('#EFABFF')} strokeWidth={1.8} />)}<circle cx="130" cy="70" r="3.6" {...shape('#F9DC5C')} strokeWidth={1.8} /></g>
     case 'headphones': return <g><path d="M60 94C56 50 144 50 140 94" {...line} strokeWidth={5} /><rect x="54" y="86" width="12" height="22" rx="6" {...shape('#E84855')} /><rect x="132" y="84" width="12" height="22" rx="6" {...shape('#E84855')} /></g>
+    case 'halo': return <ellipse cx="100" cy="34" rx="30" ry="7" fill="none" stroke="#F9DC5C" strokeWidth={6} />
+    case 'starclip': return <path d="M128 58l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" {...shape('#F9DC5C')} strokeWidth={2} />
+    case 'partyhat': return <g><path d="M82 56L104 12L122 54C110 50 94 50 82 56Z" {...shape('#E84855')} /><path d="M90 42l20-4M86 50l26-5" stroke="#F9DC5C" strokeWidth={4} strokeLinecap="round" /><circle cx="104" cy="12" r="6" {...shape('#F9DC5C')} strokeWidth={2} /></g>
+    case 'sprout': return <g><path d="M100 50v-16" stroke="#202124" strokeWidth={3} strokeLinecap="round" /><path d="M100 38c-10-2-16-10-14-18 9 0 15 7 14 18Z" {...shape('#3DDC97')} strokeWidth={2} /><path d="M100 34c8-4 14-12 12-20-9 1-14 9-12 20Z" {...shape('#3DDC97')} strokeWidth={2} /></g>
     case 'crown': return <path d="M74 60L78 36L90 48L100 30L110 48L122 36L126 60C110 55 90 55 74 60Z" transform={`translate(0 ${CROWN_LIFT[hair] ?? 0})`} {...shape('#F9DC5C')} />
     case 'cap': return <g><path d="M64 84C62 60 80 46 102 46C124 46 138 60 137 82C120 74 84 74 64 84Z" {...shape('#3185FC')} /><path d="M64 84C52 84 42 88 40 92C52 94 66 92 78 86" {...shape('#3185FC')} /><path d="M100 46v-3" {...line} /></g>
     case 'beanie': return <g><path d="M62 86C60 58 78 44 100 44C122 44 140 58 138 86Z" {...shape('#E84855')} /><path d="M60 86C80 80 120 80 140 86L139 94C120 88 80 88 61 94Z" {...shape('#E84855')} /><circle cx="100" cy="40" r="6" {...shape('#E84855')} /></g>
