@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Avatar from '../components/Avatar.jsx'
+import Friends from '../components/Friends.jsx'
 import { AVATAR_OPTIONS, randomAvatar } from '../data/avatar.js'
 
 // Pestañas del editor. Cada una agrupa varias opciones.
@@ -65,6 +66,7 @@ export default function AvatarEditor({ avatar, onSave, onSignOut }) {
           </div>
         ))}
       </div>
+      <Friends />
       {onSignOut && <button className="btn-secondary avatar-signout" onClick={onSignOut}>Cerrar sesión</button>}
     </div>
   )
