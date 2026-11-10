@@ -117,7 +117,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick}>
         {blocks.map((b, i) => (
           <div key={b.id} className="block-slot">
-            <Gap onAdd={() => insertAt(i, newBlock())} />
+            <Gap />
+            <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
             <div className={`block block-${b.type}`}>
               <div className={`block-body bt-${b.type}`}>
                 {b.type === 'bullet' && <span className="block-mark" aria-hidden="true">•</span>}
@@ -136,7 +137,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
             </div>
           </div>
         ))}
-        <Gap onAdd={() => insertAt(blocks.length, newBlock())} last />
+        <Gap last />
         <div className="blocks-tail" aria-hidden="true" />
       </div>
       {menu && (
@@ -151,13 +152,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   )
 }
 
-/** Hueco entre bloques: al pasar por encima (o con el teclado) sale un + que crea una caja de texto ahí. */
-function Gap({ onAdd, last = false }) {
-  return (
-    <div className={`block-gap ${last ? 'is-last' : ''}`}>
-      <button className="gap-plus" onClick={(e) => { e.stopPropagation(); onAdd() }} aria-label="Añadir un bloque aquí" title="Añadir un bloque"><Icon name="plus" size={14} strokeWidth={2.8} /></button>
-    </div>
-  )
+/** Hueco entre bloques (solo espacio; el + sale a la izquierda del bloque al pasar el ratón). */
+function Gap({ last = false }) {
+  return <div className={`block-gap ${last ? 'is-last' : ''}`} aria-hidden="true" />
 }
 
 /** Una línea editable. Solo se vuelve a escribir su contenido cuando cambia desde fuera (no mientras tecleas). */
