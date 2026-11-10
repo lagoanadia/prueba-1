@@ -58,12 +58,11 @@ export default function Pills({ data, update }) {
         </div>
       )}
       {view === 'cards' && pills.length > 0 && (
-        <div className="pl-grid">
-          {pills.map((p) => {
+        <div className="pl-cards">
+          {pills.filter((p) => p.kind === 'treatment').map((p) => {
             const left = daysLeft(p)
             const frac = left == null ? 0 : Math.min(1, Math.max(0, ((p.days ?? 1) - left) / (p.days ?? 1)))
-            if (p.kind === 'treatment') {
-              const ev = eventsOf(p)
+            const ev = eventsOf(p)
               return (
                 <div key={p.id} className="pl-tcard">
                   <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
@@ -86,17 +85,18 @@ export default function Pills({ data, update }) {
                   </div>
                 </div>
               )
-            }
+          })}
+          {pills.some((p) => p.kind !== 'treatment') && <div className="pl-lab">Cada día</div>}
+          {pills.filter((p) => p.kind !== 'treatment').map((p) => {
             const it = itemsOf(p)[0]
             return (
-              <div key={p.id} className="pl-card" style={{ '--c': p.color ?? PILL_COLORS[0] }}>
+              <div key={p.id} className="pl-drow" style={{ '--c': p.color ?? PILL_COLORS[0] }}>
+                <b className={it.times.every((t) => isDone(p, it, t)) ? 'is-done' : ''}>{p.name}</b>
+                <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
                 <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-                <b className="pl-name">{p.name}</b>
-                <div className="pl-hours">{it.times.map((t) => <button key={t} className={`pl-hr ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</div>
               </div>
             )
           })}
-          <button type="button" className="pl-addcard" onClick={() => setAdding(true)}><Icon name="plus" size={14} strokeWidth={2.8} /> Añadir otro</button>
         </div>
       )}
       {view === 'day' && pills.length > 0 && (
