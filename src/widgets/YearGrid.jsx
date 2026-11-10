@@ -1,4 +1,4 @@
-import { todayISO } from '../lib/dates.js'
+import { addDays, todayISO, weekStart } from '../lib/dates.js'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -26,6 +26,22 @@ export default function YearGrid({ colorFor, onDay }) {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+/** El año como una masa de cuadrados (semanas en columnas, lunes arriba): solo las últimas `weeks` semanas, siempre cuadrados. */
+export function YearMass({ colorFor, onDay, weeks = 37 }) {
+  const today = todayISO()
+  const year = today.slice(0, 4)
+  const first = weekStart(`${year}-01-01`)
+  const all = Array.from({ length: 53 }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i)))
+  const shown = all.slice(-weeks).flat()
+  return (
+    <div className="year-mass" style={{ '--n': weeks }}>
+      {shown.map((d) => (d.startsWith(year)
+        ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
+        : <span key={d} />))}
     </div>
   )
 }

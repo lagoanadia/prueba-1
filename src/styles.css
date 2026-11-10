@@ -2322,3 +2322,32 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fill .month-wrap .month .px { width: 100%; height: 100%; max-width: none; aspect-ratio: auto; justify-self: stretch; border-radius: 8px; }
 .px:disabled { opacity: 1; }
 .month .px:disabled { opacity: 1; }
+
+/* Mood tracker: semana, año (meses o masa) y panel Análisis */
+.week-one { --wc: min(calc((100cqw - 36px) / 7), calc((100cqh - 28px)), 52px); display: flex; flex-direction: column; gap: 6px; margin: auto; }
+.week-one .px-dow, .week-one .month { display: grid; grid-template-columns: repeat(7, var(--wc)); gap: 6px; text-align: center; font-size: 11px; font-weight: 600; color: #9AA0A6; }
+.week-one .month .px { width: var(--wc); height: var(--wc); border-radius: 25%; max-width: none; }
+.year-mass { --s: min(calc((100cqw - 6px) / var(--n) - 2px), calc((100cqh - 6px) / 7 - 2px), 24px); display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, var(--s)); grid-auto-columns: var(--s); gap: 2px; margin: auto; }
+.year-mass .ypx { width: var(--s); height: var(--s); aspect-ratio: auto; border-radius: 25%; background: #D7D9DB; border: none; padding: 0; }
+.year-mass .ypx:disabled { opacity: 1; }
+.year-mass button.ypx:not(:disabled) { cursor: pointer; } .year-mass button.ypx:not(:disabled):hover { transform: scale(1.25); }
+.mood-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mood-bar .fd-grow { flex: 1; }
+.mood-view { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.mood-view.on { background: #E8F0FE; }
+.mood-year { display: flex; gap: 14px; width: 100%; height: 100%; min-height: 0; }
+.mood-year-grid { flex: 1; min-width: 0; min-height: 0; container-type: size; display: flex; align-items: center; }
+.mood-year-grid > .year-months { margin: auto; }
+.mood-an { width: 200px; flex-shrink: 0; border-left: 1px solid var(--line); padding-left: 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0; touch-action: pan-y; user-select: none; }
+.mood-an-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.mood-an-big { display: flex; align-items: baseline; gap: 8px; } .mood-an-big b { font-size: 34px; line-height: 1; color: #0F6B45; } .mood-an-big span { font-size: 13px; font-weight: 600; }
+.mood-an-weeks { display: flex; flex-direction: column; gap: 8px; } .mood-an-weeks > div { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.mood-an-strip { display: flex; gap: 3px; } .mood-an-strip i { width: 18px; height: 10px; border-radius: 3px; background: #3DDC97; }
+.mood-an-rank { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; gap: 6px; }
+.mood-an-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.mood-an-row { display: flex; align-items: center; gap: 6px; font-size: 12px; } .mood-an-row b { width: 12px; } .mood-an-row > span:nth-child(2) { width: 26px; }
+.mood-an-bar { flex: 1; height: 9px; border-radius: 5px; background: var(--line); overflow: hidden; } .mood-an-bar i { display: block; height: 100%; background: #3DDC97; }
+.mood-an-n { width: 34px; text-align: right; color: var(--muted); }
+.mood-an-pager { display: flex; align-items: center; gap: 6px; } .mood-an-dots { flex: 1; display: flex; justify-content: center; gap: 4px; }
+.mood-an-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D7D9DB; transition: width .2s var(--ease), background .2s; } .mood-an-dots i.on { width: 14px; background: #F9DC5C; }
+@media (prefers-reduced-motion: reduce) { .mood-an-dots i { transition: none; } }

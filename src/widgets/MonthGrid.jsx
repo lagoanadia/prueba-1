@@ -38,3 +38,19 @@ export function TwoWeeks({ colorFor, onDay }) {
     </div>
   )
 }
+
+/** Esta semana en una línea de 7 (lunes a domingo), con cuadrados. */
+export function OneWeek({ colorFor, onDay }) {
+  const today = todayISO()
+  return (
+    <div className="week-one">
+      <Dow />
+      <div className="month">
+        {weekDays(today).map((d) => (
+          <button key={d} className={`px ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }}
+            onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} />
+        ))}
+      </div>
+    </div>
+  )
+}

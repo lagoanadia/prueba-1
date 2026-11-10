@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import MonthGrid, { EMPTY, TwoWeeks } from '../MonthGrid.jsx'
-import YearGrid from '../YearGrid.jsx'
+import MonthGrid, { EMPTY, OneWeek, TwoWeeks } from '../MonthGrid.jsx'
+import YearGrid, { YearMass } from '../YearGrid.jsx'
+import Icon from '../../components/Icon.jsx'
+import MoodAnalysis from './MoodAnalysis.jsx'
 import Chips from '../Chips.jsx'
 import { todayISO } from '../../lib/dates.js'
 
@@ -10,13 +12,15 @@ export const MOODS = [
   { id: 'malo', label: 'Malo', color: '#E84855' },
 ]
 const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? EMPTY
-const RANGES = [{ id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
+const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
 /** Mood tracker. S: elegir hoy · T: + mes · M: + 2 semanas · L: + Mes / Año (tocar un día cambia su ánimo). */
 export default function Mood({ size, data, update }) {
   const today = todayISO()
   const moods = data.moods ?? {}
   const [range, setRange] = useState('año')
+  const [yearView, setYearView] = useState('masa') // 'masa' | 'meses'
+  const [analysis, setAnalysis] = useState(false)
   const set = (date, mood) => update((d) => ({ ...d, moods: { ...d.moods, [date]: mood } }))
   const cycle = (date) => {
     const i = MOODS.findIndex((m) => m.id === moods[date])
@@ -37,14 +41,33 @@ export default function Mood({ size, data, update }) {
   if (size === 'S') return <div className="w-center"><span className="w-hint">Hoy</span>{chips}</div>
   if (size === 'T') return <>{chips}<div className="fill"><MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
   if (size === 'M') return <>{chips}<div className="fill"><TwoWeeks colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
+  const colorFor = (d) => colorOf(moods[d])
+  const yearGrid = yearView === 'masa'
+    ? <YearMass colorFor={colorFor} onDay={cycle} weeks={analysis ? 22 : 37} />
+    : <YearGrid colorFor={colorFor} onDay={cycle} />
   return (
     <>
       {chips}
-      <Chips options={RANGES} value={range} onChange={setRange} small />
+      <div className="mood-bar">
+        <Chips options={RANGES} value={range} onChange={setRange} small />
+        {range === 'año' && (
+          <>
+            <button className={`mood-view ${yearView === 'meses' ? 'on' : ''}`} onClick={() => setYearView('meses')} aria-label="Año por meses" title="Por meses"><Icon name="table" size={15} /></button>
+            <button className={`mood-view ${yearView === 'masa' ? 'on' : ''}`} onClick={() => setYearView('masa')} aria-label="Año en masa" title="En masa"><Icon name="tree" size={15} /></button>
+            <span className="fd-grow" />
+            <button className={`chip ${analysis ? 'chip-on' : ''}`} onClick={() => setAnalysis(!analysis)} aria-pressed={analysis}><Icon name="chart" size={14} /> Análisis</button>
+          </>
+        )}
+      </div>
       <div className="slide-in fill" key={range}>
-        {range === 'mes'
-          ? <MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} />
-          : <YearGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} />}
+        {range === 'semana' && <OneWeek colorFor={colorFor} onDay={cycle} />}
+        {range === 'mes' && <MonthGrid colorFor={colorFor} onDay={cycle} />}
+        {range === 'año' && (
+          <div className="mood-year">
+            <div className="mood-year-grid" key={yearView + analysis}>{yearGrid}</div>
+            {analysis && <MoodAnalysis moods={moods} />}
+          </div>
+        )}
       </div>
     </>
   )
