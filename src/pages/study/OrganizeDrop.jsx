@@ -36,6 +36,7 @@ export default function OrganizeDrop({ subjectName, onReview }) {
   const [note, setNote] = useState('')
   const input = useRef(null)
   const folderInput = useRef(null)
+  const [menu, setMenu] = useState(false) // elegir entre PDF sueltos o una carpeta
   const [over, setOver] = useState(false)
 
   const add = (list) => {
@@ -70,8 +71,18 @@ export default function OrganizeDrop({ subjectName, onReview }) {
   const busy = phase !== 'idle'
   return (
     <section className={`og-drop ${over ? 'is-over' : ''}`} onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); if (!busy) filesFromDrop(e.dataTransfer).then(add).catch(() => setNote('No he podido leer esa carpeta.')) }} aria-label="Organizar con tus documentos">
-      <button className="og-drop-ic" onClick={() => input.current?.click()} disabled={busy} aria-label="Subir documentos" title="Subir documentos"><Icon name="upload" size={30} color="#3185FC" /></button>
-      <button className="og-drop-ic og-drop-folder" onClick={() => folderInput.current?.click()} disabled={busy} aria-label="Subir una carpeta" title="Subir una carpeta (se leen los PDF de dentro)"><Icon name="folder" size={26} color="#3185FC" /></button>
+      <div className="og-pick">
+        <button className="og-drop-ic" onClick={() => setMenu(!menu)} disabled={busy} aria-expanded={menu} aria-label="Subir documentos" title="Subir documentos"><Icon name="upload" size={30} color="#3185FC" /></button>
+        {menu && (
+          <>
+            <span className="sc-back" onClick={() => setMenu(false)} />
+            <div className="card og-pick-menu" role="menu">
+              <button role="menuitem" onClick={() => { setMenu(false); input.current?.click() }}><Icon name="pdf" size={18} color="#E84855" />PDF</button>
+              <button role="menuitem" onClick={() => { setMenu(false); folderInput.current?.click() }}><Icon name="folder" size={18} color="#3185FC" />Carpeta</button>
+            </div>
+          </>
+        )}
+      </div>
       <input ref={input} type="file" accept="application/pdf" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = '' }} />
       <input ref={folderInput} type="file" multiple hidden {...{ webkitdirectory: '', directory: '' }} onChange={(e) => { add(e.target.files); e.target.value = '' }} />
       <div className="og-drop-body">

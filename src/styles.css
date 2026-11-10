@@ -2476,3 +2476,10 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sv-block b, .sv-block.is-double b { font-size: 15px; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
 .sv-block span { font-size: 12.5px; line-height: 1.3; margin-left: auto; }
 .sv-break-full { font-size: 14px; font-weight: 700; }
+
+.og-pick { position: relative; flex-shrink: 0; }
+.og-pick-menu { position: absolute; left: 0; top: calc(100% + 6px); z-index: 41; padding: 6px; display: flex; flex-direction: column; min-width: 140px; }
+.og-pick-menu button { display: flex; align-items: center; gap: 10px; border: none; background: none; font: inherit; font-size: 15px; font-weight: 600; padding: 9px 12px; border-radius: 12px; cursor: pointer; text-align: left; }
+.og-pick-menu button:hover { background: var(--soft); }
+.unit-add { background: var(--soft); border: none; }
+.unit-add:hover { background: #E8EAED; }

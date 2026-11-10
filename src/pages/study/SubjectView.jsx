@@ -110,7 +110,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
 
       <div className="head-line unit-head">
         <h2 className="page-h2">Unidades</h2>
-        <button className="icon-btn on" onClick={() => setDialog('new')} aria-label="Añadir unidad" title="Añadir unidad"><Icon name="plus" size={20} /></button>
+        <button className="icon-btn unit-add" onClick={() => setDialog('new')} aria-label="Añadir unidad" title="Añadir unidad"><Icon name="plus" size={20} /></button>
       </div>
       <div className="unit-cards">
         {subject.units.map((u, i) => {
