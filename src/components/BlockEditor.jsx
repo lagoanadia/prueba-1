@@ -51,6 +51,24 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     commit(rest)
     setDrag(null)
   }
+  // Arrastrando se puede soltar en cualquier punto de la página: se elige el bloque más cercano y se desplaza sola al llegar al borde
+  const dragOverPage = (e) => {
+    if (!drag) return
+    e.preventDefault()
+    const page = pageRef.current
+    const slots = [...page.querySelectorAll('.block-slot')]
+    if (!slots.length) return
+    const y = e.clientY
+    let hit = slots.find((el) => { const r = el.getBoundingClientRect(); return y >= r.top && y <= r.bottom })
+    if (!hit) hit = y < slots[0].getBoundingClientRect().top ? slots[0] : slots[slots.length - 1]
+    const r = hit.getBoundingClientRect()
+    const over = hit.dataset.id
+    const after = y > r.top + r.height / 2
+    if (drag.over !== over || drag.after !== after) setDrag({ ...drag, over, after })
+    const pr = page.getBoundingClientRect()
+    if (y < pr.top + 50) page.scrollTop -= 14
+    else if (y > pr.bottom - 50) page.scrollTop += 14
+  }
   const duplicate = (id) => { const i = indexOf(id); const b = blocks[i]; const n = [...blocks]; n.splice(i + 1, 0, { ...b, id: crypto.randomUUID() }); commit(n); setRowMenu(null) }
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
 
@@ -135,11 +153,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     <div className="card blocks">
       <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>
       {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick}>
+      <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
         {blocks.map((b, i) => (
-          <div key={b.id} className={`block-slot slot-${b.type} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}
-            onDragOver={(e) => { if (!drag) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY > r.top + r.height / 2; if (drag.over !== b.id || drag.after !== after) setDrag({ ...drag, over: b.id, after }) }}
-            onDrop={(e) => { e.preventDefault(); dropDrag() }}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
             <span className="row-tools">
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
