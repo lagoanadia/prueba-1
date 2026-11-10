@@ -65,17 +65,17 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
             </div>
           </div>
           <div className="xp-style">
-            <span className="w-hint">Letra</span>
-            <div className="xp-opts">{Object.keys(FONTS).map((f) => <button key={f} className={`pill pill-sm ${st.font === f ? 'pill-on' : ''}`} style={{ fontFamily: FONTS[f] }} onClick={() => set({ font: f })} aria-pressed={st.font === f}>{FONT_NAMES[f]}</button>)}</div>
-            <span className="w-hint">Color</span>
-            <div className="xp-opts">{COLORS.map((c) => <button key={c} className={`xp-dot ${st.color === c ? 'on' : ''}`} style={{ background: c }} onClick={() => set({ color: c })} aria-label={`Color ${c}`} aria-pressed={st.color === c} />)}</div>
-            <span className="w-hint">Redondeo</span>
-            <div className="xp-opts">{RADII.map((r) => <button key={r} className={`xp-round ${st.radius === r ? 'on' : ''}`} style={{ borderRadius: r / 1.3 }} onClick={() => set({ radius: r })} aria-label={`Redondeo ${r}`} aria-pressed={st.radius === r} />)}</div>
-            <span className="w-hint">Filas</span>
-            <div className="xp-opts">
-              <button className={`pill pill-sm ${st.stripes ? 'pill-on' : ''}`} onClick={() => set({ stripes: true })}>Alternas</button>
-              <button className={`pill pill-sm ${!st.stripes ? 'pill-on' : ''}`} onClick={() => set({ stripes: false })}>Lisas</button>
-            </div>
+            <div className="xp-grp"><span className="w-hint">Letra</span>
+              <div className="xp-opts">{Object.keys(FONTS).map((f) => <button key={f} className={`pill pill-sm ${st.font === f ? 'pill-on' : ''}`} style={{ fontFamily: FONTS[f] }} onClick={() => set({ font: f })} aria-pressed={st.font === f}>{FONT_NAMES[f]}</button>)}</div></div>
+            <div className="xp-grp"><span className="w-hint">Color</span>
+              <div className="xp-opts">{COLORS.map((c) => <button key={c} className={`xp-dot ${st.color === c ? 'on' : ''}`} style={{ background: c }} onClick={() => set({ color: c })} aria-label={`Color ${c}`} aria-pressed={st.color === c} />)}</div></div>
+            <div className="xp-grp"><span className="w-hint">Redondeo</span>
+              <div className="xp-opts">{RADII.map((r) => <button key={r} className={`xp-round ${st.radius === r ? 'on' : ''}`} style={{ borderRadius: r / 1.3 }} onClick={() => set({ radius: r })} aria-label={`Redondeo ${r}`} aria-pressed={st.radius === r} />)}</div></div>
+            <div className="xp-grp"><span className="w-hint">Filas</span>
+              <div className="xp-opts">
+                <button className={`pill pill-sm ${st.stripes ? 'pill-on' : ''}`} onClick={() => set({ stripes: true })}>Alternas</button>
+                <button className={`pill pill-sm ${!st.stripes ? 'pill-on' : ''}`} onClick={() => set({ stripes: false })}>Lisas</button>
+              </div></div>
           </div>
         </div>
       </div>
