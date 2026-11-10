@@ -16,9 +16,14 @@ import ProfilePage from './ProfilePage.jsx'
 import FriendsStrip from '../components/FriendsStrip.jsx'
 import FriendToast from '../components/FriendToast.jsx'
 
+// Los colores muy claros (Comida) necesitan más tinte para que el resalte se vea como en el resto
+const tint = (hex) => { const n = parseInt(hex.slice(1), 16); return Math.min(n >> 16, (n >> 8) & 255, n & 255) > 150 ? 45 : 22 }
+
 /** Vista portátil: menú lateral + contenido. */
 export default function DesktopApp({ firstName, today, onHome, entries, toggleEntry, onTalk, onSignOut, avatar, onSaveAvatar, settings, onSaveSettings }) {
-  const [view, setView] = useState('inicio')
+  // La sección abierta se recuerda: al recargar la página vuelves a donde estabas
+  const [view, setViewState] = useState(() => { try { return sessionStorage.getItem('app-view') || 'inicio' } catch { return 'inicio' } })
+  const setView = (v) => { setViewState(v); try { sessionStorage.setItem('app-view', v) } catch { /* sin almacenamiento: no se recuerda */ } }
   const closed = useCloseDay(today) // al tachar todo: +1 bloque en tu edificio
   const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
   const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
@@ -31,7 +36,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
     <button className={`nv ${view === id ? 'on' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { if (id === 'inicio' && focus) { setNavOpen(!navOpen); return } setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
-      style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} 22%, #FFFFFF)` } : undefined}>
+      style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} ${tint(color)}%, #FFFFFF)` } : undefined}>
       <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : ''}`} style={{ background: color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
         {id === 'amigos' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}

@@ -7,7 +7,9 @@ import UnitWorkspace from './UnitWorkspace.jsx'
  * Estudios: Planificador → Asignatura → Unidad (modo concentración con PDF y documento lado a lado).
  */
 export default function StudyPage({ data, update }) {
-  const [route, setRoute] = useState({ view: 'planner' })
+  // La pantalla de Estudios (asignatura/unidad) también se recuerda al recargar
+  const [route, setRouteState] = useState(() => { try { return JSON.parse(sessionStorage.getItem('study-route')) ?? { view: 'planner' } } catch { return { view: 'planner' } } })
+  const setRoute = (r) => { setRouteState(r); try { sessionStorage.setItem('study-route', JSON.stringify(r)) } catch { /* sin almacenamiento */ } }
   const subject = (data.subjects ?? []).find((s) => s.id === route.subjectId)
   const unit = subject?.units.find((u) => u.id === route.unitId)
   const go = (r) => setRoute(r)
