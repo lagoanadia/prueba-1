@@ -274,14 +274,51 @@ function SizeDock({ size, onPick, name, sizes = SIZES }) {
   )
 }
 
+const BASE_ROWS = { S: 1, M: 1, T: 2, L: 2 } // filas que ocupa cada tamaño
+const MAX_ROWS = 8
+
+/**
+ * Si lo que hay dentro de un widget no cabe (listas largas, muchas botellas…), no hay scroll: el widget
+ * crece hacia abajo ocupando las filas que necesite. Si luego sobra espacio, vuelve a su tamaño.
+ */
+function useFitRows(ref, size, deps) {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const measure = () => {
+      const grid = el.parentElement
+      if (!grid) return
+      const cs = getComputedStyle(grid)
+      const row = parseFloat(cs.getPropertyValue('--row')) || 150
+      const gap = parseFloat(cs.rowGap) || 16
+      const base = BASE_ROWS[size] ?? 1
+      el.style.gridRow = `span ${base}` // se mide con el tamaño normal
+      const scrollers = [...el.querySelectorAll('*')].filter((n) => n.clientHeight > 0 && n.scrollHeight > n.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(n).overflowY))
+      const top = scrollers.filter((n) => !scrollers.some((o) => o !== n && o.contains(n)))
+      let need = el.clientHeight + top.reduce((sum, n) => sum + (n.scrollHeight - n.clientHeight), 0)
+      if (el.scrollHeight > el.clientHeight + 2) need = Math.max(need, el.scrollHeight)
+      let n = base
+      while (n < MAX_ROWS && n * row + (n - 1) * gap < need) n++
+      el.style.gridRow = n > base ? `span ${n}` : ''
+    }
+    measure()
+    const t = setTimeout(measure, 300) // por si el contenido llega un poco después
+    const ro = new ResizeObserver(() => measure())
+    ro.observe(el.parentElement) // al cambiar el ancho de la rejilla, el texto se recoloca
+    return () => { clearTimeout(t); ro.disconnect() }
+  }, deps) // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 // memo: solo se repinta si cambian sus datos (no cada vez que se mueve el fantasma o cambia otro widget)
 const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragged, api }) {
   const def = WIDGETS[raw.type]
   if (!def) return null
   const w = { ...raw, size: shownSize(raw.type, raw.size, data) } // tamaños antiguos → el más parecido; sin contenido → pequeño
   const Widget = def.component
+  const cardRef = useRef(null)
+  useFitRows(cardRef, w.size, [data, w.size, editing])
   return (
-    <article ref={(el) => api.setRef(w.id, el)} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
+    <article ref={(el) => { cardRef.current = el; api.setRef(w.id, el) }} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
       className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
       <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>
       {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
