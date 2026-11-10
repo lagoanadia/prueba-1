@@ -9,7 +9,7 @@ import ResourceFrames from './ResourceFrames.jsx'
 import { applyReview, buildReview, countReview, fallbackProposal } from './organize.js'
 import { deleteFile } from '../../lib/fileStore.js'
 import { proposeOrganization } from '../../services/organizeService.js'
-import { METRICS, changeSubject, metricsOf, practicesOf, progressFor, soft, unitProgress } from './helpers.js'
+import { METRICS, SUBJECT_PALETTE, changeSubject, metricsOf, practicesOf, progressFor, soft, unitProgress } from './helpers.js'
 
 /** Estado de una unidad según sus temas. */
 function unitState(u) {
@@ -26,6 +26,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
   const [reviewMsg, setReviewMsg] = useState('')
   const [docsText, setDocsText] = useState([]) // lo leído de cada documento (para «Rehacer propuesta»)
   const [busy, setBusy] = useState(false)
+  const [palette, setPalette] = useState(false) // selector de color de la asignatura
   const [banner, setBanner] = useState('')
   const subjects = data.subjects ?? []
   const p = progressFor(subject, data.assignments)
@@ -64,6 +65,22 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
         <div className="head-line">
           <button className="icon-btn" onClick={back} aria-label="Volver a Estudios" title="Volver"><Icon name="back" /></button>
           <h1>{subject.name}</h1>
+          <div className="sc-wrap">
+            <button className="sc-dot" style={{ background: subject.color, '--c': subject.color }} onClick={() => setPalette(!palette)} aria-expanded={palette} aria-label="Cambiar el color de la asignatura" title="Cambiar color" />
+            {palette && (
+              <>
+                <div className="sc-back" onClick={() => setPalette(false)} />
+                <div className="card sc-pop" role="listbox" aria-label="Colores">
+                  {SUBJECT_PALETTE.map((c) => (
+                    <button key={c} role="option" aria-selected={c === subject.color} className={`sc-opt ${c === subject.color ? 'on' : ''}`} style={{ background: c }} aria-label={`Color ${c}`}
+                      onClick={() => { changeSubject(update, subject.id, (x) => ({ ...x, color: c })); setPalette(false) }}>
+                      {c === subject.color && <Icon name="check" size={14} color="#FFFFFF" strokeWidth={3.2} />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <button className="icon-btn" onClick={() => { if (window.confirm(`¿Eliminar ${subject.short} con todo su contenido?`)) onDelete() }} aria-label="Eliminar asignatura" title="Eliminar asignatura"><Icon name="trash" /></button>
       </header>

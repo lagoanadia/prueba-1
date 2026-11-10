@@ -1,5 +1,7 @@
 // Utilidades compartidas por las pantallas de Estudios
 export const soft = (c, pct = 30) => `color-mix(in srgb, ${c} ${pct}%, #FFFFFF)`
+/** Los 10 colores que se pueden elegir para una asignatura. */
+export const SUBJECT_PALETTE = ['#3185FC', '#E84855', '#3DDC97', '#EFABFF', '#F9DC5C', '#FF9F43', '#8E7CFF', '#FF6FAE', '#22C7D6', '#9BD84A']
 export const SUBJECT_COLORS = ['#3185FC', '#E84855', '#3DDC97', '#EFABFF', '#F9DC5C', '#FF9F43', '#8E7CFF']
 
 export const unitProgress = (u) => ({ clear: u.topics.filter((t) => t.state === 'clear').length, total: u.topics.length })
