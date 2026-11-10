@@ -90,7 +90,7 @@ export default function Bottle({ size, data, update }) {
         <div className="w-form capsule-to">
           <span className="w-hint">Para</span>
           <Select value={to} label="Para quién" onChange={setTo}
-            options={[{ value: '', label: 'Solo yo (privada)', color: '#EFABFF' }, ...friends.map((f) => ({ value: f.username, label: `@${f.username}`, color: '#9CC5FF' }))]} />
+            options={[{ value: '', label: 'Solo yo', color: '#EFABFF' }, ...friends.map((f) => ({ value: f.username, label: `@${f.username}`, color: '#9CC5FF' }))]} />
         </div>
       )}
       <textarea autoFocus={!inline} placeholder={to ? `Escribe a @${to}. No podrá leerla hasta la fecha que elijas.` : 'Escribe a tu yo del futuro, elige una fecha y la cápsula queda cerrada hasta ese día.'} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={inline ? undefined : 4} />

@@ -79,7 +79,7 @@ const EN = {
   '{0} de {1} libros': '{0} of {1} books', '{0}/{1} libros': '{0}/{1} books', '{0} de {1} veces': '{0} of {1} times', '{0}/{1} veces': '{0}/{1} times', '{0} de {1} km': '{0} of {1} km', '{0}/{1} km': '{0}/{1} km',
   'Sin hábitos': 'No habits', 'Nuevo hábito': 'New habit', 'Añadir hábito': 'Add habit', 'Leer, meditar…': 'Read, meditate…', '{0} d': '{0} d',
   'Nueva cápsula': 'New capsule', 'Sin cápsulas': 'No capsules', 'Abrir': 'Open', 'Abrir cápsula': 'Open capsule', 'Cápsula abierta': 'Opened capsule', 'Cápsulas abiertas': 'Opened capsules', 'Aún no has abierto ninguna': "You haven't opened any yet",
-  'Sellar': 'Seal', 'Enviar': 'Send', 'Solo yo (privada)': 'Just me (private)', 'Se abre el': 'Opens on', 'Escribe tu primera cápsula con el +': 'Write your first capsule with +',
+  'Sellar': 'Seal', 'Enviar': 'Send', 'Solo yo': 'Just me', 'Se abre el': 'Opens on', 'Escribe tu primera cápsula con el +': 'Write your first capsule with +',
   'Escribe a tu yo del futuro. La botella quedará cerrada hasta la fecha que elijas.': 'Write to your future self. The bottle stays sealed until the date you choose.',
   '{0} lista para abrir · {1} cerradas': '{0} ready to open · {1} sealed', '{0} listas para abrir · {1} cerradas': '{0} ready to open · {1} sealed', '{0} cerradas': '{0} sealed', '{0} cerrada': '{0} sealed', '1 lista para abrir · ': '1 ready to open · ',
   '¿Algo bueno hoy?': 'Anything good today?', '¿Qué ha salido bien hoy?': 'What went well today?', 'Cosas buenas': 'Good things', 'Editar la cosa buena de hoy': "Edit today's good thing",
