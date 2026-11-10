@@ -2351,3 +2351,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .mood-an-pager { display: flex; align-items: center; gap: 6px; } .mood-an-dots { flex: 1; display: flex; justify-content: center; gap: 4px; }
 .mood-an-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D7D9DB; transition: width .2s var(--ease), background .2s; } .mood-an-dots i.on { width: 14px; background: #F9DC5C; }
 @media (prefers-reduced-motion: reduce) { .mood-an-dots i { transition: none; } }
+
+.year-mass-scroll { width: 100%; overflow-x: auto; overflow-y: hidden; display: flex; scrollbar-width: thin; padding-bottom: 2px; }
+.year-mass-scroll .year-mass { flex-shrink: 0; margin: auto; }

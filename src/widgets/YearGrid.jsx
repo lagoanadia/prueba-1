@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { addDays, todayISO, weekStart } from '../lib/dates.js'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -30,18 +31,25 @@ export default function YearGrid({ colorFor, onDay }) {
   )
 }
 
-/** El año como una masa de cuadrados (semanas en columnas, lunes arriba): solo las últimas `weeks` semanas, siempre cuadrados. */
+/**
+ * El año como una masa de cuadrados (semanas en columnas, lunes arriba), siempre cuadrados.
+ * Se ven las últimas `weeks` semanas hasta hoy; el resto del año está a la izquierda (se desliza).
+ */
 export function YearMass({ colorFor, onDay, weeks = 37 }) {
   const today = todayISO()
   const year = today.slice(0, 4)
   const first = weekStart(`${year}-01-01`)
-  const all = Array.from({ length: 53 }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i)))
-  const shown = all.slice(-weeks).flat()
+  const upToToday = Math.floor((new Date(`${weekStart(today)}T12:00:00`) - new Date(`${first}T12:00:00`)) / 604800000) + 1
+  const all = Array.from({ length: upToToday }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i))).flat()
+  const box = useRef(null)
+  useLayoutEffect(() => { if (box.current) box.current.scrollLeft = box.current.scrollWidth }, [weeks, upToToday])
   return (
-    <div className="year-mass" style={{ '--n': weeks }}>
-      {shown.map((d) => (d.startsWith(year)
-        ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
-        : <span key={d} />))}
+    <div className="year-mass-scroll" ref={box}>
+      <div className="year-mass" style={{ '--n': weeks }}>
+        {all.map((d) => (d.startsWith(year)
+          ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
+          : <span key={d} />))}
+      </div>
     </div>
   )
 }
