@@ -2727,3 +2727,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-item { display: flex; flex-direction: column; gap: 6px; border-radius: 14px; padding: 8px; background: #F8F9FA; box-shadow: inset 0 0 0 1.5px var(--c); }
 .pl-item-top { display: flex; gap: 6px; align-items: center; } .pl-item-x { width: 26px; height: 26px; flex: none; border: 0; border-radius: 50%; background: #fff; display: grid; place-items: center; cursor: pointer; }
 .pl-additem { border: 2px dashed #C6CACE; border-radius: 14px; padding: 8px; background: none; font: 600 12.5px Poppins, sans-serif; color: #9AA0A6; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; } .pl-additem:hover { border-color: #9AA0A6; color: var(--text); }
+/* Diarios y suplementos: solo la hora en grande; se oscurece al tomarla */
+.pl-hours { display: flex; gap: 6px; width: 100%; }
+.pl-hr { flex: 1 1 0; min-width: 0; border: 0; border-radius: 14px; background: transparent; padding: 4px 2px; font: 700 24px/1.2 Poppins, sans-serif; color: var(--text); cursor: pointer; transition: background .2s; }
+.pl-hr:hover { background: color-mix(in srgb, var(--c) 18%, #fff); }
+.pl-hr.is-done { background: color-mix(in srgb, var(--c) 58%, #fff); }
+.pl-card .pl-name { font-size: 12.5px; font-weight: 600; color: var(--muted); }
