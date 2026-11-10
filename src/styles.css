@@ -2639,3 +2639,19 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .block-slot:hover > .row-plus, .row-plus:focus-visible { opacity: 1; }
 .row-plus:hover { background: var(--soft); color: #5F6368; }
 @media (hover: none) { .row-plus { opacity: .6; } }
+/* Como en Notion: + y asa de seis puntos a la izquierda del bloque */
+.blocks-page { padding-left: 58px; }
+.row-tools { position: absolute; left: -52px; top: 13px; z-index: 3; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+.block-slot:hover > .row-tools, .row-tools:focus-within { opacity: 1; }
+.row-tools .row-plus { position: static; opacity: 1; width: 24px; height: 24px; }
+.row-grip { width: 22px; height: 24px; border: 0; border-radius: 8px; background: none; color: #9AA0A6; display: grid; place-items: center; padding: 0; cursor: grab; }
+.row-grip:hover { background: var(--soft); color: #5F6368; } .row-grip:active { cursor: grabbing; }
+.row-backdrop { position: fixed; inset: 0; z-index: 4; }
+.row-menu { position: absolute; left: 0; top: 28px; z-index: 5; display: flex; flex-direction: column; min-width: 150px; padding: 6px; border-radius: 14px; }
+.row-menu button { display: flex; align-items: center; gap: 8px; border: 0; background: none; border-radius: 9px; padding: 8px 10px; font: 600 14px Poppins, sans-serif; cursor: pointer; text-align: left; color: var(--text); }
+.row-menu button:hover { background: var(--soft); }
+.block-slot.is-dragging { opacity: .4; }
+.block-slot.drop-before::before, .block-slot.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: 3px; border-radius: 3px; background: var(--blue); z-index: 4; }
+.block-slot.drop-before::before { top: 0; } .block-slot.drop-after::after { bottom: 0; }
+@media (max-width: 899px) { .blocks-page { padding-left: 34px; } .row-tools { left: -30px; } .row-grip { display: none; } }
+@media (hover: none) { .row-tools { opacity: .6; } }

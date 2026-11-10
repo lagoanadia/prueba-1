@@ -28,6 +28,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const [focusId, setFocusId] = useState(null)
   const [menu, setMenu] = useState(null) // { id, q, i, x, y }
   const [exporting, setExporting] = useState(false)
+  const [drag, setDrag] = useState(null) // { id, over, after } al arrastrar un bloque por su asa
+  const [rowMenu, setRowMenu] = useState(null) // id del bloque con el menú del asa abierto
   const refs = useRef({})
   const pageRef = useRef(null)
 
@@ -38,6 +40,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const insertAfter = (id, b) => insertAt(indexOf(id) + 1, b)
   const remove = (id) => { const i = indexOf(id); const n = blocks.filter((b) => b.id !== id); commit(n.length ? n : [newBlock()]); setFocusId((n[i - 1] ?? n[0])?.id ?? null) }
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; commit(n) }
+  const dropDrag = () => {
+    if (!drag?.over || drag.over === drag.id) { setDrag(null); return }
+    const item = blocks.find((b) => b.id === drag.id)
+    const rest = blocks.filter((b) => b.id !== drag.id)
+    const at = rest.findIndex((b) => b.id === drag.over) + (drag.after ? 1 : 0)
+    rest.splice(at, 0, item)
+    commit(rest)
+    setDrag(null)
+  }
+  const duplicate = (id) => { const i = indexOf(id); const b = blocks[i]; const n = [...blocks]; n.splice(i + 1, 0, { ...b, id: crypto.randomUUID() }); commit(n); setRowMenu(null) }
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
 
   const options = useMemo(() => (menu ? BLOCK_TYPES.filter((t) => `${t.label} ${t.hint}`.toLowerCase().includes(menu.q.toLowerCase())) : []), [menu?.q])
@@ -116,9 +128,28 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick}>
         {blocks.map((b, i) => (
-          <div key={b.id} className="block-slot">
+          <div key={b.id} className={`block-slot ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}
+            onDragOver={(e) => { if (!drag) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY > r.top + r.height / 2; if (drag.over !== b.id || drag.after !== after) setDrag({ ...drag, over: b.id, after }) }}
+            onDrop={(e) => { e.preventDefault(); dropDrag() }}>
             <Gap />
-            <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
+            <span className="row-tools">
+              <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
+              <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
+                onClick={(e) => { e.stopPropagation(); setRowMenu(rowMenu === b.id ? null : b.id) }}
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }) }}
+                onDragEnd={() => setDrag(null)}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">{[3, 7, 11].flatMap((y) => [4.5, 9.5].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" />))}</svg>
+              </button>
+              {rowMenu === b.id && (
+                <>
+                  <span className="row-backdrop" onClick={(e) => { e.stopPropagation(); setRowMenu(null) }} />
+                  <span className="card row-menu" role="menu">
+                    {b.type !== 'image' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
+                    <button role="menuitem" onClick={() => { setRowMenu(null); remove(b.id) }}><Icon name="trash" size={16} />Eliminar</button>
+                  </span>
+                </>
+              )}
+            </span>
             <div className={`block block-${b.type}`}>
               <div className={`block-body bt-${b.type}`}>
                 {b.type === 'bullet' && <span className="block-mark" aria-hidden="true">•</span>}
