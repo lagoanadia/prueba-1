@@ -2360,3 +2360,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .year-mass-box .year-mass .ypx { border-radius: 25%; aspect-ratio: auto; }
 .year-mass-box .year-mass { grid-auto-flow: row; }
 .year-mass-box { padding-bottom: 5px; box-sizing: border-box; }
+
+/* Cuadrículas de 7 columnas con cuadrados que llenan el widget */
+.g7-box { width: 100%; height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.g7 { display: flex; flex-direction: column; gap: 6px; }
+.g7-dow, .g7-grid { display: grid; }
+.g7-dow { text-align: center; font-size: 11px; font-weight: 600; color: #9AA0A6; height: 16px; }
+.g7 .px { border-radius: 25%; max-width: none; justify-self: center; }
+.g7 .px:disabled { opacity: 1; }
