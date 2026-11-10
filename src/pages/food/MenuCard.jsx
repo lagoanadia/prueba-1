@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { addDays, dayShort, todayISO, weekDays, weekStart } from '../../lib/dates.js'
 import { MEALS, OUT, dishName, dishesOf, isWith, mealsOf } from '../../widgets/comida/food.js'
+import Modal from './Modal.jsx'
 import SlotDialog from './SlotDialog.jsx'
 
 const kindOf = (v) => (v === OUT ? 'out' : isWith(v) ? 'with' : 'dish')
@@ -18,6 +19,7 @@ export default function MenuCard({ data, update }) {
   const [offset, setOffset] = useState(0)
   const [slot, setSlot] = useState(null) // { day, meal }
   const [over, setOver] = useState(null)
+  const [clearing, setClearing] = useState(false)
   const days = weekDays(addDays(weekStart(today), offset * 7))
   const dishes = dishesOf(data)
   const meals = mealsOf(data)
@@ -29,6 +31,9 @@ export default function MenuCard({ data, update }) {
     const next = cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]
     return { ...d, meals: Object.keys(MEALS).filter((x) => next.includes(x)) }
   })
+  // Vaciar la semana: quita las comidas del menú de esos 7 días (las recetas no se borran)
+  const clearWeek = () => { update((d) => { const menu = { ...(d.menu ?? {}) }; days.forEach((x) => delete menu[x]); return { ...d, menu } }); setClearing(false) }
+  const empty = days.every((x) => !Object.values(menu[x] ?? {}).some(Boolean))
   const drop = (e, day, meal) => {
     e.preventDefault(); setOver(null)
     const id = e.dataTransfer.getData('text/dish')
@@ -42,6 +47,7 @@ export default function MenuCard({ data, update }) {
         <button className="fd-ib" onClick={() => setOffset(offset - 1)} aria-label="Semana anterior"><Icon name="left" size={16} /></button>
         <b className="fd-range">{range(days)}</b>
         <button className="fd-ib" onClick={() => setOffset(offset + 1)} aria-label="Semana siguiente"><Icon name="right" size={16} /></button>
+        <button className="fd-ib fd-clear" onClick={() => setClearing(true)} disabled={empty} aria-label="Vaciar semana" title="Vaciar semana"><Icon name="trash" size={16} color="#B3261E" /></button>
         <span className="fd-grow" />
         {['desayuno', 'media', 'merienda'].map((m) => (
           <button key={m} className={`fd-chip ${meals.includes(m) ? 'is-on' : 'is-dash'}`} onClick={() => toggleMeal(m)} aria-pressed={meals.includes(m)}>{meals.includes(m) ? '−' : '+'} {MEALS[m]}</button>
@@ -67,6 +73,12 @@ export default function MenuCard({ data, update }) {
           </div>
         ))}
       </div>
+      {clearing && (
+        <Modal title={`Vaciar la semana ${range(days)}`} icon="trash" onClose={() => setClearing(false)}>
+          <p className="fd-hint">Se quitan las comidas del menú. Tus recetas no se borran.</p>
+          <div className="fd-row"><button className="fd-pill" onClick={() => setClearing(false)}><Icon name="close" size={14} />Cancelar</button><span className="fd-grow" /><button className="fd-pill is-danger" onClick={clearWeek}><Icon name="trash" size={14} color="#B3261E" />Vaciar</button></div>
+        </Modal>
+      )}
       {slot && <SlotDialog day={slot.day} meal={slot.meal} data={data} update={update} value={menu[slot.day]?.[slot.meal]} onSet={(v) => set(slot.day, slot.meal, v)} onClose={() => setSlot(null)} />}
     </section>
   )

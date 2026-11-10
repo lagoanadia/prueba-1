@@ -2214,8 +2214,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fd-abc { display: flex; justify-content: space-between; align-items: center; height: 64px; padding-top: 6px; }
 .fd-l { border: none; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 500; color: #9AA0A6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: font-size .18s var(--ease), transform .18s var(--ease), color .18s; width: 1.2em; }
 .fd-l.has { color: var(--text); font-weight: 700; }
-.fd-l.d1 { font-size: 21px; color: var(--text); font-weight: 700; transform: translateY(-5px); }
-.fd-l.d2 { font-size: 18px; color: var(--text); font-weight: 700; transform: translateY(-2px); }
+.fd-l.d1 { font-size: 21px; transform: translateY(-5px); }
+.fd-l.d2 { font-size: 18px; transform: translateY(-2px); }
 .fd-l.d0, .fd-l.is-sel { width: 46px; height: 46px; border-radius: 50%; background: var(--fd); color: var(--text); font-size: 26px; font-weight: 700; transform: translateY(-8px); }
 .fd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .fd-rec { border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 9px 12px; display: flex; flex-direction: column; gap: 6px; font: inherit; font-weight: 600; text-align: left; cursor: grab; min-width: 0; }
@@ -2272,3 +2272,10 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
   .fd-abc { overflow-x: auto; gap: 2px; justify-content: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) { .fd-l, .fd-slot { transition: none; } .fd-modal, .fd-panel { animation: none; } }
+.name-del { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; border: none; background: none; color: #B3261E; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 8px; border-radius: 14px; text-align: left; }
+.name-del:hover, .name-del.is-sure { background: #FDECEE; }
+
+.fd-clear { background: #FDECEE; } .fd-clear:hover { background: #F9D2D6; } .fd-clear:disabled { opacity: .35; cursor: default; }
+.fd-pill { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); border-radius: 18px; padding: 5px 14px; font: inherit; font-size: 13px; font-weight: 600; background: #fff; cursor: pointer; }
+.fd-pill.is-danger { background: #FDECEE; border-color: #F4B4BA; color: #B3261E; }
+.fd-ib:disabled { opacity: .35; cursor: default; }

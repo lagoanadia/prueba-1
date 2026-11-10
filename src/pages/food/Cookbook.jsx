@@ -44,7 +44,7 @@ export default function Cookbook({ data, update }) {
       </div>
 
       {dishes.length === 0 && <p className="fd-empty">Guarda tu primera comida y aparecerá aquí.</p>}
-      {dishes.length > 0 && list.length === 0 && <p className="fd-empty">Sin recetas con la {shown}.</p>}
+      {dishes.length > 0 && list.length === 0 && <p className="fd-empty">Sin recetas con la {shown}</p>}
       <div className="fd-cards">
         {list.map((x) => (
           <button key={x.id} draggable className={`fd-rec ${active?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
@@ -55,7 +55,7 @@ export default function Cookbook({ data, update }) {
         ))}
       </div>
 
-      {active && (
+      {active && list.length > 0 && (
         <div className="fd-detail">
           <div className="fd-detail-head">
             <h2>{active.name}</h2>

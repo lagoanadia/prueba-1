@@ -33,7 +33,7 @@ export default function BatchCard({ data, update }) {
             <button className="fd-chk-btn" onClick={() => save((c) => c.map((x) => (x.id === b.id ? { ...x, done: !x.done } : x)))} aria-label={b.done ? 'Marcar pendiente' : 'Marcar cocinado'}>{b.done ? <Icon name="check" size={14} color="#fff" strokeWidth={3.4} /> : <Icon name="pot" size={15} color="#B3261E" />}</button>
             <div className="fd-batch-main">
               <span className="fd-batch-top"><b>{name(b.dish)}</b><b>×{b.portions}</b></span>
-              <span className="fd-hint">Cocinar el {fmt(b.cook)}{b.eat.length ? ` · ${b.eat.map((d) => dayShort(d)).join(', ')}` : ''}</span>
+              <span className="fd-hint">Cocinar el {fmt(b.cook)}{b.eat.length ? ` · ${b.eat.map(fmt).join(', ')}` : ''}</span>
             </div>
             <button className="fd-del" onClick={() => save((c) => c.filter((x) => x.id !== b.id))} aria-label="Quitar"><Icon name="close" size={14} /></button>
           </li>
@@ -50,13 +50,21 @@ function BatchDialog({ dishes, initialDish, week, onSave, onClose, today }) {
   const [cook, setCook] = useState(week.find((d) => d >= today) ?? week[0])
   const [eat, setEat] = useState([])
   const [portions, setPortions] = useState(null)
+  const [wk, setWk] = useState(0) // semana que se ve (0 = esta); siempre de lunes a domingo
   const n = portions ?? Math.max(eat.length, 1)
   const toggle = (d) => setEat((e) => (e.includes(d) ? e.filter((x) => x !== d) : [...e, d].sort()))
-  const nextWeek = week.map((d) => addDays(d, 7))
-  const picker = (sel, on, multi) => (
-    <div className="fd-chips">{[...week, ...(multi ? nextWeek : [])].map((d, i) => (
-      <button type="button" key={d} className={`fd-chip fd-day-chip ${sel(d) ? 'is-on' : ''}`} onClick={() => on(d)} title={`${dayShort(d)} ${Number(d.slice(8))}`}>{LET[i % 7]}<small>{Number(d.slice(8))}</small></button>
+  const shown = week.map((d) => addDays(d, wk * 7))
+  const picker = (sel, on) => (
+    <div className="fd-chips">{shown.map((d, i) => (
+      <button type="button" key={d} className={`fd-chip fd-day-chip ${sel(d) ? 'is-on' : ''}`} onClick={() => on(d)} title={`${dayShort(d)} ${Number(d.slice(8))}`}>{LET[i]}<small>{Number(d.slice(8))}</small></button>
     ))}</div>
+  )
+  const weekNav = (
+    <div className="fd-row">
+      <button type="button" className="fd-ib" onClick={() => setWk(wk - 1)} disabled={wk <= 0} aria-label="Semana anterior"><Icon name="left" size={16} /></button>
+      <span className="fd-hint">{Number(shown[0].slice(8))} – {Number(shown[6].slice(8))} {new Date(`${shown[6]}T12:00:00`).toLocaleDateString('es-ES', { month: 'short' })}</span>
+      <button type="button" className="fd-ib" onClick={() => setWk(wk + 1)} aria-label="Semana siguiente"><Icon name="right" size={16} /></button>
+    </div>
   )
   return (
     <Modal title="Batch cooking" icon="pot" onClose={onClose}>
@@ -65,8 +73,9 @@ function BatchDialog({ dishes, initialDish, week, onSave, onClose, today }) {
       ) : (
         <div className="fd-form">
           <b>{dishes.find((x) => x.id === dish)?.name}</b>
-          <span className="fd-hint">Cocinar el</span>{picker((d) => d === cook, setCook, false)}
-          <span className="fd-hint">Para comer</span>{picker((d) => eat.includes(d), toggle, true)}
+          {weekNav}
+          <span className="fd-hint">Cocinar el</span>{picker((d) => d === cook, setCook)}
+          <span className="fd-hint">Para comer</span>{picker((d) => eat.includes(d), toggle)}
           <div className="fd-row">
             <button type="button" className="fd-ib" onClick={() => setPortions(Math.max(1, n - 1))} aria-label="Menos raciones">−</button>
             <span className="fd-hint">×{n} raciones</span>

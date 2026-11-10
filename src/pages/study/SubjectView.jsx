@@ -31,6 +31,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
   const p = progressFor(subject, data.assignments)
   const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
   const addUnit = (name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name, topics: [] }] })); setDialog(null) }
+  const removeUnit = (id) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.filter((u) => u.id !== id) })); setDialog(null) }
   const renameUnit = (id, name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, name } : u)) })); setDialog(null) }
   const startReview = (r, msg, docs) => { setReview(r); setReviewMsg(msg); setDocsText(docs) }
   const cancelReview = () => { Object.values(review.docs).forEach((d) => deleteFile(d.file.id).catch(() => {})); setReview(null) }
@@ -106,13 +107,13 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
               <span className="state-chip" style={{ background: soft(st.color, 35) }}>{st.label}</span>
               {u.topics.slice(0, 4).map((t) => <span key={t.id} className="w-row unit-topic"><span className="w-ellipsis">{t.name}</span><Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={TOPIC_STATES.find((x) => x.id === t.state)?.id === 'clear' ? '#3DDC97' : '#9AA0A6'} /></span>)}
             </button>
-            <button className="icon-btn unit-edit" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`} title="Cambiar nombre"><Icon name="pen" size={16} /></button>
+            <button className="icon-btn unit-edit" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`} title="Editar unidad"><Icon name="pen" size={16} /></button>
             </div>
           )
         })}
       </div>
       {dialog === 'new' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
-      {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onClose={() => setDialog(null)} />}
+      {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" onClose={() => setDialog(null)} />}
 
       <h2 className="page-h2 page-gap">Recursos</h2>
       <ResourceFrames data={data} update={update} subjectId={subject.id} />
