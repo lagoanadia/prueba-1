@@ -72,7 +72,7 @@ const EN = {
   'Gimnasio': 'Gym', 'Natación': 'Swimming', 'Correr': 'Run', 'Caminar': 'Walking', 'Yoga': 'Yoga', 'Pilates': 'Pilates', 'Ciclismo': 'Cycling', 'Senderismo': 'Hiking', 'Escalada': 'Climbing', 'Descanso': 'Rest', 'Fútbol': 'Football', 'Baloncesto': 'Basketball', 'Tenis': 'Tennis', 'Pádel': 'Padel', 'Boxeo': 'Boxing', 'Baile': 'Dancing',
 
   // ---- Journal
-  'Mood tracker': 'Mood tracker', 'Bueno': 'Good', 'Mejorable': 'Could be better', 'Malo': 'Bad', 'Metas': 'Goals', 'Pixels': 'Pixels', 'Palabra del día': 'Word of the day', 'Palabra oculta': 'Hidden word', 'Palabra oculta: escribe tu intento': 'Hidden word: type your guess', 'Cápsulas del tiempo': 'Time capsules', 'Una cosa buena del día': 'One good thing today',
+  'Mood tracker': 'Mood tracker', 'Bueno': 'Good', 'Mejorable': 'Could be better', 'Malo': 'Bad', 'Metas': 'Goals', 'Pixels': 'Pixels', 'Hábitos in pixels': 'Habits in pixels', 'Palabra del día': 'Word of the day', 'Palabra oculta': 'Hidden word', 'Palabra oculta: escribe tu intento': 'Hidden word: type your guess', 'Cápsulas del tiempo': 'Time capsules', 'Una cosa buena del día': 'One good thing today',
   'Sin metas': 'No goals', 'Nueva meta': 'New goal', 'Crear meta': 'Create goal', 'Tu meta': 'Your goal', '¿Qué quieres conseguir?': 'What do you want to achieve?', '¿Cuánto?': 'How much?', '¿De qué?': 'Of what?',
   'Leer, correr, ahorrar…': 'Read, run, save…', 'libros, km, veces…': 'books, km, times…', 'Objetivo': 'Target', '{0} de {1}': '{0} of {1}', '{0}/{1}': '{0}/{1}',
   'Leer · 12 libros': 'Read · 12 books', 'Correr · 100 km': 'Run · 100 km', 'Ir al gimnasio · 50 veces': 'Go to the gym · 50 times', 'Ahorrar · 500 €': 'Save · 500 €', 'Aprender palabras · 300 palabras': 'Learn words · 300 words',

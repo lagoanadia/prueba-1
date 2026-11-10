@@ -2409,3 +2409,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cap-tags .bottle-tag { width: clamp(40px, 12cqw, 66px); text-align: center; flex-shrink: 0; }
 .cap-left .cap-shelf { padding-bottom: 0; }
 .cap-form .w-form { flex-wrap: nowrap; } .cap-form input[type=date] { flex: 1 1 auto !important; min-width: 0; } .cap-form .pill { flex: none; }
+
+.cap-row { justify-content: flex-start; gap: 6px; }
+.cap-tags { justify-content: flex-start; gap: 6px; }
+.cap-form { width: clamp(260px, 46%, 360px); }
+.cap-form textarea { min-height: 120px; }

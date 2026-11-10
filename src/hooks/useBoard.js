@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { getBoard, saveBoard } from '../services/boardService.js'
 import { BOARDS_EVENT } from '../services/entriesService.js'
 import { defaultLayout } from '../widgets/registry.js'
-import { recordUse } from '../lib/usage.js'
 
 /**
  * Tablero de un área: qué widgets hay (layout) y sus datos (data).
@@ -43,8 +42,8 @@ export default function useBoard(area) {
     return () => clearTimeout(t)
   }, [board, area])
 
-  const updateData = (fn) => { recordUse(); setBoard((b) => ({ ...b, data: fn(b.data) })) }
-  const updateLayout = (fn) => { recordUse(); setBoard((b) => ({ ...b, layout: fn(b.layout) })) }
+  const updateData = (fn) => setBoard((b) => ({ ...b, data: fn(b.data) }))
+  const updateLayout = (fn) => setBoard((b) => ({ ...b, layout: fn(b.layout) }))
 
   return { board, error, updateData, updateLayout }
 }
