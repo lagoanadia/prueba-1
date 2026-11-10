@@ -2626,9 +2626,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 @media (max-width: 899px) { .xp-panel { width: 100vw; height: 94dvh; max-height: 94dvh; border-radius: 26px 26px 0 0; } .xp-body { flex-direction: column-reverse; } .xp-style { width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; } .xp-opts { margin: 0 8px 0 0; } .xp-sheet { padding: 24px 20px; } }
 .ws-empty-add { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
 .ws-empty-add p { margin: 0; }
-/* Opciones del PDF en una sola fila, encima de la vista previa */
-.xp-body { flex-direction: column; gap: 12px; }
-.xp-style { order: -1; width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
-.xp-grp { display: flex; align-items: center; gap: 8px; }
-.xp-grp .xp-opts { flex-wrap: nowrap; gap: 6px; margin: 0; }
-.xp-round { width: 32px; height: 24px; } .xp-dot { width: 22px; height: 22px; }
+/* Opciones del PDF: columna ordenada a la derecha (en móvil, debajo) */
+.xp-body { flex-direction: row; gap: 16px; }
+.xp-style { order: 0; width: 200px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 16px; padding-top: 4px; }
+.xp-grp { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.xp-grp .xp-opts { flex-wrap: wrap; gap: 8px; margin: 0; }
+@media (max-width: 899px) { .xp-body { flex-direction: column; } .xp-style { order: 2; width: auto; flex-direction: row; flex-wrap: wrap; gap: 10px 18px; } .xp-grp { flex-direction: row; align-items: center; } }
