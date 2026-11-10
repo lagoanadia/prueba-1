@@ -2539,3 +2539,14 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-tile { border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; gap: 1px; } .sa-tile span { font-size: 13px; } .sa-tile b { font-size: 28px; line-height: 1.15; } .sa-tile small { font-size: 12px; color: rgba(32, 33, 36, .7); }
 .sa-tile.is-green { background: #DDF8EC; } .sa-tile.is-blue { background: #DDEBFE; } .sa-tile.is-yellow { background: #FDF5CE; } .sa-tile.is-pink { background: #F9DDFF; }
 .sa-grid { height: 140px; display: flex; }
+
+/* Plan semanal como horario */
+.sa-plan { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sa-plan-days { display: grid; grid-template-columns: 40px repeat(var(--c), minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 12px; } .sa-plan-days b { font-weight: 500; color: var(--muted); } .sa-plan-days b.is-today { color: #0B3D27; font-weight: 700; }
+.sa-plan-grid { display: grid; grid-template-columns: 40px repeat(var(--c), minmax(0, 1fr)); gap: 6px; height: var(--h); position: relative; margin-top: 4px; }
+.sa-plan-hours { position: relative; } .sa-plan-hours span { position: absolute; right: 4px; transform: translateY(-50%); font-size: 11px; color: #9AA0A6; }
+.sa-plan-col { position: relative; border-radius: 14px; background: #F8F9FA; cursor: pointer; } .sa-plan-col.is-today { background: #EEF7F2; }
+.sa-plan-col > i { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0, 0, 0, .05); pointer-events: none; }
+.sa-sess { position: absolute; left: 3px; right: 3px; border: none; border-radius: 12px; background: color-mix(in srgb, var(--c) 42%, #fff); padding: 4px 8px; text-align: left; font: inherit; font-size: 12.5px; line-height: 1.25; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05); }
+.sa-sess span { font-size: 11px; color: rgba(32, 33, 36, .7); } .sa-sess em { font-style: normal; font-size: 10.5px; font-weight: 700; background: #fff; border-radius: 8px; padding: 0 6px; align-self: flex-start; margin-top: 2px; }
+.sa-sess.is-done { box-shadow: inset 0 0 0 2px #3DDC97; }

@@ -5,7 +5,8 @@ import { fmtHM } from './healthUtils.js'
 export default function WeekSummary({ data }) {
   const today = todayISO()
   const plan = data.plan ?? []
-  const planned = plan.filter((p) => p && p !== 'Descanso').length
+  const sessions = data.planSessions ?? []
+  const planned = sessions.length || plan.filter((p) => p && p !== 'Descanso').length
   const workouts = data.workouts ?? []
   const inWeek = (monday) => { const days = weekDays(monday); return workouts.filter((w) => days.includes(w.date)) }
   const mine = inWeek(today)
