@@ -6,7 +6,6 @@ import { fromMin, toMin } from './healthUtils.js'
 // Un color por medicamento (se reparte solo; se puede cambiar al crearlo)
 export const PILL_COLORS = ['#2FA36B', '#8B5CF6', '#F29D38', '#E0457B', '#2F6FED', '#5F6368']
 const KINDS = [['treatment', 'Tratamiento'], ['daily', 'Diario'], ['supplement', 'Suplemento']]
-const EVERY = [4, 6, 8, 12, 24]
 
 /** Horas de toma: desde la primera, cada N horas (da la vuelta al día) o repartidas en N veces al día. */
 const timesEvery = (first, every) => { const out = []; for (let k = 0; k * every < 24; k++) out.push(fromMin(toMin(first) + k * every * 60)); return out.sort() }
@@ -61,12 +60,14 @@ export default function Pills({ data, update }) {
             return (
               <div key={p.id} className="pl-card" style={{ '--c': p.color ?? PILL_COLORS[0] }}>
                 <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-                {left != null && (
-                  <div className="pl-ring" style={{ '--f': `${frac * 360}deg` }}>
-                    <span className="pl-count"><b>{left || '–'}</b><i>{left ? (left === 1 ? 'día' : 'días') : 'fin'}</i></span>
-                  </div>
-                )}
                 <b className="pl-name">{p.name}</b>
+                {left != null && (
+                  <>
+                    <div className="pl-big">{left || '–'}</div>
+                    <div className="pl-sub">{left === 1 ? 'día restante' : left ? 'días restantes' : 'tratamiento terminado'}</div>
+                    <div className="pl-bar"><i style={{ width: `${frac * 100}%` }} /></div>
+                  </>
+                )}
                 <div className="pl-slots">{timesOfPill(p).map((t) => <button key={t} className={`pl-slot ${isDone(p, t) ? 'is-done' : ''}`} onClick={() => toggle(p, t)} aria-pressed={isDone(p, t)} title={isDone(p, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</div>
               </div>
             )
@@ -93,41 +94,37 @@ export default function Pills({ data, update }) {
   )
 }
 
+function Stepper({ label, value, onChange, min = 1, max = 99, suffix = '' }) {
+  return (
+    <div className="pl-step">
+      <span>{label}</span>
+      <div>
+        <button type="button" onClick={() => onChange(Math.max(min, value - 1))} aria-label={`Menos ${label}`}>−</button>
+        <b>{value}{suffix}</b>
+        <button type="button" onClick={() => onChange(Math.min(max, value + 1))} aria-label={`Más ${label}`}>+</button>
+      </div>
+    </div>
+  )
+}
+
 function PillForm({ color: initialColor, onSave }) {
-  const [f, setF] = useState({ kind: 'treatment', name: '', mode: 'every', every: 8, per: 3, first: '08:00', box: '', days: '', color: initialColor })
+  const [f, setF] = useState({ kind: 'treatment', name: '', per: 3, first: '08:00', days: 7, color: initialColor })
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
-  const times = f.mode === 'per' ? timesPer(f.first, Math.min(6, Math.max(1, Number(f.per) || 1))) : timesEvery(f.first, Number(f.every))
-  const perDay = times.length
-  const box = Number(f.box) || 0
-  const days = Number(f.days) || (box ? Math.floor(box / perDay) : 0) // con las pastillas se calcula cuántos días dan
-  const need = days * perDay
+  const times = timesPer(f.first, f.per)
   const isT = f.kind === 'treatment'
-  const ok = f.name.trim() && (!isT || days > 0)
-  const save = () => { if (ok) onSave({ kind: f.kind, name: f.name.trim(), color: f.color, times, ...(isT ? { days } : {}) }) }
+  const ok = f.name.trim() && (!isT || f.days > 0)
+  const save = () => { if (ok) onSave({ kind: f.kind, name: f.name.trim(), color: f.color, times, ...(isT ? { days: f.days } : {}) }) }
 
   return (
     <div className="pl-form" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save() } }}>
       <div className="pl-chips">{KINDS.map(([k, l]) => <button key={k} type="button" className={f.kind === k ? 'on' : ''} onClick={() => set('kind', k)} aria-pressed={f.kind === k}>{l}</button>)}</div>
       <input className="pl-in" autoFocus placeholder="Nombre y dosis (Ibuprofeno 400 mg)" value={f.name} onChange={(e) => set('name', e.target.value)} maxLength={40} aria-label="Nombre" />
-      <div className="pl-chips">
-        <button type="button" className={f.mode === 'every' ? 'on' : ''} onClick={() => set('mode', 'every')} aria-pressed={f.mode === 'every'}>Cada X horas</button>
-        <button type="button" className={f.mode === 'per' ? 'on' : ''} onClick={() => set('mode', 'per')} aria-pressed={f.mode === 'per'}>Veces al día</button>
-      </div>
-      <div className="pl-row2">
-        {f.mode === 'every'
-          ? <label className="pl-fld">cada<select className="pl-in" value={f.every} onChange={(e) => set('every', e.target.value)}>{EVERY.map((h) => <option key={h} value={h}>{h} h</option>)}</select></label>
-          : <label className="pl-fld">veces<input className="pl-in" type="number" min="1" max="6" value={f.per} onChange={(e) => set('per', e.target.value)} /></label>}
-        <label className="pl-fld">desde<input className="pl-in" type="time" value={f.first} onChange={(e) => set('first', e.target.value)} /></label>
-      </div>
-      {isT && (
-        <div className="pl-row2">
-          <label className="pl-fld">pastillas<input className="pl-in" type="number" min="0" value={f.box} onChange={(e) => set('box', e.target.value)} /></label>
-          <label className="pl-fld">durante (días)<input className="pl-in" type="number" min="1" value={f.days} onChange={(e) => set('days', e.target.value)} placeholder={box ? String(Math.floor(box / perDay)) : ''} /></label>
-        </div>
-      )}
-      <div className="pl-calc"><b>{perDay} {perDay === 1 ? 'toma' : 'tomas'} al día</b>{isT && days > 0 && <> · {need} pastillas · acabas el {formatShort(addDays(todayISO(), days - 1))}{box > need && Number(f.days) ? ` · te sobran ${box - need}` : ''}</>}</div>
+      <Stepper label="Tomas al día" value={f.per} onChange={(v) => set('per', v)} max={6} />
+      {isT && <Stepper label="Durante" value={f.days} onChange={(v) => set('days', v)} max={365} suffix={f.days === 1 ? ' día' : ' días'} />}
+      <label className="pl-step"><span>Primera toma</span><input className="pl-time" type="time" value={f.first} onChange={(e) => set('first', e.target.value)} aria-label="Primera toma" /></label>
+      <div className="pl-calc"><b>{times.join(' · ')}</b>{isT && <><br />{f.per * f.days} pastillas · acabas el {formatShort(addDays(todayISO(), f.days - 1))}</>}</div>
       <div className="pl-colors" role="group" aria-label="Color">{PILL_COLORS.map((c) => <button key={c} type="button" className={f.color === c ? 'on' : ''} style={{ background: c }} onClick={() => set('color', c)} aria-label={`Color ${c}`} aria-pressed={f.color === c} />)}</div>
-      <button type="button" className="sa-btn" disabled={!ok} onClick={save}>Añadir</button>
+      <button type="button" className="sa-btn" disabled={!ok} onClick={save}>{isT ? 'Empezar tratamiento' : 'Añadir'}</button>
     </div>
   )
 }
