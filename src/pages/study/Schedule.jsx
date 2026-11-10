@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { DEFAULT_BREAK, DEFAULT_CLASS, fmt, normalizeTimetable, spans, toMin } from './timetable.js'
-import { SUBJECT_COLORS, soft, tone } from './helpers.js'
+import { SUBJECT_PALETTE, soft, tone } from './helpers.js'
 
 // «Recreo» de horarios antiguos se ve como «Descanso»
 const breakName = (l) => (!l || l === 'Recreo' ? 'Descanso' : l)
@@ -20,6 +20,7 @@ export default function Schedule({ data, update, subjects }) {
   const today = (new Date().getDay() + 6) % 7
   const [brush, setBrush] = useState(null)
   const [dialog, setDialog] = useState(null) // 'label'
+  const [colorFor, setColorFor] = useState(null) // etiqueta cuyo color se está cambiando
   const [rowMenu, setRowMenu] = useState(null) // { id, mode: 'add' | 'grip' } de la fila con menú abierto
   const menuRef = useRef(null)
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Schedule({ data, update, subjects }) {
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
   const options = [...subjects.map((s) => s.short), ...tt.labels.map((l) => `#${l.id}`)]
-  const look = (v) => (bySubject[v] ? { name: v, color: tone(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: soft(byLabel[v].color, 40) } : null)
+  const look = (v) => (bySubject[v] ? { name: v, color: tone(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: tone(byLabel[v].color) } : null)
 
   const patch = (fn) => update((d) => ({ ...d, timetable: fn(normalizeTimetable(d.timetable, d.subjects ?? [])) }))
   // Vacío = se quita la casilla
@@ -77,7 +78,7 @@ export default function Schedule({ data, update, subjects }) {
 
   return (
     <div className="schedule">
-      <div className="deliv-head"><h2 className="page-h2">Horario</h2><button className="icon-btn on sv-edit" onClick={() => setEditing(false)} aria-label="Terminar de editar" title="Listo"><Icon name="check" size={18} /></button></div>
+      <div className="deliv-head"><h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Horario</h2><button className="icon-btn on sv-edit" onClick={() => setEditing(false)} aria-label="Terminar de editar" title="Listo"><Icon name="check" size={18} /></button></div>
 
       <div className="tt-grid">
         <div className="tt-row tt-head">
@@ -132,7 +133,17 @@ export default function Schedule({ data, update, subjects }) {
         <span className="tt-sep" />
         {tt.labels.map((l) => (
           <span key={l.id} className="seg-wrap">
-            <button className={`seg-chip ${brush === `#${l.id}` ? 'on' : ''}`} style={{ background: soft(l.color, 40) }} aria-pressed={brush === `#${l.id}`} onClick={() => setBrush(brush === `#${l.id}` ? null : `#${l.id}`)}>{l.name}</button>
+            <button className={`seg-chip ${brush === `#${l.id}` ? 'on' : ''}`} style={{ background: tone(l.color) }} aria-pressed={brush === `#${l.id}`} onClick={() => setBrush(brush === `#${l.id}` ? null : `#${l.id}`)}>{l.name}</button>
+            <button className="seg-color" style={{ background: l.color }} onClick={() => setColorFor(colorFor === l.id ? null : l.id)} aria-expanded={colorFor === l.id} aria-label={`Cambiar el color de la etiqueta ${l.name}`} title="Cambiar color" />
+            {colorFor === l.id && (
+              <>
+                <span className="sc-back" onClick={() => setColorFor(null)} />
+                <span className="card seg-pop" role="listbox" aria-label="Colores">
+                  {['#9AA0A6', ...SUBJECT_PALETTE].map((c) => <button key={c} role="option" aria-selected={c === l.color} className={`swatch-dot ${c === l.color ? 'on' : ''}`} style={{ background: c }} aria-label={`Color ${c}`}
+                    onClick={() => { patch((t) => ({ ...t, labels: t.labels.map((x) => (x.id === l.id ? { ...x, color: c } : x)) })); setColorFor(null) }} />)}
+                </span>
+              </>
+            )}
             <button className="seg-x" onClick={() => removeLabel(l.id)} aria-label={`Borrar la etiqueta ${l.name}`}><Icon name="close" size={12} /></button>
           </span>
         ))}
@@ -162,7 +173,7 @@ function LabelDialog({ onSubmit, onClose }) {
         <b className="name-dialog-title">Nombre de la etiqueta</b>
         <input className="pill-input" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Convalidada" maxLength={20} aria-label="Nombre de la etiqueta" />
         <div className="seg-row">
-          {['#9AA0A6', ...SUBJECT_COLORS].map((c) => <button type="button" key={c} className={`swatch-dot ${c === color ? 'on' : ''}`} style={{ background: soft(c, 40) }} aria-label={`Color ${c}`} aria-pressed={c === color} onClick={() => setColor(c)} />)}
+          {['#9AA0A6', ...SUBJECT_PALETTE].map((c) => <button type="button" key={c} className={`swatch-dot ${c === color ? 'on' : ''}`} style={{ background: tone(c) }} aria-label={`Color ${c}`} aria-pressed={c === color} onClick={() => setColor(c)} />)}
         </div>
         <div className="name-dialog-actions">
           <button type="button" className="icon-btn name-x" onClick={onClose} aria-label="Cancelar"><Icon name="close" size={22} /></button>
@@ -189,7 +200,7 @@ function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
   const today = (now.getDay() + 6) % 7
   const [day, setDay] = useState(today < 5 ? today : 0) // en móvil se ve un día
   // Vacío (sin franjas o sin ninguna asignatura puesta): un lápiz grande con el texto girando alrededor
-  if (!times.length || !Object.values(tt.cells).some(Boolean)) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2">Horario</h2></div><EmptySchedule onEdit={onEdit} /></div>
+  if (!times.length || !Object.values(tt.cells).some(Boolean)) return <div className="schedule"><div className="deliv-head"><h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Horario</h2></div><EmptySchedule onEdit={onEdit} /></div>
 
   // Franjas de clase vacías todos los días no se dibujan: lo de abajo sube
   const used = tt.rows.map((r) => r.kind === 'break' || [0, 1, 2, 3, 4].some((c) => tt.cells[`${r.id}:${c}`]))
@@ -223,7 +234,7 @@ function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
   return (
     <div className="schedule sv">
       <div className="deliv-head">
-        <h2 className="page-h2">Horario</h2>
+        <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Horario</h2>
         {current ? <span className="sv-now" style={{ background: current.color }}>Ahora: <b>{current.name}</b> · hasta {fmt(current.end)}</span>
           : next ? <span className="sv-now">Luego: <b>{next.name}</b> a las {fmt(next.start)}</span> : null}
         <button className="icon-btn sv-edit" onClick={onEdit} aria-label="Editar horario" title="Editar"><Icon name="pen" size={18} /></button>

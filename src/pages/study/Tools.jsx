@@ -23,7 +23,7 @@ export default function Tools({ data, update, bare = false }) {
 
   return (
     <div className="tools">
-      {!bare && <h2 className="page-h2">Herramientas</h2>}
+      {!bare && <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Herramientas</h2>}
       <div className="tool-grid">
         {tools.map((t) => (
           <div key={t.id} className="tool">

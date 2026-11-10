@@ -2461,3 +2461,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sc-opt { width: 30px; height: 30px; border-radius: 50%; border: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .sc-opt.on { box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 5px var(--text); }
 @media (prefers-reduced-motion: reduce) { .sc-dot, .sc-pop { transition: none; animation: none; } }
+
+/* Punto azul: marca los widgets de Estudios */
+.dot-study { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #3185FC; margin-right: 10px; vertical-align: middle; flex-shrink: 0; }
+/* Color de una etiqueta del horario */
+.seg-wrap { position: relative; }
+.seg-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 0 0 1px #DADCE0; padding: 0; cursor: pointer; margin-left: 2px; }
+.seg-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; padding: 10px 12px; display: grid; grid-template-columns: repeat(6, 26px); gap: 9px; }
+.seg-color { position: absolute; left: -5px; top: -5px; width: 16px; height: 16px; margin: 0; z-index: 2; }

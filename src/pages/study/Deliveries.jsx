@@ -35,7 +35,7 @@ export default function Deliveries({ data, update, subjects, course = null }) {
   return (
     <div className="deliv">
       <div className="deliv-head">
-        <h2 className="page-h2">Próximas entregas</h2>
+        <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Próximas entregas</h2>
         <History title="Entregas hechas" empty="Aún no has entregado nada" items={done.map((a) => ({ id: a.id, date: a.doneAt ? formatShort(a.doneAt) : '', text: `${a.course} · ${a.title}` }))} />
         <button className="icon-btn" onClick={() => open(null)} aria-label="Añadir entrega" title="Añadir entrega" disabled={!subjects.length}><Icon name="plus" size={22} /></button>
       </div>
