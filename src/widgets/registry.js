@@ -30,6 +30,12 @@ import Dishes from './comida/Dishes.jsx'
 import Recipe from './comida/Recipe.jsx'
 import Shopping from './comida/Shopping.jsx'
 import Batch from './comida/Batch.jsx'
+import Cycle from './salud/Cycle.jsx'
+import SleepCalc from './salud/SleepCalc.jsx'
+import Pills from './salud/Pills.jsx'
+import Steps from './salud/Steps.jsx'
+import WeekSummary from './salud/WeekSummary.jsx'
+import Consistency from './salud/Consistency.jsx'
 import Subjects from './estudios/Subjects.jsx'
 import Syllabus from './estudios/Syllabus.jsx'
 import Timetable from './estudios/Timetable.jsx'
@@ -53,6 +59,12 @@ export const WIDGETS = {
   progress: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
   water: { area: 'salud', name: 'Agua', color: '#3185FC', component: Water },
   sleep: { area: 'salud', name: 'Sueño', color: '#8E7CFF', component: Sleep },
+  cycle: { sizes: ['M', 'L'], area: 'salud', name: 'Ciclo menstrual', color: '#EFABFF', component: Cycle },
+  sleepcalc: { sizes: ['M', 'L'], area: 'salud', name: 'Calculadora de sueño', color: '#8E7CFF', component: SleepCalc },
+  pills: { sizes: ['M', 'L'], area: 'salud', name: 'Pastillero', color: '#3DDC97', component: Pills },
+  steps: { sizes: ['M', 'L'], area: 'salud', name: 'Pasos de la semana', color: '#3DDC97', component: Steps },
+  weeksummary: { sizes: ['M', 'L'], area: 'salud', name: 'Resumen de la semana', color: '#3DDC97', component: WeekSummary },
+  consistency: { sizes: ['M', 'L'], area: 'salud', name: 'Constancia', color: '#3DDC97', component: Consistency },
   projects: { area: 'trabajo', name: 'Proyectos', color: '#E84855', component: Projects },
   kanban: { area: 'trabajo', name: 'Tablero', color: '#3185FC', component: Kanban },
   priorities: { area: 'trabajo', name: 'Prioridades de hoy', color: '#F9DC5C', component: Priorities },

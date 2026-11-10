@@ -2506,3 +2506,36 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .exam-pager { display: flex; align-items: center; gap: 6px; margin-top: 12px; touch-action: pan-y; }
 .exam-dots { flex: 1; display: flex; justify-content: center; gap: 4px; }
 .exam-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D7D9DB; transition: width .2s var(--ease), background .2s; } .exam-dots i.on { width: 14px; background: #3185FC; }
+
+/* Salud: widgets de ciclo, sueño, pastillero, pasos, resumen y constancia */
+.sa-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .sa-split { justify-content: space-between; align-items: flex-start; }
+.sa-center { justify-content: center; }
+.sa-label { display: block; font-size: 12px; color: var(--muted); }
+.sa-big { font-size: 26px; line-height: 1.15; font-weight: 700; } .sa-big small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.sa-hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+.sa-btn { border: none; border-radius: 18px; padding: 7px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: #3DDC97; color: #0B3D27; } .sa-btn:disabled { opacity: .45; cursor: default; }
+.sa-btn.is-soft { background: #F1F3F4; color: var(--text); } .sa-btn.is-soft.on { background: #E8F0FE; }
+.sa-chips { display: flex; flex-wrap: wrap; gap: 6px; } .sa-chip { border: 2px solid var(--line); background: #fff; border-radius: 16px; padding: 3px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; } .sa-chip.on { background: #DDF8EC; border-color: #3DDC97; }
+.sa-x { border: none; background: none; cursor: pointer; padding: 4px; display: inline-flex; }
+.sa-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12px; color: var(--muted); } .sa-legend b { margin-left: auto; color: var(--text); font-size: 13px; }
+.sa-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: #D7D9DB; margin-right: 6px; vertical-align: -1px; }
+.sa-legend i.is-period { background: #E58BD7; } .sa-legend i.is-met { background: #3DDC97; }
+.sa-cycle, .sa-sleepcalc, .sa-pills, .sa-steps, .sa-consist { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sa-days { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 3px; } .sa-days i { aspect-ratio: 1; border-radius: 25%; background: #F9DDFF; } .sa-days i.is-period { background: #E58BD7; } .sa-days i.is-now { outline: 2px solid var(--text); outline-offset: 1px; }
+.sa-sleepcalc input[type=time], .sa-steps input[type=number] { border: 2px solid var(--line); border-radius: 16px; padding: 5px 12px; font: inherit; font-size: 14px; width: 130px; }
+.sa-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.sa-card { border-radius: 16px; background: #F1F3F4; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; border: none; font: inherit; text-align: left; } .sa-card small { font-size: 11px; color: var(--muted); } .sa-card b { font-size: 22px; } .sa-card span { font-size: 12px; color: var(--muted); }
+.sa-card.is-rec { background: #DDEBFE; }
+.sa-slot { cursor: pointer; } .sa-slot.is-done { background: #DDF8EC; } .sa-slot.is-done b { text-decoration: line-through; color: var(--muted); }
+.sa-pill { display: flex; flex-direction: column; gap: 8px; }
+.sa-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.sa-chart { position: relative; display: flex; align-items: flex-end; gap: 10px; height: 150px; padding-top: 6px; }
+.sa-chart::before { content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--goal) * .78 + 22px); border-top: 2px dashed #9AA0A6; opacity: .7; }
+.sa-goal { position: absolute; right: 0; bottom: calc(var(--goal) * .78 + 24px); border: none; background: #fff; font: inherit; font-size: 11px; color: var(--muted); cursor: pointer; padding: 0 4px; z-index: 2; }
+.sa-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; }
+.sa-col small { font-size: 11px; color: var(--muted); } .sa-col.is-now small { color: var(--text); font-weight: 700; } .sa-num { font-size: 10.5px; color: var(--muted); height: 14px; }
+.sa-bar { width: 100%; max-width: 40px; border-radius: 8px 8px 4px 4px; background: #A7EBCB; min-height: 0; flex: 0 0 auto; max-height: calc(100% - 36px); } .sa-bar.is-met { background: #3DDC97; } .sa-col.is-now .sa-bar { outline: 2px solid var(--text); outline-offset: 1px; }
+.sa-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sa-tile { border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; gap: 1px; } .sa-tile span { font-size: 13px; } .sa-tile b { font-size: 28px; line-height: 1.15; } .sa-tile small { font-size: 12px; color: rgba(32, 33, 36, .7); }
+.sa-tile.is-green { background: #DDF8EC; } .sa-tile.is-blue { background: #DDEBFE; } .sa-tile.is-yellow { background: #FDF5CE; } .sa-tile.is-pink { background: #F9DDFF; }
+.sa-grid { height: 140px; display: flex; }
