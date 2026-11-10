@@ -9,6 +9,8 @@ import { sanitize } from '../lib/richText.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
 const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
+// Sin tildes ni mayúsculas, para que «tit» encuentre «Título»
+const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
@@ -52,7 +54,14 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const duplicate = (id) => { const i = indexOf(id); const b = blocks[i]; const n = [...blocks]; n.splice(i + 1, 0, { ...b, id: crypto.randomUUID() }); commit(n); setRowMenu(null) }
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
 
-  const options = useMemo(() => (menu ? BLOCK_TYPES.filter((t) => `${t.label} ${t.hint}`.toLowerCase().includes(menu.q.toLowerCase())) : []), [menu?.q])
+  // Al escribir tras «+» o «/» se quedan solo los tipos cuya palabra empieza por lo escrito (primero los del nombre)
+  const options = useMemo(() => {
+    if (!menu) return []
+    const q = norm(menu.q).trim()
+    if (!q) return BLOCK_TYPES
+    const starts = (txt) => norm(txt).split(/[^a-z0-9]+/).some((w) => w.startsWith(q))
+    return BLOCK_TYPES.filter((t) => starts(t.label) || starts(t.hint)).sort((a, b) => Number(starts(b.label)) - Number(starts(a.label)))
+  }, [menu?.q])
 
   // Convierte el bloque vacío donde escribiste «+» o «/» en el tipo elegido
   const pick = (type) => {
@@ -97,7 +106,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if ((text.startsWith('/') || text.startsWith('+')) && TEXTY.includes(b.type)) {
       const r = el.getBoundingClientRect()
       const z = parseFloat(getComputedStyle(el.closest('.d-app') ?? document.body).zoom) || 1 // la vista portátil va con zoom
-      setMenu((m) => ({ id: b.id, q: text.slice(1), i: m?.id === b.id ? Math.min(m.i, 11) : 0, x: r.left / z, y: r.bottom / z }))
+      setMenu((m) => ({ id: b.id, q: text.slice(1), i: m?.id === b.id && m.q === text.slice(1) ? m.i : 0, x: r.left / z, y: r.bottom / z }))
     } else if (menu?.id === b.id) setMenu(null)
     patch(b.id, { html: sanitize(el.innerHTML) })
   }
