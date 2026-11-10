@@ -18,6 +18,7 @@ export default function Cookbook({ data, update }) {
   const has = new Set(dishes.map((d) => letterOf(d.name)))
   const shown = letter ?? (active ? letterOf(active.name) : LETTERS.find((l) => has.has(l)))
   const list = dishes.filter((d) => letterOf(d.name) === shown).sort((a, b) => a.name.localeCompare(b.name, 'es'))
+  const open = list.find((x) => x.id === active?.id) // la receta abierta solo se ve si es de la letra elegida
   const select = (id) => update((d) => ({ ...d, activeDish: id }))
   const save = (patch) => { update((d) => ({ ...d, dishes: dishesOf(d).map((x) => (x.id === active.id ? { ...x, ...patch } : x)) })); setEditing(false) }
   const remove = () => {
@@ -55,20 +56,20 @@ export default function Cookbook({ data, update }) {
         ))}
       </div>
 
-      {active && list.length > 0 && (
+      {open && (
         <div className="fd-detail">
           <div className="fd-detail-head">
-            <h2>{active.name}</h2>
+            <h2>{open.name}</h2>
             <button className="fd-ib" onClick={() => setEditing(true)} aria-label="Editar receta" title="Editar receta"><Icon name="pen" size={16} /></button>
           </div>
           <div className="fd-tags">
-            {active.for.map((m) => <span key={m} className="fd-chip is-on">{MEALS[m]}</span>)}
-            {active.time && <span className="fd-chip"><Icon name="clock" size={13} />{active.time} min</span>}
+            {open.for.map((m) => <span key={m} className="fd-chip is-on">{MEALS[m]}</span>)}
+            {open.time && <span className="fd-chip"><Icon name="clock" size={13} />{open.time} min</span>}
           </div>
           <hr />
           <div className="fd-cols">
-            <div><b>Ingredientes</b>{active.ingredients.length ? <ul>{active.ingredients.map((x, i) => <li key={x + i}>{x}</li>)}</ul> : <p className="fd-hint">Sin ingredientes</p>}</div>
-            <div><b>Preparación</b>{active.steps.length ? <ol>{active.steps.map((x, i) => <li key={x + i}>{x}</li>)}</ol> : <p className="fd-hint">Sin pasos</p>}</div>
+            <div><b>Ingredientes</b>{open.ingredients.length ? <ul>{open.ingredients.map((x, i) => <li key={x + i}>{x}</li>)}</ul> : <p className="fd-hint">Sin ingredientes</p>}</div>
+            <div><b>Preparación</b>{open.steps.length ? <ol>{open.steps.map((x, i) => <li key={x + i}>{x}</li>)}</ol> : <p className="fd-hint">Sin pasos</p>}</div>
           </div>
         </div>
       )}
