@@ -2660,3 +2660,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .slot-h1 > .row-tools { top: 34px; } .slot-h2 > .row-tools { top: 30px; } .slot-h3 > .row-tools { top: 22px; }
 .slot-callout > .row-tools { top: 24px; } .slot-code > .row-tools { top: 22px; } .slot-table > .row-tools { top: 25px; }
 @media (max-width: 899px) { .row-tools { left: -28px; } }
+/* + más cerca del asa y el conjunto 1 px más separado del texto */
+.row-tools { left: -41px; gap: 0; }
+.row-tools .row-plus { width: 20px; }
+@media (max-width: 899px) { .row-tools { left: -29px; } }
