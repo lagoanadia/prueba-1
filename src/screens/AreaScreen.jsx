@@ -36,13 +36,12 @@ const arrayMove = (list, from, to) => {
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
 
-  // Salud: los widgets nuevos (ciclo, sueño, pastillero, pasos, resumen, constancia) se añaden una sola vez a tu tablero
-  // para que aparezcan sin tener que ir a buscarlos; si luego quitas alguno, no vuelve.
+  // Salud: se abren todos los widgets de Salud en grande, una sola vez (los que falten se añaden); luego puedes cambiarlos o quitarlos
   useEffect(() => {
-    if (area.id !== 'salud' || !board || board.isNew || board.data.healthWidgetsAdded) return
-    const NEW = ['weeksummary', 'steps', 'cycle', 'sleepcalc', 'pills', 'consistency']
-    updateLayout((l) => [...l, ...NEW.filter((t) => !l.some((w) => w.type === t)).map((type) => ({ id: crypto.randomUUID(), type, size: 'L' }))])
-    updateData((d) => ({ ...d, healthWidgetsAdded: true }))
+    if (area.id !== 'salud' || !board || board.isNew || board.data.healthAllOpen) return
+    const all = widgetsFor('salud').map((w) => w.type)
+    updateLayout((l) => [...l.map((w) => (all.includes(w.type) ? { ...w, size: 'L' } : w)), ...all.filter((t) => !l.some((w) => w.type === t)).map((type) => ({ id: crypto.randomUUID(), type, size: 'L' }))])
+    updateData((d) => ({ ...d, healthAllOpen: true, healthWidgetsAdded: true }))
   }, [area.id, board?.isNew, Boolean(board)]) // eslint-disable-line react-hooks/exhaustive-deps
   const [editing, setEditing] = useState(false)
   const [gallery, setGallery] = useState(false)
