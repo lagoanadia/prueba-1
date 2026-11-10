@@ -2550,3 +2550,13 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-sess { position: absolute; left: 3px; right: 3px; border: none; border-radius: 12px; background: color-mix(in srgb, var(--c) 42%, #fff); padding: 4px 8px; text-align: left; font: inherit; font-size: 12.5px; line-height: 1.25; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05); }
 .sa-sess span { font-size: 11px; color: rgba(32, 33, 36, .7); } .sa-sess em { font-style: normal; font-size: 10.5px; font-weight: 700; background: #fff; border-radius: 8px; padding: 0 6px; align-self: flex-start; margin-top: 2px; }
 .sa-sess.is-done { box-shadow: inset 0 0 0 2px #3DDC97; }
+
+/* Comida: puntito rosa en los títulos, buscador del recetario y recuperar semanas */
+.dot-food { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #EFABFF; margin-right: 2px; flex-shrink: 0; }
+.fd-search { display: flex; align-items: center; gap: 8px; border: 2px solid var(--line); border-radius: 22px; padding: 6px 14px; background: #fff; transition: border-color .2s; } .fd-search:focus-within { border-color: #EFABFF; }
+.fd-search input { flex: 1; min-width: 0; border: none; outline: none; font: inherit; font-size: 15px; background: none; }
+.fd-cookbook:focus { outline: none; }
+.fd-menu { position: relative; }
+.fd-recover { position: absolute; right: 18px; top: 64px; z-index: 41; width: min(360px, 92%); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.fd-recover-row { display: flex; align-items: center; gap: 10px; border-radius: 14px; background: #F8F9FA; padding: 8px 10px; } .fd-recover-row > div { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; } .fd-recover-row span { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-ib.on { background: var(--fd-soft); }

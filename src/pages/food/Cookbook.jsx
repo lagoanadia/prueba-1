@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { MEALS, activeDishOf, dishesOf } from '../../widgets/comida/food.js'
 import DishForm from './DishForm.jsx'
@@ -14,6 +14,12 @@ export default function Cookbook({ data, update }) {
   const [letter, setLetter] = useState(null)
   const [hot, setHot] = useState(null) // índice de la letra bajo el ratón (para la onda)
   const [editing, setEditing] = useState(false)
+  const [q, setQ] = useState(null) // null = sin buscar · texto = buscando
+  const searchRef = useRef(null)
+  // Al empezar a buscar, el cursor pasa al buscador (al final del texto) para seguir escribiendo
+  useEffect(() => { const el = searchRef.current; if (q != null && el && document.activeElement !== el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) } }, [q != null]) // eslint-disable-line react-hooks/exhaustive-deps
+  const norm = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const results = q == null ? [] : dishes.filter((x) => { const n = norm(q).trim(); return n && (norm(x.name).includes(n) || (x.ingredients ?? []).some((i) => norm(i).includes(n))) })
 
   const has = new Set(dishes.map((d) => letterOf(d.name)))
   const shown = letter ?? (active ? letterOf(active.name) : LETTERS.find((l) => has.has(l)))
@@ -32,8 +38,26 @@ export default function Cookbook({ data, update }) {
   }
 
   return (
-    <section className="card fd-card fd-cookbook" aria-label="Recetario">
-      <div className="fd-title"><span className="fd-ic"><Icon name="book" size={18} /></span><b>Recetario</b></div>
+    <section className="card fd-card fd-cookbook" aria-label="Recetario" tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Escape' && q != null) { setQ(null); return } if (q == null && e.target === e.currentTarget && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setQ(e.key) } }}>
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Recetario</b></div>
+      <div className="fd-search">
+        <Icon name="search" size={16} />
+        <input ref={searchRef} value={q ?? ''} placeholder="Buscar receta o ingrediente" aria-label="Buscar receta" onFocus={() => q == null && setQ('')} onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setQ(null); e.currentTarget.blur() } }} />
+        {q != null && <><span className="fd-hint">{q.trim() ? `${results.length} resultado${results.length === 1 ? '' : 's'}` : ''}</span><button className="fd-ib" onClick={() => setQ(null)} aria-label="Cerrar la búsqueda"><Icon name="close" size={14} /></button></>}
+      </div>
+      {q != null && q.trim() ? (
+        <div className="fd-cards">
+          {results.map((x) => (
+            <button key={x.id} className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null) }}>
+              <span className="fd-rec-name">{x.name}</span>
+              <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
+            </button>
+          ))}
+          {results.length === 0 && <p className="fd-empty">Sin resultados para «{q}»</p>}
+        </div>
+      ) : (<>
       <div className="fd-abc" role="tablist" aria-label="Letras" onMouseLeave={() => setHot(null)}>
         {LETTERS.map((l, i) => {
           const d = hot == null ? 9 : Math.abs(i - hot)
@@ -74,6 +98,7 @@ export default function Cookbook({ data, update }) {
           </div>
         </div>
       )}
+      </>)}
       {editing && open && (
         <Modal title="Editar receta" icon="pen" onClose={() => setEditing(false)} wide>
           <DishForm initial={open} onSave={save} onRemove={remove} />

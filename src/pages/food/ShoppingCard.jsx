@@ -30,7 +30,7 @@ export default function ShoppingCard({ data, update }) {
       onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
       onDrop={(e) => { e.preventDefault(); setOver(false); const id = e.dataTransfer.getData('text/dish'); if (dishes.some((x) => x.id === id)) setPick(id) }}>
       <div className="fd-title">
-        <span className="fd-ic"><Icon name="cart" size={18} /></span><b>Lista de la compra</b><span className="fd-grow" />
+        <span className="dot-food" aria-hidden="true" /><b>Lista de la compra</b><span className="fd-grow" />
         {items.some((i) => i.done) && <button className="fd-ib" onClick={() => save((c) => c.filter((i) => !i.done))} aria-label="Quitar lo comprado" title="Quitar lo comprado"><Icon name="trash" size={16} /></button>}
         <button className="fd-ib" onClick={() => setChoose(true)} aria-label="Añadir ingredientes de una receta" title="Añadir de una receta"><Icon name="book" size={16} /></button>
       </div>

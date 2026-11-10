@@ -20,6 +20,7 @@ export default function MenuCard({ data, update }) {
   const [slot, setSlot] = useState(null) // { day, meal }
   const [over, setOver] = useState(null)
   const [clearing, setClearing] = useState(false)
+  const [recover, setRecover] = useState(false) // semanas anteriores para basarse en una
   const days = weekDays(addDays(weekStart(today), offset * 7))
   const dishes = dishesOf(data)
   const meals = mealsOf(data)
@@ -34,6 +35,22 @@ export default function MenuCard({ data, update }) {
   // Vaciar la semana: quita las comidas del menú de esos 7 días (las recetas no se borran)
   const clearWeek = () => { update((d) => { const menu = { ...(d.menu ?? {}) }; days.forEach((x) => delete menu[x]); return { ...d, menu } }); setClearing(false) }
   const empty = days.every((x) => !Object.values(menu[x] ?? {}).some(Boolean))
+  // Semanas anteriores a la que estás viendo que tienen algo apuntado (las más recientes primero)
+  const viewed = days[0]
+  const pastWeeks = [...new Set(Object.keys(menu).filter((d) => Object.values(menu[d] ?? {}).some(Boolean)).map((d) => weekStart(d)))].filter((w) => w < viewed).sort().reverse().slice(0, 8)
+  const preview = (monday) => weekDays(monday).flatMap((d) => Object.values(menu[d] ?? {})).filter(Boolean).map((v) => dishName(dishes, v)).filter(Boolean).slice(0, 3).join(', ')
+  // Copia esa semana a la que estás viendo, solo en las casillas vacías (no pisa lo que ya tienes)
+  const useWeek = (monday) => {
+    update((d) => {
+      const next = { ...(d.menu ?? {}) }
+      weekDays(monday).forEach((src, i) => {
+        const dst = addDays(viewed, i)
+        Object.entries(d.menu?.[src] ?? {}).forEach(([meal, v]) => { if (v && !next[dst]?.[meal]) next[dst] = { ...(next[dst] ?? {}), [meal]: v } })
+      })
+      return { ...d, menu: next }
+    })
+    setRecover(false)
+  }
   const drop = (e, day, meal) => {
     e.preventDefault(); setOver(null)
     const id = e.dataTransfer.getData('text/dish')
@@ -42,8 +59,22 @@ export default function MenuCard({ data, update }) {
 
   return (
     <section className="card fd-card fd-menu" aria-label="Menú de la semana">
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Planificador de comidas</b><span className="fd-grow" />
+        <button className={`fd-ib ${recover ? 'on' : ''}`} onClick={() => setRecover(!recover)} aria-expanded={recover} aria-label="Basarme en una semana anterior" title="Recuperar una semana anterior"><Icon name="restore" size={18} /></button>
+      </div>
+      {recover && (
+        <>
+          <span className="sc-back" onClick={() => setRecover(false)} />
+          <div className="card fd-recover" role="dialog" aria-label="Semanas anteriores">
+            <b>Basarme en otra semana</b><span className="fd-hint">Copia sus comidas a la semana que estás viendo (solo en las casillas vacías).</span>
+            {pastWeeks.length === 0 && <p className="fd-hint">Aún no hay semanas anteriores con comidas apuntadas.</p>}
+            {pastWeeks.map((w) => (
+              <div key={w} className="fd-recover-row"><div><b>{range(weekDays(w))}</b><span>{preview(w)}</span></div><button className="fd-pill" onClick={() => useWeek(w)}>Usar</button></div>
+            ))}
+          </div>
+        </>
+      )}
       <div className="fd-menu-head">
-        <button className="fd-ib" onClick={() => setOffset(0)} aria-label="Esta semana" title="Esta semana"><Icon name="calendario" size={18} /></button>
         <button className="fd-ib" onClick={() => setOffset(offset - 1)} aria-label="Semana anterior"><Icon name="left" size={16} /></button>
         <b className="fd-range">{range(days)}</b>
         <button className="fd-ib" onClick={() => setOffset(offset + 1)} aria-label="Semana siguiente"><Icon name="right" size={16} /></button>

@@ -23,7 +23,7 @@ export default function FoodPage({ data, update }) {
         <Cookbook data={data} update={update} />
         <div className="fd-rail">
           <section className="card fd-card" aria-label="Guardar comida">
-            <div className="fd-title"><span className="fd-ic"><Icon name="comida" size={18} /></span><b>Guardar comida</b></div>
+            <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Guardar comida</b></div>
             <DishForm onSave={saveDish} />
           </section>
           <ShoppingCard data={data} update={update} />

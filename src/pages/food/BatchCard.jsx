@@ -25,7 +25,7 @@ export default function BatchCard({ data, update }) {
     <section className={`card fd-card ${over ? 'is-over' : ''}`} aria-label="Batch cooking"
       onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
       onDrop={(e) => { e.preventDefault(); setOver(false); const id = e.dataTransfer.getData('text/dish'); if (dishes.some((x) => x.id === id)) setDlg({ dish: id }) }}>
-      <div className="fd-title"><span className="fd-ic"><Icon name="pot" size={18} /></span><b>Batch cooking</b><span className="fd-grow" />
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Batch cooking</b><span className="fd-grow" />
         <button className="fd-ib" onClick={() => setDlg({ dish: null })} aria-label="Planificar una cocinada" title="Planificar"><Icon name="plus" size={16} /></button></div>
       <ul className="fd-batch">
         {[...plan].sort((a, b) => a.cook.localeCompare(b.cook)).map((b) => (
