@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TopActions from '../../components/TopActions.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
 import Icon from '../../components/Icon.jsx'
-import { progressFor, soft, SUBJECT_COLORS } from './helpers.js'
+import { progressFor, soft, SUBJECT_PALETTE } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
 import QuickNote from './QuickNote.jsx'
 import Schedule from './Schedule.jsx'
@@ -54,7 +54,7 @@ export default function Planner({ data, update, openSubject }) {
     e.preventDefault()
     const v = short.trim().toUpperCase()
     if (!v) return
-    update((d) => { const list = d.subjects ?? []; return { ...d, subjects: [...list, { id: crypto.randomUUID(), short: v, name: v, color: SUBJECT_COLORS[list.length % SUBJECT_COLORS.length], units: [{ id: crypto.randomUUID(), name: 'Bloque 1', topics: [] }] }] } })
+    update((d) => { const list = d.subjects ?? []; return { ...d, subjects: [...list, { id: crypto.randomUUID(), short: v, name: v, color: SUBJECT_PALETTE[list.length % SUBJECT_PALETTE.length], units: [{ id: crypto.randomUUID(), name: 'Bloque 1', topics: [] }] }] } })
     setShort('')
   }
 
@@ -84,9 +84,9 @@ export default function Planner({ data, update, openSubject }) {
         {subjects.map((s, i) => {
           const p = progressFor(s, data.assignments)
           return (
-            <button key={s.id} className="card subject-card" style={{ '--i': i, borderTop: `6px solid ${soft(s.color, 60)}` }} onClick={() => openSubject(s.id)}>
+            <button key={s.id} className="card subject-card" style={{ '--i': i, borderTop: `6px solid ${s.color}` }} onClick={() => openSubject(s.id)}>
               <span className="w-row"><b>{s.short}</b><b className={p.pct ? '' : 'pct-zero'}>{p.pct} %</b></span>
-              <span className="bar bar-track" style={{ background: soft(s.color, 20) }}><span style={{ width: `${p.pct}%`, background: soft(s.color, 80) }} /></span>
+              <span className="bar bar-track" style={{ background: soft(s.color, 28) }}><span style={{ width: `${p.pct}%`, background: s.color }} /></span>
             </button>
           )
         })}

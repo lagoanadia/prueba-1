@@ -60,7 +60,7 @@ export default function Deliveries({ data, update, subjects, course = null }) {
           {!course && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
           {list.map((a) => (
             <div key={a.id} className="deliv-row" style={{ background: soft(color(a.course), 16) }}>
-              <button className="deliv-ic" style={{ background: soft(color(a.course)) }} onClick={() => finish(a.id)} aria-label={`Marcar «${a.title}» como entregada`} title="Marcar como entregada"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></button>
+              <button className="deliv-ic" style={{ background: soft(color(a.course), 55) }} onClick={() => finish(a.id)} aria-label={`Marcar «${a.title}» como entregada`} title="Marcar como entregada"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></button>
               <span className="deliv-name w-ellipsis">{a.title}</span>
               <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>
               <button className="prio-x" onClick={() => open(a)} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>

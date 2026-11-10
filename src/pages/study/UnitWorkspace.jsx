@@ -102,7 +102,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       <div className="ws-body">
         {panel && (
           <aside className="card ws-panel" aria-label="Unidades y temas">
-            <b className="ws-subject" style={{ borderColor: soft(subject.color) }}>{subject.short}</b>
+            <b className="ws-subject" style={{ borderColor: subject.color }}>{subject.short}</b>
             {subject.units.map((u) => {
               const on = u.id === unit.id
               const isOpen = open.has(u.id)

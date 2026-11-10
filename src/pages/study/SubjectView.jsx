@@ -88,9 +88,9 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       {banner && <p className="og-banner" role="status"><Icon name="check" size={20} color="#0F6B45" strokeWidth={3} />{banner}</p>}
       {review ? <OrganizeReview review={review} setReview={setReview} message={reviewMsg} busy={busy} onCreate={create} onRedo={redo} onCancel={cancelReview} /> : (<>
       <div className="study-mid subject-top">
-        <section className="card progress-card" style={{ background: soft(subject.color, 22), boxShadow: 'none' }}>
+        <section className="card progress-card" style={{ background: soft(subject.color, 28), boxShadow: 'none' }}>
           <svg className="ring-svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso ${p.pct} %`}>
-            <circle cx="60" cy="60" r={R} fill="none" stroke={soft(subject.color, 45)} strokeWidth="14" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke={soft(subject.color, 40)} strokeWidth="14" />
             {p.pct > 0 && <circle cx="60" cy="60" r={R} fill="none" stroke={subject.color} strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(p.pct / 100) * C} ${C}`} transform="rotate(-90 60 60)" />}
             <text x="60" y="68" textAnchor="middle" fontSize="24" fontWeight="700" fill="#202124">{p.pct} %</text>
           </svg>
@@ -120,7 +120,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
             <div key={u.id} className="unit-wrap" style={{ '--i': i }}>
             <button className="card unit-card unit-btn" onClick={() => openUnit(u.id)}>
               <span className="w-row"><b className="unit-title">{u.name}</b><b>{up.clear} de {up.total}</b></span>
-              <span className="bar"><span style={{ width: `${up.total ? (up.clear / up.total) * 100 : 0}%`, background: soft(subject.color) }} /></span>
+              <span className="bar"><span style={{ width: `${up.total ? (up.clear / up.total) * 100 : 0}%`, background: subject.color }} /></span>
               <span className="state-chip" style={{ background: soft(st.color, 35) }}>{st.label}</span>
               {u.topics.slice(0, 4).map((t) => <span key={t.id} className="w-row unit-topic"><span className="w-ellipsis">{t.name}</span><Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={TOPIC_STATES.find((x) => x.id === t.state)?.id === 'clear' ? '#3DDC97' : '#9AA0A6'} /></span>)}
             </button>

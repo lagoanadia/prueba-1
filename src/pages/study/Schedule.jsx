@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { DEFAULT_BREAK, DEFAULT_CLASS, fmt, normalizeTimetable, spans, toMin } from './timetable.js'
-import { SUBJECT_COLORS, soft } from './helpers.js'
+import { SUBJECT_COLORS, soft, tone } from './helpers.js'
 
 // «Recreo» de horarios antiguos se ve como «Descanso»
 const breakName = (l) => (!l || l === 'Recreo' ? 'Descanso' : l)
@@ -33,7 +33,7 @@ export default function Schedule({ data, update, subjects }) {
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
   const options = [...subjects.map((s) => s.short), ...tt.labels.map((l) => `#${l.id}`)]
-  const look = (v) => (bySubject[v] ? { name: v, color: soft(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: soft(byLabel[v].color, 40) } : null)
+  const look = (v) => (bySubject[v] ? { name: v, color: tone(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: soft(byLabel[v].color, 40) } : null)
 
   const patch = (fn) => update((d) => ({ ...d, timetable: fn(normalizeTimetable(d.timetable, d.subjects ?? [])) }))
   // Vacío = se quita la casilla
@@ -128,7 +128,7 @@ export default function Schedule({ data, update, subjects }) {
       </div>
 
       <div className="tt-tools">
-        {subjects.map((s) => <button key={s.id} className={`seg-chip ${brush === s.short ? 'on' : ''}`} style={{ background: soft(s.color) }} aria-pressed={brush === s.short} onClick={() => setBrush(brush === s.short ? null : s.short)}>{s.short}</button>)}
+        {subjects.map((s) => <button key={s.id} className={`seg-chip ${brush === s.short ? 'on' : ''}`} style={{ background: tone(s.color) }} aria-pressed={brush === s.short} onClick={() => setBrush(brush === s.short ? null : s.short)}>{s.short}</button>)}
         <span className="tt-sep" />
         {tt.labels.map((l) => (
           <span key={l.id} className="seg-wrap">
