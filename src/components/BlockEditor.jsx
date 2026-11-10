@@ -128,7 +128,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick}>
         {blocks.map((b, i) => (
-          <div key={b.id} className={`block-slot ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}
+          <div key={b.id} className={`block-slot slot-${b.type} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}
             onDragOver={(e) => { if (!drag) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY > r.top + r.height / 2; if (drag.over !== b.id || drag.after !== after) setDrag({ ...drag, over: b.id, after }) }}
             onDrop={(e) => { e.preventDefault(); dropDrag() }}>
             <Gap />

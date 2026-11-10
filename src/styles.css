@@ -2655,3 +2655,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .block-slot.drop-before::before { top: 0; } .block-slot.drop-after::after { bottom: 0; }
 @media (max-width: 899px) { .blocks-page { padding-left: 34px; } .row-tools { left: -30px; } .row-grip { display: none; } }
 @media (hover: none) { .row-tools { opacity: .6; } }
+/* Herramientas más pegadas al bloque y alineadas con su primera línea */
+.row-tools { left: -46px; top: 17px; }
+.slot-h1 > .row-tools { top: 34px; } .slot-h2 > .row-tools { top: 30px; } .slot-h3 > .row-tools { top: 22px; }
+.slot-callout > .row-tools { top: 24px; } .slot-code > .row-tools { top: 22px; } .slot-table > .row-tools { top: 25px; }
+@media (max-width: 899px) { .row-tools { left: -28px; } }
