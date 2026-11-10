@@ -173,12 +173,14 @@ export default function AreaScreen({ area, showTitle = true }) {
   // Las tarjetas están memorizadas (memo): para que no se repinten sin motivo, les pasamos
   // funciones estables que leen siempre la última versión desde este ref.
   const api = useRef({})
-  api.current = { onPointerDown: onWidgetPointerDown, remove, resize, updateData }
+  const setConfig = (id, patch) => updateLayout((l) => l.map((w) => (w.id === id ? { ...w, ...patch } : w))) // ajustes de un widget concreto (p. ej. su hábito)
+  api.current = { onPointerDown: onWidgetPointerDown, remove, resize, updateData, setConfig }
   const [stableApi] = useState(() => ({
     onPointerDown: (e, id) => api.current.onPointerDown(e, id),
     remove: (id) => api.current.remove(id),
     resize: (id, size) => api.current.resize(id, size),
     updateData: (fn) => api.current.updateData(fn),
+    setConfig: (id, patch) => api.current.setConfig(id, patch),
     setRef: (id, el) => (el ? cards.current.set(id, el) : cards.current.delete(id)),
   }))
 
@@ -251,8 +253,8 @@ function WidgetView({ w: raw, data, update = () => {} }) {
   const Widget = def.component
   return (
     <article className={`widget w-${w.size}`}>
-      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>}
-      <div className="w-body"><Widget size={w.size} data={data} update={update} /></div>
+      <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>
+      <div className="w-body"><Widget size={w.size} data={data} update={update} config={w} /></div>
     </article>
   )
 }
@@ -281,9 +283,9 @@ const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragge
   return (
     <article ref={(el) => api.setRef(w.id, el)} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
       className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
-      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>}
+      <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>
       {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
-      <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} /></div>
+      <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} config={w} setConfig={(patch) => api.setConfig(w.id, patch)} /></div>
       {editing && (
         <>
           <button className="w-remove" onClick={() => api.remove(w.id)} aria-label={`Quitar ${def.name}`}>×</button>

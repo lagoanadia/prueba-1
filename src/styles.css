@@ -2431,3 +2431,23 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 
 /* Metas: la barra vacía es del mismo gris que los cuadrados sin marcar */
 .goals .bar { background: #D7D9DB; }
+
+/* Hábitos pequeño: nombre desplegable y puntos para pasar al siguiente */
+.px-s { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: pan-y; }
+.px-s-name { display: inline-flex; align-items: center; gap: 4px; border: none; background: var(--soft); border-radius: 14px; padding: 3px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; max-width: 90%; }
+.px-s-menu { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 6; width: min(150px, 92%); background: #fff; border-radius: 16px; box-shadow: 0 8px 28px rgba(60, 64, 67, .35); padding: 6px; display: flex; flex-direction: column; }
+.px-s-menu > button { display: flex; justify-content: space-between; align-items: center; border: none; background: none; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 10px; cursor: pointer; text-align: left; }
+.px-s-menu > button.on { background: #E8F0FE; }
+.px-s-new { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); margin-top: 4px; padding: 7px 10px 3px; color: var(--muted); }
+.px-s-new input { border: none; outline: none; font: inherit; font-size: 13px; min-width: 0; flex: 1; background: none; }
+.px-s-dots { display: flex; gap: 4px; margin-top: 2px; }
+.px-s-dots button { width: 6px; height: 6px; padding: 0; border: none; border-radius: 3px; background: #D7D9DB; cursor: pointer; transition: width .2s var(--ease), background .2s; }
+.px-s-dots button.on { width: 14px; background: #F9DC5C; }
+@media (prefers-reduced-motion: reduce) { .px-s-dots button { transition: none; } }
+
+/* Todos los widgets llevan título con su puntito, también el pequeño */
+.w-S > .w-title { font-size: 11px; gap: 6px; min-width: 0; padding-right: 30px; }
+.w-S > .w-title .dot { width: 8px; height: 8px; flex-shrink: 0; }
+.w-S > .w-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.w-S > .w-title .dot { display: inline-block; margin-right: 6px; }
+.widget:has(.px-s-menu) { overflow: visible; z-index: 20; }
