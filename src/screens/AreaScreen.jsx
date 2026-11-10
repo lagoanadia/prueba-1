@@ -36,6 +36,12 @@ const arrayMove = (list, from, to) => {
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
 
+  // Salud: Sueño y Agua ya no existen; se quitan de los tableros guardados
+  useEffect(() => {
+    if (area.id !== 'salud' || !board || board.isNew) return
+    if (board.layout.some((w) => w.type === 'sleep' || w.type === 'water')) updateLayout((l) => l.filter((w) => w.type !== 'sleep' && w.type !== 'water'))
+  }, [area.id, board?.layout]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Salud: se abren todos los widgets de Salud en grande, una sola vez (los que falten se añaden); luego puedes cambiarlos o quitarlos
   useEffect(() => {
     if (area.id !== 'salud' || !board || board.isNew || board.data.healthAllOpen) return
@@ -261,7 +267,7 @@ function WidgetView({ w: raw, data, update = () => {} }) {
   const Widget = def.component
   return (
     <article className={`widget w-${w.size}`}>
-      <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>
+      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{def.name}</h3>
       <div className="w-body"><Widget size={w.size} data={data} update={update} config={w} /></div>
     </article>
   )
@@ -282,6 +288,8 @@ function SizeDock({ size, onPick, name, sizes = SIZES }) {
   )
 }
 
+// Color del puntito de los títulos: el del área (Journal amarillo, Salud verde)
+const AREA_DOT = { journal: '#F9DC5C', salud: '#3DDC97' }
 const BASE_ROWS = { S: 1, M: 1, T: 2, L: 2 } // filas que ocupa cada tamaño
 const MAX_ROWS = 8
 
@@ -328,7 +336,7 @@ const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragge
   return (
     <article ref={(el) => { cardRef.current = el; api.setRef(w.id, el) }} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
       className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
-      <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>
+      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{def.name}</h3>
       {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
       <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} config={w} setConfig={(patch) => api.setConfig(w.id, patch)} /></div>
       {editing && (

@@ -37,15 +37,13 @@ export const FLOWS = {
       { id: 'sports', type: 'tags', title: '¿Qué deportes haces?', suggestions: SPORT_SUGGESTIONS, placeholder: 'Otro deporte' },
       { id: 'days', type: 'days', title: '¿Qué días entrenas?' },
       { id: 'weeklyGoal', type: 'choice', title: '¿Cuánto quieres moverte a la semana?', options: [{ value: 90, label: '90 min' }, { value: 150, label: '150 min' }, { value: 300, label: '300 min' }], initial: 150 },
-      { id: 'waterGoal', type: 'choice', title: '¿Cuántos vasos de agua al día?', options: [6, 8, 10].map((v) => ({ value: v, label: `${v} vasos` })), initial: 8 },
-      { id: 'sleepGoal', type: 'choice', title: '¿Cuántas horas quieres dormir?', options: [7, 8, 9].map((v) => ({ value: v, label: `${v} h` })), initial: 8 },
     ],
     build: (a) => {
       const sports = a.sports ?? []
       let k = 0
       // Reparte tus deportes entre los días que entrenas; el resto, descanso
       const plan = Array.from({ length: 7 }, (_, i) => ((a.days ?? []).includes(i) ? (sports.length ? sports[k++ % sports.length] : 'Descanso') : 'Descanso'))
-      return { sports, plan, weeklyGoal: a.weeklyGoal ?? 150, waterGoal: a.waterGoal ?? 8, sleepGoal: a.sleepGoal ?? 8 }
+      return { sports, plan, weeklyGoal: a.weeklyGoal ?? 150 }
     },
   },
 
