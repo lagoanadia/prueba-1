@@ -32,7 +32,6 @@ export default function YearGrid({ colorFor, onDay }) {
 }
 
 const GAP = 2 // entre cuadrados
-const BAND_GAP = 10 // entre bandas
 
 /**
  * El año entero como una masa de cuadrados (semanas en columnas, lunes arriba). Siempre cuadrados y sin deslizar:
@@ -55,20 +54,25 @@ export function YearMass({ colorFor, onDay }) {
   const weeks = Math.floor((new Date(`${weekStart(`${year}-12-31`)}T12:00:00`) - new Date(`${first}T12:00:00`)) / 604800000) + 1
   const cols = Array.from({ length: weeks }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i)))
 
+  // Se prueba con 1 a 6 bandas apiladas y se queda la que da los cuadrados más grandes
   let best = { bands: 1, cell: 0 }
-  for (let b = 1; b <= 4; b++) {
+  for (let b = 1; b <= 6; b++) {
     const per = Math.ceil(weeks / b)
-    const cell = Math.min((size.w - (per - 1) * GAP) / per, (size.h - (b - 1) * BAND_GAP - (7 * b - 1) * GAP) / (7 * b))
+    const cell = Math.min((size.w - (per - 1) * GAP) / per, (size.h - (7 * b - 1) * GAP) / (7 * b))
     if (cell > best.cell) best = { bands: b, cell }
   }
-  const cell = Math.max(4, Math.min(Math.floor(best.cell), 28))
+  const cell = Math.max(4, Math.min(Math.floor(best.cell), 40))
   const per = Math.ceil(weeks / best.bands)
   const bands = Array.from({ length: best.bands }, (_, i) => cols.slice(i * per, (i + 1) * per))
+  // El espacio que sobra se reparte entre los cuadrados (hueco parejo, también entre bandas) para llenar el widget
+  const spread = (room, n) => (n > 1 ? Math.max(GAP, Math.min((room - n * cell) / (n - 1), cell * 0.45)) : GAP)
+  const gapX = spread(size.w, per)
+  const gapY = spread(size.h, 7 * best.bands)
 
   return (
-    <div className="year-mass-box" ref={box}>
+    <div className="year-mass-box" ref={box} style={{ gap: gapY }}>
       {size.w > 0 && bands.map((band, bi) => (
-        <div key={bi} className="year-mass" style={{ gridTemplateRows: `repeat(7, ${cell}px)`, gridAutoColumns: `${cell}px`, gap: GAP }}>
+        <div key={bi} className="year-mass" style={{ gridTemplateRows: `repeat(7, ${cell}px)`, gridAutoColumns: `${cell}px`, gap: `${gapY}px ${gapX}px` }}>
           {band.flat().map((d) => (d.startsWith(year)
             ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ width: cell, height: cell, background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
             : <span key={d} />))}
