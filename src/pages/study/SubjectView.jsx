@@ -6,7 +6,7 @@ import Deliveries from './Deliveries.jsx'
 import OrganizeDrop from './OrganizeDrop.jsx'
 import OrganizeReview from './OrganizeReview.jsx'
 import ResourceFrames from './ResourceFrames.jsx'
-import SubjectNotes from './SubjectNotes.jsx'
+import QuickNote from './QuickNote.jsx'
 import { applyReview, buildReview, countReview, fallbackProposal } from './organize.js'
 import { deleteFile } from '../../lib/fileStore.js'
 import { proposeOrganization } from '../../services/organizeService.js'
@@ -112,6 +112,8 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
 
       <OrganizeDrop subjectName={subject.name} onReview={startReview} />
 
+      <div className="unit-row">
+      <div className="unit-main">
       <div className="head-line unit-head">
         <h2 className="page-h2">Unidades</h2>
         <button className="icon-btn unit-add" onClick={() => setDialog('new')} aria-label="Añadir unidad" title="Añadir unidad"><Icon name="plus" size={20} /></button>
@@ -133,10 +135,13 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
           )
         })}
       </div>
+      </div>
+      <aside className="subject-note" aria-label="Post-it de la asignatura">
+        <QuickNote note={subject.note ?? { html: '' }} onChange={(n) => changeSubject(update, subject.id, (x) => ({ ...x, note: n }))} onDelete={() => changeSubject(update, subject.id, (x) => ({ ...x, note: { html: '' } }))} />
+      </aside>
+      </div>
       {dialog === 'new' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
-
-      <SubjectNotes update={update} subject={subject} />
 
       <h2 className="page-h2 page-gap">Recursos</h2>
       <ResourceFrames data={data} update={update} subjectId={subject.id} />
