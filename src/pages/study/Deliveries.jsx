@@ -9,15 +9,18 @@ import { KINDS, soft } from './helpers.js'
  * Próximas entregas: se pueden añadir, editar y quitar a mano; cada una lleva el icono de su tipo.
  * Si `course` viene, solo muestra las de esa asignatura; si no, todas agrupadas por asignatura.
  */
-export default function Deliveries({ data, update, subjects, course = null }) {
+export default function Deliveries({ data, update, subjects, course = null, exams = false }) {
   const today = todayISO()
-  const all = (data.assignments ?? []).filter((a) => (course ? a.course === course : true))
+  // Los exámenes son un widget aparte: aquí solo salen los que cuadran con este modo
+  const all = (data.assignments ?? []).filter((a) => (course ? a.course === course : true) && ((a.kind === 'examen') === exams))
   const pending = all.filter((a) => !a.done).sort((a, b) => a.due.localeCompare(b.due))
   const done = all.filter((a) => a.done)
   const [form, setForm] = useState(null) // null cerrado · { id?, title, course, due, kind }
+  const [kindOpen, setKindOpen] = useState(false)
+  const kinds = Object.entries(KINDS).filter(([id]) => id !== 'examen') // los exámenes tienen su propio widget
   const color = (c) => subjects.find((s) => s.short === c)?.color ?? '#9AA0A6'
 
-  const open = (a) => setForm(a ? { ...a } : { title: '', course: course ?? subjects[0]?.short ?? '', due: '', kind: 'practica' })
+  const open = (a) => setForm(a ? { ...a } : { title: '', course: course ?? subjects[0]?.short ?? '', due: '', kind: exams ? 'examen' : 'practica' })
   const save = (e) => {
     e.preventDefault()
     if (!form.title.trim() || !form.due || !form.course) return
@@ -35,19 +38,31 @@ export default function Deliveries({ data, update, subjects, course = null }) {
   return (
     <div className="deliv">
       <div className="deliv-head">
-        <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Próximas entregas</h2>
-        <History title="Entregas hechas" empty="Aún no has entregado nada" items={done.map((a) => ({ id: a.id, date: a.doneAt ? formatShort(a.doneAt) : '', text: `${a.course} · ${a.title}` }))} />
-        <button className="icon-btn" onClick={() => open(null)} aria-label="Añadir entrega" title="Añadir entrega" disabled={!subjects.length}><Icon name="plus" size={22} /></button>
+        <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />{exams ? 'Exámenes' : 'Próximas entregas'}</h2>
+        <History title={exams ? 'Exámenes hechos' : 'Entregas hechas'} empty={exams ? 'Aún no has hecho ninguno' : 'Aún no has entregado nada'} items={done.map((a) => ({ id: a.id, date: a.doneAt ? formatShort(a.doneAt) : '', text: `${a.course} · ${a.title}` }))} />
+        <button className="icon-btn" onClick={() => open(null)} aria-label={exams ? 'Añadir examen' : 'Añadir entrega'} title={exams ? 'Añadir examen' : 'Añadir entrega'} disabled={!subjects.length}><Icon name="plus" size={22} /></button>
       </div>
 
       {form && (
         <form className="deliv-form" onSubmit={save}>
-          <div className="deliv-kinds" role="radiogroup" aria-label="Tipo de entrega">
-            {Object.entries(KINDS).map(([id, k]) => (
-              <button type="button" key={id} role="radio" aria-checked={form.kind === id} className={`icon-btn ${form.kind === id ? 'on' : ''}`} title={k.label} aria-label={k.label} onClick={() => setForm({ ...form, kind: id })}><Icon name={k.icon} size={20} /></button>
-            ))}
-          </div>
-          <input className="line-input" autoFocus placeholder="Qué hay que entregar" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} />
+          {!exams && (
+            <div className="deliv-kind">
+              <button type="button" className="kind-btn" onClick={() => setKindOpen(!kindOpen)} aria-expanded={kindOpen} aria-label="Tipo de entrega">
+                <Icon name={KINDS[form.kind]?.icon ?? 'doc'} size={16} />{KINDS[form.kind]?.label ?? 'Tipo'}<Icon name="down" size={12} strokeWidth={2.6} />
+              </button>
+              {kindOpen && (
+                <>
+                  <span className="sc-back" onClick={() => setKindOpen(false)} />
+                  <div className="card kind-menu" role="listbox" aria-label="Tipo de entrega">
+                    {kinds.map(([id, k]) => (
+                      <button type="button" key={id} role="option" aria-selected={form.kind === id} className={form.kind === id ? 'on' : ''} onClick={() => { setForm({ ...form, kind: id }); setKindOpen(false) }}><Icon name={k.icon} size={18} />{k.label}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          <input className="line-input" autoFocus placeholder={exams ? 'Qué examen es' : 'Qué hay que entregar'} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} />
           {!course && <Select value={form.course} label="Asignatura" onChange={(v) => setForm({ ...form, course: v })} options={subjects.map((s) => ({ value: s.short, label: s.short, color: s.color }))} />}
           <input type="date" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} aria-label="Fecha" />
           <button className="icon-btn on" aria-label="Guardar" title="Guardar" disabled={!form.title.trim() || !form.due}><Icon name="check" size={20} /></button>
@@ -69,7 +84,7 @@ export default function Deliveries({ data, update, subjects, course = null }) {
           ))}
         </div>
       ))}
-      {pending.length === 0 && !form && <p className="muted">Nada pendiente.</p>}
+      {pending.length === 0 && !form && <p className="muted">{exams ? 'Sin exámenes.' : 'Nada pendiente.'}</p>}
     </div>
   )
 }

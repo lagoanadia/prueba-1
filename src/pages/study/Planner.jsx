@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import TopActions from '../../components/TopActions.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -10,6 +10,7 @@ import Tools from './Tools.jsx'
 
 const DEFAULT_BLOCKS = [
   { id: 'entregas', type: 'entregas', span: 1 },
+  { id: 'examenes', type: 'examenes', span: 1 },
   { id: 'tools', type: 'tools', span: 1 },
   { id: 'note-1', type: 'note', span: 1 },
   { id: 'schedule', type: 'schedule', span: 3 },
@@ -26,8 +27,8 @@ function freeSpan(blocks) {
   return col > 0 ? 3 - col : 3
 }
 
-const LABELS = { entregas: 'Próximas entregas', tools: 'Herramientas', schedule: 'Horario' }
-const ICONS = { entregas: 'exam', tools: 'link', schedule: 'clock' }
+const LABELS = { entregas: 'Próximas entregas', examenes: 'Exámenes', tools: 'Herramientas', schedule: 'Horario' }
+const ICONS = { entregas: 'doc', examenes: 'exam', tools: 'link', schedule: 'clock' }
 
 /**
  * Planificador de estudios: asignaturas arriba y debajo bloques que se pueden personalizar
@@ -39,6 +40,17 @@ export default function Planner({ data, update, openSubject }) {
   const [editing, setEditing] = useState(false)
   const [adding, setAdding] = useState(false) // selector abierto dentro del cuadrado vacío
   const [short, setShort] = useState('')
+
+  // Los exámenes ahora son un widget aparte: si ya tenías exámenes guardados, se añade el bloque una sola vez para que sigan a la vista
+  useEffect(() => {
+    if (data.planner?.examsMigrated) return
+    update((d) => {
+      const cur = d.planner?.blocks ?? DEFAULT_BLOCKS
+      const hasExam = (d.assignments ?? []).some((a) => a.kind === 'examen')
+      const next = hasExam && !cur.some((b) => b.type === 'examenes') ? [...cur, { id: 'examenes', type: 'examenes', span: 1 }] : cur
+      return { ...d, planner: { ...(d.planner ?? {}), blocks: next, examsMigrated: true } }
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setBlocks = (fn) => update((d) => ({ ...d, planner: { ...(d.planner ?? {}), blocks: fn(d.planner?.blocks ?? DEFAULT_BLOCKS) } }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
@@ -60,6 +72,7 @@ export default function Planner({ data, update, openSubject }) {
 
   const render = (b) => {
     if (b.type === 'entregas') return <Deliveries data={data} update={update} subjects={subjects} />
+    if (b.type === 'examenes') return <Deliveries data={data} update={update} subjects={subjects} exams />
     if (b.type === 'tools') return <Tools data={data} update={update} />
     if (b.type === 'schedule') return <Schedule data={data} update={update} subjects={subjects} />
     const note = data.quickNotes?.[b.id] ?? { html: '' }

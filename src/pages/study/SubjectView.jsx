@@ -103,7 +103,10 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
             </div>
           </div>
         </section>
-        <section className="card deliv-card"><Deliveries data={data} update={update} subjects={subjects} course={subject.short} /></section>
+        <div className="subject-side">
+          <section className="card deliv-card"><Deliveries data={data} update={update} subjects={subjects} course={subject.short} /></section>
+          <section className="card deliv-card"><Deliveries data={data} update={update} subjects={subjects} course={subject.short} exams /></section>
+        </div>
       </div>
 
       <OrganizeDrop subjectName={subject.name} onReview={startReview} />

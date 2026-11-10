@@ -2483,3 +2483,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .og-pick-menu button:hover { background: var(--soft); }
 .unit-add { background: var(--soft); border: none; }
 .unit-add:hover { background: #E8EAED; }
+
+/* Tipo de entrega: desplegable con icono y nombre */
+.deliv-kind { position: relative; }
+.kind-btn { display: inline-flex; align-items: center; gap: 7px; border: none; border-radius: 18px; background: #FFFFFF; box-shadow: 0 0 0 2px var(--line); padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.kind-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; padding: 6px; display: flex; flex-direction: column; min-width: 170px; }
+.kind-menu button { display: flex; align-items: center; gap: 10px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: left; }
+.kind-menu button.on { background: #E8F0FE; } .kind-menu button:hover { background: var(--soft); }
+.subject-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
