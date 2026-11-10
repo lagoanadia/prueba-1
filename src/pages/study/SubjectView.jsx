@@ -90,7 +90,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       <div className="study-mid subject-top">
         <section className="card progress-card" style={{ background: soft(subject.color, 22), boxShadow: 'none' }}>
           <svg className="ring-svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso ${p.pct} %`}>
-            <circle cx="60" cy="60" r={R} fill="none" stroke="#FFFFFF" strokeWidth="14" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke={soft(subject.color, 45)} strokeWidth="14" />
             {p.pct > 0 && <circle cx="60" cy="60" r={R} fill="none" stroke={subject.color} strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(p.pct / 100) * C} ${C}`} transform="rotate(-90 60 60)" />}
             <text x="60" y="68" textAnchor="middle" fontSize="24" fontWeight="700" fill="#202124">{p.pct} %</text>
           </svg>
