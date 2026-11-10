@@ -1,7 +1,7 @@
 import { addDays, monthWeeks, todayISO, weekDays, weekStart } from '../lib/dates.js'
 
 /** Gris de un día sin marcar: se intuye sin llamar la atención. */
-export const EMPTY = '#E1E4E8'
+export const EMPTY = '#D7D9DB'
 const DOW = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const Dow = () => <div className="px-dow" aria-hidden="true">{DOW.map((d) => <span key={d}>{d}</span>)}</div>
 

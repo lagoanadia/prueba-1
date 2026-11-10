@@ -2289,7 +2289,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .name-btn.is-danger { background: #B3261E; border-color: #B3261E; color: #fff; }
 
 /* Journal: meses en filas de 7 (una por semana) y año en 12 mini-meses */
-.px { background: #E1E4E8; }
+.px { background: #D7D9DB; }
 .month-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .px-dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 11px; font-weight: 600; color: #9AA0A6; }
 .month-wrap .month { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
@@ -2298,8 +2298,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .ymonth { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .ymonth-name { font-size: 11px; font-weight: 600; color: #5F6368; }
 .ymonth-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
-.ymonth-grid .ypx { width: 100%; height: auto; aspect-ratio: 1; border-radius: 28%; background: #E1E4E8; border: none; padding: 0; }
-.ymonth-grid .ypx:disabled { opacity: .45; }
+.ymonth-grid .ypx { width: 100%; height: auto; aspect-ratio: 1; border-radius: 28%; background: #D7D9DB; border: none; padding: 0; }
+.ymonth-grid .ypx:disabled { opacity: 1; }
 .ymonth-grid button.ypx:not(:disabled) { cursor: pointer; }
 .ymonth-grid button.ypx:not(:disabled):hover { transform: scale(1.2); }
 @media (max-width: 520px) { .year-months { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -2313,3 +2313,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fill .month-wrap .month { --cell: var(--wcell); }
 .fill .month-wrap { --wcell: min(calc((100cqw - 36px) / 7), calc((100cqh - 60px) / 6), 44px); --cell: var(--wcell); }
 .fill .month-wrap.two { --wcell: min(calc((100cqw - 36px) / 7), calc((100cqh - 8px) / 2), 44px); }
+
+/* Mes y dos semanas: la cuadrícula ocupa todo el widget (ancho y alto) */
+.fill .month-wrap { width: 100%; height: 100%; }
+.fill .month-wrap .month { flex: 1; min-height: 0; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(var(--weeks, 6), minmax(0, 1fr)); }
+.fill .month-wrap.two .month { --weeks: 2; }
+.fill .month-wrap .px-dow { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.fill .month-wrap .month .px { width: 100%; height: 100%; max-width: none; aspect-ratio: auto; justify-self: stretch; border-radius: 8px; }
+.px:disabled { opacity: 1; }
+.month .px:disabled { opacity: 1; }
