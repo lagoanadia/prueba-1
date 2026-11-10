@@ -5,12 +5,15 @@ import Icon from './Icon.jsx'
  * PDF dibujado como páginas limpias dentro de la pantalla (sin la barra del visor del navegador): se ajusta al ancho,
  * con página actual y zoom. Las páginas se pintan solo cuando se acercan, para que los PDF largos vayan ligeros.
  */
-export default function PdfPages({ blob, name, onFallback }) {
+export default function PdfPages({ blob, name, onFallback, onPickText }) {
   const box = useRef(null)
   const [pdf, setPdf] = useState(null)
   const [width, setWidth] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [current, setCurrent] = useState(1)
+  const [pick, setPick] = useState(null) // { x, y, text } del texto seleccionado
+  const [done, setDone] = useState(false)
+  const root = useRef(null)
 
   useEffect(() => {
     let dead = false
@@ -33,10 +36,37 @@ export default function PdfPages({ blob, name, onFallback }) {
     return () => ro.disconnect()
   }, [])
 
+  // Al seleccionar texto del PDF aparece «Pasar a apuntes» junto a la selección
+  useEffect(() => {
+    if (!onPickText) return undefined
+    const check = () => {
+      const sel = window.getSelection()
+      const el = box.current
+      const text = sel?.toString().replace(/\s*\n\s*/g, ' ').trim()
+      if (!sel || sel.isCollapsed || !text || !el || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) { setPick(null); return }
+      const r = sel.getRangeAt(0).getBoundingClientRect()
+      const c = root.current.getBoundingClientRect()
+      const z = parseFloat(getComputedStyle(root.current.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
+      setDone(false)
+      setPick({ x: Math.max(8, (r.left - c.left) / z), y: Math.max(40, (r.top - c.top) / z - 44), text })
+    }
+    document.addEventListener('mouseup', check)
+    document.addEventListener('keyup', check)
+    document.addEventListener('touchend', check)
+    return () => { document.removeEventListener('mouseup', check); document.removeEventListener('keyup', check); document.removeEventListener('touchend', check) }
+  }, [onPickText])
+
+  const send = () => {
+    onPickText(pick.text)
+    window.getSelection()?.removeAllRanges()
+    setDone(true)
+    setTimeout(() => setPick(null), 900)
+  }
+
   const open = () => { const url = URL.createObjectURL(blob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 60000) }
 
   return (
-    <div className="pdfp">
+    <div className="pdfp" ref={root}>
       <div className="pdfp-bar">
         <span className="pdfp-count">{pdf ? `Página ${current} de ${pdf.numPages}` : 'Abriendo…'}</span>
         <button className="icon-btn" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.15).toFixed(2)))} aria-label="Alejar" title="Alejar"><Icon name="minus" size={16} /></button>
@@ -46,6 +76,11 @@ export default function PdfPages({ blob, name, onFallback }) {
       <div className="pdfp-pages" ref={box}>
         {pdf && width > 0 && Array.from({ length: pdf.numPages }, (_, i) => <PdfPage key={i} pdf={pdf} n={i + 1} width={Math.max(120, width - 4) * zoom} root={box} onSeen={setCurrent} />)}
       </div>
+      {pick && (
+        <button className={`pdfp-pick ${done ? 'is-done' : ''}`} style={{ left: pick.x, top: pick.y }} onMouseDown={(e) => e.preventDefault()} onTouchStart={(e) => e.preventDefault()} onClick={send}>
+          <Icon name={done ? 'check' : 'arrow'} size={14} strokeWidth={2.6} />{done ? 'Pasado' : 'Pasar a apuntes'}
+        </button>
+      )}
     </div>
   )
 }
@@ -53,6 +88,7 @@ export default function PdfPages({ blob, name, onFallback }) {
 function PdfPage({ pdf, n, width, root, onSeen }) {
   const wrap = useRef(null)
   const canvas = useRef(null)
+  const text = useRef(null)
   const [size, setSize] = useState({ w: width, h: width * 1.414 })
   const [near, setNear] = useState(n <= 2)
   const [drawn, setDrawn] = useState('')
@@ -88,6 +124,14 @@ function PdfPage({ pdf, n, width, root, onSeen }) {
       c.width = vp.width; c.height = vp.height
       task = p.render({ canvasContext: c.getContext('2d'), viewport: vp })
       task.promise.then(() => { if (!dead) setDrawn(key) }).catch(() => {})
+      // Capa de texto transparente encima: permite seleccionar y copiar
+      const t = text.current
+      if (t) {
+        t.replaceChildren()
+        const css = p.getViewport({ scale: width / base.width })
+        t.style.setProperty('--total-scale-factor', String(css.scale))
+        import('pdfjs-dist').then((pdfjs) => { if (!dead) new pdfjs.TextLayer({ textContentSource: p.streamTextContent(), container: t, viewport: css }).render().catch(() => {}) })
+      }
     })
     return () => { dead = true; task?.cancel?.() }
   }, [near, pdf, n, width]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,6 +139,7 @@ function PdfPage({ pdf, n, width, root, onSeen }) {
   return (
     <div ref={wrap} className="pdfp-page" style={{ width: size.w, height: size.h }}>
       <canvas ref={canvas} style={{ width: '100%', height: '100%' }} />
+      <div ref={text} className="textLayer" />
     </div>
   )
 }

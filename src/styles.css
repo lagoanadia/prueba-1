@@ -2591,3 +2591,36 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 
 .tp-grip { position: absolute; left: 0; top: 50%; transform: translateY(-50%); margin-left: 0; }
 .file-switch { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; color: var(--muted); }
+
+/* Texto seleccionable del PDF + botón «Pasar a apuntes» */
+.pdfp { position: relative; }
+.pdfp-page { position: relative; }
+.pdfp-page canvas { display: block; }
+.pdfp-page .textLayer { position: absolute; inset: 0; overflow: clip; line-height: 1; text-align: initial; text-size-adjust: none; transform-origin: 0 0; z-index: 1; --min-font-size: 1; --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size)); --min-font-size-inv: calc(1 / var(--min-font-size)); }
+.pdfp-page .textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0 0; user-select: text; }
+.pdfp-page .textLayer > :not(.markedContent), .pdfp-page .textLayer .markedContent span:not(.markedContent) { --font-height: 0; --scale-x: 1; --rotate: 0deg; font-size: calc(var(--text-scale-factor) * var(--font-height)); transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv)); }
+.pdfp-page .textLayer .markedContent { display: contents; }
+.pdfp-page .textLayer ::selection { background: rgba(47, 111, 237, .32); }
+.pdfp-pick { position: absolute; z-index: 5; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 18px; padding: 8px 14px; background: #202124; color: #fff; font: 600 13px Poppins, sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); cursor: pointer; animation: rise .2s var(--ease) both; }
+.pdfp-pick.is-done { background: #2FA36B; }
+@media (prefers-reduced-motion: reduce) { .pdfp-pick { animation: none; } }
+
+/* Exportar apuntes a PDF */
+.xp-panel { max-width: 980px; width: 96vw; height: 88dvh; max-height: 88dvh; display: flex; flex-direction: column; padding: 14px 18px; overflow: hidden; }
+.xp-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; } .xp-top .name-dialog-title { display: flex; align-items: center; gap: 8px; }
+.xp-body { flex: 1; min-height: 0; display: flex; gap: 16px; }
+.xp-sheetwrap { flex: 1; min-width: 0; overflow: auto; background: #E8EAED; border-radius: 18px; padding: 18px; }
+.xp-sheet { width: 100%; max-width: 700px; margin: 0 auto; background: #fff; border-radius: 6px; box-shadow: 0 8px 28px rgba(60, 64, 67, .3); padding: 40px 44px; }
+.xp-row { position: relative; }
+.xp-row:hover { background: rgba(47, 111, 237, .05); border-radius: 8px; }
+.xp-tools { position: absolute; right: -4px; top: -2px; z-index: 3; display: none; gap: 2px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 2px; }
+.xp-row:hover .xp-tools, .xp-row:focus-within .xp-tools { display: flex; }
+.xp-tools button { width: 26px; height: 26px; border: 0; border-radius: 9px; background: none; display: grid; place-items: center; cursor: pointer; color: var(--text); }
+.xp-tools button:hover:not(:disabled) { background: var(--soft); } .xp-tools button:disabled { opacity: .3; cursor: default; } .xp-tools button.on { background: var(--blue); color: #fff; }
+.xp-break { display: flex; align-items: center; margin: 6px 0 12px; border-top: 2px dashed #9AA0A6; position: relative; height: 0; }
+.xp-break span { position: absolute; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 0 10px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.xp-style { width: 190px; flex: none; display: flex; flex-direction: column; gap: 8px; align-content: flex-start; }
+.xp-opts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.xp-dot { width: 26px; height: 26px; border-radius: 50%; border: 0; cursor: pointer; } .xp-dot.on { outline: 2px solid var(--text); outline-offset: 2px; }
+.xp-round { width: 38px; height: 28px; border: 2px solid #BFD3FA; background: none; cursor: pointer; } .xp-round.on { border-color: var(--blue); background: #EAF1FF; }
+@media (max-width: 899px) { .xp-panel { width: 100vw; height: 94dvh; max-height: 94dvh; border-radius: 26px 26px 0 0; } .xp-body { flex-direction: column-reverse; } .xp-style { width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; } .xp-opts { margin: 0 8px 0 0; } .xp-sheet { padding: 24px 20px; } }

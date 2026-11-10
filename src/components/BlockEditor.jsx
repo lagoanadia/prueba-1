@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './Icon.jsx'
+import ExportDialog from './ExportDialog.jsx'
 import CodeBlock from './blocks/CodeBlock.jsx'
 import ImageBlock from './blocks/ImageBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
@@ -22,10 +23,11 @@ const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'co
  * `value` = lo guardado; `onChange(doc)` guarda; `bar` = botones extra para la barra (p. ej. Compartir).
  * Cambia la `key` para abrir otro documento.
  */
-export default function BlockEditor({ value, onChange, label = 'Documento', bar = null }) {
+export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null }) {
   const [blocks, setBlocks] = useState(() => toBlocks(value))
   const [focusId, setFocusId] = useState(null)
   const [menu, setMenu] = useState(null) // { id, q, i, x, y }
+  const [exporting, setExporting] = useState(false)
   const refs = useRef({})
   const pageRef = useRef(null)
 
@@ -96,11 +98,22 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     else insertAt(blocks.length, newBlock())
   }
 
+  // Texto que llega de fuera (seleccionado en el PDF): se añade al final como un párrafo
+  if (appendRef) {
+    appendRef.current = (text) => {
+      const html = sanitize(String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
+      const last = blocks[blocks.length - 1]
+      if (last && last.type === 'text' && !strip(last.html)) commit(blocks.map((b) => (b.id === last.id ? { ...b, html } : b)))
+      else commit([...blocks, newBlock('text', html)])
+    }
+  }
+
   const only = blocks.length === 1 && isEmpty(blocks[0])
 
   return (
     <div className="card blocks">
-      <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{bar}</div>
+      <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>
+      {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick}>
         {blocks.map((b, i) => (
           <div key={b.id} className="block-slot">

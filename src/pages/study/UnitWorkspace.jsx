@@ -35,6 +35,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const [layout, setLayout] = useState('split')
   const [open, setOpen] = useState(() => new Set([unit.id])) // unidades desplegadas
   const menuRef = useRef(null)
+  const notesIn = useRef(null) // función de los apuntes para pegar texto copiado del PDF
   const tab = route.tab ?? 'estudio'
   const practices = practicesOf(unit)
   const topicIndex = Math.max(0, unit.topics.findIndex((t) => t.id === route.itemId))
@@ -195,8 +196,8 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
           {tab === 'estudio' && (
             topic
-              ? split(<FilesPane key={`pdf-${topic.id}`} files={topicFiles} onChange={setTopicFiles} label="Subir el PDF de este tema" />,
-                  <BlockEditor key={topic.id} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
+              ? split(<FilesPane key={`pdf-${topic.id}`} files={topicFiles} onChange={setTopicFiles} label="Subir el PDF de este tema" onPickText={(t) => notesIn.current?.(t)} />,
+                  <BlockEditor key={topic.id} appendRef={notesIn} exportAs={{ title: topic.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
                     bar={data.notes?.[topic.id] ? <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
               : <p className="muted ws-empty">Añade un tema con + en el panel para empezar a tomar apuntes.</p>
@@ -204,8 +205,8 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
           {tab === 'practicas' && (
             practice
-              ? split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" />,
-                  <BlockEditor key={practice.id} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
+              ? split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" onPickText={(t) => notesIn.current?.(t)} />,
+                  <BlockEditor key={practice.id} appendRef={notesIn} exportAs={{ title: practice.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
                     bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
               : <p className="muted ws-empty">Añade una práctica con + en el panel: su PDF a un lado y tus apuntes al otro.</p>
@@ -224,7 +225,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 }
 
 /** Los PDF de un tema: pestañas con sus nombres, el visor del que elijas y un + para añadir otro. */
-function FilesPane({ files, onChange, label }) {
+function FilesPane({ files, onChange, label, onPickText }) {
   const [idx, setIdx] = useState(0)
   const input = useRef(null)
   const i = Math.min(idx, Math.max(files.length - 1, 0))
@@ -238,7 +239,7 @@ function FilesPane({ files, onChange, label }) {
   return (
     <div className="files-pane">
       <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
-      <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label}
+      <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label} onPickText={onPickText}
         extra={files.length > 0 && (
           <>
             {files.length > 1 && (
