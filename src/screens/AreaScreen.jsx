@@ -35,6 +35,15 @@ const arrayMove = (list, from, to) => {
  */
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, updateData, updateLayout } = useBoard(area.id)
+
+  // Salud: los widgets nuevos (ciclo, sueño, pastillero, pasos, resumen, constancia) se añaden una sola vez a tu tablero
+  // para que aparezcan sin tener que ir a buscarlos; si luego quitas alguno, no vuelve.
+  useEffect(() => {
+    if (area.id !== 'salud' || !board || board.isNew || board.data.healthWidgetsAdded) return
+    const NEW = ['weeksummary', 'steps', 'cycle', 'sleepcalc', 'pills', 'consistency']
+    updateLayout((l) => [...l, ...NEW.filter((t) => !l.some((w) => w.type === t)).map((type) => ({ id: crypto.randomUUID(), type, size: 'L' }))])
+    updateData((d) => ({ ...d, healthWidgetsAdded: true }))
+  }, [area.id, board?.isNew, Boolean(board)]) // eslint-disable-line react-hooks/exhaustive-deps
   const [editing, setEditing] = useState(false)
   const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
