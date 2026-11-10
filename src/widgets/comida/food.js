@@ -1,5 +1,5 @@
 // Datos compartidos por los widgets de Comida
-export const MEALS = { desayuno: 'Desayuno', comida: 'Comida', merienda: 'Merienda', cena: 'Cena' }
+export const MEALS = { desayuno: 'Desayuno', media: 'Media mañana', comida: 'Comida', merienda: 'Merienda', cena: 'Cena' }
 export const OUT = 'fuera' // "Comer fuera"
 
 // Recetas de muestra: solo se usan si el usuario elige un plato con el mismo nombre en las preguntas
@@ -27,12 +27,14 @@ export const SAMPLE_DISHES = [
 export const dishesOf = (data) => data.dishes ?? []
 export const mealsOf = (data) => data.meals ?? ['comida', 'cena']
 export const activeDishOf = (data) => dishesOf(data).find((d) => d.id === data.activeDish) ?? dishesOf(data)[0]
-export const dishName = (dishes, id) => (id === OUT ? 'Comer fuera' : dishes.find((d) => d.id === id)?.name ?? '')
+export const WITH = 'con:' // «Con alguien»: el valor es 'con:Marta'
+export const isWith = (v) => typeof v === 'string' && v.startsWith(WITH)
+export const dishName = (dishes, id) => (id === OUT ? 'Comer fuera' : isWith(id) ? `Con ${id.slice(WITH.length)}` : dishes.find((d) => d.id === id)?.name ?? '')
 
 /** Cuántas veces sale cada plato en el menú de unos días (para batch cooking y la compra). */
 export function dishCounts(data, days) {
   const menu = data.menu ?? {}
   const counts = {}
-  days.forEach((d) => Object.values(menu[d] ?? {}).forEach((id) => { if (id && id !== OUT) counts[id] = (counts[id] ?? 0) + 1 }))
+  days.forEach((d) => Object.values(menu[d] ?? {}).forEach((id) => { if (id && id !== OUT && !isWith(id)) counts[id] = (counts[id] ?? 0) + 1 }))
   return counts
 }

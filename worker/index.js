@@ -21,6 +21,7 @@ import games from './routes/games.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 import organize from './routes/organize.js'
+import ingredients from './routes/ingredients.js'
 
 const ROUTES = {
   '/api/auth/google': google,
@@ -36,6 +37,7 @@ const ROUTES = {
   '/api/transcribe': transcribe,
   '/api/command': command,
   '/api/organize': organize,
+  '/api/ingredients': ingredients,
 }
 
 export default {
