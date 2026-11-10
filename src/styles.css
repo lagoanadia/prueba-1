@@ -2664,3 +2664,44 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .row-tools { left: -41px; gap: 0; }
 .row-tools .row-plus { width: 20px; }
 @media (max-width: 899px) { .row-tools { left: -29px; } }
+
+/* Pastillero: tarjetas, el día en orden y formulario desplegable */
+.pl { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pl-switch { align-self: flex-end; display: inline-flex; gap: 2px; background: #F1F3F4; border-radius: 16px; padding: 3px; }
+.pl-switch button { width: 30px; height: 26px; border: 0; border-radius: 13px; background: none; display: grid; place-items: center; cursor: pointer; color: var(--text); } .pl-switch button.on { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .2); }
+.pl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.pl-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; border-radius: 18px; padding: 12px; background: color-mix(in srgb, var(--c) 13%, #fff); }
+.pl-del { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: none; display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .15s; color: #B3261E; } .pl-card:hover .pl-del, .pl-del:focus-visible { opacity: 1; } @media (hover: none) { .pl-del { opacity: .6; } }
+.pl-ring { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 22%, #fff); }
+.pl-ring[style] { background: conic-gradient(var(--c) var(--f), color-mix(in srgb, var(--c) 22%, #fff) 0); position: relative; }
+.pl-ring[style]::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: #fff; }
+.pl-count { position: relative; display: flex; flex-direction: column; align-items: center; line-height: 1; } .pl-count b { font-size: 18px; } .pl-count i { font-style: normal; font-size: 9px; color: var(--muted); }
+.pl-inf { font-size: 28px; color: var(--c); }
+.pl-name { font-size: 13px; overflow-wrap: anywhere; }
+.pl-slots { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.pl-slot { border: 1.5px solid var(--c); background: #fff; color: var(--text); border-radius: 16px; padding: 4px 12px; font: 600 12.5px Poppins, sans-serif; cursor: pointer; transition: background .15s, color .15s; }
+.pl-slot.is-done { background: var(--c); color: #fff; }
+.pl-day { display: flex; flex-direction: column; }
+.pl-row { display: flex; align-items: stretch; gap: 10px; border: 0; background: none; padding: 0; font: inherit; cursor: pointer; text-align: left; }
+.pl-time { width: 44px; flex: none; padding-top: 8px; font-weight: 700; font-size: 13px; color: var(--c); }
+.pl-line { display: flex; flex-direction: column; align-items: center; } .pl-line i { width: 14px; height: 14px; border-radius: 50%; margin-top: 10px; border: 2.5px solid var(--c); background: #fff; flex: none; } .pl-line u { flex: 1; width: 2px; background: color-mix(in srgb, var(--c) 25%, #fff); }
+.pl-row.is-done .pl-line i { background: var(--c); }
+.pl-what { flex: 1; min-width: 0; margin-bottom: 8px; border-radius: 14px; padding: 8px 12px; background: color-mix(in srgb, var(--c) 14%, #fff); font-weight: 700; font-size: 13px; }
+.pl-row.is-done .pl-what { opacity: .55; text-decoration: line-through; }
+.pl-form { display: flex; flex-direction: column; gap: 8px; background: #F8F9FA; border-radius: 18px; padding: 12px 14px; }
+.pl-chips { display: flex; flex-wrap: wrap; gap: 6px; } .pl-chips button { border: 0; border-radius: 16px; padding: 6px 14px; background: #fff; box-shadow: 0 0 0 1.5px var(--line); font: 600 12.5px Poppins, sans-serif; cursor: pointer; color: var(--text); } .pl-chips button.on { background: #2FA36B; color: #fff; box-shadow: none; }
+.pl-in { border: 1.5px solid #DADCE0; border-radius: 14px; padding: 7px 12px; font: inherit; font-size: 13px; background: #fff; min-width: 0; width: 100%; }
+.pl-row2 { display: flex; gap: 8px; } .pl-fld { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
+.pl-calc { border-radius: 14px; padding: 8px 12px; background: #E3F7EA; font-size: 12.5px; }
+.pl-colors { display: flex; gap: 8px; } .pl-colors button { width: 22px; height: 22px; border-radius: 50%; border: 0; cursor: pointer; } .pl-colors button.on { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* Plan semanal: deportes en globitos que se arrastran al plan (paleta pastel) */
+.sa-sess { background: var(--c); }
+.sa-sportbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 6px; }
+.sa-bubble { position: relative; display: inline-flex; }
+.sa-bubble > button:first-child { border: 0; border-radius: 20px; padding: 6px 16px; background: var(--c); font: 600 13px Poppins, sans-serif; color: var(--text); cursor: grab; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); } .sa-bubble > button:first-child:active { cursor: grabbing; }
+.sa-bubble-x { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); display: none; place-items: center; cursor: pointer; padding: 0; }
+.sa-bubble:hover .sa-bubble-x, .sa-bubble-x:focus-visible { display: grid; }
+.sa-bubble-add { border: 1.5px dashed #9AA0A6; border-radius: 20px; padding: 5px 14px; background: #fff; font: 600 13px Poppins, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--text); }
+.sa-bubble-in { border: 1.5px solid var(--line); border-radius: 20px; padding: 5px 14px; font: inherit; font-size: 13px; width: 130px; }
+.sa-plan-col.is-drop { outline: 2px dashed #2FA36B; outline-offset: -2px; background: #E3F7EA; }
