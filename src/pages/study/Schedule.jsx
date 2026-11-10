@@ -34,7 +34,7 @@ export default function Schedule({ data, update, subjects }) {
   const bySubject = Object.fromEntries(subjects.map((s) => [s.short, s]))
   const byLabel = Object.fromEntries(tt.labels.map((l) => [`#${l.id}`, l]))
   const options = [...subjects.map((s) => s.short), ...tt.labels.map((l) => `#${l.id}`)]
-  const look = (v) => (bySubject[v] ? { name: v, color: tone(bySubject[v].color) } : byLabel[v] ? { name: byLabel[v].name, color: tone(byLabel[v].color) } : null)
+  const look = (v) => (bySubject[v] ? { name: v, color: tone(bySubject[v].color, SOFT) } : byLabel[v] ? { name: byLabel[v].name, color: tone(byLabel[v].color, SOFT) } : null)
 
   const patch = (fn) => update((d) => ({ ...d, timetable: fn(normalizeTimetable(d.timetable, d.subjects ?? [])) }))
   // Vacío = se quita la casilla
@@ -185,8 +185,9 @@ function LabelDialog({ onSubmit, onClose }) {
   )
 }
 
+const SOFT = 46 // intensidad del color de los bloques (un poco más suave)
 const ROW = 58 // alto de una franja de clase (todas iguales, duren lo que duren)
-const BREAK = 22 // alto del descanso
+const BREAK = 28 // alto del descanso
 
 /**
  * El horario para MIRAR: la semana como un calendario. Cada franja de clase tiene el mismo alto;
@@ -249,10 +250,10 @@ function ScheduleView({ tt: rawTt, times: rawTimes, look, onEdit }) {
             <div className="sv-track">
               {blocksOf(c).map((b) => {
                 const top = tops[b.firstRow]
-                const height = tops[b.lastRow] + ROW - top - 4
+                const height = tops[b.lastRow] + ROW - top - 6 // 3px de aire arriba y abajo: entre dos asignaturas pegadas quedan 6px
                 const isNow = c === today && nowMin >= b.start && nowMin < b.end
                 return (
-                  <div key={b.firstRow} className={`sv-block ${b.rows > 1 ? 'is-double' : ''} ${isNow ? 'is-now' : ''}`} style={{ top: top + 2, height, background: b.color }}>
+                  <div key={b.firstRow} className={`sv-block ${b.rows > 1 ? 'is-double' : ''} ${isNow ? 'is-now' : ''}`} style={{ top: top + 3, height, background: b.color }}>
                     <b>{b.name}</b><span>{fmt(b.start)}–{fmt(b.end)}</span>
                   </div>
                 )
