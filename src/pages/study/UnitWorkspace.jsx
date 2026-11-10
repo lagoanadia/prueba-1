@@ -237,14 +237,20 @@ function FilesPane({ files, onChange, label }) {
   }
   return (
     <div className="files-pane">
-      {files.length > 0 && (
-        <div className="file-tabs" role="tablist" aria-label="PDF de este tema">
-          {files.map((f, k) => <button key={f.id} role="tab" aria-selected={k === i} className={`file-tab ${k === i ? 'on' : ''}`} onClick={() => setIdx(k)} title={f.name}><Icon name="pdf" size={14} color="#E84855" /><span className="w-ellipsis">{f.name}</span></button>)}
-          <button className="file-tab file-tab-add" onClick={() => input.current?.click()} aria-label="Añadir otro PDF a este tema" title="Añadir otro PDF"><Icon name="plus" size={14} /></button>
-          <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
-        </div>
-      )}
+      <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
       <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label}
+        extra={files.length > 0 && (
+          <>
+            {files.length > 1 && (
+              <span className="file-switch" role="group" aria-label="PDF de este tema">
+                <button className="icon-btn" onClick={() => setIdx((i - 1 + files.length) % files.length)} aria-label="PDF anterior"><Icon name="left" size={16} /></button>
+                <b>{i + 1}/{files.length}</b>
+                <button className="icon-btn" onClick={() => setIdx((i + 1) % files.length)} aria-label="PDF siguiente"><Icon name="right" size={16} /></button>
+              </span>
+            )}
+            <button className="icon-btn" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="plus" size={20} /></button>
+          </>
+        )}
         onChange={(f) => onChange(f ? (files.length ? files.map((x, k) => (k === i ? f : x)) : [f]) : files.filter((_, k) => k !== i))} />
     </div>
   )

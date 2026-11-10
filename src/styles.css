@@ -2087,7 +2087,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tp-chev { padding: 8px 6px; } .tp-uname { flex: 1; min-width: 0; font-size: 15px; text-align: left; padding: 8px 4px; }
 .tp-pen { display: flex; opacity: .5; } .tp-unit:hover .tp-pen { opacity: 1; }
 .tp-children { display: flex; flex-direction: column; gap: 1px; }
-.tp-row { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 30px; border-radius: 12px; font-size: 14px; }
+.tp-row { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 12px; font-size: 14px; }
 .tp-row.sel { background: #EEF4FF; font-weight: 600; }
 .tp-name { flex: 1; min-width: 0; border: none; background: none; font: inherit; text-align: left; cursor: pointer; padding: 2px 0; }
 .tp-del { display: none; } .tp-row:hover .tp-del { display: flex; }
@@ -2588,3 +2588,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tp-row.drop-before::before, .tp-row.drop-after::after { content: ''; position: absolute; left: 6px; right: 6px; height: 3px; border-radius: 2px; background: #3185FC; }
 .tp-row.drop-before::before { top: -2px; } .tp-row.drop-after::after { bottom: -2px; }
 .tp-unit.drop-into { outline: 2px solid #3185FC; outline-offset: -2px; border-radius: 14px; }
+
+.tp-grip { position: absolute; left: 0; top: 50%; transform: translateY(-50%); margin-left: 0; }
+.file-switch { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; color: var(--muted); }

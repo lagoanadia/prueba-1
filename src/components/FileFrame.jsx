@@ -7,7 +7,7 @@ import PdfPages from './PdfPages.jsx'
  * Visor de un archivo (PDF, imagen…) dentro de un iframe, con botón para subirlo o cambiarlo.
  * `file` = { id, name, type } o null. `onChange(file|null)` guarda la referencia en los datos.
  */
-export default function FileFrame({ file, onChange, label = 'Subir archivo' }) {
+export default function FileFrame({ file, onChange, label = 'Subir archivo', extra = null }) {
   const [url, setUrl] = useState(null)
   const [blob, setBlob] = useState(null)
   const [plain, setPlain] = useState(false) // si el PDF no se puede dibujar, se usa el visor del navegador
@@ -36,6 +36,7 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo' }) {
         <Icon name={file?.type?.startsWith('image/') ? 'eye' : 'pdf'} size={20} color="#E84855" />
         <b className="w-ellipsis">{file?.name ?? 'Sin archivo'}</b>
         <span style={{ flex: 1 }} />
+        {extra}
         <button className="icon-btn" onClick={() => input.current?.click()} aria-label={file ? 'Cambiar archivo' : label} title={file ? 'Cambiar archivo' : label}><Icon name="upload" size={20} /></button>
         {file && <button className="icon-btn" onClick={remove} aria-label="Quitar archivo" title="Quitar archivo"><Icon name="trash" size={20} /></button>}
         <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={pick} />
