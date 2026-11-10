@@ -1,8 +1,8 @@
 import Select from '../../components/Select.jsx'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import History from '../../components/History.jsx'
-import { formatShort, todayISO } from '../../lib/dates.js'
+import { daysUntil, formatLong, formatShort, todayISO } from '../../lib/dates.js'
 import { KINDS, soft } from './helpers.js'
 
 /**
@@ -17,10 +17,12 @@ export default function Deliveries({ data, update, subjects, course = null, exam
   const done = all.filter((a) => a.done)
   const [form, setForm] = useState(null) // null cerrado · { id?, title, course, due, kind }
   const [kindOpen, setKindOpen] = useState(false)
+  const [view, setView] = useState('count') // exámenes: 'count' = el más cercano en grande · 'list' = todos
+  const swipe = useRef(null)
   const kinds = Object.entries(KINDS).filter(([id]) => id !== 'examen') // los exámenes tienen su propio widget
   const color = (c) => subjects.find((s) => s.short === c)?.color ?? '#9AA0A6'
 
-  const open = (a) => setForm(a ? { ...a } : { title: '', course: course ?? subjects[0]?.short ?? '', due: '', kind: exams ? 'examen' : 'practica' })
+  const open = (a) => setForm(a ? { ...a, kind: a.kind === 'proyecto' ? 'trabajo' : a.kind } : { title: '', course: course ?? subjects[0]?.short ?? '', due: '', kind: exams ? 'examen' : 'practica' })
   const save = (e) => {
     e.preventDefault()
     if (!form.title.trim() || !form.due || !form.course) return
@@ -31,6 +33,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
   const remove = (id) => update((d) => ({ ...d, assignments: d.assignments.filter((a) => a.id !== id) }))
   const finish = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, done: true, doneAt: today } : a)) }))
 
+  const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : `${n} días` }
   const groups = course ? [[course, pending]] : subjects.map((s) => [s.short, pending.filter((a) => a.course === s.short)]).filter(([, l]) => l.length)
   const orphans = course ? [] : pending.filter((a) => !subjects.some((s) => s.short === a.course))
   if (orphans.length) groups.push(['Sin asignatura', orphans])
@@ -70,6 +73,15 @@ export default function Deliveries({ data, update, subjects, course = null, exam
         </form>
       )}
 
+      {exams && view === 'count' && pending.length > 0 && !form ? (
+        <div className="exam-count">
+          <span className="exam-count-name">{pending[0].course} · {pending[0].title}</span>
+          <div className={`exam-count-n ${pending[0].due < today ? 'is-late' : ''}`} style={{ color: pending[0].due < today ? undefined : color(pending[0].course) }}>{Math.abs(daysUntil(pending[0].due))}<small>{Math.abs(daysUntil(pending[0].due)) === 1 ? 'día' : 'días'}</small></div>
+          <span className="muted">{daysUntil(pending[0].due) < 0 ? 'hace' : daysUntil(pending[0].due) === 0 ? 'es hoy' : 'faltan'} · {formatLong(pending[0].due)}</span>
+          {pending.length > 1 && <div className="exam-next">{pending.slice(1, 4).map((a) => <span key={a.id} style={{ background: soft(color(a.course), 40) }}>{a.course} {Math.max(daysUntil(a.due), 0)} d</span>)}</div>}
+        </div>
+      ) : (
+        <>
       {groups.map(([short, list]) => (
         <div key={short} className="deliv-group">
           {!course && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
@@ -77,14 +89,23 @@ export default function Deliveries({ data, update, subjects, course = null, exam
             <div key={a.id} className="deliv-row" style={{ background: soft(color(a.course), 16) }}>
               <button className="deliv-ic" style={{ background: soft(color(a.course), 55) }} onClick={() => finish(a.id)} aria-label={`Marcar «${a.title}» como entregada`} title="Marcar como entregada"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></button>
               <span className="deliv-name w-ellipsis">{a.title}</span>
-              <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>
+              {exams ? <span className={`exam-chip ${a.due < today ? 'is-late' : ''}`}>{daysText(a.due)}</span> : <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>}
               <button className="prio-x" onClick={() => open(a)} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>
               <button className="prio-x" onClick={() => remove(a.id)} aria-label={`Eliminar «${a.title}»`}><Icon name="trash" size={16} /></button>
             </div>
           ))}
         </div>
       ))}
+        </>
+      )}
       {pending.length === 0 && !form && <p className="muted">{exams ? 'Sin exámenes.' : 'Nada pendiente.'}</p>}
+      {exams && pending.length > 0 && !form && (
+        <div className="exam-pager" onPointerDown={(e) => { swipe.current = e.clientX }} onPointerUp={(e) => { if (swipe.current == null) return; const dx = e.clientX - swipe.current; swipe.current = null; if (Math.abs(dx) > 40) setView(dx < 0 ? 'list' : 'count') }}>
+          <button className="fd-ib" onClick={() => setView('count')} disabled={view === 'count'} aria-label="Cuenta atrás"><Icon name="left" size={14} /></button>
+          <span className="exam-dots"><i className={view === 'count' ? 'on' : ''} /><i className={view === 'list' ? 'on' : ''} /></span>
+          <button className="fd-ib" onClick={() => setView('list')} disabled={view === 'list'} aria-label="Lista de exámenes"><Icon name="right" size={14} /></button>
+        </div>
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export const changeUnit = (update, subjectId, unitId, fn) => changeSubject(updat
 export const practicesOf = (u) => u.practices ?? (u.exercises ?? []).map((x) => ({ id: x.id, name: x.title, done: x.done }))
 
 // Tipos de entrega: cada uno con su icono
-export const KINDS = { practica: { label: 'Práctica', icon: 'code' }, examen: { label: 'Examen', icon: 'exam' }, trabajo: { label: 'Trabajo', icon: 'doc' }, proyecto: { label: 'Proyecto', icon: 'star' } }
+export const KINDS = { practica: { label: 'Práctica', icon: 'code' }, examen: { label: 'Examen', icon: 'exam' }, trabajo: { label: 'Trabajo', icon: 'doc' } }
 
 // Qué cuenta para el progreso de una asignatura (lo decide el usuario)
 export const METRICS = { topics: { label: 'Teoría' }, practices: { label: 'Prácticas' }, assignments: { label: 'Entregas' } }

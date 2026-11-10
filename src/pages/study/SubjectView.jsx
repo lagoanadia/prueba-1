@@ -6,6 +6,7 @@ import Deliveries from './Deliveries.jsx'
 import OrganizeDrop from './OrganizeDrop.jsx'
 import OrganizeReview from './OrganizeReview.jsx'
 import ResourceFrames from './ResourceFrames.jsx'
+import SubjectNotes from './SubjectNotes.jsx'
 import { applyReview, buildReview, countReview, fallbackProposal } from './organize.js'
 import { deleteFile } from '../../lib/fileStore.js'
 import { proposeOrganization } from '../../services/organizeService.js'
@@ -134,6 +135,8 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       </div>
       {dialog === 'new' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
+
+      <SubjectNotes update={update} subject={subject} />
 
       <h2 className="page-h2 page-gap">Recursos</h2>
       <ResourceFrames data={data} update={update} subjectId={subject.id} />

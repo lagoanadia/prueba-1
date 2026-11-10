@@ -2491,3 +2491,18 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .kind-menu button { display: flex; align-items: center; gap: 10px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: left; }
 .kind-menu button.on { background: #E8F0FE; } .kind-menu button:hover { background: var(--soft); }
 .subject-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Subir documentos: botón compacto y texto algo más grande que el mínimo */
+.og-drop-title { font-size: 19px; }
+.og-drop-body .muted { font-size: 15px; }
+.og-go { padding: 6px 16px; font-size: 14px; min-height: 0; height: 38px; border-radius: 19px; }
+/* Exámenes: cuenta atrás y pasador */
+.exam-count { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+.exam-count-name { font-size: 13px; font-weight: 600; color: var(--muted); }
+.exam-count-n { font-size: 58px; font-weight: 700; line-height: 1; } .exam-count-n small { font-size: 18px; color: var(--muted); margin-left: 6px; font-weight: 600; }
+.exam-count-n.is-late { color: #B3261E; }
+.exam-next { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; justify-content: center; } .exam-next span { border-radius: 12px; padding: 3px 10px; font-weight: 700; font-size: 12px; }
+.exam-chip { border-radius: 12px; background: #FFFFFF; padding: 3px 10px; font-weight: 700; font-size: 13px; box-shadow: 0 0 0 1.5px var(--line); white-space: nowrap; } .exam-chip.is-late { color: #B3261E; }
+.exam-pager { display: flex; align-items: center; gap: 6px; margin-top: 12px; touch-action: pan-y; }
+.exam-dots { flex: 1; display: flex; justify-content: center; gap: 4px; }
+.exam-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D7D9DB; transition: width .2s var(--ease), background .2s; } .exam-dots i.on { width: 14px; background: #3185FC; }

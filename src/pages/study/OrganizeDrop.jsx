@@ -86,8 +86,8 @@ export default function OrganizeDrop({ subjectName, onReview }) {
       <input ref={input} type="file" accept="application/pdf" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = '' }} />
       <input ref={folderInput} type="file" multiple hidden {...{ webkitdirectory: '', directory: '' }} onChange={(e) => { add(e.target.files); e.target.value = '' }} />
       <div className="og-drop-body">
-        <b className="og-drop-title">Sube los documentos de la asignatura</b>
-        <span className="muted">Sube PDF sueltos o carpetas enteras (las carpetas se abren y se ignoran, solo cuentan los PDF). Te propongo cómo organizarlos en unidades y temas y podrás revisarlo antes de crear nada.</span>
+        <b className="og-drop-title">Sube tus PDF o una carpeta</b>
+        <span className="muted">Te los ordeno en unidades y temas, y lo revisas antes de crear nada.</span>
         {files.length > 0 && (
           <div className="og-files">
             {files.map((f) => (
@@ -103,7 +103,7 @@ export default function OrganizeDrop({ subjectName, onReview }) {
         )}
         {note && <span className="og-note" role="status">{note}</span>}
       </div>
-      <button className="og-go" onClick={run} disabled={busy || !files.length}><Icon name="star" size={18} />Proponer organización</button>
+      <button className="og-go" onClick={run} disabled={busy || !files.length}><Icon name="star" size={16} />Organizar</button>
     </section>
   )
 }
