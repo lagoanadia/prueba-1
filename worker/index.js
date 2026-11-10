@@ -22,6 +22,7 @@ import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 import organize from './routes/organize.js'
 import ingredients from './routes/ingredients.js'
+import recipes from './routes/recipes.js'
 
 const ROUTES = {
   '/api/auth/google': google,
@@ -38,6 +39,7 @@ const ROUTES = {
   '/api/command': command,
   '/api/organize': organize,
   '/api/ingredients': ingredients,
+  '/api/recipes': recipes,
 }
 
 export default {

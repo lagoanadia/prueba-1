@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { MEALS, activeDishOf, dishesOf } from '../../widgets/comida/food.js'
 import DishForm from './DishForm.jsx'
+import ImportRecipes from './ImportRecipes.jsx'
 import Modal from './Modal.jsx'
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -14,6 +15,7 @@ export default function Cookbook({ data, update }) {
   const [letter, setLetter] = useState(null)
   const [hot, setHot] = useState(null) // índice de la letra bajo el ratón (para la onda)
   const [editing, setEditing] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [q, setQ] = useState(null) // null = sin buscar · texto = buscando
   const searchRef = useRef(null)
   // Al empezar a buscar, el cursor pasa al buscador (al final del texto) para seguir escribiendo
@@ -40,7 +42,7 @@ export default function Cookbook({ data, update }) {
   return (
     <section className="card fd-card fd-cookbook" aria-label="Recetario" tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Escape' && q != null) { setQ(null); return } if (q == null && e.target === e.currentTarget && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setQ(e.key) } }}>
-      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Recetario</b></div>
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Recetario</b><span className="fd-grow" /><button className="fd-ib" onClick={() => setImporting(true)} aria-label="Importar recetas desde un PDF" title="Importar recetas desde un PDF"><Icon name="upload" size={16} /></button></div>
       <div className="fd-search">
         <Icon name="search" size={16} />
         <input ref={searchRef} value={q ?? ''} placeholder="Buscar receta o ingrediente" aria-label="Buscar receta" onFocus={() => q == null && setQ('')} onChange={(e) => setQ(e.target.value)}
@@ -99,6 +101,7 @@ export default function Cookbook({ data, update }) {
         </div>
       )}
       </>)}
+      {importing && <ImportRecipes data={data} update={update} onClose={() => setImporting(false)} />}
       {editing && open && (
         <Modal title="Editar receta" icon="pen" onClose={() => setEditing(false)} wide>
           <DishForm initial={open} onSave={save} onRemove={remove} />
