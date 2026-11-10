@@ -17,11 +17,6 @@ const endOf = (p) => addDays(p.start ?? todayISO(), Math.max(0, (p.days ?? 1) - 
 /** Días que le quedan a un tratamiento (contando hoy); null si es diario o suplemento. */
 const daysLeft = (p) => (p.kind === 'treatment' && p.days ? Math.max(0, daysUntil(endOf(p)) + 1) : null)
 
-const Capsule = ({ size = 26, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-35 12 12)" /><path d="M9.2 7.6l7.2 7.2" />
-  </svg>
-)
 const GridIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></svg>
 
 /**
@@ -66,15 +61,17 @@ export default function Pills({ data, update }) {
             return (
               <div key={p.id} className="pl-card" style={{ '--c': p.color ?? PILL_COLORS[0] }}>
                 <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-                <div className="pl-ring" style={left != null ? { '--f': `${frac * 360}deg` } : undefined}>
-                  {left != null ? <span className="pl-count"><b>{left || '–'}</b><i>{left ? (left === 1 ? 'día' : 'días') : 'fin'}</i></span>
-                    : p.kind === 'supplement' ? <Capsule size={28} color="var(--c)" /> : <b className="pl-inf">∞</b>}
-                </div>
+                {left != null && (
+                  <div className="pl-ring" style={{ '--f': `${frac * 360}deg` }}>
+                    <span className="pl-count"><b>{left || '–'}</b><i>{left ? (left === 1 ? 'día' : 'días') : 'fin'}</i></span>
+                  </div>
+                )}
                 <b className="pl-name">{p.name}</b>
                 <div className="pl-slots">{timesOfPill(p).map((t) => <button key={t} className={`pl-slot ${isDone(p, t) ? 'is-done' : ''}`} onClick={() => toggle(p, t)} aria-pressed={isDone(p, t)} title={isDone(p, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</div>
               </div>
             )
           })}
+          <button type="button" className="pl-addcard" onClick={() => setAdding(true)}><Icon name="plus" size={14} strokeWidth={2.8} /> Añadir otro</button>
         </div>
       )}
       {view === 'day' && pills.length > 0 && (

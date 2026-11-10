@@ -2705,3 +2705,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-bubble-add { border: 1.5px dashed #9AA0A6; border-radius: 20px; padding: 5px 14px; background: #fff; font: 600 13px Poppins, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--text); }
 .sa-bubble-in { border: 1.5px solid var(--line); border-radius: 20px; padding: 5px 14px; font: inherit; font-size: 13px; width: 130px; }
 .sa-plan-col.is-drop { outline: 2px dashed #2FA36B; outline-offset: -2px; background: #E3F7EA; }
+/* Pastillero: tarjetas compactas y hueco para añadir otro */
+.pl-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.pl-addcard { border: 2px dashed #C6CACE; border-radius: 18px; min-height: 110px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; font: 600 13px Poppins, sans-serif; color: #9AA0A6; cursor: pointer; } .pl-addcard:hover { border-color: #9AA0A6; color: var(--text); }
