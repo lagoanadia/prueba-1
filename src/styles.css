@@ -2414,3 +2414,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cap-tags { justify-content: flex-start; gap: 6px; }
 .cap-form { width: clamp(260px, 46%, 360px); }
 .cap-form textarea { min-height: 120px; }
+
+/* Cosa buena: al escribir, 3px de aire arriba y abajo entre los elementos */
+.good-form { padding: 3px 0; }
+.good-form textarea, .good-form input { margin: 3px 0; }
+.good-form > .w-form { margin: 3px 0; }

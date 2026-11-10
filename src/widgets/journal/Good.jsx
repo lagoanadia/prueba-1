@@ -73,7 +73,7 @@ export default function Good({ size, data, update }) {
   return (
     <>
       {history}
-      <form className={`w-form ${tall ? 'w-form-col w-grow' : ''}`} onSubmit={save}
+      <form className={`w-form good-form ${tall ? 'w-form-col w-grow' : ''}`} onSubmit={save}
         onKeyDown={(e) => { if (e.key === 'Escape' && saved) cancel(); if (e.key === 'Enter' && !e.shiftKey && tall) save(e) }}>
         {tall
           ? <textarea autoFocus={Boolean(saved)} placeholder="¿Qué ha salido bien hoy?" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} rows={4} />
