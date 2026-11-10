@@ -4,6 +4,7 @@ import AddPopup from '../AddPopup.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import Select from '../../components/Select.jsx'
+import { useBox } from '../useBox.js'
 import { getFriends, getShared, openShared, sendCapsule } from '../../services/friendsService.js'
 import { addDays, daysUntil, formatLong, formatShort, todayISO } from '../../lib/dates.js'
 
@@ -49,6 +50,7 @@ export default function Bottle({ size, data, update }) {
   const [date, setDate] = useState(addDays(today, 30))
   const [reading, setReading] = useState(null)
   const [selId, setSelId] = useState(null)
+  const [shelfRef, shelfBox] = useBox()
 
   const seal = async (e) => {
     e.preventDefault()
@@ -139,13 +141,26 @@ export default function Bottle({ size, data, update }) {
     return <>{popup}{addBtn}{sentNote}<div className="cap-shelf">{row}{bar}{tags}</div></>
   }
 
+  // L: si no caben en una balda, las siguientes botellas van a otra balda más abajo
+  const per = Math.max(1, Math.floor((shelfBox.w + 6) / 66))
+  const shelves = []
+  for (let i = 0; i < shelf.length; i += per) shelves.push(shelf.slice(i, i + per))
   const st = sel ? stateOf(sel) : null
   return (
     <>
       {popup}
       <div className="cap-l">
         <div className="cap-left">
-          <div className="cap-shelf">{row}{bar}{tags}</div>
+          <div className="cap-shelves" ref={shelfRef}>
+            {shelves.map((group, gi) => (
+              <div key={gi} className="cap-shelf">
+                <div className="cap-row">{group.map((b) => one(b))}</div>
+                {bar}
+                <div className="cap-tags">{group.map((b) => <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)}</div>
+              </div>
+            ))}
+            {shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula</span>}
+          </div>
           {sel && (
             <div className="cap-detail">
               <div>

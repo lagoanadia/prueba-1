@@ -2419,3 +2419,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .good-form { padding: 3px 0; }
 .good-form textarea, .good-form input { margin: 3px 0; }
 .good-form > .w-form { margin: 3px 0; }
+
+/* Cápsulas L: 50 / 50 y las baldas se apilan hacia abajo */
+.cap-l .cap-left { flex: 1 1 0; }
+.cap-l .cap-form { flex: 1 1 0; width: auto; min-width: 0; }
+.cap-shelves { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.cap-shelves .cap-shelf { flex: none; justify-content: flex-start; padding-top: 6px; }
+.cap-shelves .cap-row { overflow: visible; margin-bottom: -5px; }
+.cap-shelves .cap-row .bottle, .cap-shelves .cap-tags .bottle-tag { width: 60px; }
+.cap-shelves .cap-row .bottle.is-sel { transform: translateY(-6px); }
