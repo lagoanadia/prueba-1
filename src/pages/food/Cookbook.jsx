@@ -18,14 +18,15 @@ export default function Cookbook({ data, update }) {
   const has = new Set(dishes.map((d) => letterOf(d.name)))
   const shown = letter ?? (active ? letterOf(active.name) : LETTERS.find((l) => has.has(l)))
   const list = dishes.filter((d) => letterOf(d.name) === shown).sort((a, b) => a.name.localeCompare(b.name, 'es'))
-  const open = list.find((x) => x.id === active?.id) // la receta abierta solo se ve si es de la letra elegida
+  // Receta desplegada: la elegida si es de esta letra; si no, la primera de la letra
+  const open = list.find((x) => x.id === active?.id) ?? list[0]
   const select = (id) => update((d) => ({ ...d, activeDish: id }))
-  const save = (patch) => { update((d) => ({ ...d, dishes: dishesOf(d).map((x) => (x.id === active.id ? { ...x, ...patch } : x)) })); setEditing(false) }
+  const save = (patch) => { update((d) => ({ ...d, dishes: dishesOf(d).map((x) => (x.id === open.id ? { ...x, ...patch } : x)) })); setEditing(false) }
   const remove = () => {
-    if (!window.confirm(`¿Eliminar «${active.name}»? También saldrá del menú.`)) return
+    if (!window.confirm(`¿Eliminar «${open.name}»? También saldrá del menú.`)) return
     update((d) => {
-      const menu = Object.fromEntries(Object.entries(d.menu ?? {}).map(([day, m]) => [day, Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v === active.id ? null : v]))]))
-      return { ...d, dishes: dishesOf(d).filter((x) => x.id !== active.id), menu, activeDish: null, batchPlan: (d.batchPlan ?? []).filter((b) => b.dish !== active.id) }
+      const menu = Object.fromEntries(Object.entries(d.menu ?? {}).map(([day, m]) => [day, Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v === open.id ? null : v]))]))
+      return { ...d, dishes: dishesOf(d).filter((x) => x.id !== open.id), menu, activeDish: null, batchPlan: (d.batchPlan ?? []).filter((b) => b.dish !== open.id) }
     })
     setEditing(false)
   }
@@ -48,7 +49,7 @@ export default function Cookbook({ data, update }) {
       {dishes.length > 0 && list.length === 0 && <p className="fd-empty">Sin recetas con la {shown}</p>}
       <div className="fd-cards">
         {list.map((x) => (
-          <button key={x.id} draggable className={`fd-rec ${active?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
+          <button key={x.id} draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
             onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copy' }}>
             <span className="fd-rec-name"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} />{x.name}</span>
             <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
@@ -73,9 +74,9 @@ export default function Cookbook({ data, update }) {
           </div>
         </div>
       )}
-      {editing && active && (
+      {editing && open && (
         <Modal title="Editar receta" icon="pen" onClose={() => setEditing(false)} wide>
-          <DishForm initial={active} onSave={save} onRemove={remove} />
+          <DishForm initial={open} onSave={save} onRemove={remove} />
         </Modal>
       )}
     </section>
