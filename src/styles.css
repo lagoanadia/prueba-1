@@ -2359,4 +2359,4 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .year-mass-box .year-mass { display: grid; grid-auto-flow: column; margin: 0; }
 .year-mass-box .year-mass .ypx { border-radius: 25%; aspect-ratio: auto; }
 .year-mass-box .year-mass { grid-auto-flow: row; }
-.year-mass-box { padding-bottom: 14px; box-sizing: border-box; }
+.year-mass-box { padding-bottom: 5px; box-sizing: border-box; }
