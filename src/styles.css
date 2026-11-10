@@ -2624,3 +2624,5 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .xp-dot { width: 26px; height: 26px; border-radius: 50%; border: 0; cursor: pointer; } .xp-dot.on { outline: 2px solid var(--text); outline-offset: 2px; }
 .xp-round { width: 38px; height: 28px; border: 2px solid #BFD3FA; background: none; cursor: pointer; } .xp-round.on { border-color: var(--blue); background: #EAF1FF; }
 @media (max-width: 899px) { .xp-panel { width: 100vw; height: 94dvh; max-height: 94dvh; border-radius: 26px 26px 0 0; } .xp-body { flex-direction: column-reverse; } .xp-style { width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; } .xp-opts { margin: 0 8px 0 0; } .xp-sheet { padding: 24px 20px; } }
+.ws-empty-add { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.ws-empty-add p { margin: 0; }

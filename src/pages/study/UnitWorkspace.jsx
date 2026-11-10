@@ -209,7 +209,10 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                   <BlockEditor key={practice.id} appendRef={notesIn} exportAs={{ title: practice.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
                     bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
-              : <p className="muted ws-empty">Añade una práctica con + en el panel: su PDF a un lado y tus apuntes al otro.</p>
+              : <div className="ws-empty ws-empty-add">
+                  <p className="muted">Cada práctica tiene su PDF a un lado y tus apuntes al otro.</p>
+                  <button className="pill pill-on" onClick={() => setDialog('practice')}><Icon name="plus" size={16} color="#fff" strokeWidth={2.8} /> Crear práctica</button>
+                </div>
           )}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
