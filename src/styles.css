@@ -2506,10 +2506,3 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .exam-pager { display: flex; align-items: center; gap: 6px; margin-top: 12px; touch-action: pan-y; }
 .exam-dots { flex: 1; display: flex; justify-content: center; gap: 4px; }
 .exam-dots i { width: 6px; height: 6px; border-radius: 3px; background: #D7D9DB; transition: width .2s var(--ease), background .2s; } .exam-dots i.on { width: 14px; background: #3185FC; }
-
-/* Unidades y el post-it de la asignatura, en la misma fila */
-.unit-row { display: flex; gap: 24px; align-items: flex-start; }
-.unit-main { flex: 1; min-width: 0; }
-.subject-note { width: 260px; flex-shrink: 0; display: flex; margin-top: 8px; }
-.subject-note .quick-note { min-height: 190px; border-radius: 20px; padding: 16px 18px 46px; }
-@media (max-width: 899px) { .unit-row { flex-direction: column; } .subject-note { width: 100%; } }
