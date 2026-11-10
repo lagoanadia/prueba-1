@@ -43,7 +43,7 @@ export default function Mood({ size, data, update }) {
   if (size === 'M') return <>{chips}<div className="fill"><TwoWeeks colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
   const colorFor = (d) => colorOf(moods[d])
   const yearGrid = yearView === 'masa'
-    ? <YearMass colorFor={colorFor} onDay={cycle} weeks={analysis ? 22 : 37} />
+    ? <YearMass colorFor={colorFor} onDay={cycle} />
     : <YearGrid colorFor={colorFor} onDay={cycle} />
   return (
     <>

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { addDays, todayISO, weekStart } from '../lib/dates.js'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -31,25 +31,49 @@ export default function YearGrid({ colorFor, onDay }) {
   )
 }
 
+const GAP = 2 // entre cuadrados
+const BAND_GAP = 10 // entre bandas
+
 /**
- * El año como una masa de cuadrados (semanas en columnas, lunes arriba), siempre cuadrados.
- * Se ven las últimas `weeks` semanas hasta hoy; el resto del año está a la izquierda (se desliza).
+ * El año entero como una masa de cuadrados (semanas en columnas, lunes arriba). Siempre cuadrados y sin deslizar:
+ * se parte en 1-4 bandas apiladas según el ancho y el alto del hueco, la que dé los cuadrados más grandes.
  */
-export function YearMass({ colorFor, onDay, weeks = 37 }) {
+export function YearMass({ colorFor, onDay }) {
+  const box = useRef(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return undefined
+    const ro = new ResizeObserver(([e]) => setSize({ w: e.contentRect.width, h: e.contentRect.height }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   const today = todayISO()
   const year = today.slice(0, 4)
   const first = weekStart(`${year}-01-01`)
-  const upToToday = Math.floor((new Date(`${weekStart(today)}T12:00:00`) - new Date(`${first}T12:00:00`)) / 604800000) + 1
-  const all = Array.from({ length: upToToday }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i))).flat()
-  const box = useRef(null)
-  useLayoutEffect(() => { if (box.current) box.current.scrollLeft = box.current.scrollWidth }, [weeks, upToToday])
+  const weeks = Math.floor((new Date(`${weekStart(`${year}-12-31`)}T12:00:00`) - new Date(`${first}T12:00:00`)) / 604800000) + 1
+  const cols = Array.from({ length: weeks }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i)))
+
+  let best = { bands: 1, cell: 0 }
+  for (let b = 1; b <= 4; b++) {
+    const per = Math.ceil(weeks / b)
+    const cell = Math.min((size.w - (per - 1) * GAP) / per, (size.h - (b - 1) * BAND_GAP - (7 * b - 1) * GAP) / (7 * b))
+    if (cell > best.cell) best = { bands: b, cell }
+  }
+  const cell = Math.max(4, Math.min(Math.floor(best.cell), 28))
+  const per = Math.ceil(weeks / best.bands)
+  const bands = Array.from({ length: best.bands }, (_, i) => cols.slice(i * per, (i + 1) * per))
+
   return (
-    <div className="year-mass-scroll" ref={box}>
-      <div className="year-mass" style={{ '--n': weeks }}>
-        {all.map((d) => (d.startsWith(year)
-          ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
-          : <span key={d} />))}
-      </div>
+    <div className="year-mass-box" ref={box}>
+      {size.w > 0 && bands.map((band, bi) => (
+        <div key={bi} className="year-mass" style={{ gridTemplateRows: `repeat(7, ${cell}px)`, gridAutoColumns: `${cell}px`, gap: GAP }}>
+          {band.flat().map((d) => (d.startsWith(year)
+            ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ width: cell, height: cell, background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
+            : <span key={d} />))}
+        </div>
+      ))}
     </div>
   )
 }
