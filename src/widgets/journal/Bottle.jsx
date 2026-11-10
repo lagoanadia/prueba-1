@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import AddPopup from '../AddPopup.jsx'
-import History from '../../components/History.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import Select from '../../components/Select.jsx'
@@ -10,16 +9,15 @@ import { addDays, daysUntil, formatLong, formatShort, todayISO } from '../../lib
 
 const TINTS = ['#9CC5FF', '#B9F2D6', '#F7C8FF', '#FFE59A', '#FFC4A8']
 
-/** Botella de cristal con el mensaje enrollado dentro. Lista para abrir = brilla y se mueve. */
-const BottleArt = ({ tint, ready }) => (
+/** Botella plana de color con el mensaje enrollado dentro. Abierta = la misma botella sin tapón. Lista para abrir = brilla. */
+const BottleArt = ({ tint, opened }) => (
   <svg className="bottle-art" viewBox="0 0 40 64" aria-hidden="true">
-    <rect x="15" y="2" width="10" height="8" rx="2" fill="#C08552" stroke="#202124" strokeWidth="1.6" />
-    <path d="M16 10h8v6c0 2 8 5 8 13v26a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6V29c0-8 8-11 8-13Z" fill={tint} fillOpacity=".55" stroke="#202124" strokeWidth="1.8" strokeLinejoin="round" />
-    <path d="M12 32v18" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" opacity=".8" />
-    <g transform="rotate(-12 20 42)">
-      <rect x="15" y="30" width="10" height="22" rx="3" fill="#FFF6DC" stroke="#202124" strokeWidth="1.4" />
-      <path d="M17.5 35h5M17.5 39h5M17.5 43h4" stroke="#C9B98F" strokeWidth="1.2" strokeLinecap="round" />
-      {!ready && <circle cx="20" cy="48" r="2.6" fill="#E84855" stroke="#202124" strokeWidth="1" />}
+    {!opened && <><rect x="15" y="1.5" width="10" height="8" rx="2.5" fill="#D9A66C" /><rect x="15" y="6" width="10" height="2" fill="#B98045" opacity=".5" /></>}
+    <path d="M16.5 9.5h7v6c0 3 8.5 5 8.5 13v27a7.5 7.5 0 0 1-7.5 7.5h-9A7.5 7.5 0 0 1 8 55.5v-27c0-8 8.5-10 8.5-13Z" fill={tint} />
+    <path d="M12.5 30v20" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" opacity=".6" />
+    <g transform="rotate(-10 20 44)">
+      <rect x="15.5" y="32" width="9" height="20" rx="3" fill="#FFFFFF" />
+      <path d="M18 37h4M18 41h4M18 45h3" stroke="#D5D8DC" strokeWidth="1.3" strokeLinecap="round" />
     </g>
   </svg>
 )
@@ -50,6 +48,7 @@ export default function Bottle({ size, data, update }) {
   const [text, setText] = useState('')
   const [date, setDate] = useState(addDays(today, 30))
   const [reading, setReading] = useState(null)
+  const [selId, setSelId] = useState(null)
 
   const seal = async (e) => {
     e.preventDefault()
@@ -72,7 +71,6 @@ export default function Bottle({ size, data, update }) {
     update((d) => ({ ...d, bottles: d.bottles.map((x) => (x.id === b.id ? { ...x, openedAt: today } : x)) }))
   }
 
-  const history = <History title="Cápsulas abiertas" empty="Aún no has abierto ninguna" items={opened.map((b) => ({ id: b.id, date: formatShort(b.openedAt) + (b.from ? ` · de @${b.from.username}` : ''), text: b.text }))} />
   const popup = reading && createPortal(
     <div className="popup" role="dialog" aria-modal="true" aria-label="Cápsula abierta">
       <div className="popup-backdrop" onClick={() => setReading(null)} />
@@ -84,8 +82,8 @@ export default function Bottle({ size, data, update }) {
     document.body
   )
 
-  const writeForm = (close) => (
- <form className="w-form w-form-col" onSubmit={async (e) => { if (await seal(e)) close?.() }}>
+  const writeForm = (close, inline = false) => (
+    <form className={`w-form w-form-col ${inline ? 'cap-form' : ''}`} onSubmit={async (e) => { if (await seal(e)) close?.() }}>
       {friends.length > 0 && (
         <div className="w-form capsule-to">
           <span className="w-hint">Para</span>
@@ -93,7 +91,7 @@ export default function Bottle({ size, data, update }) {
             options={[{ value: '', label: 'Solo yo (privada)', color: '#EFABFF' }, ...friends.map((f) => ({ value: f.username, label: `@${f.username}`, color: '#9CC5FF' }))]} />
         </div>
       )}
-      <textarea autoFocus placeholder={to ? `Escribe a @${to}. No podrá leerla hasta la fecha que elijas.` : 'Escribe a tu yo del futuro. La botella quedará cerrada hasta la fecha que elijas.'} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4} />
+      <textarea autoFocus={!inline} placeholder={to ? `Escribe a @${to}. No podrá leerla hasta la fecha que elijas.` : 'Escribe a tu yo del futuro, elige una fecha y la cápsula queda cerrada hasta ese día.'} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={inline ? undefined : 4} />
       <div className="w-form">
         <input type="date" value={date} min={addDays(today, 1)} onChange={(e) => setDate(e.target.value)} style={{ flex: 'none' }} aria-label="Se abre el" />
         <button className="pill pill-pink" disabled={!text.trim()}>{to ? 'Enviar' : 'Sellar'}</button>
@@ -102,16 +100,23 @@ export default function Bottle({ size, data, update }) {
   )
   const addBtn = <AddPopup label="Nueva cápsula">{writeForm}</AddPopup>
   const sentNote = sent && <p className="w-hint capsule-sent" role="status" onClick={() => setSent('')}>{sent}</p>
-  const shelf = [...ready, ...sealed]
+
+  // En la balda están todas: las listas, las cerradas y las ya abiertas (sin tapón)
+  const shelf = [...ready, ...sealed, ...opened]
+  const stateOf = (b) => (b.openedAt ? 'open' : b.openDate <= today ? 'ready' : 'sealed')
+  const tagOf = (b) => ({ open: 'Leída', ready: 'Abrir' }[stateOf(b)] ?? (daysUntil(b.openDate) === 1 ? '1 día' : `${daysUntil(b.openDate)} días`))
+  const sel = shelf.find((b) => b.id === selId) ?? shelf[0]
+  const remove = (b) => { if (window.confirm('¿Borrar esta cápsula?')) { update((d) => ({ ...d, bottles: (d.bottles ?? []).filter((x) => x.id !== b.id) })); setSelId(null) } }
+
   const one = (b, big = false) => {
-    const isReady = b.openDate <= today
-    const left = daysUntil(b.openDate)
+    const st = stateOf(b)
     return (
-      <button key={b.id} className={`bottle ${isReady ? 'is-ready' : ''} ${big ? 'bottle-big' : ''}`} onClick={() => isReady && open(b)} disabled={!isReady}
-        title={isReady ? 'Toca para abrir' : `Se abre el ${formatLong(b.openDate)}`} aria-label={isReady ? 'Abrir cápsula' : `Cápsula cerrada, faltan ${left} días`}>
-        <BottleArt tint={tintOf(b)} ready={isReady} />
+      <button key={b.id} className={`bottle bottle-${st} ${big ? 'bottle-big' : ''} ${sel?.id === b.id && !big ? 'is-sel' : ''}`}
+        onClick={() => (big ? st === 'ready' && open(b) : setSelId(b.id))}
+        title={st === 'sealed' ? `Se abre el ${formatLong(b.openDate)}` : st === 'ready' ? 'Lista para abrir' : `Abierta el ${formatLong(b.openedAt)}`}
+        aria-label={st === 'ready' ? 'Cápsula lista para abrir' : st === 'open' ? 'Cápsula abierta' : `Cápsula cerrada, faltan ${daysUntil(b.openDate)} días`}>
+        <BottleArt tint={tintOf(b)} opened={st === 'open'} />
         {b.from && <span className="bottle-from" title={`De @${b.from.username}`}><Avatar avatar={b.from.avatar} size={22} /></span>}
-        <span className="bottle-tag">{isReady ? 'Abrir' : left === 1 ? '1 día' : `${left} días`}</span>
       </button>
     )
   }
@@ -120,20 +125,42 @@ export default function Bottle({ size, data, update }) {
   if (size === 'S') {
     return (
       <div className="w-center">
-        {history}{popup}{addBtn}
+        {popup}{addBtn}
         {shelf[0] ? one(shelf[0], true) : <span className="w-hint">Sin cápsulas</span>}
       </div>
     )
   }
 
+  const bar = <div className="cap-bar" aria-hidden="true" />
+  const row = <div className="cap-row">{shelf.map((b) => one(b))}{shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula{size === 'L' ? '' : ' con el +'}</span>}</div>
+  const tags = <div className="cap-tags">{shelf.map((b) => <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)}</div>
+
+  if (size !== 'L') {
+    return <>{popup}{addBtn}{sentNote}<div className="cap-shelf">{row}{bar}{tags}</div></>
+  }
+
+  const st = sel ? stateOf(sel) : null
   return (
     <>
-      {history}{popup}{addBtn}{sentNote}
-      <div className={`shelf shelf-${size}`}>
-        {shelf.map((b) => one(b))}
-        {shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula con el +</span>}
+      {popup}
+      <div className="cap-l">
+        <div className="cap-left">
+          <div className="cap-shelf">{row}{bar}{tags}</div>
+          {sel && (
+            <div className="cap-detail">
+              <div>
+                <b>{st === 'open' ? `Abierta el ${formatLong(sel.openedAt)}` : st === 'ready' ? `Se podía abrir desde el ${formatLong(sel.openDate)}` : `Se abre el ${formatLong(sel.openDate)} · faltan ${daysUntil(sel.openDate)} días`}</b>
+                <span>{sel.from ? `De @${sel.from.username} · ` : ''}Escrita el {formatLong(sel.createdAt)}</span>
+              </div>
+              {st === 'ready' && <button className="pill pill-pink" onClick={() => open(sel)}>Abrir</button>}
+              {st === 'open' && <button className="pill pill-sm" onClick={() => setReading(sel)}>Leer</button>}
+              {!sel.remote && <button className="icon-btn cap-del" onClick={() => remove(sel)} aria-label="Borrar cápsula" title="Borrar"><Icon name="trash" size={16} color="#B3261E" /></button>}
+            </div>
+          )}
+          {sentNote}
+        </div>
+        {writeForm(null, true)}
       </div>
-      {size === 'L' && ready.length + sealed.length > 0 && <span className="w-hint">{ready.length ? `${ready.length} lista${ready.length > 1 ? 's' : ''} para abrir · ` : ''}{sealed.length} cerrada{sealed.length === 1 ? '' : 's'}</span>}
     </>
   )
 }

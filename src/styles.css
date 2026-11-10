@@ -2368,3 +2368,44 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .g7-dow { text-align: center; font-size: 11px; font-weight: 600; color: #9AA0A6; height: 16px; }
 .g7 .px { border-radius: 25%; max-width: none; justify-self: center; }
 .g7 .px:disabled { opacity: 1; }
+
+/* Cápsulas del tiempo: botellas planas sobre una barra marrón */
+.cap-shelf { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.cap-row { display: flex; align-items: flex-end; justify-content: space-around; gap: 10px; padding: 0 6px; margin-bottom: -5px; position: relative; z-index: 2; overflow-x: auto; overflow-y: visible; }
+.cap-bar { height: 12px; border-radius: 6px; background: #D9BB94; flex-shrink: 0; }
+.cap-row .bottle { width: clamp(40px, 12cqw, 66px); flex-shrink: 0; cursor: pointer; filter: drop-shadow(0 3px 2px rgba(60, 64, 67, .18)); transition: transform .2s var(--ease); position: relative; padding-bottom: 22px; }
+.cap-row .bottle .bottle-tag { position: absolute; bottom: -17px; left: 50%; transform: translateX(-50%); }
+.cap-row .bottle.is-sel { transform: translateY(-8px); }
+.cap-row .bottle:hover { transform: translateY(-4px); }
+.cap-row .bottle.bottle-ready { filter: drop-shadow(0 0 7px #EFABFF); }
+.cap-row .bottle.bottle-ready .bottle-art { animation: none; }
+.bottle-tag.tag-open { color: #0F6B45; background: #DDF8EC; border-radius: 8px; padding: 1px 8px; }
+.bottle-tag.tag-ready { color: #A12CB3; background: #FBE4FF; border-radius: 8px; padding: 1px 8px; }
+.cap-l { display: flex; gap: 14px; flex: 1; min-height: 0; }
+.cap-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.cap-left .cap-shelf { padding-bottom: 20px; }
+.cap-detail { border-radius: 14px; background: #F8F9FA; padding: 9px 12px; font-size: 12.5px; line-height: 1.4; display: flex; align-items: center; gap: 10px; }
+.cap-detail > div { flex: 1; min-width: 0; display: flex; flex-direction: column; } .cap-detail span { color: var(--muted); }
+.cap-del { width: 32px; height: 32px; background: #FDECEE; }
+.cap-form { width: 230px; flex-shrink: 0; border-left: 1px solid var(--line); padding-left: 14px; display: flex; flex-direction: column; gap: 8px; }
+.cap-form textarea { flex: 1; min-height: 0; resize: none; }
+
+/* Journal: lápiz de la esquina, hábitos editables, metas, tira de la semana */
+.widget { position: relative; }
+.w-corner { position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+.w-corner.on { background: #3DDC97; }
+.chip-habit { display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+.chip-habit > button { border: none; background: none; font: inherit; color: inherit; padding: 4px 12px; cursor: pointer; border-radius: inherit; }
+.chip-habit > button.chip-x { padding: 0; width: 18px; height: 18px; margin-right: 8px; border-radius: 50%; background: #FDECEE; display: inline-flex; align-items: center; justify-content: center; }
+.goal-fixed { font-style: normal; font-size: 11px; color: var(--muted); background: var(--soft); border-radius: 8px; padding: 1px 8px; margin-left: 6px; }
+.mini-del { background: #FDECEE; }
+.good-week { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.good-week span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #9AA0A6; width: 22px; }
+.good-week span.is-today { color: var(--text); }
+.good-week i { width: 14px; height: 14px; border-radius: 50%; background: #E8EAED; } .good-week i.on { background: #F9DC5C; }
+
+.cap-row .bottle { padding-bottom: 0; }
+.cap-tags { display: flex; justify-content: space-around; gap: 10px; padding: 8px 6px 0; }
+.cap-tags .bottle-tag { width: clamp(40px, 12cqw, 66px); text-align: center; flex-shrink: 0; }
+.cap-left .cap-shelf { padding-bottom: 0; }
+.cap-form .w-form { flex-wrap: nowrap; } .cap-form input[type=date] { flex: 1 1 auto !important; min-width: 0; } .cap-form .pill { flex: none; }

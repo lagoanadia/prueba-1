@@ -1,7 +1,7 @@
 import ShareButton from '../../components/ShareButton.jsx'
 import { useEffect, useState } from 'react'
 import History from '../../components/History.jsx'
-import { formatShort, todayISO } from '../../lib/dates.js'
+import { formatShort, todayISO, weekDays } from '../../lib/dates.js'
 
 /**
  * Una cosa buena del día.
@@ -41,6 +41,13 @@ export default function Good({ size, data, update }) {
   const past = Object.keys(good).filter((d) => d < today && good[d]).sort().reverse()
   const history = <History title="Cosas buenas" empty="Aún no hay días anteriores" items={past.map((d) => ({ id: d, date: formatShort(d), text: good[d] }))} />
 
+  // Esta semana: bolita amarilla en los días en que has escrito algo bueno
+  const strip = (
+    <div className="good-week" aria-label="Esta semana">
+      {weekDays(today).map((d, i) => <span key={d} className={d === today ? 'is-today' : ''}>{'LMXJVSD'[i]}<i className={good[d] ? 'on' : ''} /></span>)}
+    </div>
+  )
+
   // Vista de lectura: el texto guardado. Al tocarlo pasa a edición.
   if (!editing) {
     return (
@@ -49,6 +56,7 @@ export default function Good({ size, data, update }) {
         <button className={`good-read good-${size}`} onClick={edit} aria-label="Editar la cosa buena de hoy" title="Toca para editar">
           <span className="good-quote">{saved}</span>
         </button>
+        {size !== 'S' && strip}
         {size !== 'S' && <span className="good-share"><ShareButton kind="good" title="una cosa buena de hoy" className="pill pill-sm" data={{ text: saved }} /></span>}
       </>
     )

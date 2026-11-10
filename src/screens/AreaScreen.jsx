@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
 import TopActions from '../components/TopActions.jsx'
 import useBoard from '../hooks/useBoard.js'
-import { WIDGETS, SIZES, fitSize, sizesOf, widgetsFor } from '../widgets/registry.js'
+import { WIDGETS, SIZES, fitSize, shownSize, sizesOf, widgetsFor } from '../widgets/registry.js'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import { PAGES } from '../pages/index.js'
@@ -247,11 +247,11 @@ export default function AreaScreen({ area, showTitle = true }) {
 function WidgetView({ w: raw, data, update = () => {} }) {
   const def = WIDGETS[raw.type]
   if (!def) return null
-  const w = { ...raw, size: fitSize(raw.type, raw.size) }
+  const w = { ...raw, size: shownSize(raw.type, raw.size, data) }
   const Widget = def.component
   return (
     <article className={`widget w-${w.size}`}>
-      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.color }} />{def.name}</h3>}
+      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>}
       <div className="w-body"><Widget size={w.size} data={data} update={update} /></div>
     </article>
   )
@@ -276,12 +276,12 @@ function SizeDock({ size, onPick, name, sizes = SIZES }) {
 const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragged, api }) {
   const def = WIDGETS[raw.type]
   if (!def) return null
-  const w = { ...raw, size: fitSize(raw.type, raw.size) } // tamaños antiguos que ya no valen → el más parecido
+  const w = { ...raw, size: shownSize(raw.type, raw.size, data) } // tamaños antiguos → el más parecido; sin contenido → pequeño
   const Widget = def.component
   return (
     <article ref={(el) => api.setRef(w.id, el)} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
       className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
-      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.color }} />{def.name}</h3>}
+      {w.size !== 'S' && <h3 className="w-title"><span className="dot" style={{ background: def.area === 'journal' ? '#F9DC5C' : def.color }} />{def.name}</h3>}
       {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
       <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} /></div>
       {editing && (

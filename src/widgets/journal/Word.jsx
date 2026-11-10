@@ -139,7 +139,7 @@ export default function Word({ size, data, update }) {
   )
 
   return (
-    <div className={`wordle wordle-${size}`} tabIndex={0} onKeyDown={onKeyDown} aria-label="Palabra del día: escribe tu intento">
+    <div className={`wordle wordle-${size}`} tabIndex={0} onKeyDown={onKeyDown} aria-label="Palabra oculta: escribe tu intento">
       <div className="wordle-area" ref={areaRef}>{board}</div>
       {over ? (
         <div className="wordle-end">

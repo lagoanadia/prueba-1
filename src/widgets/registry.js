@@ -40,9 +40,9 @@ export const SIZES = ['S', 'T', 'M', 'L']
 
 export const WIDGETS = {
   mood: { area: 'journal', name: 'Mood tracker', color: '#F9DC5C', component: Mood },
-  goals: { area: 'journal', name: 'Metas', color: '#3185FC', component: Goals },
-  pixels: { area: 'journal', name: 'Pixels', color: '#3DDC97', component: Pixels },
-  word: { sizes: ['T', 'L'], area: 'journal', name: 'Palabra del día', color: '#F9DC5C', component: Word },
+  goals: { area: 'journal', name: 'Metas', color: '#3185FC', component: Goals, isEmpty: (d) => !(d.goals ?? []).some((g) => !g.fixed) },
+  pixels: { area: 'journal', name: 'Pixels', color: '#3DDC97', component: Pixels, isEmpty: (d) => !(d.habits ?? []).length },
+  word: { sizes: ['T', 'L'], area: 'journal', name: 'Palabra oculta', color: '#F9DC5C', component: Word },
   bottle: { area: 'journal', name: 'Cápsulas del tiempo', color: '#EFABFF', component: Bottle },
   sudoku: { area: 'journal', name: 'Sudoku', color: '#3185FC', component: SudokuWidget },
   bee: { area: 'journal', name: 'Spelling Bee', color: '#F9DC5C', component: BeeWidget },
@@ -73,6 +73,12 @@ export const WIDGETS = {
 // Tamaños en los que cada widget es útil de verdad (si no dice nada: todos)
 export const sizesOf = (type) => WIDGETS[type]?.sizes ?? SIZES
 /** Si un tamaño no vale para ese widget, el más parecido que sí vale. */
+/** Tamaño con el que se pinta: un widget sin nada (sin metas, sin hábitos) se queda en el ancho pequeño. */
+export function shownSize(type, size, data) {
+  const s = fitSize(type, size)
+  return WIDGETS[type]?.isEmpty?.(data ?? {}) && (s === 'L' || s === 'T') ? 'M' : s
+}
+
 export function fitSize(type, size) {
   const ok = sizesOf(type)
   if (ok.includes(size)) return size

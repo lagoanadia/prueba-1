@@ -22,6 +22,7 @@ export default function Pixels({ size, data, update }) {
   const [range, setRange] = useState('año')
   const [yearView, setYearView] = useState('masa') // el año entero en bloque, o por meses
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState(false) // lápiz de la esquina: enseña la ✕ de cada hábito
   const [name, setName] = useState('')
   const habit = habits.find((h) => h.id === current) ?? habits[0]
 
@@ -29,6 +30,11 @@ export default function Pixels({ size, data, update }) {
     const days = d.pixels?.[habit.id] ?? []
     return { ...d, pixels: { ...d.pixels, [habit.id]: days.includes(day) ? days.filter((x) => x !== day) : [...days, day] } }
   })
+  const removeHabit = (h) => {
+    if (!window.confirm(`¿Borrar «${h.name}»? Se borran también sus días marcados.`)) return
+    update((d) => { const px = { ...(d.pixels ?? {}) }; delete px[h.id]; return { ...d, habits: (d.habits ?? []).filter((x) => x.id !== h.id), pixels: px } })
+    setCurrent(null)
+  }
   const add = (e) => {
     e.preventDefault()
     if (!name.trim()) return
@@ -50,11 +56,17 @@ export default function Pixels({ size, data, update }) {
   const addForm = adding
     ? <form className="w-form" onSubmit={add}><input autoFocus placeholder="Nuevo hábito" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => !name && setAdding(false)} maxLength={30} /></form>
     : null
+  const pencil = size !== 'S' && habits.length > 0 && (
+    <button className={`w-corner ${editing ? 'on' : ''}`} onClick={() => setEditing(!editing)} aria-label={editing ? 'Terminar de editar' : 'Editar hábitos'} title={editing ? 'Listo' : 'Editar hábitos'}><Icon name={editing ? 'check' : 'pen'} size={15} /></button>
+  )
   const tabs = (
     <div className="w-row">
       <div className="chips chips-sm">
         {habits.map((h) => (
-          <button key={h.id} className={`chip ${habit?.id === h.id ? 'chip-on' : ''}`} onClick={() => setCurrent(h.id)}>{h.name}</button>
+          <span key={h.id} className={`chip chip-habit ${habit?.id === h.id ? 'chip-on' : ''}`}>
+            <button onClick={() => setCurrent(h.id)}>{h.name}</button>
+            {editing && <button className="chip-x" onClick={() => removeHabit(h)} aria-label={`Borrar ${h.name}`}><Icon name="close" size={10} strokeWidth={3.2} color="#B3261E" /></button>}
+          </span>
         ))}
         {size === 'L' && <button className="chip" onClick={() => setAdding(true)} aria-label="Añadir hábito">+</button>}
       </div>
@@ -81,7 +93,7 @@ export default function Pixels({ size, data, update }) {
   }
   return (
     <>
-      {addBtn}
+      {pencil}{addBtn}
       {tabs}
       {addForm}
       {size === 'T' ? (
