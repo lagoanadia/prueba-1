@@ -210,8 +210,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                     bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
               : <div className="ws-empty ws-empty-add">
-                  <p className="muted">Cada práctica tiene su PDF a un lado y tus apuntes al otro.</p>
-                  <button className="pill pill-on" onClick={() => setDialog('practice')}><Icon name="plus" size={16} color="#fff" strokeWidth={2.8} /> Crear práctica</button>
+                  <button className="pill" onClick={() => setDialog('practice')}><Icon name="plus" size={16} strokeWidth={2.8} /> Crear práctica</button>
                 </div>
           )}
 
