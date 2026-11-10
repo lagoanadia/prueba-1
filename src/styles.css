@@ -2281,3 +2281,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fd-ib:disabled { opacity: .35; cursor: default; }
 .fd-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .fd-days .fd-chip { justify-content: center; padding: 6px 0; }
+.name-confirm { align-items: center; text-align: center; background: #FFF8F8; border: 2px solid #F4B4BA; }
+.name-confirm-ic { width: 56px; height: 56px; border-radius: 50%; background: #FDECEE; display: inline-flex; align-items: center; justify-content: center; }
+.name-confirm-text { color: #5F6368; font-size: 14px; line-height: 1.5; }
+.name-confirm-actions { display: flex; gap: 10px; width: 100%; }
+.name-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 2px solid var(--line); border-radius: 22px; padding: 10px 14px; background: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.name-btn.is-danger { background: #B3261E; border-color: #B3261E; color: #fff; }
