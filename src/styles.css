@@ -2428,3 +2428,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cap-shelves .cap-row { overflow: visible; margin-bottom: -5px; }
 .cap-shelves .cap-row .bottle, .cap-shelves .cap-tags .bottle-tag { width: 60px; }
 .cap-shelves .cap-row .bottle.is-sel { transform: translateY(-6px); }
+
+/* Metas: la barra vacía es del mismo gris que los cuadrados sin marcar */
+.goals .bar { background: #D7D9DB; }
