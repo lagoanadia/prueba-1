@@ -327,7 +327,11 @@ function useFitRows(ref, size, deps) {
     const t = setTimeout(measure, 300) // por si el contenido llega un poco después
     const ro = new ResizeObserver(() => measure())
     ro.observe(el.parentElement) // al cambiar el ancho de la rejilla, el texto se recoloca
-    return () => { clearTimeout(t); ro.disconnect() }
+    // Si el contenido cambia por dentro (p. ej. se despliega un formulario), el widget se vuelve a medir
+    let pending = 0
+    const mo = new MutationObserver(() => { clearTimeout(pending); pending = setTimeout(measure, 60) })
+    mo.observe(el, { childList: true, subtree: true })
+    return () => { clearTimeout(t); clearTimeout(pending); ro.disconnect(); mo.disconnect() }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
