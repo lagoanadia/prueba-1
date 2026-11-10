@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import MonthGrid from '../MonthGrid.jsx'
+import MonthGrid, { EMPTY, TwoWeeks } from '../MonthGrid.jsx'
 import YearGrid from '../YearGrid.jsx'
 import Chips from '../Chips.jsx'
-import { lastDays, todayISO } from '../../lib/dates.js'
+import { todayISO } from '../../lib/dates.js'
 
 export const MOODS = [
   { id: 'bueno', label: 'Bueno', color: '#3DDC97' },
   { id: 'regular', label: 'Mejorable', color: '#F9DC5C' },
   { id: 'malo', label: 'Malo', color: '#E84855' },
 ]
-const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? '#F1F3F4'
+const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? EMPTY
 const RANGES = [{ id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
 /** Mood tracker. S: elegir hoy · T: + mes · M: + 2 semanas · L: + Mes / Año (tocar un día cambia su ánimo). */
@@ -36,7 +36,7 @@ export default function Mood({ size, data, update }) {
 
   if (size === 'S') return <div className="w-center"><span className="w-hint">Hoy</span>{chips}</div>
   if (size === 'T') return <>{chips}<div className="fill"><MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
-  if (size === 'M') return <>{chips}<div className="px-row">{lastDays(14).map((d) => <span key={d} className="px" style={{ background: colorOf(moods[d]) }} />)}</div></>
+  if (size === 'M') return <>{chips}<div className="fill"><TwoWeeks colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
   return (
     <>
       {chips}

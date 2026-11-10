@@ -2287,3 +2287,29 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .name-confirm-actions { display: flex; gap: 10px; width: 100%; }
 .name-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 2px solid var(--line); border-radius: 22px; padding: 10px 14px; background: #fff; font: inherit; font-weight: 600; cursor: pointer; }
 .name-btn.is-danger { background: #B3261E; border-color: #B3261E; color: #fff; }
+
+/* Journal: meses en filas de 7 (una por semana) y año en 12 mini-meses */
+.px { background: #E1E4E8; }
+.month-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.px-dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 11px; font-weight: 600; color: #9AA0A6; }
+.month-wrap .month { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.month-wrap .month .px { width: 100%; height: auto; aspect-ratio: 1; max-width: 44px; justify-self: center; border-radius: 28%; }
+.year-months { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; width: 100%; }
+.ymonth { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ymonth-name { font-size: 11px; font-weight: 600; color: #5F6368; }
+.ymonth-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.ymonth-grid .ypx { width: 100%; height: auto; aspect-ratio: 1; border-radius: 28%; background: #E1E4E8; border: none; padding: 0; }
+.ymonth-grid .ypx:disabled { opacity: .45; }
+.ymonth-grid button.ypx:not(:disabled) { cursor: pointer; }
+.ymonth-grid button.ypx:not(:disabled):hover { transform: scale(1.2); }
+@media (max-width: 520px) { .year-months { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Dentro de un widget: los cuadrados se ajustan para que todo quepa en su alto y ancho */
+.fill .month-wrap { --cell: min(calc((100cqw - 36px) / 7), calc((100cqh - 60px) / 6), 44px); width: auto; }
+.fill .month-wrap .px-dow, .fill .month-wrap .month { grid-template-columns: repeat(7, var(--cell)); }
+.fill .month-wrap .month .px { width: var(--cell); height: var(--cell); max-width: none; aspect-ratio: auto; }
+.fill .year-months { --yc: min(calc((100cqw - 70px) / 42 - 2px), calc((100cqh - 46px) / 12 - 3px), 20px); width: auto; grid-template-columns: repeat(6, auto); gap: 10px 14px; }
+.fill .ymonth-grid { grid-template-columns: repeat(7, var(--yc)); }
+.fill .ymonth-grid .ypx { width: var(--yc); height: var(--yc); aspect-ratio: auto; }
+.fill .month-wrap .month { --cell: var(--wcell); }
+.fill .month-wrap { --wcell: min(calc((100cqw - 36px) / 7), calc((100cqh - 60px) / 6), 44px); --cell: var(--wcell); }
+.fill .month-wrap.two { --wcell: min(calc((100cqw - 36px) / 7), calc((100cqh - 8px) / 2), 44px); }

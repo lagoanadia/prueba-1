@@ -1,6 +1,6 @@
 import AddPopup from '../AddPopup.jsx'
 import { useState } from 'react'
-import MonthGrid from '../MonthGrid.jsx'
+import MonthGrid, { EMPTY, TwoWeeks } from '../MonthGrid.jsx'
 import YearGrid from '../YearGrid.jsx'
 import Chips from '../Chips.jsx'
 import { lastDays, streak, todayISO } from '../../lib/dates.js'
@@ -66,7 +66,7 @@ export default function Pixels({ size, data, update }) {
   }
 
   const days = pixels[habit.id] ?? []
-  const color = (d) => (days.includes(d) ? habit.color : '#F1F3F4')
+  const color = (d) => (days.includes(d) ? habit.color : EMPTY)
 
   if (size === 'S') {
     return (
@@ -85,9 +85,7 @@ export default function Pixels({ size, data, update }) {
       {size === 'T' ? (
         <div className="fill slide-in" key={habit.id}><MonthGrid colorFor={color} onDay={toggle} /></div>
       ) : size === 'M' ? (
-        <div className="px-row slide-in" key={habit.id}>
-          {lastDays(14).map((d) => <button key={d} className="px" style={{ background: color(d) }} onClick={() => toggle(d)} aria-label={d} />)}
-        </div>
+        <div className="fill slide-in" key={habit.id}><TwoWeeks colorFor={color} onDay={toggle} /></div>
       ) : (
         <>
           <Chips options={RANGES} value={range} onChange={setRange} small />
