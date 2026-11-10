@@ -31,11 +31,11 @@ export default function YearGrid({ colorFor, onDay }) {
   )
 }
 
-const GAP = 2 // entre cuadrados
+const GAP = 2 // hueco mínimo entre cuadrados
 
 /**
- * El año entero como una masa de cuadrados (semanas en columnas, lunes arriba). Siempre cuadrados y sin deslizar:
- * se parte en 1-4 bandas apiladas según el ancho y el alto del hueco, la que dé los cuadrados más grandes.
+ * El año entero como un bloque de cuadrados que llena el hueco del widget (los días van de izquierda a derecha y
+ * de arriba abajo). Siempre cuadrados y sin deslizar: solo la última fila puede quedarse sin llegar al final.
  */
 export function YearMass({ colorFor, onDay }) {
   const box = useRef(null)
@@ -49,35 +49,32 @@ export function YearMass({ colorFor, onDay }) {
   }, [])
 
   const today = todayISO()
-  const year = today.slice(0, 4)
-  const first = weekStart(`${year}-01-01`)
-  const weeks = Math.floor((new Date(`${weekStart(`${year}-12-31`)}T12:00:00`) - new Date(`${first}T12:00:00`)) / 604800000) + 1
-  const cols = Array.from({ length: weeks }, (_, w) => Array.from({ length: 7 }, (_, i) => addDays(first, w * 7 + i)))
+  const year = Number(today.slice(0, 4))
+  const total = (new Date(year + 1, 0, 1) - new Date(year, 0, 1)) / 86400000
+  const days = Array.from({ length: total }, (_, i) => addDays(`${year}-01-01`, i))
 
-  // Se prueba con 1 a 6 bandas apiladas y se queda la que da los cuadrados más grandes
-  let best = { bands: 1, cell: 0 }
-  for (let b = 1; b <= 6; b++) {
-    const per = Math.ceil(weeks / b)
-    const cell = Math.min((size.w - (per - 1) * GAP) / per, (size.h - (7 * b - 1) * GAP) / (7 * b))
-    if (cell > best.cell) best = { bands: b, cell }
+  // El cuadrado más grande con el que caben todos los días en el hueco
+  let cell = 4
+  for (let c = 40; c >= 4; c -= 0.25) {
+    const cols = Math.floor((size.w + GAP) / (c + GAP))
+    const rows = Math.floor((size.h + GAP) / (c + GAP))
+    if (cols > 0 && cols * rows >= total) { cell = c; break }
   }
-  const cell = Math.max(4, Math.min(Math.floor(best.cell), 40))
-  const per = Math.ceil(weeks / best.bands)
-  const bands = Array.from({ length: best.bands }, (_, i) => cols.slice(i * per, (i + 1) * per))
-  // El espacio que sobra se reparte entre los cuadrados (hueco parejo, también entre bandas) para llenar el widget
-  const spread = (room, n) => (n > 1 ? Math.max(GAP, Math.min((room - n * cell) / (n - 1), cell * 0.45)) : GAP)
-  const gapX = spread(size.w, per)
-  const gapY = spread(size.h, 7 * best.bands)
+  const cols = Math.max(1, Math.floor((size.w + GAP) / (cell + GAP)))
+  const rows = Math.ceil(total / cols)
+  // El sobrante se reparte en los huecos para que el bloque llene el widget de lado a lado y de arriba abajo
+  const spread = (room, n) => (n > 1 ? Math.max(GAP, Math.min((room - n * cell) / (n - 1), cell * 0.5)) : GAP)
 
   return (
-    <div className="year-mass-box" ref={box} style={{ gap: gapY }}>
-      {size.w > 0 && bands.map((band, bi) => (
-        <div key={bi} className="year-mass" style={{ gridTemplateRows: `repeat(7, ${cell}px)`, gridAutoColumns: `${cell}px`, gap: `${gapY}px ${gapX}px` }}>
-          {band.flat().map((d) => (d.startsWith(year)
-            ? <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ width: cell, height: cell, background: colorFor(d) }} onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
-            : <span key={d} />))}
+    <div className="year-mass-box" ref={box}>
+      {size.w > 0 && (
+        <div className="year-mass" style={{ gridTemplateColumns: `repeat(${cols}, ${cell}px)`, gap: `${spread(size.h, rows)}px ${spread(size.w, cols)}px` }}>
+          {days.map((d) => (
+            <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ width: cell, height: cell, background: colorFor(d) }}
+              onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
+          ))}
         </div>
-      ))}
+      )}
     </div>
   )
 }
