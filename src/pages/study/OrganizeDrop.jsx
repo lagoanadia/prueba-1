@@ -7,6 +7,27 @@ import { buildReview, fallbackProposal } from './organize.js'
 
 const MAX_FILES = 40
 
+/** Lee una carpeta soltada (con subcarpetas dentro): devuelve todos los archivos, sin importar cómo estén organizados. */
+async function readEntry(entry) {
+  if (entry.isFile) return [await new Promise((res, rej) => entry.file(res, rej))]
+  if (!entry.isDirectory) return []
+  const reader = entry.createReader()
+  const out = []
+  for (;;) {
+    const batch = await new Promise((res, rej) => reader.readEntries(res, rej))
+    if (!batch.length) break
+    for (const e of batch) out.push(...(await readEntry(e)))
+  }
+  return out
+}
+/** Archivos de lo soltado: archivos sueltos y carpetas (se abren, las carpetas en sí se ignoran). */
+async function filesFromDrop(dt) {
+  const entries = [...(dt.items ?? [])].map((i) => i.webkitGetAsEntry?.()).filter(Boolean) // hay que pedirlo ya, antes de esperar
+  if (!entries.length) return [...dt.files]
+  const lists = await Promise.all(entries.map(readEntry))
+  return lists.flat()
+}
+
 /** Zona para subir los documentos de la asignatura: se leen y la IA propone cómo organizarlos. */
 export default function OrganizeDrop({ subjectName, onReview }) {
   const [files, setFiles] = useState([]) // File[]
@@ -14,12 +35,13 @@ export default function OrganizeDrop({ subjectName, onReview }) {
   const [done, setDone] = useState(0)
   const [note, setNote] = useState('')
   const input = useRef(null)
+  const folderInput = useRef(null)
   const [over, setOver] = useState(false)
 
   const add = (list) => {
     const pdfs = [...list].filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name))
     const skipped = list.length - pdfs.length
-    setNote(skipped ? `${skipped} archivo(s) no son PDF y se han ignorado.` : '')
+    setNote(skipped ? `${skipped} archivo(s) no son PDF y se han ignorado.` : pdfs.length ? '' : 'No he encontrado PDF ahí.')
     setFiles((cur) => [...cur, ...pdfs.filter((f) => !cur.some((c) => c.name === f.name && c.size === f.size))].slice(0, MAX_FILES))
   }
 
@@ -47,12 +69,14 @@ export default function OrganizeDrop({ subjectName, onReview }) {
 
   const busy = phase !== 'idle'
   return (
-    <section className={`og-drop ${over ? 'is-over' : ''}`} onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); if (!busy) add(e.dataTransfer.files) }} aria-label="Organizar con tus documentos">
+    <section className={`og-drop ${over ? 'is-over' : ''}`} onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); if (!busy) filesFromDrop(e.dataTransfer).then(add).catch(() => setNote('No he podido leer esa carpeta.')) }} aria-label="Organizar con tus documentos">
       <button className="og-drop-ic" onClick={() => input.current?.click()} disabled={busy} aria-label="Subir documentos" title="Subir documentos"><Icon name="upload" size={30} color="#3185FC" /></button>
+      <button className="og-drop-ic og-drop-folder" onClick={() => folderInput.current?.click()} disabled={busy} aria-label="Subir una carpeta" title="Subir una carpeta (se leen los PDF de dentro)"><Icon name="folder" size={26} color="#3185FC" /></button>
       <input ref={input} type="file" accept="application/pdf" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = '' }} />
+      <input ref={folderInput} type="file" multiple hidden {...{ webkitdirectory: '', directory: '' }} onChange={(e) => { add(e.target.files); e.target.value = '' }} />
       <div className="og-drop-body">
         <b className="og-drop-title">Sube los documentos de la asignatura</b>
-        <span className="muted">Los leo y te propongo cómo organizarlos en unidades y temas. Antes de crear nada podrás revisarlo.</span>
+        <span className="muted">Sube PDF sueltos o carpetas enteras (las carpetas se abren y se ignoran, solo cuentan los PDF). Te propongo cómo organizarlos en unidades y temas y podrás revisarlo antes de crear nada.</span>
         {files.length > 0 && (
           <div className="og-files">
             {files.map((f) => (

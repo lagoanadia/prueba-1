@@ -2469,3 +2469,4 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .seg-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 0 0 1px #DADCE0; padding: 0; cursor: pointer; margin-left: 2px; }
 .seg-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; padding: 10px 12px; display: grid; grid-template-columns: repeat(6, 26px); gap: 9px; }
 .seg-color { position: absolute; left: -5px; top: -5px; width: 16px; height: 16px; margin: 0; z-index: 2; }
+.og-drop-folder { width: 48px; height: 48px; margin-left: -6px; }
