@@ -55,7 +55,7 @@ function BatchDialog({ dishes, initialDish, week, onSave, onClose, today }) {
   const toggle = (d) => setEat((e) => (e.includes(d) ? e.filter((x) => x !== d) : [...e, d].sort()))
   const shown = week.map((d) => addDays(d, wk * 7))
   const picker = (sel, on) => (
-    <div className="fd-chips">{shown.map((d, i) => (
+    <div className="fd-chips fd-days">{shown.map((d, i) => (
       <button type="button" key={d} className={`fd-chip fd-day-chip ${sel(d) ? 'is-on' : ''}`} onClick={() => on(d)} title={`${dayShort(d)} ${Number(d.slice(8))}`}>{LET[i]}<small>{Number(d.slice(8))}</small></button>
     ))}</div>
   )

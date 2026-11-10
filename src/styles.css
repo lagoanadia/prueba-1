@@ -2279,3 +2279,5 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fd-pill { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); border-radius: 18px; padding: 5px 14px; font: inherit; font-size: 13px; font-weight: 600; background: #fff; cursor: pointer; }
 .fd-pill.is-danger { background: #FDECEE; border-color: #F4B4BA; color: #B3261E; }
 .fd-ib:disabled { opacity: .35; cursor: default; }
+.fd-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.fd-days .fd-chip { justify-content: center; padding: 6px 0; }
