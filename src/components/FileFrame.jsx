@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon.jsx'
 import { deleteFile, getFile, saveFile } from '../lib/fileStore.js'
+import PdfPages from './PdfPages.jsx'
 
 /**
  * Visor de un archivo (PDF, imagen…) dentro de un iframe, con botón para subirlo o cambiarlo.
@@ -8,13 +9,15 @@ import { deleteFile, getFile, saveFile } from '../lib/fileStore.js'
  */
 export default function FileFrame({ file, onChange, label = 'Subir archivo' }) {
   const [url, setUrl] = useState(null)
+  const [blob, setBlob] = useState(null)
+  const [plain, setPlain] = useState(false) // si el PDF no se puede dibujar, se usa el visor del navegador
   const input = useRef(null)
 
   useEffect(() => {
     let cancelled = false
     let made = null
-    setUrl(null)
-    if (file?.id) getFile(file.id).then((blob) => { if (blob && !cancelled) { made = URL.createObjectURL(blob); setUrl(made) } }).catch(() => {})
+    setUrl(null); setBlob(null); setPlain(false)
+    if (file?.id) getFile(file.id).then((b) => { if (b && !cancelled) { made = URL.createObjectURL(b); setUrl(made); setBlob(b) } }).catch(() => {})
     return () => { cancelled = true; if (made) URL.revokeObjectURL(made) }
   }, [file?.id])
 
@@ -38,7 +41,7 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo' }) {
         <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={pick} />
       </div>
       {url
-        ? (file.type?.startsWith('image/') ? <img className="file-img" src={url} alt={file.name} /> : <iframe className="file-view" src={url} title={file.name} />)
+        ? (file.type?.startsWith('image/') ? <img className="file-img" src={url} alt={file.name} /> : blob && !plain ? <PdfPages blob={blob} name={file.name} onFallback={() => setPlain(true)} /> : <iframe className="file-view" src={url} title={file.name} />)
         : <button className="file-empty" onClick={() => input.current?.click()}><Icon name="upload" size={36} /><span>{label}</span></button>}
     </div>
   )

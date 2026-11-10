@@ -10,7 +10,7 @@
 import { AREA_IDS } from '../src/data/areas.js'
 
 const MAX_WIDGETS = 30
-const MAX_BYTES = 200 * 1024 // 200 KB por tablero: de sobra para texto
+const MAX_BYTES = 20 * 1024 * 1024 // 20 MB por tablero (el tope de un valor de KV son 25 MB): con apuntes largos 200 KB se quedaba corto
 const SIZES = ['S', 'T', 'M', 'L'] // T = vertical (1x2)
 
 const key = (userId, area) => `board:${userId}:${area}`

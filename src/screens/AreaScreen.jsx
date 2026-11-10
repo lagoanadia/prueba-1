@@ -34,7 +34,7 @@ const arrayMove = (list, from, to) => {
  * El fantasma se mueve tocando su `transform` directamente (en un requestAnimationFrame).
  */
 export default function AreaScreen({ area, showTitle = true }) {
-  const { board, error, updateData, updateLayout } = useBoard(area.id)
+  const { board, error, saveError, retrySave, updateData, updateLayout } = useBoard(area.id)
 
   // Salud: Sueño y Agua ya no existen; se quitan de los tableros guardados
   useEffect(() => {
@@ -209,11 +209,16 @@ export default function AreaScreen({ area, showTitle = true }) {
     )
   }
 
+  // Si un guardado falla se avisa (antes pasaba en silencio y al recargar se perdían los últimos cambios)
+  const saveBanner = saveError ? (
+    <div className="save-error" role="alert"><Icon name="close" size={16} color="#B3261E" strokeWidth={3} /><span>No se han podido guardar los últimos cambios ({saveError}).</span><button className="pill pill-sm" onClick={retrySave}>Reintentar</button></div>
+  ) : null
+
   // Áreas con página propia: misma carga/guardado de datos, pero sin el tablero de widgets
   const Page = PAGES[area.id]
   if (Page) {
     if (!board) return <div className="area">{error ? <p className="error">{error}</p> : <div className="spinner" aria-label="Cargando" />}</div>
-    return <Page area={area} data={board.data} update={updateData} />
+    return <><Page area={area} data={board.data} update={updateData} />{saveBanner}</>
   }
 
   return (
@@ -229,6 +234,7 @@ export default function AreaScreen({ area, showTitle = true }) {
       </header>
 
       {error && <p className="error">{error}</p>}
+      {saveBanner}
       {!board && !error && <div className="spinner" aria-label="Cargando" />}
       {board && available.length === 0 && <p className="muted">Pronto habrá widgets para {area.label}.</p>}
 

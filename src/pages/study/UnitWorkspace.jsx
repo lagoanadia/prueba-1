@@ -64,6 +64,46 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const removePractice = (uid, id) => { if (!window.confirm('¿Quitar esta práctica?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).filter((p) => p.id !== id) })); go({ ...route, itemId: null }) }
   const toggleOpen = (id) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
+  // Prácticas: igual que los temas (varios PDF y apuntes). El enunciado y la solución de antes se conservan.
+  const practiceFiles = practice ? (practice.pdfs ?? (practice.statement ? [practice.statement] : [])) : []
+  const setPracticeFiles = (list) => patchPractice(practice.id, { pdfs: list, statement: undefined })
+
+  // Mover temas y prácticas arrastrando: dentro de una unidad o a otra
+  const [dragging, setDragging] = useState(null) // { type, unitId, id }
+  const [mark, setMark] = useState(null) // { type, unitId, id, pos } | { type, unitId, end: true }
+  const listKey = (type) => (type === 'topic' ? 'topics' : 'practices')
+  const itemsOf = (u, type) => (type === 'topic' ? u.topics : practicesOf(u))
+  const moveItem = (drag, target) => {
+    changeSubject(update, subject.id, (sub) => {
+      const key = listKey(drag.type)
+      const from = sub.units.find((u) => u.id === drag.unitId)
+      const item = itemsOf(from, drag.type).find((x) => x.id === drag.id)
+      if (!item) return sub
+      const units = sub.units.map((u) => (u.id === drag.unitId ? { ...u, [key]: itemsOf(u, drag.type).filter((x) => x.id !== drag.id) } : u))
+      return {
+        ...sub,
+        units: units.map((u) => {
+          if (u.id !== target.unitId) return u
+          const list = [...itemsOf(u, drag.type)]
+          let at = target.end ? list.length : list.findIndex((x) => x.id === target.id)
+          if (at < 0) at = list.length
+          if (!target.end && target.pos === 'after') at++
+          list.splice(at, 0, item)
+          return { ...u, [key]: list }
+        }),
+      }
+    })
+    if (drag.id === (drag.type === 'topic' ? topic?.id : practice?.id) && target.unitId !== drag.unitId) go({ ...route, unitId: target.unitId, tab: drag.type === 'topic' ? 'estudio' : 'practicas', itemId: drag.id })
+    setDragging(null); setMark(null)
+  }
+  const dragProps = (type, unitId, id) => ({
+    draggable: true,
+    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); setDragging({ type, unitId, id }) },
+    onDragEnd: () => { setDragging(null); setMark(null) },
+    onDragOver: (e) => { if (dragging?.type !== type || dragging.id === id) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const pos = e.clientY < r.top + r.height / 2 ? 'before' : 'after'; setMark((m) => (m?.id === id && m.pos === pos ? m : { type, unitId, id, pos })) },
+    onDrop: (e) => { if (dragging?.type !== type || dragging.id === id) return; e.preventDefault(); e.stopPropagation(); moveItem(dragging, { unitId, id, pos: mark?.id === id ? mark.pos : 'before' }) },
+  })
+
   // PDF por tema (puede haber varios). El PDF que antes se guardaba en la unidad se queda en el primer tema.
   const topicFiles = topic ? (topic.pdfs ?? (topic.pdf ? [topic.pdf] : topicIndex === 0 && unit.temario ? [unit.temario] : [])) : []
   const setTopicFiles = (list) => changeU((u) => ({ ...u, ...(topicIndex === 0 ? { temario: undefined } : {}), topics: u.topics.map((t) => (t.id === topic.id ? { ...t, pdfs: list, pdf: undefined } : t)) }))
@@ -82,8 +122,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       {layout !== 'pdf' && right}
     </div>
   )
-  const row = (selected, done, onCheck, icon, name, onPick, onRemove, doneLabel) => (
-    <div className={`tp-row ${selected ? 'sel' : ''}`}>
+  const row = (selected, done, onCheck, icon, name, onPick, onRemove, doneLabel, meta) => (
+    <div key={meta.id} className={`tp-row ${selected ? 'sel' : ''} ${dragging?.id === meta.id ? 'is-dragging' : ''} ${mark?.id === meta.id ? `drop-${mark.pos}` : ''}`} {...dragProps(meta.type, meta.unitId, meta.id)}>
+      <span className="tp-grip" aria-hidden="true"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} /></span>
       <button className={`chk ${done ? 'on' : ''}`} onClick={onCheck} aria-pressed={done} aria-label={doneLabel} title={done ? 'Estudiado' : 'Marcar como estudiado'}>{done && <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3.4} />}</button>
       {icon && <Icon name={icon} size={14} color="#9AA0A6" />}
       <button className="tp-name" onClick={onPick}>{name}</button>
@@ -109,7 +150,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               const ps = practicesOf(u)
               return (
                 <div key={u.id} className="tp-unit-wrap">
-                  <div className={`tp-unit ${on ? 'on' : ''}`}>
+                  <div className={`tp-unit ${on ? 'on' : ''} ${mark?.end && mark.unitId === u.id ? 'drop-into' : ''}`}
+                    onDragOver={(e) => { if (!dragging) return; e.preventDefault(); setMark({ type: dragging.type, unitId: u.id, end: true }) }}
+                    onDrop={(e) => { if (!dragging) return; e.preventDefault(); moveItem(dragging, { unitId: u.id, end: true }); setOpen((o) => new Set([...o, u.id])) }}>
                     <button className="tp-chev" onClick={() => toggleOpen(u.id)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Plegar' : 'Desplegar'} ${u.name}`}><Icon name={isOpen ? 'down' : 'right'} size={16} /></button>
                     <button className="tp-uname w-ellipsis" onClick={() => { go({ ...route, unitId: u.id, itemId: null }); setOpen((s) => new Set([...s, u.id])) }}>{u.name}</button>
                     <button className="prio-x tp-pen" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`}><Icon name="pen" size={14} /></button>
@@ -117,9 +160,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                   {isOpen && (
                     <div className="tp-children">
                       {u.topics.map((t) => row(on && tab === 'estudio' && topic?.id === t.id, t.state === 'clear', () => toggleTopic(u.id, t.id), null, t.name,
-                        () => go({ ...route, unitId: u.id, tab: 'estudio', itemId: t.id }), () => removeTopic(u.id, t.id), `Marcar «${t.name}» como estudiado`))}
+                        () => go({ ...route, unitId: u.id, tab: 'estudio', itemId: t.id }), () => removeTopic(u.id, t.id), `Marcar «${t.name}» como estudiado`, { type: 'topic', unitId: u.id, id: t.id }))}
                       {ps.map((p) => row(on && tab === 'practicas' && practice?.id === p.id, !!p.done, () => togglePractice(u.id, p.id), 'code', p.name,
-                        () => go({ ...route, unitId: u.id, tab: 'practicas', itemId: p.id }), () => removePractice(u.id, p.id), `Marcar «${p.name}» como hecha`))}
+                        () => go({ ...route, unitId: u.id, tab: 'practicas', itemId: p.id }), () => removePractice(u.id, p.id), `Marcar «${p.name}» como hecha`, { type: 'practice', unitId: u.id, id: p.id }))}
                       {!u.topics.length && !ps.length && <span className="tp-empty">Sin temas todavía</span>}
                     </div>
                   )}
@@ -161,9 +204,11 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
           {tab === 'practicas' && (
             practice
-              ? split(<FileFrame key={`st-${practice.id}`} file={practice.statement ?? null} onChange={(f) => patchPractice(practice.id, { statement: f })} label="Subir el enunciado (PDF)" />,
-                  <BlockEditor key={practice.id} label={`Solución de ${practice.name}`} value={practice.doc} onChange={(doc) => patchPractice(practice.id, { doc })} />)
-              : <p className="muted ws-empty">Añade una práctica con + en el panel: el enunciado en PDF a un lado y tu solución al otro.</p>
+              ? split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" />,
+                  <BlockEditor key={practice.id} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
+                    bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
+                    onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
+              : <p className="muted ws-empty">Añade una práctica con + en el panel: su PDF a un lado y tus apuntes al otro.</p>
           )}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}

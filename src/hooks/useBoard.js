@@ -10,6 +10,8 @@ import { defaultLayout } from '../widgets/registry.js'
 export default function useBoard(area) {
   const [board, setBoard] = useState(null)
   const [error, setError] = useState('')
+  const [saveError, setSaveError] = useState('') // el último guardado falló: se avisa para no perder cambios sin darse cuenta
+  const [retry, setRetry] = useState(0)
   const loaded = useRef(false)
 
   useEffect(() => {
@@ -38,12 +40,12 @@ export default function useBoard(area) {
   useEffect(() => {
     if (!board) return
     if (!loaded.current) { loaded.current = true; return } // la primera vez es la carga, no un cambio
-    const t = setTimeout(() => saveBoard(area, { layout: board.layout, data: board.data }).catch((e) => setError(e.message)), 600)
+    const t = setTimeout(() => saveBoard(area, { layout: board.layout, data: board.data }).then(() => setSaveError('')).catch((e) => setSaveError(e.message || 'No se ha podido guardar')), 600)
     return () => clearTimeout(t)
-  }, [board, area])
+  }, [board, area, retry])
 
   const updateData = (fn) => setBoard((b) => ({ ...b, data: fn(b.data) }))
   const updateLayout = (fn) => setBoard((b) => ({ ...b, layout: fn(b.layout) }))
 
-  return { board, error, updateData, updateLayout }
+  return { board, error, saveError, retrySave: () => setRetry((n) => n + 1), updateData, updateLayout }
 }
