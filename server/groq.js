@@ -20,7 +20,7 @@ export class GroqError extends Error {
  * @param {{role: 'system'|'user'|'assistant', content: string}[]} messages
  * @returns {Promise<string>} el texto de la respuesta del modelo
  */
-export async function groqChat(messages, env, { temperature = 0.4, maxTokens = 2048, json = false } = {}) {
+export async function groqChat(messages, env, { temperature = 0.4, maxTokens = 2048, json = false, model } = {}) {
   const apiKey = env.GROQ_API_KEY
   if (!apiKey) throw new Error('GROQ_API_KEY is not set')
 
@@ -31,7 +31,7 @@ export async function groqChat(messages, env, { temperature = 0.4, maxTokens = 2
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: env.GROQ_MODEL || DEFAULT_MODEL,
+      model: model || env.GROQ_MODEL || DEFAULT_MODEL,
       messages,
       temperature,
       max_tokens: maxTokens,

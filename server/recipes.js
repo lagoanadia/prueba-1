@@ -4,6 +4,9 @@ import { groqChat } from './groq.js'
 const MEALS = ['desayuno', 'media', 'comida', 'merienda', 'cena']
 const clean = (s, n) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, n) : '')
 export const MAX_TEXT = 9000
+// Modelo con visión (lee fotos). Se puede cambiar con la variable GROQ_VISION_MODEL del Worker.
+const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+export const MAX_IMAGE = 5_000_000 // caracteres del data URL (≈ 3,7 MB)
 
 function systemPrompt(lang) {
   const en = lang === 'en'
@@ -24,15 +27,26 @@ function parseJson(text) {
   }
 }
 
-export async function extractRecipes({ text, lang }, env) {
-  const raw = await groqChat([{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: clean(text, MAX_TEXT) }], env, { json: true, temperature: 0.1, maxTokens: 4096 })
+const mapRecipes = (parsed) => (Array.isArray(parsed?.recipes) ? parsed.recipes : []).slice(0, 30).map((r) => ({
+  name: clean(r?.name, 80),
+  meals: [...new Set((Array.isArray(r?.meals) ? r.meals : []).filter((m) => MEALS.includes(m)))],
+  time: Number.isFinite(r?.time) && r.time > 0 && r.time < 1000 ? Math.round(r.time) : null,
+  ingredients: (Array.isArray(r?.ingredients) ? r.ingredients : []).map((x) => clean(x, 40)).filter(Boolean).slice(0, 40),
+  steps: (Array.isArray(r?.steps) ? r.steps : []).map((x) => clean(x, 200)).filter(Boolean).slice(0, 30),
+})).filter((r) => r.name)
+
+/** Recetas de un trozo de texto (PDF) o de una foto (`image` = data URL de una imagen). */
+export async function extractRecipes({ text, image, lang }, env) {
+  let raw
+  if (image) {
+    const ask = lang === 'en' ? 'Read the recipe(s) in this photo and reply with the JSON.' : 'Lee la(s) receta(s) de esta foto y responde con el JSON.'
+    raw = await groqChat(
+      [{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: [{ type: 'text', text: ask }, { type: 'image_url', image_url: { url: image } }] }],
+      env, { temperature: 0.1, maxTokens: 4096, model: env.GROQ_VISION_MODEL || VISION_MODEL })
+  } else {
+    raw = await groqChat([{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: clean(text, MAX_TEXT) }], env, { json: true, temperature: 0.1, maxTokens: 4096 })
+  }
   const parsed = parseJson(raw)
   if (!parsed) throw new Error(`Model returned invalid JSON: ${raw.slice(0, 200)}`)
-  return (Array.isArray(parsed.recipes) ? parsed.recipes : []).slice(0, 30).map((r) => ({
-    name: clean(r?.name, 80),
-    meals: [...new Set((Array.isArray(r?.meals) ? r.meals : []).filter((m) => MEALS.includes(m)))],
-    time: Number.isFinite(r?.time) && r.time > 0 && r.time < 1000 ? Math.round(r.time) : null,
-    ingredients: (Array.isArray(r?.ingredients) ? r.ingredients : []).map((x) => clean(x, 40)).filter(Boolean).slice(0, 40),
-    steps: (Array.isArray(r?.steps) ? r.steps : []).map((x) => clean(x, 200)).filter(Boolean).slice(0, 30),
-  })).filter((r) => r.name)
+  return mapRecipes(parsed)
 }

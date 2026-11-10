@@ -42,7 +42,7 @@ export default function Cookbook({ data, update }) {
   return (
     <section className="card fd-card fd-cookbook" aria-label="Recetario" tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Escape' && q != null) { setQ(null); return } if (q == null && e.target === e.currentTarget && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setQ(e.key) } }}>
-      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Recetario</b><span className="fd-grow" /><button className="fd-ib" onClick={() => setImporting(true)} aria-label="Importar recetas desde un PDF" title="Importar recetas desde un PDF"><Icon name="upload" size={16} /></button></div>
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Recetario</b><span className="fd-grow" /><button className="fd-ib" onClick={() => setImporting(true)} aria-label="Importar recetas" title="Importar recetas (PDF o foto)"><Icon name="upload" size={16} /></button></div>
       <div className="fd-search">
         <Icon name="search" size={16} />
         <input ref={searchRef} value={q ?? ''} placeholder="Buscar receta o ingrediente" aria-label="Buscar receta" onFocus={() => q == null && setQ('')} onChange={(e) => setQ(e.target.value)}

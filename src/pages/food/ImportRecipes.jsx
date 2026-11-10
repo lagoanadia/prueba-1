@@ -7,6 +7,14 @@ import Modal from './Modal.jsx'
 
 const CHUNK = 8000 // letras que se mandan a la IA cada vez
 const MAX_CHUNKS = 8
+/** Foto -> JPEG reducido (lado largo 1600 px) como data URL: se manda mucho menos y se lee igual. */
+async function photoToDataUrl(file) {
+  const bmp = await createImageBitmap(file)
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k)
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height)
+  return c.toDataURL('image/jpeg', 0.85)
+}
 const norm = (t) => (t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
 /** Trozos de texto con páginas enteras (sin partir una página por la mitad si cabe). */
@@ -34,17 +42,30 @@ export default function ImportRecipes({ data, update, onClose }) {
   const [msg, setMsg] = useState('')
   const have = new Set(dishesOf(data).map((d) => norm(d.name)))
 
-  const run = async (f) => {
+  const run = async (files) => {
+    const f = files[0]
     setFile(f); setPhase('reading'); setMsg('')
-    const doc = await extractPdfPages(f)
-    if (!doc.readable) { setPhase('pick'); setMsg('No he podido leer texto en ese PDF (puede ser un escaneo). Prueba con otro.'); return }
-    const chunks = chunksOf(doc.pages)
-    setProgress({ done: 0, total: chunks.length })
     const found = []
     let failed = 0
-    for (const text of chunks) {
-      try { found.push(...(await extractRecipes(text))) } catch { failed++ }
-      setProgress((p) => ({ ...p, done: p.done + 1 }))
+    let note = ''
+    if (f.type.startsWith('image/')) {
+      // Una o varias fotos
+      const photos = files.filter((x) => x.type.startsWith('image/')).slice(0, 6)
+      setProgress({ done: 0, total: photos.length })
+      for (const ph of photos) {
+        try { found.push(...(await extractRecipes(null, await photoToDataUrl(ph)))) } catch { failed++ }
+        setProgress((p) => ({ ...p, done: p.done + 1 }))
+      }
+    } else {
+      const doc = await extractPdfPages(f)
+      if (!doc.readable) { setPhase('pick'); setMsg('No he podido leer texto en ese PDF (puede ser un escaneo). Prueba con otro o hazle una foto.'); return }
+      const chunks = chunksOf(doc.pages)
+      setProgress({ done: 0, total: chunks.length })
+      for (const text of chunks) {
+        try { found.push(...(await extractRecipes(text))) } catch { failed++ }
+        setProgress((p) => ({ ...p, done: p.done + 1 }))
+      }
+      if (doc.total > doc.pages.length) note = `Solo he leído las primeras ${doc.pages.length} páginas.`
     }
     // Sin repetir (el mismo nombre en dos trozos se queda con la versión más completa)
     const byName = new Map()
@@ -54,9 +75,9 @@ export default function ImportRecipes({ data, update, onClose }) {
       if (!prev || r.ingredients.length + r.steps.length > prev.ingredients.length + prev.steps.length) byName.set(k, r)
     }
     const list = [...byName.values()].map((r) => ({ ...r, meals: r.meals.length ? r.meals : ['comida'], dup: have.has(norm(r.name)), on: !have.has(norm(r.name)) }))
-    if (!list.length) { setPhase('pick'); setMsg(failed ? 'La IA no ha podido leer el PDF ahora mismo. Inténtalo de nuevo.' : 'No he encontrado recetas en ese PDF.'); return }
+    if (!list.length) { setPhase('pick'); setMsg(failed ? 'La IA no ha podido leerlo ahora mismo. Inténtalo de nuevo.' : 'No he encontrado recetas ahí.'); return }
     setItems(list); setPhase('review')
-    setMsg(failed ? 'Algunas partes del PDF no se han podido leer; puede que falten recetas.' : (doc.total > doc.pages.length ? `Solo he leído las primeras ${doc.pages.length} páginas.` : ''))
+    setMsg(failed ? 'Algunas partes no se han podido leer; puede que falten recetas.' : note)
   }
 
   const toggle = (i) => setItems((l) => l.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))
@@ -76,16 +97,16 @@ export default function ImportRecipes({ data, update, onClose }) {
         <div className="fd-form">
           <button className="fd-import-drop" onClick={() => input.current?.click()} disabled={phase === 'reading'}>
             <Icon name="upload" size={28} color="#3185FC" />
-            <b>{phase === 'reading' ? 'Leyendo las recetas…' : 'Elige un PDF con recetas'}</b>
-            {phase === 'reading' && <span className="fd-hint">{progress.total ? `Parte ${Math.min(progress.done + 1, progress.total)} de ${progress.total}` : 'Abriendo el PDF…'}</span>}
+            <b>{phase === 'reading' ? 'Leyendo las recetas…' : 'Elige un PDF o haz una foto'}</b>
+            {phase === 'reading' && <span className="fd-hint">{progress.total ? `Parte ${Math.min(progress.done + 1, progress.total)} de ${progress.total}` : 'Abriendo el archivo…'}</span>}
           </button>
-          <input ref={input} type="file" accept="application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) run(f) }} />
+          <input ref={input} type="file" accept="application/pdf,image/*" multiple hidden onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ''; if (fs.length) run(fs) }} />
           {msg && <p className="fd-hint" role="status">{msg}</p>}
         </div>
       )}
       {phase === 'review' && (
         <div className="fd-form">
-          <div className="fd-import-file"><Icon name="pdf" size={20} color="#E84855" /><b>{file?.name}</b></div>
+          <div className="fd-import-file"><Icon name={file?.type?.startsWith('image/') ? 'img' : 'pdf'} size={20} color="#E84855" /><b>{file?.name}</b></div>
           <p className="fd-hint">He encontrado {items.length} receta{items.length === 1 ? '' : 's'}. Quita las que no quieras y ajusta el tipo de comida; no se guarda nada hasta que lo confirmes.</p>
           {msg && <p className="fd-hint" role="status">{msg}</p>}
           <ul className="fd-import-list">
