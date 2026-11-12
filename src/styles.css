@@ -2772,3 +2772,14 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tp-unit-wrap.u-before::before, .tp-unit-wrap.u-after::after { content: ''; position: absolute; left: 6px; right: 6px; height: 3px; border-radius: 2px; background: #3185FC; z-index: 3; pointer-events: none; }
 .tp-unit-wrap.u-before::before { top: -3px; } .tp-unit-wrap.u-after::after { bottom: -3px; }
 .tp-unit { cursor: grab; }
+/* Vista previa del PDF: una hoja A4 (794 px) con márgenes de 20 mm */
+.xp-sheet { width: 794px; max-width: none; padding: 76px; margin: 0 auto; }
+.xp-sheetwrap { overflow-x: hidden; }
+@media (max-width: 899px) { .xp-sheet { padding: 76px; } }
+/* Modo estudio: el espacio de trabajo ocupa toda la pantalla */
+.ws.ws-full { position: fixed; inset: 0; z-index: 80; height: auto; min-height: 0; background: #fff; padding: 14px 18px; }
+.ws-resize { flex: none; width: 10px; margin: 0 -13px; cursor: col-resize; position: relative; z-index: 2; touch-action: none; }
+.ws-resize::after { content: ''; position: absolute; left: 4px; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: transparent; transition: background .15s; }
+.ws-resize:hover::after, .ws-resize:active::after { background: #3185FC; }
+.ws-full-btn.on { background: #202124; } .ws-full-btn.on svg { stroke: #fff; }
+@media (max-width: 899px) { .ws-resize { display: none; } }

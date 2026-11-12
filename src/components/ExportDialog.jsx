@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
 import { COLORS, DEFAULT_STYLE, FONTS, RADII, loadImages, printSheet, sheetCss, sheetHtml, blockHtml } from '../lib/exportNotes.js'
@@ -16,6 +16,16 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
   const [st, setSt] = useState(load)
   const [imgs, setImgs] = useState({})
   const [busy, setBusy] = useState(false)
+  const wrap = useRef(null)
+  const [scale, setScale] = useState(1)
+  // La hoja de la vista previa mide lo que un A4 (794 px) y se encoge para caber, así los saltos de línea son los del PDF
+  useEffect(() => {
+    const el = wrap.current
+    if (!el) return undefined
+    const ro = new ResizeObserver(([e]) => setScale(Math.min(1, (e.contentRect.width - 36) / 794)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => { loadImages(initial).then(setImgs) }, [initial])
   useEffect(() => { try { localStorage.setItem('exportStyle', JSON.stringify(st)) } catch { /* sin guardado */ } }, [st])
@@ -46,9 +56,9 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
           <button className="icon-btn" onClick={onClose} aria-label="Cerrar" title="Cerrar"><Icon name="close" size={20} /></button>
         </div>
         <div className="xp-body">
-          <div className="xp-sheetwrap">
+          <div className="xp-sheetwrap" ref={wrap}>
             <style>{sheetCss(st)}</style>
-            <div className="xp-sheet">
+            <div className="xp-sheet" style={{ zoom: scale }}>
               <div className="x-sheet"><div className="x-head"><i />{title}{subtitle ? ` · ${subtitle}` : ''}</div></div>
               {blocks.length === 0 && <p className="muted">Los apuntes están vacíos.</p>}
               {blocks.map((b, i) => (

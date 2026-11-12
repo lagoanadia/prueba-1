@@ -33,6 +33,27 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
   const [layout, setLayout] = useState('split')
+  const [full, setFull] = useState(false) // modo estudio: la ventana ocupa toda la pantalla
+  const [panelW, setPanelW] = useState(() => { try { return Math.min(480, Math.max(150, Number(localStorage.getItem('ws-panel-w')) || 250)) } catch { return 250 } })
+  const wsRef = useRef(null)
+  useEffect(() => { if (!full) return undefined; const k = (e) => e.key === 'Escape' && setFull(false); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [full])
+  // Ajustar el ancho del panel de unidades arrastrando su borde; si se hace muy pequeño, se cierra y queda el icono
+  const startResize = (e) => {
+    e.preventDefault()
+    const z = parseFloat(getComputedStyle(wsRef.current?.closest('.d-app') ?? document.body).zoom) || 1
+    const x0 = e.clientX
+    const w0 = panelW
+    let last = w0
+    const move = (ev) => {
+      const raw = w0 + (ev.clientX - x0) / z
+      if (raw < 110) { end(); setPanel(false); return }
+      last = Math.min(480, Math.max(150, raw))
+      setPanelW(last)
+    }
+    const end = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); try { localStorage.setItem('ws-panel-w', String(Math.round(last))) } catch { /* sin guardado */ } }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+  }
   const [open, setOpen] = useState(() => new Set([unit.id])) // unidades desplegadas
   const menuRef = useRef(null)
   const notesIn = useRef(null) // función de los apuntes para pegar texto copiado del PDF
@@ -141,7 +162,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   )
 
   return (
-    <div className="ws">
+    <div className={`ws ${full ? 'ws-full' : ''}`} ref={wsRef}>
       <nav className="crumbs" aria-label="Ruta">
         <button className="crumb" onClick={back}><i style={{ background: subject.color }} />{subject.short}</button>
         <Icon name="right" size={14} color="#9AA0A6" />
@@ -150,7 +171,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
       <div className="ws-body">
         {panel && (
-          <aside className="card ws-panel" aria-label="Unidades y temas">
+          <aside className="card ws-panel" aria-label="Unidades y temas" style={{ width: panelW }}>
             <b className="ws-subject" style={{ borderColor: subject.color }}>{subject.short}</b>
             {subject.units.map((u) => {
               const on = u.id === unit.id
@@ -200,6 +221,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
             </div>
           </aside>
         )}
+        {panel && <div className="ws-resize" role="separator" aria-orientation="vertical" aria-label="Cambiar el ancho del panel de unidades" onPointerDown={startResize} />}
 
         <div className="ws-main">
           <div className="ws-tabs" role="tablist">
@@ -210,6 +232,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               </button>
             ))}
             {tab !== 'recursos' && layouts()}
+            <button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'close' : 'expand'} size={20} /></button>
           </div>
 
           {tab === 'estudio' && (

@@ -16,9 +16,12 @@ export function sheetCss(st) {
   return `
 .x-sheet { font-family: ${FONTS[st.font] ?? FONTS.poppins}; color: #202124; font-size: 13px; line-height: 1.65; --c: ${c}; --r: ${r}px; }
 .x-sheet * { box-sizing: border-box; }
+.x-sheet { overflow-wrap: anywhere; word-break: break-word; } /* ningún texto se sale de la hoja, ni sin espacios */
 .x-head { font-size: 11px; color: #5F6368; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
+/* El texto sí puede continuar en la página siguiente; lo demás (tablas, código, fotos…) pasa entero */
+.x-text, .x-li, .x-quote { break-inside: auto; page-break-inside: auto; orphans: 3; widows: 3; }
 .x-pb { break-before: page; page-break-before: always; }
 .x-h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin: 6px 0 10px; break-after: avoid; }
 .x-h2 { font-size: 18px; font-weight: 700; color: var(--c); margin: 16px 0 6px; break-after: avoid; }
@@ -32,7 +35,7 @@ export function sheetCss(st) {
 .x-callout { background: color-mix(in srgb, var(--c) 12%, #fff); border-left: 4px solid var(--c); border-radius: ${Math.max(r - 2, 0)}px; padding: 10px 14px; }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
-.x-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
+.x-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
 .x-table th { background: var(--c); color: #fff; text-align: left; font-weight: 600; padding: 8px 12px; }
 .x-table td { padding: 8px 12px; }
 .x-table tr { break-inside: avoid; }

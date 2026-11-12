@@ -37,7 +37,7 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo', ext
         <b className="w-ellipsis">{file?.name ?? 'Sin archivo'}</b>
         <span style={{ flex: 1 }} />
         {extra}
-        <button className="icon-btn" onClick={() => input.current?.click()} aria-label={file ? 'Cambiar archivo' : label} title={file ? 'Cambiar archivo' : label}><Icon name="upload" size={20} /></button>
+        {!extra && <button className="icon-btn" onClick={() => input.current?.click()} aria-label={file ? 'Cambiar archivo' : label} title={file ? 'Cambiar archivo' : label}><Icon name="upload" size={20} /></button>}
         {file && <button className="icon-btn" onClick={remove} aria-label="Quitar archivo" title="Quitar archivo"><Icon name="trash" size={20} /></button>}
         <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={pick} />
       </div>
