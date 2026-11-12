@@ -2909,3 +2909,22 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-plan-hours span.is-lit { color: #9AA0A6; font-weight: 400; }
 /* En sesiones bajitas los bordes para estirar no se comen el centro (que sirve para marcar/mover) */
 .sa-rz { height: min(9px, 28%); }
+/* Entrenamientos: la rueda del deporte más practicado */
+.wk-wheel { display: flex; flex-direction: column; gap: 10px; }
+.wk-range { align-self: flex-start; display: inline-flex; gap: 2px; background: var(--soft); border-radius: 16px; padding: 3px; }
+.wk-range button { border: 0; border-radius: 13px; padding: 5px 14px; background: none; font: 600 12.5px Poppins, sans-serif; color: var(--text); cursor: pointer; } .wk-range button.on { background: #fff; box-shadow: 0 1px 3px rgba(60, 64, 67, .3); }
+.wk-wheel-body { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.wk-donut { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.wk-hole { width: 100px; height: 100px; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.15; padding: 6px; }
+.wk-hole span { font-size: 10.5px; color: var(--muted); } .wk-hole b { font-size: 16px; overflow-wrap: anywhere; }
+.wk-legend { flex: 1; min-width: 160px; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wk-legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; } .wk-legend li.is-top > span { font-weight: 700; }
+.wk-legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; } .wk-legend li > span { flex: 1; min-width: 0; } .wk-legend em { font-style: normal; color: var(--muted); } .wk-legend b { min-width: 34px; text-align: right; }
+.wk-legend .wk-total { border-top: 1px solid var(--line); padding-top: 6px; font-size: 12px; color: var(--muted); } .wk-legend .wk-total b { color: var(--text); }
+/* Constancia: el mes con forma de calendario */
+.cs-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.cs-filters button { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 16px; padding: 5px 13px; background: var(--soft); font: 600 12.5px Poppins, sans-serif; color: var(--text); cursor: pointer; } .cs-filters button.on { background: #202124; color: #fff; }
+.cs-filters i { width: 9px; height: 9px; border-radius: 50%; }
+.cs-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; width: min(100%, 380px); }
+.cs-wd { text-align: center; font-size: 11px; color: #9AA0A6; }
+.cs-day { aspect-ratio: 1; border-radius: 9px; background: var(--soft); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #5F6368; } .cs-day.is-future { opacity: .45; } .cs-day.is-today { box-shadow: 0 0 0 2px #202124; }
