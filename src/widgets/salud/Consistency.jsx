@@ -46,7 +46,7 @@ export default function Consistency({ data }) {
         <button className={filter === 'steps' ? 'on' : ''} onClick={() => setFilter('steps')} aria-pressed={filter === 'steps'}>Pasos</button>
         {sports.map((sp) => <button key={sp} className={filter === sp ? 'on' : ''} onClick={() => setFilter(sp)} aria-pressed={filter === sp}><i style={{ background: colorOf(sports, sp) }} />{sp}</button>)}
       </div>
-      <div className="cs-month">
+      <div className="cs-month" style={{ '--rows': Math.ceil((lead + n) / 7) + 1 }}>
         {WEEK.map((d) => <span key={d} className="cs-wd">{d}</span>)}
         {Array.from({ length: lead }, (_, i) => <i key={`l${i}`} />)}
         {days.map((d) => {

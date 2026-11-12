@@ -2929,3 +2929,21 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cs-wd { text-align: center; font-size: 11px; color: #9AA0A6; }
 .cs-day { aspect-ratio: 1; border-radius: 9px; background: var(--soft); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #5F6368; } .cs-day.is-future { opacity: .45; } .cs-day.is-today { box-shadow: 0 0 0 2px #202124; }
 .cs-day { font-size: 0; }
+/* Entrenamientos y Constancia: centrados y adaptados al espacio que tiene el widget */
+.wk-wheel { flex: 1; min-height: 0; container-type: size; align-items: center; justify-content: center; gap: 12px; }
+.wk-range { align-self: center; }
+.wk-wheel-body { justify-content: center; flex-wrap: nowrap; gap: 5cqw; max-width: 100%; }
+.wk-donut { width: min(68cqh, 36cqw, 240px); height: min(68cqh, 36cqw, 240px); aspect-ratio: 1; }
+.wk-hole { width: 66%; height: 66%; padding: 4px; } .wk-hole b { font-size: clamp(11px, 3.4cqw, 20px); } .wk-hole span { font-size: clamp(8px, 1.9cqw, 11px); }
+.wk-legend { flex: 0 1 auto; min-width: 0; width: min(46cqw, 260px); }
+.wk-legend li { font-size: clamp(11px, 2.4cqw, 14px); }
+@container (max-width: 330px) { .wk-wheel-body { flex-direction: column; } .wk-donut { width: min(46cqh, 62cqw, 220px); height: min(46cqh, 62cqw, 220px); } .wk-legend { width: 100%; } }
+
+.sa-consist { flex: 1; min-height: 0; container-type: size; align-items: center; justify-content: center; gap: 8px; }
+.cs-filters { justify-content: center; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 130px - (var(--rows) - 1) * 5px) / var(--rows)), 56px)); grid-template-columns: repeat(7, var(--cell)); width: auto; justify-content: center; }
+.cs-day { width: var(--cell); height: var(--cell); aspect-ratio: auto; border-radius: calc(var(--cell) * .24); }
+.sa-consist .sa-legend { justify-content: center; text-align: center; }
+.sa-consist .sa-legend b { margin-left: 0; }
+.sa-consist { min-height: 330px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 56px)); }
