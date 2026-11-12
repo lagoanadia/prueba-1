@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
@@ -12,6 +12,32 @@ const DEFAULT_MIN = 60
 const DEFAULT_VIEW = { from: 8, to: 23, days: [0, 1, 2, 3, 4, 5, 6] }
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const snap = (m) => Math.round(m / SNAP) * SNAP
+
+/** El nombre del deporte siempre se ve entero: la letra se encoge (de 15 a 7 px) hasta que la palabra cabe en la columna. */
+function SessName({ text }) {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const fit = () => {
+      // 1.º en una línea hasta 9 px; si no cabe, en varias líneas (sin partir ninguna palabra), encogiendo hasta que la palabra más larga quepa
+      el.style.whiteSpace = 'nowrap'
+      let fs = 15
+      el.style.fontSize = `${fs}px`
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 9) { fs -= 0.5; el.style.fontSize = `${fs}px` }
+      if (el.scrollWidth <= el.clientWidth + 0.5) return
+      el.style.whiteSpace = 'normal'
+      fs = 12
+      el.style.fontSize = `${fs}px`
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 6) { fs -= 0.5; el.style.fontSize = `${fs}px` }
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el.parentElement)
+    return () => ro.disconnect()
+  }, [text])
+  return <b ref={ref} className="sa-name">{text}</b>
+}
 
 /**
  * Ejercicio de la semana, como un horario (las horas y días que tú elijas):
@@ -165,7 +191,7 @@ export default function Plan({ data, update }) {
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: marcar como hecha · tira de los bordes: duración"
                     onClick={() => toggleDone(s, date)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    <b>{s.sport}</b>{done && <Icon name="check" size={13} strokeWidth={3} />}
+                    <SessName text={s.sport} />{done && <Icon name="check" size={13} strokeWidth={3} />}
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>

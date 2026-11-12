@@ -2873,3 +2873,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-sess { padding: 6px 8px; }
 .sa-sess.is-live .sa-sess-x { display: none; }
 .sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 6), 15px); }
+/* Nombre del deporte: nunca cortado; la letra se ajusta sola al ancho */
+.sa-sess > b.sa-name { font-size: 15px; overflow: visible; text-overflow: clip; white-space: nowrap; padding-right: 0; }
+.sa-sess > b.sa-name { overflow-wrap: normal; word-break: normal; hyphens: none; }
