@@ -26,16 +26,14 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   const setView = (v) => { setViewState(v); try { sessionStorage.setItem('app-view', v) } catch { /* sin almacenamiento: no se recuerda */ } }
   const closed = useCloseDay(today) // al tachar todo: +1 bloque en tu edificio
   const { count: requests, toast, dismiss } = useFriendRequests() // peticiones de amistad sin responder + aviso
-  const [focus, setFocus] = useState(false) // modo concentración (unidad de Estudios): la casa pliega el menú
-  const [navOpen, setNavOpen] = useState(true)
-  const [panelOpen, setPanelOpen] = useState(true) // panel de unidades (modo concentración)
-  const focusCtx = useMemo(() => ({ setFocus: (v) => { setFocus(v); if (!v) setNavOpen(true) }, panelOpen, setPanelOpen }), [panelOpen])
+  const [panelOpen, setPanelOpen] = useState(true) // panel de unidades de Estudios
+  const focusCtx = useMemo(() => ({ setFocus() {}, panelOpen, setPanelOpen }), [panelOpen])
   const iconsOnly = settings.iconsOnly
   const pending = today.filter((i) => !i.done) // lo tachado sale de la lista y de la rueda
   const visible = AREAS.filter((a) => activeAreaIds(settings).includes(a.id)) // solo las activas, sin huecos
 
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
-    <button className={`nv ${view === id ? 'on' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { if (id === 'inicio' && focus) { setNavOpen(!navOpen); return } setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
+    <button className={`nv ${view === id ? 'on' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
       style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} ${tint(color)}%, #FFFFFF)` } : undefined}>
       <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : ''}`} style={{ background: color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
@@ -52,13 +50,8 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
     <div className="d-app">
       <FriendToast toast={toast} onOpen={() => setView('amigos')} onClose={dismiss} />
       {closed && <div className="toast" role="status"><span className="toast-block" />{closed}<button className="pill" onClick={() => setView('amigos')}>Ver</button></div>}
-      {focus && !navOpen ? (
-        <nav className="sidebar sidebar-slim" aria-label="Navegación">
-          <button className="nv nv-slim" onClick={() => setNavOpen(true)} aria-label="Mostrar menú" aria-expanded="false" title="Mostrar menú"><span className="ic" style={{ background: '#F1F3F4' }}><Icon name="inicio" /></span></button>
-        </nav>
-      ) : (
       <nav className={`sidebar ${iconsOnly ? 'sidebar-icons' : ''}`} aria-label="Navegación">
-        <NavItem id="inicio" label={focus ? 'Ocultar menú' : 'Inicio'} color="#FFFFFF" />
+        <NavItem id="inicio" label="Inicio" color="#FFFFFF" />
         <hr className="side-sep" />
         {visible.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
         <div style={{ flex: 1 }} />
@@ -67,7 +60,6 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
         <NavItem id="calendario" label="Calendario" color="#FFFFFF" />
         <NavItem id="perfil" label="Perfil" />
       </nav>
-      )}
 
       {/* El main NO lleva key: así el botón de hablar no se vuelve a montar (ni a animar) al cambiar de sección */}
       <main className="d-main">

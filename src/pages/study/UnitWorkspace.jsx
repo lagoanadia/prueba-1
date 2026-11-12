@@ -5,7 +5,7 @@ import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import ShareButton from '../../components/ShareButton.jsx'
-import { useFocusMode, usePanel } from '../../screens/focus.js'
+import { usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
 import { changeSubject, changeUnit, practicesOf, reorderUnits, soft } from './helpers.js'
 
@@ -28,7 +28,6 @@ const LAYOUTS = [['pdf', true, false, 'Solo el PDF del profe'], ['split', true, 
  * (con una casilla para marcar lo estudiado). Arriba, la ruta Asignatura › Unidad para volver atrás.
  */
 export default function UnitWorkspace({ data, update, subject, unit, route, go, back }) {
-  useFocusMode(true)
   const [panel, setPanel] = usePanel()
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
@@ -232,7 +231,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               </button>
             ))}
             {tab !== 'recursos' && layouts()}
-            <button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'close' : 'expand'} size={20} /></button>
+            <button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'shrink' : 'expand'} size={20} /></button>
           </div>
 
           {tab === 'estudio' && (
