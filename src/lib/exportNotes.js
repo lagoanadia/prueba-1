@@ -37,7 +37,7 @@ export function sheetCss(st) {
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
 .x-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
 .x-table th { background: var(--c); color: #fff; text-align: left; font-weight: 600; padding: 8px 12px; }
-.x-table td { padding: 8px 12px; }
+.x-table td { padding: 8px 12px; white-space: pre-wrap; } .x-table th { white-space: pre-wrap; }
 .x-table tr { break-inside: avoid; }
 ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, var(--c) 7%, #fff); }' : ''}
 .x-table td + td, .x-table th + th { border-left: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }

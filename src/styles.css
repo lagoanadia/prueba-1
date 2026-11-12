@@ -2811,3 +2811,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .xp-row.is-dragging { opacity: .35; }
 .xp-row.drop-before::before, .xp-row.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 3px; background: var(--blue); z-index: 5; pointer-events: none; }
 .xp-row.drop-before::before { top: -3px; } .xp-row.drop-after::after { bottom: -3px; }
+/* Celdas de tabla que crecen con el texto */
+.tb td textarea { display: block; width: 100%; border: none; background: none; font: inherit; padding: 9px 12px; outline: none; font-weight: inherit; resize: none; overflow: hidden; line-height: 1.4; white-space: pre-wrap; overflow-wrap: break-word; }
+.tb td textarea:focus { background: #EEF4FF; }
+.tb { table-layout: fixed; }
+.tb td.tb-end { width: 28px; }
