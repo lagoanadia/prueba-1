@@ -3079,3 +3079,20 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-side .wk-range button { width: auto; }
 .wk-side .wk-legend { width: 100%; flex: none; }
 @container (max-width: 420px) { .wk-wheel { flex-direction: column; } .wk-side { width: 100%; flex: none; } }
+/* Más margen: el contenido no se pega a las paredes del widget y las pastillas son menos grandes */
+.pl { padding: 8px 12px 14px; gap: 14px; }
+.pl-cards { gap: 22px; }
+.pl-dailybox, .pl-treats { padding: 0; }
+.pl-shelf { grid-auto-rows: minmax(110px, 150px); align-content: start; gap: 12px; }
+.pl-capsule { width: 50cqw; }
+.pl-capwrap { padding: 6cqw 0 9cqw; }
+.pl-medname { font-size: clamp(12px, 7.5cqw, 17px); } .pl-med .pl-chip { font-size: clamp(11px, 6cqw, 14px); }
+.pl-treats .pl-tcard { padding: 14px 14px 8px; }
+.wk-wheel { padding: 12px 18px 18px; gap: 28px; }
+.wk-donut { width: min(86cqh, 42cqw, 400px); height: min(86cqh, 42cqw, 400px); }
+.wk-side { padding-right: 6px; }
+.pl-shelf { grid-auto-rows: minmax(144px, auto); }
+.pl-med { height: auto; min-height: 144px; justify-content: center; padding: 12px 8px 14px; }
+.pl-capsule { width: 46cqw; }
+.pl-capwrap { padding: 4cqw 0 6cqw; }
+.wk-wheel { padding: 16px 24px 22px; gap: 32px; }
