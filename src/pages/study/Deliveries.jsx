@@ -37,6 +37,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
     setFinishing((s) => new Set(s).add(id))
     setTimeout(() => { finish(id); setFinishing((s) => { const n = new Set(s); n.delete(id); return n }) }, 520)
   }
+  const restore = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, done: false, doneAt: null } : a)) }))
   const finish = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, done: true, doneAt: today } : a)) }))
 
   const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : `${n} días` }
@@ -48,7 +49,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
     <div className="deliv">
       <div className="deliv-head">
         <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />{exams ? 'Exámenes' : 'Próximas entregas'}</h2>
-        <History title={exams ? 'Exámenes hechos' : 'Entregas hechas'} empty={exams ? 'Aún no has hecho ninguno' : 'Aún no has entregado nada'} items={done.map((a) => ({ id: a.id, date: a.doneAt ? formatShort(a.doneAt) : '', text: `${a.course} · ${a.title}` }))} />
+        <History title={exams ? 'Exámenes hechos' : 'Entregas hechas'} empty={exams ? 'Aún no has hecho ninguno' : 'Aún no has entregado nada'} items={done.map((a) => ({ id: a.id, date: a.doneAt ? formatShort(a.doneAt) : '', text: `${a.course} · ${a.title}` }))} onRestore={restore} />
         <button className="icon-btn" onClick={() => open(null)} aria-label={exams ? 'Añadir examen' : 'Añadir entrega'} title={exams ? 'Añadir examen' : 'Añadir entrega'} disabled={!subjects.length}><Icon name="plus" size={22} /></button>
       </div>
 
