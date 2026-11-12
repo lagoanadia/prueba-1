@@ -68,9 +68,21 @@ export default function Plan({ data, update }) {
   // Poner una sesión directamente (solo lleva el deporte, el día, la hora y cuánto dura)
   const usual = (sport) => data.sportMin?.[sport] ?? DEFAULT_MIN // lo que sueles hacer de ese deporte
   const setUsual = (sport, min) => update((d) => ({ ...d, sportMin: { ...(d.sportMin ?? {}), [sport]: Math.min(Math.max(min, MIN_SESSION), 600) } }))
+  // Tramos ya ocupados de un día (las sesiones no se pueden solapar)
+  const busy = (day, ignoreId) => sessions.filter((x) => x.day === day && x.id !== ignoreId).map((x) => [toMin(x.start), toMin(x.start) + x.min]).sort((a, b) => a[0] - b[0])
   const place = (sport, day, startMin, min = usual(sport)) => {
-    const start = Math.min(Math.max(snap(startMin), lo), hi - MIN_SESSION)
-    const len = Math.min(min, hi - start)
+    const others = busy(day)
+    const drop = Math.min(Math.max(snap(startMin), lo), hi - MIN_SESSION)
+    let start = drop
+    for (const [a, b] of others) if (start >= a && start < b) start = b // cae encima de otra: empieza donde acaba esa
+    const next = others.find(([a]) => a >= start)
+    let len = Math.min(min, hi - start, next ? next[0] - start : Infinity)
+    if (len < MIN_SESSION) { // no hay hueco detrás: se intenta justo antes del punto donde la soltaste
+      const prevEnd = Math.max(lo, ...others.filter(([, b]) => b <= drop).map(([, b]) => b))
+      start = Math.max(prevEnd, drop - min)
+      len = drop - start
+      if (len < MIN_SESSION) return // no cabe en ese hueco
+    }
     update((d) => ({ ...d, planSessions: [...(d.planSessions ?? []), { id: crypto.randomUUID(), done: {}, sport, day, start: fromMin(start), min: len }] }))
   }
   // Soltar un globito en una columna
@@ -113,11 +125,14 @@ export default function Plan({ data, update }) {
     const s0 = toMin(s.start)
     const m0 = s.min
     const y0 = e.clientY
+    const others = busy(s.day, s.id)
+    const prevEnd = Math.max(lo, ...others.filter(([, b]) => b <= s0).map(([, b]) => b)) // no se pasa de la sesión de antes…
+    const nextStart = Math.min(hi, ...others.filter(([a]) => a >= s0 + m0).map(([a]) => a)) // …ni de la de después
     let patch = {}
     const move = (ev) => {
       const dm = ((ev.clientY - y0) / scale / H) * 60
-      if (mode === 'bottom') patch = { min: Math.min(Math.max(snap(m0 + dm), MIN_SESSION), hi - s0) }
-      else { const ns = Math.min(Math.max(snap(s0 + dm), lo), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns } }
+      if (mode === 'bottom') patch = { min: Math.min(Math.max(snap(m0 + dm), MIN_SESSION), nextStart - s0) }
+      else { const ns = Math.min(Math.max(snap(s0 + dm), prevEnd), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns } }
       setLive({ id: s.id, ...patch })
       const f = mode === 'bottom' ? s0 : toMin(patch.start)
       setGuide({ from: f, to: f + (patch.min ?? m0), c: colorOf(sports, s.sport) })
