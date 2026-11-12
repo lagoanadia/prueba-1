@@ -102,6 +102,7 @@ export default function Pills({ data, update }) {
           )}
           {pills.some((p) => p.kind === 'treatment') && (
             <div className="pl-treats">
+              <div className="pl-lab">Tratamiento</div>
           {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind === 'treatment').map(([p, pi]) => {
             const color = colorOf(p, pi)
             const left = daysLeft(p)

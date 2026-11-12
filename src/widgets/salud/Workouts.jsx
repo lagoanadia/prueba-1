@@ -27,17 +27,17 @@ export default function Workouts({ data }) {
 
   return (
     <div className="wk-wheel">
-      <div className="wk-range" role="group" aria-label="Periodo">
-        <button className={range === 'week' ? 'on' : ''} onClick={() => setRange('week')} aria-pressed={range === 'week'}>Semana</button>
-        <button className={range === 'month' ? 'on' : ''} onClick={() => setRange('month')} aria-pressed={range === 'month'}>Mes</button>
+      <div className="wk-donut" style={{ background: ranking.length ? `conic-gradient(${stops})` : 'var(--soft)' }}>
+        <div className="wk-hole">
+          {ranking.length
+            ? <><span>Más practicado</span><b style={{ color: colorOf(sports, ranking[0].sport) }}>{ranking[0].sport}</b></>
+            : <span>Aún no hay entrenos {range === 'week' ? 'esta semana' : 'este mes'}</span>}
+        </div>
       </div>
-      <div className="wk-wheel-body">
-        <div className="wk-donut" style={{ background: ranking.length ? `conic-gradient(${stops})` : 'var(--soft)' }}>
-          <div className="wk-hole">
-            {ranking.length
-              ? <><span>Más practicado</span><b style={{ color: colorOf(sports, ranking[0].sport) }}>{ranking[0].sport}</b></>
-              : <span>Aún no hay entrenos {range === 'week' ? 'esta semana' : 'este mes'}</span>}
-          </div>
+      <div className="wk-side">
+        <div className="wk-range" role="group" aria-label="Periodo">
+          <button className={range === 'week' ? 'on' : ''} onClick={() => setRange('week')} aria-pressed={range === 'week'}>Semana</button>
+          <button className={range === 'month' ? 'on' : ''} onClick={() => setRange('month')} aria-pressed={range === 'month'}>Mes</button>
         </div>
         {ranking.length > 0 && (
           <ul className="wk-legend">
