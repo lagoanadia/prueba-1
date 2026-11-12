@@ -19,6 +19,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
   const [kindOpen, setKindOpen] = useState(false)
   const [view, setView] = useState('count') // exámenes: 'count' = el más cercano en grande · 'list' = todos
   const swipe = useRef(null)
+  const [finishing, setFinishing] = useState(() => new Set()) // filas que se están marcando como hechas (se ve el check un instante)
   const kinds = Object.entries(KINDS).filter(([id]) => id !== 'examen') // los exámenes tienen su propio widget
   const color = (c) => subjects.find((s) => s.short === c)?.color ?? '#9AA0A6'
 
@@ -31,6 +32,11 @@ export default function Deliveries({ data, update, subjects, course = null, exam
     setForm(null)
   }
   const remove = (id) => update((d) => ({ ...d, assignments: d.assignments.filter((a) => a.id !== id) }))
+  const tick = (id) => {
+    if (finishing.has(id)) return
+    setFinishing((s) => new Set(s).add(id))
+    setTimeout(() => { finish(id); setFinishing((s) => { const n = new Set(s); n.delete(id); return n }) }, 520)
+  }
   const finish = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, done: true, doneAt: today } : a)) }))
 
   const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : `${n} días` }
@@ -86,12 +92,14 @@ export default function Deliveries({ data, update, subjects, course = null, exam
         <div key={short} className="deliv-group">
           {!course && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
           {list.map((a) => (
-            <div key={a.id} className="deliv-row" style={{ background: soft(color(a.course), 16) }}>
-              <button className="deliv-ic" style={{ background: soft(color(a.course), 55) }} onClick={() => finish(a.id)} aria-label={`Marcar «${a.title}» como entregada`} title="Marcar como entregada"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></button>
+            <div key={a.id} className={`deliv-row is-click ${finishing.has(a.id) ? 'is-finishing' : ''}`} style={{ background: soft(color(a.course), 16) }} role="button" tabIndex={0}
+              onClick={() => tick(a.id)} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tick(a.id) } }}
+              aria-label={`Marcar «${a.title}» como hecha`} title="Toca para marcarla como hecha">
+              <span className="deliv-ic" style={{ background: soft(color(a.course), 55) }} aria-hidden="true"><Icon name={finishing.has(a.id) ? 'check' : (KINDS[a.kind]?.icon ?? 'doc')} size={18} strokeWidth={finishing.has(a.id) ? 3 : 2.3} /></span>
               <span className="deliv-name w-ellipsis">{a.title}</span>
               {exams ? <span className={`exam-chip ${a.due < today ? 'is-late' : ''}`}>{daysText(a.due)}</span> : <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>}
-              <button className="prio-x" onClick={() => open(a)} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>
-              <button className="prio-x" onClick={() => remove(a.id)} aria-label={`Eliminar «${a.title}»`}><Icon name="trash" size={16} /></button>
+              <button className="prio-x" onClick={(e) => { e.stopPropagation(); open(a) }} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>
+              <button className="prio-x" onClick={(e) => { e.stopPropagation(); remove(a.id) }} aria-label={`Eliminar «${a.title}»`}><Icon name="trash" size={16} /></button>
             </div>
           ))}
         </div>

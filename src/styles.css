@@ -2741,3 +2741,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-chips2 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .pl-chip { border: 1.5px solid var(--c); background: #fff; color: var(--text); border-radius: 14px; padding: 3px 12px; font: 600 12px Poppins, sans-serif; cursor: pointer; transition: background .15s, color .15s; } .pl-chip.is-done { background: var(--c); color: #fff; }
 .pl-drow .pl-del { position: static; flex: none; } .pl-drow:hover .pl-del, .pl-drow .pl-del:focus-visible { opacity: 1; }
+/* Entregas: tocar la fila la marca como hecha (se ve un check y se desvanece) */
+.deliv-row.is-click { cursor: pointer; transition: opacity .45s var(--ease), transform .45s var(--ease), filter .2s; }
+.deliv-row.is-click:hover { filter: brightness(.97); }
+.deliv-row.is-finishing { opacity: 0; transform: translateX(10px); } .deliv-row.is-finishing .deliv-name { text-decoration: line-through; }
+.deliv-row.is-finishing .deliv-ic { background: #3DDC97 !important; }
+@media (prefers-reduced-motion: reduce) { .deliv-row.is-click { transition: none; } }
