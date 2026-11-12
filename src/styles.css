@@ -2804,3 +2804,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pdfp-pick button { border: 0; background: none; color: #fff; font: 600 13px Poppins, sans-serif; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; cursor: pointer; }
 .pdfp-pick .pdfp-kind { background: rgba(255, 255, 255, .14); } .pdfp-pick .pdfp-kind:hover { background: rgba(255, 255, 255, .24); }
 .pdfp-pick button svg { stroke: #fff; }
+/* Mover bloques arrastrando en la vista previa del PDF */
+.xp-row { cursor: grab; } .xp-row:active { cursor: grabbing; }
+.xp-row.is-dragging { opacity: .35; }
+.xp-row.drop-before::before, .xp-row.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 3px; background: var(--blue); z-index: 5; pointer-events: none; }
+.xp-row.drop-before::before { top: -3px; } .xp-row.drop-after::after { bottom: -3px; }

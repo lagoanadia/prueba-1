@@ -71,6 +71,42 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
     const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     w.scrollTo({ top: w.scrollTop + el.getBoundingClientRect().top - w.getBoundingClientRect().top - 12, behavior: smooth ? 'smooth' : 'auto' })
   }
+  // Mover bloques arrastrándolos a cualquier punto de cualquier hoja
+  const [drag, setDrag] = useState(null) // { id, over, after }
+  const dropBlock = () => {
+    const d = drag
+    setDrag(null)
+    if (!d?.over || d.over === d.id) return
+    setBlocks((list) => {
+      const item = list.find((x) => x.id === d.id)
+      const rest = list.filter((x) => x.id !== d.id)
+      const at = rest.findIndex((x) => x.id === d.over)
+      if (!item || at < 0) return list
+      rest.splice(at + (d.after ? 1 : 0), 0, item)
+      return rest
+    })
+  }
+  const rowDrag = (b) => ({
+    draggable: true,
+    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); setDrag({ id: b.id, over: null, after: false }) },
+    onDragEnd: () => setDrag(null),
+    onDragOver: (e) => {
+      if (!drag) return
+      e.preventDefault()
+      const r = e.currentTarget.getBoundingClientRect()
+      const after = e.clientY > r.top + r.height / 2
+      if (drag.over !== b.id || drag.after !== after) setDrag({ ...drag, over: b.id, after })
+    },
+    onDrop: (e) => { e.preventDefault(); dropBlock() },
+  })
+  // Al arrastrar cerca del borde de la vista previa, se desplaza sola
+  const autoScroll = (e) => {
+    if (!drag) return
+    const w = wrap.current
+    const r = w.getBoundingClientRect()
+    if (e.clientY < r.top + 60) w.scrollTop -= 16
+    else if (e.clientY > r.bottom - 60) w.scrollTop += 16
+  }
   const set = (p) => setSt((s) => ({ ...s, ...p }))
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; setBlocks(n) }
   const toggleBreak = (id) => setBreaks((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
@@ -104,7 +140,7 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
                 </span>
               )}
             </nav>
-          <div className="xp-sheetwrap" ref={wrap} onScroll={onScroll}>
+          <div className="xp-sheetwrap" ref={wrap} onScroll={onScroll} onDragOver={autoScroll}>
             <style>{sheetCss(st)}</style>
             <div style={{ width: PAGE.w * scale, height: (pages.length * (PAGE.h + 18)) * scale, margin: '0 auto' }}>
               <div className="xp-pages" style={{ width: PAGE.w, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
@@ -114,7 +150,7 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
                       <div className="xp-strip" ref={k === 0 ? strip : null} style={{ transform: `translateY(${-from}px)` }}>
                         <div className="x-sheet"><div className="x-head"><i />{title}{subtitle ? ` · ${subtitle}` : ''}</div></div>
                         {blocks.map((b, i) => (
-                          <div key={b.id} className={`xp-row ${breaks.has(b.id) && i > 0 ? 'has-break' : ''}`}>
+                          <div key={b.id} className={`xp-row ${breaks.has(b.id) && i > 0 ? 'has-break' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`} {...rowDrag(b)}>
                             <div className="xp-tools">
                               <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Subir" title="Subir"><span style={{ display: 'inline-flex', transform: 'rotate(180deg)' }}><Icon name="down" size={14} /></span></button>
                               <button onClick={() => move(i, 1)} disabled={i === blocks.length - 1} aria-label="Bajar" title="Bajar"><Icon name="down" size={14} /></button>
