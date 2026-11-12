@@ -44,7 +44,7 @@ function SessName({ text }) {
  *  - Los deportes son globitos: arrástralos a un día y una hora y la sesión queda puesta ahí (también tocándolos).
  *  - Tira del borde de arriba o de abajo de una sesión para hacerla más corta o más larga: se ilumina la línea de la hora y sale cuál es.
  *  - Agárrala por el centro y llévala donde quieras (otro día, otra hora); sin solaparse con otras.
- *  - Tocarla la marca como hecha (se ilumina con su color; cuenta en Resumen y Constancia) y la × la quita. Nada de ventanas.
+ *  - Tocarla la marca como hecha (se oscurece con su color; cuenta en Resumen y Constancia) y la × la quita. Nada de ventanas.
  */
 export default function Plan({ data, update }) {
   const today = todayISO()
@@ -218,7 +218,7 @@ export default function Plan({ data, update }) {
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
                     onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    <SessName text={s.sport} />{done && <Icon name="check" size={13} strokeWidth={3} />}
+                    <SessName text={s.sport} />
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
