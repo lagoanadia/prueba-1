@@ -2888,3 +2888,6 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-plan-col.is-past .sa-sess { filter: grayscale(.8) opacity(.85); }
 .sa-plan-col.is-past .sa-sess.is-done { filter: brightness(.8) saturate(1.7) grayscale(.75); }
 .sa-plan-days b.is-past { color: #B3B7BC; }
+/* Las sesiones de días pasados conservan su color (solo se apaga la columna) */
+.sa-plan-col.is-past .sa-sess { filter: none; }
+.sa-plan-col.is-past .sa-sess.is-done { filter: brightness(.8) saturate(1.7); }
