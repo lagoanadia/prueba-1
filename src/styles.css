@@ -2816,3 +2816,10 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tb td textarea:focus { background: #EEF4FF; }
 .tb { table-layout: fixed; }
 .tb td.tb-end { width: 28px; }
+/* Bordes de tabla para cambiar el tamaño de columnas y filas */
+.tb td { position: relative; }
+.tb-rz { position: absolute; z-index: 2; opacity: 0; transition: opacity .12s; background: var(--blue); }
+.tb-rz-c { top: 0; bottom: 0; right: -3px; width: 6px; cursor: col-resize; border-radius: 3px; }
+.tb-rz-r { left: 0; right: 0; bottom: -3px; height: 6px; cursor: row-resize; border-radius: 3px; }
+.tb-rz:hover, .tb-rz:active { opacity: .85; }
+.tb td textarea { min-height: 100%; }

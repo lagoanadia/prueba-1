@@ -61,7 +61,8 @@ export function blockHtml(b, n, imgs) {
     case 'code': return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${esc(b.code)}</div>`
     case 'table': {
       const rows = b.rows ?? []
-      return `<div class="x-b"><table class="x-table">${rows.map((r, i) => `<tr>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
+      const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
+      return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""></div>` : ''
     case 'divider': return '<hr class="x-hr">'
