@@ -63,3 +63,14 @@ export function embedOf(url) {
 
 /** Tono de un color de asignatura para fondos (horario, tarjetas): se nota el color elegido, sin llegar a blanco. */
 export const tone = (c, pct = 55) => soft(c, pct)
+
+/** Mueve la unidad `id` antes o después de `overId` (para reordenar arrastrando). */
+export function reorderUnits(units, id, overId, after) {
+  const item = units.find((u) => u.id === id)
+  if (!item || id === overId) return units
+  const rest = units.filter((u) => u.id !== id)
+  const at = rest.findIndex((u) => u.id === overId)
+  if (at < 0) return units
+  rest.splice(at + (after ? 1 : 0), 0, item)
+  return rest
+}

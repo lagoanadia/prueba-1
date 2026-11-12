@@ -7,7 +7,7 @@ import NameDialog from '../../components/NameDialog.jsx'
 import ShareButton from '../../components/ShareButton.jsx'
 import { useFocusMode, usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
-import { changeSubject, changeUnit, practicesOf, soft } from './helpers.js'
+import { changeSubject, changeUnit, practicesOf, reorderUnits, soft } from './helpers.js'
 
 // Orden de las pestañas: Temario y apuntes · Prácticas · Recursos (al final)
 const TABS = [['estudio', 'split', 'Temario y apuntes'], ['practicas', 'code', 'Prácticas'], ['recursos', 'link', 'Recursos']]
@@ -97,6 +97,13 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
     if (drag.id === (drag.type === 'topic' ? topic?.id : practice?.id) && target.unitId !== drag.unitId) go({ ...route, unitId: target.unitId, tab: drag.type === 'topic' ? 'estudio' : 'practicas', itemId: drag.id })
     setDragging(null); setMark(null)
   }
+  // Reordenar las propias unidades arrastrando por su cabecera
+  const [dragUnit, setDragUnit] = useState(null) // { id, over, after }
+  const dropUnit = () => {
+    const d = dragUnit
+    setDragUnit(null)
+    if (d?.over && d.over !== d.id) changeSubject(update, subject.id, (sub) => ({ ...sub, units: reorderUnits(sub.units, d.id, d.over, d.after) }))
+  }
   const dragProps = (type, unitId, id) => ({
     draggable: true,
     onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); setDragging({ type, unitId, id }) },
@@ -150,10 +157,21 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               const isOpen = open.has(u.id)
               const ps = practicesOf(u)
               return (
-                <div key={u.id} className="tp-unit-wrap">
+                <div key={u.id} className={`tp-unit-wrap ${dragUnit?.id === u.id ? 'is-dragging' : ''} ${dragUnit?.over === u.id && dragUnit.id !== u.id ? (dragUnit.after ? 'u-after' : 'u-before') : ''}`}>
                   <div className={`tp-unit ${on ? 'on' : ''} ${mark?.end && mark.unitId === u.id ? 'drop-into' : ''}`}
-                    onDragOver={(e) => { if (!dragging) return; e.preventDefault(); setMark({ type: dragging.type, unitId: u.id, end: true }) }}
-                    onDrop={(e) => { if (!dragging) return; e.preventDefault(); moveItem(dragging, { unitId: u.id, end: true }); setOpen((o) => new Set([...o, u.id])) }}>
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', u.id); setDragUnit({ id: u.id, over: null, after: false }) }}
+                    onDragEnd={() => setDragUnit(null)}
+                    onDragOver={(e) => {
+                      if (dragUnit) { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY > r.top + r.height / 2; if (dragUnit.over !== u.id || dragUnit.after !== after) setDragUnit({ ...dragUnit, over: u.id, after }); return }
+                      if (!dragging) return
+                      e.preventDefault(); setMark({ type: dragging.type, unitId: u.id, end: true })
+                    }}
+                    onDrop={(e) => {
+                      if (dragUnit) { e.preventDefault(); dropUnit(); return }
+                      if (!dragging) return
+                      e.preventDefault(); moveItem(dragging, { unitId: u.id, end: true }); setOpen((o) => new Set([...o, u.id]))
+                    }}>
                     <button className="tp-chev" onClick={() => toggleOpen(u.id)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Plegar' : 'Desplegar'} ${u.name}`}><Icon name={isOpen ? 'down' : 'right'} size={16} /></button>
                     <button className="tp-uname w-ellipsis" onClick={() => { go({ ...route, unitId: u.id, itemId: null }); setOpen((s) => new Set([...s, u.id])) }}>{u.name}</button>
                     <button className="prio-x tp-pen" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`}><Icon name="pen" size={14} /></button>

@@ -9,7 +9,7 @@ import ResourceFrames from './ResourceFrames.jsx'
 import { applyReview, buildReview, countReview, fallbackProposal } from './organize.js'
 import { deleteFile } from '../../lib/fileStore.js'
 import { proposeOrganization } from '../../services/organizeService.js'
-import { METRICS, SUBJECT_PALETTE, changeSubject, metricsOf, practicesOf, progressFor, soft, unitProgress } from './helpers.js'
+import { METRICS, SUBJECT_PALETTE, changeSubject, metricsOf, practicesOf, progressFor, reorderUnits, soft, unitProgress } from './helpers.js'
 
 /** Estado de una unidad según sus temas. */
 function unitState(u) {
@@ -32,6 +32,20 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
   const p = progressFor(subject, data.assignments)
   const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
   const addUnit = (name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name, topics: [] }] })); setDialog(null) }
+  // Reordenar las unidades arrastrando
+  const [dragU, setDragU] = useState(null) // { id, over, after }
+  const dropU = () => {
+    const d = dragU
+    setDragU(null)
+    if (d?.over && d.over !== d.id) changeSubject(update, subject.id, (s) => ({ ...s, units: reorderUnits(s.units, d.id, d.over, d.after) }))
+  }
+  const unitDrag = (u) => ({
+    draggable: true,
+    onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', u.id); setDragU({ id: u.id, over: null, after: false }) },
+    onDragEnd: () => setDragU(null),
+    onDragOver: (e) => { if (!dragU) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientX > r.left + r.width / 2; if (dragU.over !== u.id || dragU.after !== after) setDragU({ ...dragU, over: u.id, after }) },
+    onDrop: (e) => { e.preventDefault(); dropU() },
+  })
   const removeUnit = (id) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.filter((u) => u.id !== id) })); setDialog(null) }
   const renameUnit = (id, name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, name } : u)) })); setDialog(null) }
   const startReview = (r, msg, docs) => { setReview(r); setReviewMsg(msg); setDocsText(docs) }
@@ -120,7 +134,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
           const up = unitProgress(u)
           const st = unitState(u)
           return (
-            <div key={u.id} className="unit-wrap" style={{ '--i': i }}>
+            <div key={u.id} className={`unit-wrap ${dragU?.id === u.id ? 'is-dragging' : ''} ${dragU?.over === u.id && dragU.id !== u.id ? (dragU.after ? 'drop-after' : 'drop-before') : ''}`} style={{ '--i': i }} {...unitDrag(u)}>
             <button className="card unit-card unit-btn" onClick={() => openUnit(u.id)}>
               <span className="w-row"><b className="unit-title">{u.name}</b><b>{up.clear} de {up.total}</b></span>
               <span className="bar"><span style={{ width: `${up.total ? (up.clear / up.total) * 100 : 0}%`, background: subject.color }} /></span>
