@@ -3005,3 +3005,22 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-legend { width: min(46cqw, 340px); gap: 9px; } .wk-legend li { font-size: clamp(12px, 2.9cqw, 17px); } .wk-legend i { width: 13px; height: 13px; }
 .wk-range button { font-size: 13.5px; padding: 6px 16px; }
 @container (max-width: 330px) { .wk-donut { width: min(50cqh, 66cqw, 300px); height: min(50cqh, 66cqw, 300px); } }
+/* Bloques que encajan, sin cosas gigantes: cuadrados de tamaño fijo que se reparten en filas */
+.pl-shelf { grid-template-columns: repeat(auto-fill, 118px); justify-content: start; gap: 10px; }
+.pl-med { width: 118px; }
+.wk-wheel { min-height: 260px; }
+.wk-donut { width: min(62cqh, 36cqw, 200px); height: min(62cqh, 36cqw, 200px); }
+.wk-hole b { font-size: clamp(13px, 3.6cqw, 20px); } .wk-hole span { font-size: clamp(9px, 1.9cqw, 12px); }
+.wk-legend { width: min(46cqw, 280px); } .wk-legend li { font-size: clamp(12px, 2.6cqw, 14px); }
+@container (max-width: 330px) { .wk-donut { width: min(44cqh, 60cqw, 180px); height: min(44cqh, 60cqw, 180px); } }
+.sa-consist { min-height: 380px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 62px)); }
+/* Cuadrados del pastillero con medidas fijas (los cqw del propio contenedor no sirven para su padding) */
+.pl-med { container-type: normal; padding: 10px 6px 12px; gap: 6px; justify-content: center; }
+.pl-capwrap { width: 100%; padding: 6px 0 2px; height: auto; }
+.pl-capsule { width: 78px; height: auto; }
+.pl-medname { font-size: 12.5px; } .pl-med .pl-chip { font-size: 11.5px; padding: 2px 11px; }
+/* El texto del centro de la rueda se ajusta al tamaño de la rueda */
+.wk-donut { container-type: size; }
+.wk-hole b { font-size: clamp(10px, 10cqw, 22px); white-space: nowrap; overflow-wrap: normal; }
+.wk-hole span { font-size: clamp(8px, 5.4cqw, 12px); }
