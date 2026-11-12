@@ -1,5 +1,5 @@
 import { addDays, todayISO, weekDays, weekStart } from '../../lib/dates.js'
-import { fmtHM } from './healthUtils.js'
+import { doneEntries, fmtHM } from './healthUtils.js'
 
 /** Resumen de la semana: deportes distintos (y el que más), tiempo activo, días con el objetivo de pasos y racha de semanas. */
 export default function WeekSummary({ data }) {
@@ -7,7 +7,7 @@ export default function WeekSummary({ data }) {
   const plan = data.plan ?? []
   const sessions = data.planSessions ?? []
   const planned = sessions.length || plan.filter((p) => p && p !== 'Descanso').length
-  const workouts = data.workouts ?? []
+  const workouts = doneEntries(data, today, weekDays, true) // lo del plan se da por hecho solo
   const inWeek = (monday) => { const days = weekDays(monday); return workouts.filter((w) => days.includes(w.date)) }
   const mine = inWeek(today)
   const minutes = mine.reduce((s, w) => s + w.min, 0)

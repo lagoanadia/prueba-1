@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon.jsx'
-import { todayISO } from '../../lib/dates.js'
+import { todayISO, weekDays } from '../../lib/dates.js'
+import { doneEntries } from './healthUtils.js'
 import { colorOf, sportsOf } from './sports.js'
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const WEEK = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+// Los colores de las asignaturas de Estudios: verde y amarillo de su paleta
 const BOTH = '#1FA463'
-const SPORT = '#8EDCB0'
-const STEPS = '#F5C84B'
+const SPORT = 'color-mix(in srgb, #1FA463 45%, #FFFFFF)'
+const STEPS = '#EAB308'
 
 /**
  * Constancia: el mes con su forma de calendario, en cuadraditos. Un día cuenta si has hecho deporte o has llegado a tu objetivo de pasos:
@@ -25,7 +27,7 @@ export default function Consistency({ data }) {
   const iso = (d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
   const sports = sportsOf(data)
   const goal = data.stepsGoal ?? 8000
-  const workouts = data.workouts ?? []
+  const workouts = doneEntries(data, today, weekDays, true) // lo del plan se da por hecho solo
   const did = (date) => workouts.some((w) => w.date === date && (filter === 'all' || filter === 'steps' || w.sport === filter))
   const walked = (date) => (data.steps?.[date] ?? 0) >= goal
   const state = (d) => {

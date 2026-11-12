@@ -2947,3 +2947,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-consist .sa-legend b { margin-left: 0; }
 .sa-consist { min-height: 330px; }
 .cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 56px)); }
+/* Salud con los colores de las asignaturas de Estudios */
+.sa-tile.is-green { background: color-mix(in srgb, #1FA463 16%, #FFFFFF); } .sa-tile.is-blue { background: color-mix(in srgb, #2F6FED 16%, #FFFFFF); }
+.sa-tile.is-yellow { background: color-mix(in srgb, #EAB308 20%, #FFFFFF); } .sa-tile.is-pink { background: color-mix(in srgb, #EC4899 16%, #FFFFFF); }
+.sa-bar.is-met { background: #1FA463; } .sa-legend i.is-met { background: #1FA463; }

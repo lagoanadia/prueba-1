@@ -37,10 +37,11 @@ const arrayMove = (list, from, to) => {
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, saveError, retrySave, updateData, updateLayout } = useBoard(area.id)
 
-  // Salud: Sueño y Agua ya no existen; se quitan de los tableros guardados
+  // Salud: Sueño, Agua y Evolución ya no existen; se quitan de los tableros guardados
   useEffect(() => {
     if (area.id !== 'salud' || !board || board.isNew) return
-    if (board.layout.some((w) => w.type === 'sleep' || w.type === 'water')) updateLayout((l) => l.filter((w) => w.type !== 'sleep' && w.type !== 'water'))
+    const gone = ['sleep', 'water', 'progress']
+    if (board.layout.some((w) => gone.includes(w.type))) updateLayout((l) => l.filter((w) => !gone.includes(w.type)))
   }, [area.id, board?.layout]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Salud: se abren todos los widgets de Salud en grande, una sola vez (los que falten se añaden); luego puedes cambiarlos o quitarlos

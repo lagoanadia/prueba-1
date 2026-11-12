@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
-import { fmtHM } from './healthUtils.js'
+import { doneEntries, fmtHM } from './healthUtils.js'
 
 /**
  * Entrenamientos: una rueda con el tiempo de cada deporte en la semana o en el mes y, en el centro, el que más has practicado.
@@ -14,13 +14,9 @@ export default function Workouts({ data }) {
   const week = weekDays(today)
   const inRange = (date) => (range === 'week' ? week.includes(date) : date.slice(0, 7) === today.slice(0, 7))
 
-  // Cada día hecho de cada sesión del plan: deporte y minutos
+  // Las sesiones del plan se dan por hechas solas al pasar su hora: no hay que apuntar nada
   const by = new Map()
-  ;(data.planSessions ?? []).forEach((s) => Object.entries(s.done ?? {}).filter(([date, ok]) => ok && inRange(date)).forEach(() => {
-    const e = by.get(s.sport) ?? { sport: s.sport, min: 0 }
-    e.min += s.min
-    by.set(s.sport, e)
-  }))
+  doneEntries(data, today, weekDays).filter((x) => inRange(x.date)).forEach((x) => { const e = by.get(x.sport) ?? { sport: x.sport, min: 0 }; e.min += x.min; by.set(x.sport, e) })
   const ranking = [...by.values()].sort((a, b) => b.min - a.min)
   const total = ranking.reduce((n, r) => n + r.min, 0)
   let acc = 0
