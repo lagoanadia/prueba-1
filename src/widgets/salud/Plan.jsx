@@ -191,7 +191,7 @@ export default function Plan({ data, update }) {
           : <input className="sa-bubble-in" autoFocus value={newSport} maxLength={30} placeholder="Deporte" aria-label="Nuevo deporte" onChange={(e) => setNewSport(e.target.value)} onBlur={() => addSport(newSport)} onKeyDown={(e) => { if (e.key === 'Enter') addSport(newSport); if (e.key === 'Escape') setNewSport(null) }} />}
       </div>
       <div className="sa-plan-days" style={{ '--c': shownDays.length }}>
-        <span />{shownDays.map((i) => <b key={i} className={week[i] === today ? 'is-today' : ''}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
+        <span />{shownDays.map((i) => <b key={i} className={`${week[i] === today ? 'is-today' : ''} ${week[i] < today ? 'is-past' : ''}`}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
       </div>
       <div className="sa-plan-grid" style={{ '--c': shownDays.length, '--h': `${total * H}px` }}>
         <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} className={guide && (view.from + k) * 60 >= guide.from && (view.from + k) * 60 <= guide.to ? 'is-lit' : ''} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
@@ -205,7 +205,7 @@ export default function Plan({ data, update }) {
         {shownDays.map((i) => {
           const date = week[i]
           return (
-            <div key={i} data-day={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${dropDay === i ? 'is-drop' : ''}`} role="presentation"
+            <div key={i} data-day={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${date < today ? 'is-past' : ''} ${dropDay === i ? 'is-drop' : ''}`} role="presentation"
               onDragOver={(e) => { e.preventDefault(); if (dropDay !== i) setDropDay(i) }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropDay(null) }} onDrop={(e) => onDropSport(e, i)}>
               {Array.from({ length: total }, (_, k) => <i key={k} style={{ top: k * H }} />)}
               {shown.filter((s) => s.day === i).map((s) => {
