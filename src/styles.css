@@ -2758,3 +2758,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .popup-list li:has(.hist-restore) { display: flex; align-items: center; gap: 10px; } .popup-list li:has(.hist-restore) .w-text { flex: 1; }
 .hist-restore { flex: none; background: var(--soft); }
 .popup-list li:has(.hist-restore) { flex-direction: row; flex-wrap: nowrap; text-align: left; }
+/* Entregas marcadas: sección «Entregadas» más oscura, debajo, hasta salir de la pantalla */
+.deliv-done { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.deliv-done .deliv-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.deliv-row.is-ticked { cursor: pointer; filter: saturate(.85) brightness(.9); } .deliv-row.is-ticked .deliv-name { text-decoration: line-through; opacity: .75; }
+.deliv-row.is-ticked:hover { filter: saturate(.85) brightness(.85); }

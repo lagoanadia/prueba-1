@@ -24,7 +24,7 @@ export function progressFor(subject, assignments = []) {
   const counts = {
     topics: { done: units.reduce((n, u) => n + u.topics.filter((t) => t.state === 'clear').length, 0), total: units.reduce((n, u) => n + u.topics.length, 0) },
     practices: { done: units.reduce((n, u) => n + practicesOf(u).filter((p) => p.done).length, 0), total: units.reduce((n, u) => n + practicesOf(u).length, 0) },
-    assignments: { done: mine.filter((a) => a.done).length, total: mine.length },
+    assignments: { done: mine.filter((a) => a.done || a.tick).length, total: mine.length },
   }
   const on = metricsOf(subject)
   const picked = Object.keys(METRICS).filter((k) => on[k])
