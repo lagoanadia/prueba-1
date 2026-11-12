@@ -18,6 +18,8 @@ export default async function handler({ request, env }) {
     return json({ recipes: await extractRecipes({ text: body.text, image, lang: body.lang === 'en' ? 'en' : 'es' }, env) })
   } catch (err) {
     console.error(err)
-    return json({ error: 'La IA no ha podido leer las recetas. Inténtalo otra vez.' }, 502)
+    // El motivo (código de Groq, modelo…) no lleva secretos y ayuda a saber qué falla
+    const why = String(err?.message ?? '').replace(/\s+/g, ' ').slice(0, 180)
+    return json({ error: `La IA no ha podido leer las recetas${why ? ` (${why})` : ''}` }, 502)
   }
 }

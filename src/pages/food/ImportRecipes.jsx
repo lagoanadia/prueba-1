@@ -47,13 +47,14 @@ export default function ImportRecipes({ data, update, onClose }) {
     setFile(f); setPhase('reading'); setMsg('')
     const found = []
     let failed = 0
+    let why = '' // último motivo del fallo, para poder contarlo
     let note = ''
     if (f.type.startsWith('image/')) {
       // Una o varias fotos
       const photos = files.filter((x) => x.type.startsWith('image/')).slice(0, 6)
       setProgress({ done: 0, total: photos.length })
       for (const ph of photos) {
-        try { found.push(...(await extractRecipes(null, await photoToDataUrl(ph)))) } catch { failed++ }
+        try { found.push(...(await extractRecipes(null, await photoToDataUrl(ph)))) } catch (e) { failed++; why = e.message }
         setProgress((p) => ({ ...p, done: p.done + 1 }))
       }
     } else {
@@ -62,7 +63,7 @@ export default function ImportRecipes({ data, update, onClose }) {
       const chunks = chunksOf(doc.pages)
       setProgress({ done: 0, total: chunks.length })
       for (const text of chunks) {
-        try { found.push(...(await extractRecipes(text))) } catch { failed++ }
+        try { found.push(...(await extractRecipes(text))) } catch (e) { failed++; why = e.message }
         setProgress((p) => ({ ...p, done: p.done + 1 }))
       }
       if (doc.total > doc.pages.length) note = `Solo he leído las primeras ${doc.pages.length} páginas.`
@@ -75,7 +76,7 @@ export default function ImportRecipes({ data, update, onClose }) {
       if (!prev || r.ingredients.length + r.steps.length > prev.ingredients.length + prev.steps.length) byName.set(k, r)
     }
     const list = [...byName.values()].map((r) => ({ ...r, meals: r.meals.length ? r.meals : ['comida'], dup: have.has(norm(r.name)), on: !have.has(norm(r.name)) }))
-    if (!list.length) { setPhase('pick'); setMsg(failed ? 'La IA no ha podido leerlo ahora mismo. Inténtalo de nuevo.' : 'No he encontrado recetas ahí.'); return }
+    if (!list.length) { setPhase('pick'); setMsg(failed ? (why || 'La IA no ha podido leerlo ahora mismo. Inténtalo de nuevo.') : 'No he encontrado recetas ahí.'); return }
     setItems(list); setPhase('review')
     setMsg(failed ? 'Algunas partes no se han podido leer; puede que falten recetas.' : note)
   }
