@@ -2747,3 +2747,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .deliv-row.is-finishing { opacity: 0; transform: translateX(10px); } .deliv-row.is-finishing .deliv-name { text-decoration: line-through; }
 .deliv-row.is-finishing .deliv-ic { background: #3DDC97 !important; }
 @media (prefers-reduced-motion: reduce) { .deliv-row.is-click { transition: none; } }
+/* Editar el tablero: los bloques se agarran enteros y se arrastran; su contenido no se toca mientras tanto */
+.plan-grid.is-editing .plan-block { cursor: grab; }
+.plan-grid.is-editing .plan-block:active { cursor: grabbing; }
+.plan-grid.is-editing .plan-block > :not(.w-remove):not(.block-move):not(.size-dock) { pointer-events: none; user-select: none; }
+.plan-block.is-dragging { opacity: .4; }
+.plan-block.drop-before::before, .plan-block.drop-after::after { content: ''; position: absolute; background: var(--blue); border-radius: 3px; z-index: 6; pointer-events: none; }
+.plan-block.drop-h.drop-before::before { left: -13px; top: 0; bottom: 0; width: 4px; } .plan-block.drop-h.drop-after::after { right: -13px; top: 0; bottom: 0; width: 4px; }
+.plan-block.drop-v.drop-before::before { top: -13px; left: 0; right: 0; height: 4px; } .plan-block.drop-v.drop-after::after { bottom: -13px; left: 0; right: 0; height: 4px; }
