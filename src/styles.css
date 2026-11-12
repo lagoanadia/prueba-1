@@ -2907,3 +2907,5 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-thread { position: absolute; left: 0; right: 0; height: 0; z-index: 6; pointer-events: none; border-top: 2px solid var(--c); }
 .sa-thread em { position: absolute; left: 0; top: 0; transform: translateY(-50%); width: 40px; text-align: center; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; background: var(--c); border-radius: 8px; padding: 1px 0; }
 .sa-plan-hours span.is-lit { color: #9AA0A6; font-weight: 400; }
+/* En sesiones bajitas los bordes para estirar no se comen el centro (que sirve para marcar/mover) */
+.sa-rz { height: min(9px, 28%); }

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
@@ -167,6 +167,35 @@ export default function Plan({ data, update }) {
     }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
+
+  // Marcar solas las sesiones cuando pasa su hora (sin tocar las que tú ya has marcado o desmarcado a mano)
+  const upd = useRef(update)
+  upd.current = update
+  const sref = useRef(sessions)
+  sref.current = sessions
+  useEffect(() => {
+    const run = () => {
+      const now = new Date()
+      const day = now.toLocaleDateString('en-CA')
+      const mins = now.getHours() * 60 + now.getMinutes()
+      const wk = weekDays(day)
+      const isDue = (x) => { const date = wk[x.day]; return date && x.done?.[date] === undefined && (date < day || (date === day && mins >= toMin(x.start) + x.min)) }
+      if (!sref.current.some(isDue)) return // nada que marcar: no se guarda nada
+      upd.current((d) => {
+        const due = (d.planSessions ?? []).filter(isDue)
+        if (!due.length) return d
+        const entries = due.filter((x) => !(d.workouts ?? []).some((w) => w.planId === x.id && w.date === wk[x.day])).map((x) => ({ id: crypto.randomUUID(), planId: x.id, date: wk[x.day], sport: x.sport, min: x.min, notes: '' }))
+        return {
+          ...d,
+          planSessions: d.planSessions.map((x) => (isDue(x) ? { ...x, done: { ...(x.done ?? {}), [wk[x.day]]: true } } : x)),
+          workouts: [...(d.workouts ?? []), ...entries],
+        }
+      })
+    }
+    run()
+    const id = setInterval(run, 60000)
+    return () => clearInterval(id)
+  }, [sessions])
 
   const shown = sessions.map((s) => (live?.id === s.id ? { ...s, ...live } : s))
 
