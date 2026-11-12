@@ -86,7 +86,7 @@ const EN = {
   'Palabra del día: escribe tu intento': 'Word of the day: type your guess', '¡Acertada!': 'Got it!', 'Toca y escribe con el teclado': 'Tap and type with the keyboard',
 
   // ---- Salud
-  'Plan semanal': 'Weekly plan', 'Entrenamientos': 'Workouts', 'Evolución': 'Progress', 'Agua': 'Water', 'Sueño': 'Sleep', 'Mis deportes': 'My sports', '← Semana': '← Week', '+ Deporte': '+ Sport',
+  'Ejercicio de la semana': 'Weekly exercise', 'Plan semanal': 'Weekly plan', 'Entrenamientos': 'Workouts', 'Evolución': 'Progress', 'Agua': 'Water', 'Sueño': 'Sleep', 'Mis deportes': 'My sports', '← Semana': '← Week', '+ Deporte': '+ Sport',
   'Nada hoy todavía': 'Nothing today yet', 'Notas (opcional)': 'Notes (optional)', 'min hoy': 'min today', '{0} min hoy': '{0} min today', 'Bajar objetivo': 'Lower target', 'Subir objetivo': 'Raise target',
   '{0} de {1} vasos': '{0} of {1} glasses', 'Añadir vaso ({0} de {1})': 'Add a glass ({0} of {1})', '{0} vasos': '{0} glasses', 'Deporte del {0}': 'Sport for {0}',
 

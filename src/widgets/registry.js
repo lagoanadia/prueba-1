@@ -52,7 +52,7 @@ export const WIDGETS = {
   bee: { area: 'journal', name: 'Spelling Bee', color: '#F9DC5C', component: BeeWidget },
   crossword: { area: 'journal', name: 'Mini crucigrama', color: '#E84855', component: CrosswordWidget },
   good: { area: 'journal', name: 'Una cosa buena del día', color: '#3DDC97', component: Good },
-  plan: { sizes: ['M', 'L'], area: 'salud', name: 'Plan semanal', color: '#3DDC97', component: Plan },
+  plan: { sizes: ['M', 'L'], area: 'salud', name: 'Ejercicio de la semana', color: '#3DDC97', component: Plan },
   workouts: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },
   progress: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
   cycle: { sizes: ['M', 'L'], area: 'salud', name: 'Ciclo menstrual', color: '#EFABFF', component: Cycle },
