@@ -30,7 +30,7 @@ export default function Plan({ data, update }) {
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
   const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
-  const [guide, setGuide] = useState(null) // minuto del borde que estás moviendo: ilumina su línea
+  const [guide, setGuide] = useState(null) // { from, to, c }: tramo que se ilumina mientras estiras una sesión
   const shownDays = view.days.slice().sort((a, b) => a - b)
   const total = Math.max(1, view.to - view.from)
   const lo = view.from * 60
@@ -93,7 +93,8 @@ export default function Plan({ data, update }) {
       if (mode === 'bottom') patch = { min: Math.min(Math.max(snap(m0 + dm), MIN_SESSION), hi - s0) }
       else { const ns = Math.min(Math.max(snap(s0 + dm), lo), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns } }
       setLive({ id: s.id, ...patch })
-      setGuide(mode === 'bottom' ? s0 + patch.min : toMin(patch.start))
+      const f = mode === 'bottom' ? s0 : toMin(patch.start)
+      setGuide({ from: f, to: f + (patch.min ?? m0), c: colorOf(sports, s.sport) })
     }
     const end = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end)
@@ -140,11 +141,12 @@ export default function Plan({ data, update }) {
         <span />{shownDays.map((i) => <b key={i} className={week[i] === today ? 'is-today' : ''}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
       </div>
       <div className="sa-plan-grid" style={{ '--c': shownDays.length, '--h': `${total * H}px` }}>
-        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} className={guide === (view.from + k) * 60 ? 'is-lit' : ''} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
-        {guide != null && (
+        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} className={guide && (view.from + k) * 60 >= guide.from && (view.from + k) * 60 <= guide.to ? 'is-lit' : ''} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
+        {guide && (
           <>
-            <i className="sa-guide" style={{ top: ((guide - lo) / 60) * H }} />
-            <span className="sa-guide-t" style={{ top: ((guide - lo) / 60) * H }}>{fromMin(guide)}</span>
+            <div className="sa-band" style={{ top: ((guide.from - lo) / 60) * H, height: ((guide.to - guide.from) / 60) * H, '--c': guide.c }} />
+            <span className="sa-guide-t" style={{ top: ((guide.from - lo) / 60) * H }}>{fromMin(guide.from)}</span>
+            <span className="sa-guide-t" style={{ top: ((guide.to - lo) / 60) * H }}>{fromMin(guide.to)}</span>
           </>
         )}
         {shownDays.map((i) => {

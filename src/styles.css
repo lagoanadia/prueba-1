@@ -2861,3 +2861,15 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-guide-t { position: absolute; left: 0; width: 40px; transform: translateY(-50%); text-align: center; font-size: 11px; font-weight: 700; color: #fff; background: #2FA36B; border-radius: 8px; padding: 1px 0; z-index: 7; pointer-events: none; }
 .sa-plan-hours span.is-lit { color: transparent; }
 .sa-sess > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Tramo iluminado al estirar una sesión (de la hora de empezar a la de acabar) */
+.sa-band { position: absolute; left: 40px; right: 0; z-index: 4; pointer-events: none; border-radius: 10px; background: color-mix(in srgb, var(--c) 38%, transparent); border-top: 2px solid color-mix(in srgb, var(--c) 70%, #2FA36B); border-bottom: 2px solid color-mix(in srgb, var(--c) 70%, #2FA36B); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent); }
+.sa-plan-hours span.is-lit { color: #1F7A4D; font-weight: 700; }
+/* El deporte con el tipo de letra de las filas de Estudios */
+.sa-sess > b { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.25; }
+.sa-sess { border-radius: 14px; padding: 6px 10px; }
+/* El tamaño del nombre se ajusta al ancho de la columna (hasta 15 px, como en Estudios) */
+.sa-plan-grid { container-type: inline-size; }
+.sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 5.4), 15px); padding-right: 0; }
+.sa-sess { padding: 6px 8px; }
+.sa-sess.is-live .sa-sess-x { display: none; }
+.sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 6), 15px); }
