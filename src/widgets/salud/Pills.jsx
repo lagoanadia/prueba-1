@@ -4,7 +4,7 @@ import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { fromMin, toMin } from './healthUtils.js'
 
 // Un color por medicamento (se reparte solo; se puede cambiar al crearlo)
-export const PILL_COLORS = ['#2FA36B', '#8B5CF6', '#F29D38', '#E0457B', '#2F6FED', '#5F6368']
+export const PILL_COLORS = ['#2F6FED', '#E5383B', '#1FA463', '#8B5CF6', '#F97316', '#EAB308', '#EC4899', '#06B6D4', '#92400E', '#64748B'] // los mismos 10 colores que las asignaturas y los deportes
 const KINDS = [['treatment', 'Tratamiento'], ['daily', 'Diario'], ['supplement', 'Suplemento']]
 
 /** Horas de toma: desde la primera, cada N horas (da la vuelta al día) o repartidas en N veces al día. */
@@ -13,6 +13,8 @@ const timesPer = (first, n) => Array.from({ length: n }, (_, k) => fromMin(toMin
 // Los medicamentos guardados antes solo tenían `first` y `every`
 const timesOfPill = (p) => p.times ?? timesEvery(p.first ?? '08:00', p.every ?? 8)
 // Un tratamiento puede llevar varias pastillas (`items`); lo guardado antes es una sola, con sus horas en el propio medicamento
+// Un medicamento o tratamiento = un solo color en toda su tarjeta; los guardados con colores antiguos toman el de su posición
+const colorOf = (p, i) => (PILL_COLORS.includes(p.color) ? p.color : PILL_COLORS[i % PILL_COLORS.length])
 const itemsOf = (p) => p.items ?? [{ id: '_', name: p.name, color: p.color ?? PILL_COLORS[0], times: timesOfPill(p), legacy: true }]
 const keyOf = (it, t) => (it.legacy ? t : `${it.id}@${t}`)
 const endOf = (p) => addDays(p.start ?? todayISO(), Math.max(0, (p.days ?? 1) - 1))
@@ -59,23 +61,24 @@ export default function Pills({ data, update }) {
       )}
       {view === 'cards' && pills.length > 0 && (
         <div className="pl-cards">
-          {pills.filter((p) => p.kind === 'treatment').map((p) => {
+          {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind === 'treatment').map(([p, pi]) => {
+            const color = colorOf(p, pi)
             const left = daysLeft(p)
             const frac = left == null ? 0 : Math.min(1, Math.max(0, ((p.days ?? 1) - left) / (p.days ?? 1)))
             const ev = eventsOf(p)
               return (
-                <div key={p.id} className="pl-tcard">
+                <div key={p.id} className="pl-tcard" style={{ '--c': color }}>
                   <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
                   <div className="pl-thead">
                     <div><b>{p.name}</b><span>{itemsOf(p).length === 1 ? '1 pastilla' : `${itemsOf(p).length} pastillas`}{p.days ? ` · acabas el ${formatShort(endOf(p))}` : ''}</span></div>
-                    {left != null && <div className="pl-tcount" style={{ '--c': PILL_COLORS[0] }}><b>{left || '–'}</b><i>{left === 1 ? 'día' : left ? 'días' : 'fin'}</i></div>}
+                    {left != null && <div className="pl-tcount"><b>{left || '–'}</b><i>{left === 1 ? 'día' : left ? 'días' : 'fin'}</i></div>}
                   </div>
-                  {left != null && <div className="pl-bar" style={{ '--c': PILL_COLORS[0] }}><i style={{ width: `${frac * 100}%` }} /></div>}
+                  {left != null && <div className="pl-bar"><i style={{ width: `${frac * 100}%` }} /></div>}
                   <div className="pl-day">
                     {ev.map(({ it, t }, i) => {
                       const done = isDone(p, it, t)
                       return (
-                        <button key={`${it.id}${t}`} className={`pl-row ${done ? 'is-done' : ''}`} style={{ '--c': it.color }} onClick={() => toggle(p, it, t)} aria-pressed={done} title={done ? 'Tomada' : 'Toca cuando la tomes'}>
+                        <button key={`${it.id}${t}`} className={`pl-row ${done ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={done} title={done ? 'Tomada' : 'Toca cuando la tomes'}>
                           <span className="pl-time">{t}</span>
                           <span className="pl-line"><i />{i < ev.length - 1 && <u />}</span>
                           <span className="pl-what">{it.name}</span>
@@ -87,10 +90,10 @@ export default function Pills({ data, update }) {
               )
           })}
           {pills.some((p) => p.kind !== 'treatment') && <div className="pl-lab">Cada día</div>}
-          {pills.filter((p) => p.kind !== 'treatment').map((p) => {
+          {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind !== 'treatment').map(([p, pi]) => {
             const it = itemsOf(p)[0]
             return (
-              <div key={p.id} className="pl-drow" style={{ '--c': p.color ?? PILL_COLORS[0] }}>
+              <div key={p.id} className="pl-drow" style={{ '--c': colorOf(p, pi) }}>
                 <b className={it.times.every((t) => isDone(p, it, t)) ? 'is-done' : ''}>{p.name}</b>
                 <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
                 <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
@@ -105,7 +108,7 @@ export default function Pills({ data, update }) {
           {rows.map(({ p, it, t }, i) => {
             const done = isDone(p, it, t)
             return (
-              <button key={`${p.id}${it.id}${t}`} className={`pl-row ${done ? 'is-done' : ''}`} style={{ '--c': it.color ?? PILL_COLORS[0] }} onClick={() => toggle(p, it, t)} aria-pressed={done}>
+              <button key={`${p.id}${it.id}${t}`} className={`pl-row ${done ? 'is-done' : ''}`} style={{ '--c': colorOf(p, pills.indexOf(p)) }} onClick={() => toggle(p, it, t)} aria-pressed={done}>
                 <span className="pl-time">{t}</span>
                 <span className="pl-line"><i />{i < rows.length - 1 && <u />}</span>
                 <span className="pl-what">{it.name}</span>
@@ -143,7 +146,7 @@ function PillForm({ baseIndex, onSave }) {
   const ok = f.name.trim() && (!isT || (f.days > 0 && f.items.every((it) => it.name.trim())))
   const save = () => {
     if (!ok) return
-    if (isT) onSave({ kind: 'treatment', name: f.name.trim(), color: f.items[0].color, days: f.days, items: f.items.map((it) => ({ id: it.id, name: it.name.trim(), color: it.color, times: timesPer(it.first, it.per) })) })
+    if (isT) onSave({ kind: 'treatment', name: f.name.trim(), color: f.color, days: f.days, items: f.items.map((it) => ({ id: it.id, name: it.name.trim(), color: f.color, times: timesPer(it.first, it.per) })) })
     else onSave({ kind: f.kind, name: f.name.trim(), color: f.color, times })
   }
 
@@ -157,7 +160,7 @@ function PillForm({ baseIndex, onSave }) {
           <div className="pl-items">
             <span className="pl-items-t">Pastillas</span>
             {f.items.map((it, i) => (
-              <div key={it.id} className="pl-item" style={{ '--c': it.color }}>
+              <div key={it.id} className="pl-item" style={{ '--c': f.color }}>
                 <div className="pl-item-top">
                   <input className="pl-in" placeholder="Pastilla y dosis (Amoxicilina 500 mg)" value={it.name} onChange={(e) => setItem(it.id, { name: e.target.value })} maxLength={40} aria-label={`Pastilla ${i + 1}`} />
                   {f.items.length > 1 && <button type="button" className="pl-item-x" onClick={() => setF((x) => ({ ...x, items: x.items.filter((y) => y.id !== it.id) }))} aria-label="Quitar esta pastilla" title="Quitar"><Icon name="close" size={13} /></button>}
@@ -176,7 +179,7 @@ function PillForm({ baseIndex, onSave }) {
         </>
       )}
       <div className="pl-calc"><b>{perDay} {perDay === 1 ? 'toma' : 'tomas'} al día</b>{isT ? <> · acabas el {formatShort(addDays(todayISO(), f.days - 1))}</> : <> · {times.join(' · ')}</>}</div>
-      {!isT && <div className="pl-colors" role="group" aria-label="Color">{PILL_COLORS.map((c) => <button key={c} type="button" className={f.color === c ? 'on' : ''} style={{ background: c }} onClick={() => set('color', c)} aria-label={`Color ${c}`} aria-pressed={f.color === c} />)}</div>}
+      <div className="pl-colors" role="group" aria-label="Color">{PILL_COLORS.map((c) => <button key={c} type="button" className={f.color === c ? 'on' : ''} style={{ background: c }} onClick={() => set('color', c)} aria-label={`Color ${c}`} aria-pressed={f.color === c} />)}</div>
       <button type="button" className="sa-btn" disabled={!ok} onClick={save}>{isT ? 'Empezar tratamiento' : 'Añadir'}</button>
     </div>
   )

@@ -2959,3 +2959,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-ring, .pl-bar i { opacity: 1; } .pl-bar i { background: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
 .pl-count b, .pl-big, .pl-tcount b { color: color-mix(in srgb, var(--c) 80%, #000); }
 .sa-legend i.is-met { background: color-mix(in srgb, #1FA463 72%, #FFFFFF); }
+/* Pastillero: cada tratamiento o medicamento lleva UN color (el de los deportes y las asignaturas) en toda su tarjeta */
+.pl-tcard { background: color-mix(in srgb, var(--c) 14%, #FFFFFF); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 35%, #FFFFFF); }
+.pl-tcard .pl-what { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); }
+.pl-tcard .pl-time { color: color-mix(in srgb, var(--c) 78%, #000); }
+.pl-tcard .pl-line i { border-color: var(--c); } .pl-tcard .pl-line u { background: var(--c); }
+.pl-tcount { background: color-mix(in srgb, var(--c) 30%, #FFFFFF); }
+.pl-drow { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); }
+.pl-chip { border-color: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-item { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 55%, #FFFFFF); }
