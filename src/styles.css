@@ -2783,3 +2783,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .ws-resize:hover::after, .ws-resize:active::after { background: #3185FC; }
 .ws-full-btn.on { background: #202124; } .ws-full-btn.on svg { stroke: #fff; }
 @media (max-width: 899px) { .ws-resize { display: none; } }
+/* Vista previa en páginas A4 seguidas */
+.xp-pages { display: flex; flex-direction: column; gap: 18px; }
+.xp-page { position: relative; width: 794px; height: 1123px; flex: none; background: #fff; border-radius: 4px; box-shadow: 0 8px 28px rgba(60, 64, 67, .3); padding: 76px; }
+.xp-win { position: relative; width: 643px; overflow: hidden; }
+.xp-strip { width: 643px; position: relative; }
+.xp-pn { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font-size: 11px; color: #9AA0A6; }
+.xp-sheet { display: none; }
+.xp-tools { right: 6px; top: 2px; }

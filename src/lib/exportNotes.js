@@ -109,3 +109,42 @@ export async function printSheet(html, st, title) {
   frame.contentWindow.print()
   setTimeout(() => frame.remove(), 60000)
 }
+
+// Alto útil de una página A4 con márgenes de 20 mm (a 96 dpi) y alto de línea del texto (13 px × 1,65)
+export const PAGE = { w: 794, h: 1123, m: 76, content: 971 }
+const LH = 21.45
+const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
+
+/**
+ * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
+ * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final.
+ * `items` = [{ top, bottom, type, force }] en orden. Devuelve [[desde, hasta], …] en px de la tira.
+ */
+export function paginate(items, total, H = PAGE.content) {
+  const pages = []
+  let start = 0
+  for (let guard = 0; guard < 300; guard++) {
+    let end = start + H
+    if (end >= total - 0.5) { pages.push([start, Math.max(total, start + 1)]); break }
+    const force = items.find((it) => it.force && it.top > start + 1 && it.top < end)
+    if (force) end = force.top
+    else {
+      const cross = items.find((it) => it.top < end - 0.5 && it.bottom > end + 0.5)
+      if (cross) {
+        if (SPLITTABLE.includes(cross.type)) {
+          const cut = cross.top + Math.floor((end - cross.top) / LH) * LH
+          end = cut - cross.top >= 2 * LH && cut > start ? cut : (cross.top > start ? cross.top : cut > start ? cut : end)
+        } else if (cross.top > start) end = cross.top
+      }
+      const last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop()
+      if (last && /^h[123]$/.test(last.type) && last.top > start && end - last.bottom < 30) end = last.top
+    }
+    if (end <= start + 1) end = start + H
+    pages.push([start, end])
+    const inside = items.find((it) => it.top < end - 0.5 && it.bottom > end + 0.5)
+    const next = items.find((it) => it.top >= end - 0.5)
+    start = inside ? end : next ? next.top : total
+    if (start >= total - 0.5) break
+  }
+  return pages.length ? pages : [[0, Math.max(total, 1)]]
+}
