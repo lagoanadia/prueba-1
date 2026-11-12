@@ -2838,3 +2838,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .lk-pen { opacity: 0; width: 32px; height: 32px; } .lk:hover .lk-pen, .lk-pen:focus-visible { opacity: 1; }
 .lk-edit { border: 1.5px dashed #C6CACE; border-radius: 14px; padding: 6px 10px; background: #fff; flex-wrap: wrap; }
 .lk-edit input { flex: 1 1 160px; min-width: 0; border: none; background: none; font: inherit; font-size: 15px; padding: 6px 4px; outline: none; }
+/* Todos los títulos de widgets, en todas las áreas, con el tamaño de los de Estudios */
+.widget > .w-title, .w-T > .w-title, .w-M > .w-title, .w-L > .w-title { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.w-S > .w-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.fd-title { font-size: 24px; font-weight: 600; } .fd-title b { font-weight: 600; }
+.widget > .w-title .dot, .fd-title .dot-food { width: 9px; height: 9px; }
