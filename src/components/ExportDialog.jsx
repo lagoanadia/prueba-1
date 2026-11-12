@@ -53,6 +53,24 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
     return () => ro.disconnect()
   }, [blocks, breaks, imgs, st]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Moverse entre hojas: la actual según el scroll y atajos para saltar a cualquiera
+  const [cur, setCur] = useState(0)
+  const pageEls = () => [...(wrap.current?.querySelectorAll('.xp-page') ?? [])]
+  const onScroll = () => {
+    const w = wrap.current
+    if (!w) return
+    const mid = w.getBoundingClientRect().top + w.clientHeight / 3
+    let best = 0
+    pageEls().forEach((el, i) => { if (el.getBoundingClientRect().top <= mid) best = i })
+    setCur(best)
+  }
+  const goPage = (i) => {
+    const el = pageEls()[Math.max(0, Math.min(i, pages.length - 1))]
+    const w = wrap.current
+    if (!el || !w) return
+    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    w.scrollTo({ top: w.scrollTop + el.getBoundingClientRect().top - w.getBoundingClientRect().top - 12, behavior: smooth ? 'smooth' : 'auto' })
+  }
   const set = (p) => setSt((s) => ({ ...s, ...p }))
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; setBlocks(n) }
   const toggleBreak = (id) => setBreaks((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
@@ -75,7 +93,18 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
           <button className="icon-btn" onClick={onClose} aria-label="Cerrar" title="Cerrar"><Icon name="close" size={20} /></button>
         </div>
         <div className="xp-body">
-          <div className="xp-sheetwrap" ref={wrap}>
+          <div className="xp-left">
+            <nav className="xp-nav" aria-label="Hojas">
+              <button className="icon-btn" onClick={() => goPage(cur - 1)} disabled={cur === 0} aria-label="Hoja anterior" title="Hoja anterior"><Icon name="left" size={16} /></button>
+              <b>Hoja {Math.min(cur, pages.length - 1) + 1} de {pages.length}</b>
+              <button className="icon-btn" onClick={() => goPage(cur + 1)} disabled={cur >= pages.length - 1} aria-label="Hoja siguiente" title="Hoja siguiente"><Icon name="right" size={16} /></button>
+              {pages.length > 1 && (
+                <span className="xp-jump" role="group" aria-label="Ir a la hoja">
+                  {pages.map((_, i) => <button key={i} className={i === Math.min(cur, pages.length - 1) ? 'on' : ''} onClick={() => goPage(i)} aria-label={`Ir a la hoja ${i + 1}`} aria-current={i === cur ? 'page' : undefined}>{i + 1}</button>)}
+                </span>
+              )}
+            </nav>
+          <div className="xp-sheetwrap" ref={wrap} onScroll={onScroll}>
             <style>{sheetCss(st)}</style>
             <div style={{ width: PAGE.w * scale, height: (pages.length * (PAGE.h + 18)) * scale, margin: '0 auto' }}>
               <div className="xp-pages" style={{ width: PAGE.w, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
@@ -102,6 +131,7 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
                 ))}
               </div>
             </div>
+          </div>
           </div>
           <div className="xp-style">
             <div className="xp-grp"><span className="w-hint">Letra</span>

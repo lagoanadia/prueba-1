@@ -2791,3 +2791,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .xp-pn { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font-size: 11px; color: #9AA0A6; }
 .xp-sheet { display: none; }
 .xp-tools { right: 6px; top: 2px; }
+/* Navegación entre hojas de la vista previa */
+.xp-left { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.xp-left .xp-sheetwrap { flex: 1; min-height: 0; }
+.xp-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+.xp-nav .icon-btn { width: 32px; height: 32px; flex: none; } .xp-nav .icon-btn:disabled { opacity: .35; }
+.xp-nav b { flex: none; font-weight: 600; }
+.xp-jump { display: flex; gap: 4px; margin-left: 6px; overflow-x: auto; padding: 2px; scrollbar-width: thin; min-width: 0; }
+.xp-jump button { flex: none; min-width: 28px; height: 28px; border: 0; border-radius: 14px; background: #F1F3F4; font: 600 12px Poppins, sans-serif; cursor: pointer; color: var(--text); padding: 0 8px; } .xp-jump button.on { background: var(--blue); color: #fff; }
