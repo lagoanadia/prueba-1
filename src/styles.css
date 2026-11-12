@@ -2876,3 +2876,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 /* Nombre del deporte: nunca cortado; la letra se ajusta sola al ancho */
 .sa-sess > b.sa-name { font-size: 15px; overflow: visible; text-overflow: clip; white-space: nowrap; padding-right: 0; }
 .sa-sess > b.sa-name { overflow-wrap: normal; word-break: normal; hyphens: none; }
+/* Sesión hecha: se ilumina con el color de su etiqueta; y se puede llevar libremente */
+.sa-sess { cursor: grab; touch-action: none; user-select: none; }
+.sa-sess.is-done { background: color-mix(in srgb, var(--c) 100%, #000 12%); filter: saturate(1.7); box-shadow: 0 0 0 2px var(--c), 0 0 16px var(--c); }
+.sa-sess.is-live { cursor: grabbing; }
