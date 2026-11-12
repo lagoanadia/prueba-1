@@ -2968,3 +2968,14 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-drow { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); }
 .pl-chip { border-color: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
 .pl-item { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 55%, #FFFFFF); }
+/* Pastillero · propuesta B: tarjeta neutra; el color solo en puntos, horas, rayita de cada pastilla y cuenta atrás */
+.pl-tcard { background: #F8F9FA; box-shadow: none; }
+.pl-tcard .pl-what { background: #FFFFFF; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 13px 13px 6px; }
+.pl-what { background: #F8F9FA; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 13px 13px 6px; }
+.pl-tcard .pl-time, .pl-time { color: var(--c); }
+.pl-tcard .pl-line i { border-color: var(--c); } .pl-tcard .pl-line u, .pl-line u { background: #DADCE0; }
+.pl-drow { background: #F8F9FA; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 14px 14px 6px; }
+.pl-chip { background: #FFFFFF; border-color: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-tcount { background: color-mix(in srgb, var(--tc, var(--c)) 30%, #FFFFFF); } 
+.pl-tcount b { color: color-mix(in srgb, var(--tc, var(--c)) 80%, #000); }
+.pl-tcard > .pl-bar { background: color-mix(in srgb, var(--tc, var(--c)) 22%, #FFFFFF); } .pl-tcard > .pl-bar i { background: color-mix(in srgb, var(--tc, var(--c)) 70%, #FFFFFF); }
