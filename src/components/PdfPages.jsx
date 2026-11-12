@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon.jsx'
+import { classifySelection, toPayload } from '../lib/pdfSelection.js'
+
+// Cómo se puede pegar lo seleccionado: el primero es lo que se detecta solo
+const KINDS = [{ id: 'text', label: 'Texto', icon: 'note' }, { id: 'title', label: 'Título', icon: 'title' }, { id: 'list', label: 'Lista', icon: 'list' }, { id: 'table', label: 'Tabla', icon: 'table' }]
+const KIND_OF = Object.fromEntries(KINDS.map((k) => [k.id, k]))
 
 /**
  * PDF dibujado como páginas limpias dentro de la pantalla (sin la barra del visor del navegador): se ajusta al ancho,
@@ -11,7 +16,7 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
   const [width, setWidth] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [current, setCurrent] = useState(1)
-  const [pick, setPick] = useState(null) // { x, y, text } del texto seleccionado
+  const [pick, setPick] = useState(null) // { x, y, text, info, type } de lo seleccionado
   const [done, setDone] = useState(false)
   const root = useRef(null)
 
@@ -48,7 +53,8 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
       const c = root.current.getBoundingClientRect()
       const z = parseFloat(getComputedStyle(root.current.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
       setDone(false)
-      setPick({ x: Math.max(8, (r.left - c.left) / z), y: Math.max(40, (r.top - c.top) / z - 44), text })
+      const info = classifySelection(el, sel)
+      setPick((cur) => ({ x: Math.max(8, (r.left - c.left) / z), y: Math.max(40, (r.top - c.top) / z - 44), text, info, type: cur && cur.text === text ? cur.type : info?.kind ?? 'text' }))
     }
     document.addEventListener('mouseup', check)
     document.addEventListener('keyup', check)
@@ -57,7 +63,7 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
   }, [onPickText])
 
   const send = () => {
-    onPickText(pick.text)
+    onPickText(pick.info ? toPayload(pick.info, pick.type) : pick.text)
     window.getSelection()?.removeAllRanges()
     setDone(true)
     setTimeout(() => setPick(null), 900)
@@ -77,9 +83,14 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
         {pdf && width > 0 && Array.from({ length: pdf.numPages }, (_, i) => <PdfPage key={i} pdf={pdf} n={i + 1} width={Math.max(120, width - 4) * zoom} root={box} onSeen={setCurrent} />)}
       </div>
       {pick && (
-        <button className={`pdfp-pick ${done ? 'is-done' : ''}`} style={{ left: pick.x, top: pick.y }} onMouseDown={(e) => e.preventDefault()} onTouchStart={(e) => e.preventDefault()} onClick={send}>
-          <Icon name={done ? 'check' : 'arrow'} size={14} strokeWidth={2.6} />{done ? 'Pasado' : 'Pasar a apuntes'}
-        </button>
+        <div className={`pdfp-pick ${done ? 'is-done' : ''}`} style={{ left: pick.x, top: pick.y }} onMouseDown={(e) => e.preventDefault()} onTouchStart={(e) => e.preventDefault()}>
+          {!done && (
+            <button type="button" className="pdfp-kind" onClick={() => setPick((p) => ({ ...p, type: KINDS[(KINDS.findIndex((k) => k.id === p.type) + 1) % KINDS.length].id }))} title="Cambiar cómo se pega (título, lista, tabla, texto)" aria-label={`Se pegará como ${KIND_OF[pick.type]?.label}. Pulsa para cambiarlo`}>
+              <Icon name={KIND_OF[pick.type]?.icon ?? 'note'} size={14} strokeWidth={2.4} />{KIND_OF[pick.type]?.label}
+            </button>
+          )}
+          <button type="button" className="pdfp-go" onClick={send}><Icon name={done ? 'check' : 'arrow'} size={14} strokeWidth={2.6} />{done ? 'Pasado' : 'Pasar a apuntes'}</button>
+        </div>
       )}
     </div>
   )

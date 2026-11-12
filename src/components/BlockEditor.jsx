@@ -139,11 +139,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   // Texto que llega de fuera (seleccionado en el PDF): se añade al final como un párrafo
   if (appendRef) {
-    appendRef.current = (text) => {
-      const html = sanitize(String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
+    appendRef.current = (payload) => {
+      const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
+      const p = typeof payload === 'string' ? { type: 'text', text: payload } : payload
+      let made
+      if (p.type === 'table') made = [{ ...newBlock('table'), rows: p.rows }]
+      else if (p.items) made = p.items.map((t) => newBlock(p.type, esc(t)))
+      else made = [newBlock(p.type, esc(p.text))]
       const last = blocks[blocks.length - 1]
-      if (last && last.type === 'text' && !strip(last.html)) commit(blocks.map((b) => (b.id === last.id ? { ...b, html } : b)))
-      else commit([...blocks, newBlock('text', html)])
+      if (last && last.type === 'text' && !strip(last.html)) commit([...blocks.slice(0, -1), ...made]) // el bloque vacío del final se aprovecha
+      else commit([...blocks, ...made])
     }
   }
 

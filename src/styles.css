@@ -2799,3 +2799,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .xp-nav b { flex: none; font-weight: 600; }
 .xp-jump { display: flex; gap: 4px; margin-left: 6px; overflow-x: auto; padding: 2px; scrollbar-width: thin; min-width: 0; }
 .xp-jump button { flex: none; min-width: 28px; height: 28px; border: 0; border-radius: 14px; background: #F1F3F4; font: 600 12px Poppins, sans-serif; cursor: pointer; color: var(--text); padding: 0 8px; } .xp-jump button.on { background: var(--blue); color: #fff; }
+/* Pasar a apuntes: tipo detectado (título, lista, tabla, texto) + botón */
+.pdfp-pick { padding: 0; gap: 0; overflow: hidden; }
+.pdfp-pick button { border: 0; background: none; color: #fff; font: 600 13px Poppins, sans-serif; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; cursor: pointer; }
+.pdfp-pick .pdfp-kind { background: rgba(255, 255, 255, .14); } .pdfp-pick .pdfp-kind:hover { background: rgba(255, 255, 255, .24); }
+.pdfp-pick button svg { stroke: #fff; }
