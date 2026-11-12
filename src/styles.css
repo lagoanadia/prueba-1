@@ -2855,3 +2855,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-dur-t { font-size: 11.5px; color: var(--muted); font-weight: 600; }
 .sa-dur-row { display: flex; align-items: center; gap: 12px; } .sa-dur-row b { min-width: 76px; text-align: center; font-size: 16px; }
 .sa-dur-row button { width: 30px; height: 30px; border: 0; border-radius: 50%; background: #F1F3F4; font: 600 18px Poppins, sans-serif; cursor: pointer; color: var(--text); }
+/* Al tirar del borde de una sesión se ilumina la línea de esa hora y se dice cuál es */
+.sa-sess { cursor: pointer; } .sa-sess > b { padding-right: 18px; } .sa-sess > svg { position: absolute; right: 6px; bottom: 5px; }
+.sa-guide { position: absolute; left: 40px; right: 0; height: 0; border-top: 2px solid #2FA36B; box-shadow: 0 0 10px rgba(47, 163, 107, .55); z-index: 6; pointer-events: none; }
+.sa-guide-t { position: absolute; left: 0; width: 40px; transform: translateY(-50%); text-align: center; font-size: 11px; font-weight: 700; color: #fff; background: #2FA36B; border-radius: 8px; padding: 1px 0; z-index: 7; pointer-events: none; }
+.sa-plan-hours span.is-lit { color: transparent; }
+.sa-sess > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

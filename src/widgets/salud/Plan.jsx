@@ -16,7 +16,7 @@ const snap = (m) => Math.round(m / SNAP) * SNAP
 /**
  * Ejercicio de la semana, como un horario (las horas y días que tú elijas):
  *  - Los deportes son globitos: arrástralos a un día y una hora y la sesión queda puesta ahí (también tocándolos).
- *  - Tira del borde de arriba o de abajo de una sesión para hacerla más corta o más larga; arrástrala para moverla.
+ *  - Tira del borde de arriba o de abajo de una sesión para hacerla más corta o más larga: se ilumina la línea de la hora y sale cuál es.
  *  - Tocarla la marca como hecha (cuenta en Resumen y Constancia) y la × la quita. Nada de ventanas.
  */
 export default function Plan({ data, update }) {
@@ -29,7 +29,8 @@ export default function Plan({ data, update }) {
   const [dropDay, setDropDay] = useState(null) // columna resaltada mientras arrastras un deporte
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
-  const [live, setLive] = useState(null) // { id, day?, start?, min? } mientras tiras de una sesión
+  const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
+  const [guide, setGuide] = useState(null) // minuto del borde que estás moviendo: ilumina su línea
   const shownDays = view.days.slice().sort((a, b) => a - b)
   const total = Math.max(1, view.to - view.from)
   const lo = view.from * 60
@@ -78,7 +79,7 @@ export default function Plan({ data, update }) {
     workouts: (d.workouts ?? []).map((w) => (w.planId === s.id && patch.min ? { ...w, min: patch.min } : w)), // lo ya hecho sigue la misma duración
   }))
 
-  // Tirar de una sesión: arriba/abajo = cambiar su duración · el cuerpo = moverla (un toque sin mover = marcar hecha)
+  // Tirar del borde de arriba o de abajo de una sesión para cambiar su duración
   const pull = (e, s, mode) => {
     e.preventDefault(); e.stopPropagation()
     const grid = e.currentTarget.closest('.sa-plan-grid')
@@ -87,24 +88,17 @@ export default function Plan({ data, update }) {
     const m0 = s.min
     const y0 = e.clientY
     let patch = {}
-    let moved = false
     const move = (ev) => {
       const dm = ((ev.clientY - y0) / scale / H) * 60
-      if (Math.abs(ev.clientY - y0) > 3 || (mode === 'body' && Math.abs(ev.clientX - e.clientX) > 3)) moved = true
       if (mode === 'bottom') patch = { min: Math.min(Math.max(snap(m0 + dm), MIN_SESSION), hi - s0) }
-      else if (mode === 'top') { const ns = Math.min(Math.max(snap(s0 + dm), lo), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns } }
-      else {
-        const ns = Math.min(Math.max(snap(s0 + dm), lo), hi - m0)
-        const col = document.elementsFromPoint(ev.clientX, ev.clientY).find((n) => n.classList?.contains('sa-plan-col'))
-        patch = { start: fromMin(ns), ...(col ? { day: Number(col.dataset.day) } : {}) }
-      }
+      else { const ns = Math.min(Math.max(snap(s0 + dm), lo), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns } }
       setLive({ id: s.id, ...patch })
+      setGuide(mode === 'bottom' ? s0 + patch.min : toMin(patch.start))
     }
     const end = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end)
-      setLive(null)
-      if (moved && Object.keys(patch).length) commit(s, patch)
-      else if (mode === 'body') toggleDone(s, week[s.day])
+      setLive(null); setGuide(null)
+      if (Object.keys(patch).length) commit(s, patch)
     }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
@@ -146,7 +140,13 @@ export default function Plan({ data, update }) {
         <span />{shownDays.map((i) => <b key={i} className={week[i] === today ? 'is-today' : ''}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
       </div>
       <div className="sa-plan-grid" style={{ '--c': shownDays.length, '--h': `${total * H}px` }}>
-        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
+        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} className={guide === (view.from + k) * 60 ? 'is-lit' : ''} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
+        {guide != null && (
+          <>
+            <i className="sa-guide" style={{ top: ((guide - lo) / 60) * H }} />
+            <span className="sa-guide-t" style={{ top: ((guide - lo) / 60) * H }}>{fromMin(guide)}</span>
+          </>
+        )}
         {shownDays.map((i) => {
           const date = week[i]
           return (
@@ -160,12 +160,12 @@ export default function Plan({ data, update }) {
                 const done = Boolean(s.done?.[date])
                 return (
                   <div key={s.id} className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''}`} style={{ top: top + 1, height: height - 2, '--c': colorOf(sports, s.sport) }}
-                    role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
-                    onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
-                    <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} aria-hidden="true" />
-                    <b>{s.sport}</b><span>{s.start}–{fromMin(toMin(s.start) + s.min)}</span>{done && <em>Hecho</em>}
+                    role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: marcar como hecha · tira de los bordes: duración"
+                    onClick={() => toggleDone(s, date)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
+                    <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
+                    <b>{s.sport}</b>{done && <Icon name="check" size={13} strokeWidth={3} />}
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
-                    <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} aria-hidden="true" />
+                    <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
                 )
               })}
