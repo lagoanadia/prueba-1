@@ -2951,3 +2951,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-tile.is-green { background: color-mix(in srgb, #1FA463 16%, #FFFFFF); } .sa-tile.is-blue { background: color-mix(in srgb, #2F6FED 16%, #FFFFFF); }
 .sa-tile.is-yellow { background: color-mix(in srgb, #EAB308 20%, #FFFFFF); } .sa-tile.is-pink { background: color-mix(in srgb, #EC4899 16%, #FFFFFF); }
 .sa-bar.is-met { background: #1FA463; } .sa-legend i.is-met { background: #1FA463; }
+/* Colores apagados en Salud: lo hecho se rellena con el tono suave, no con el color pleno */
+.sa-sess.is-done, .sa-plan-col.is-past .sa-sess.is-done { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.sa-sess.is-done > b { color: var(--text); }
+.pl-slot.is-done, .pl-chip.is-done { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); color: var(--text); border-color: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.pl-row.is-done .pl-line i { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.pl-ring, .pl-bar i { opacity: 1; } .pl-bar i { background: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-count b, .pl-big, .pl-tcount b { color: color-mix(in srgb, var(--c) 80%, #000); }
+.sa-legend i.is-met { background: color-mix(in srgb, #1FA463 72%, #FFFFFF); }

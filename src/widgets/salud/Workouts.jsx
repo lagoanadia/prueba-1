@@ -7,6 +7,9 @@ import { doneEntries, fmtHM } from './healthUtils.js'
  * Entrenamientos: una rueda con el tiempo de cada deporte en la semana o en el mes y, en el centro, el que más has practicado.
  * Todo sale del plan de «Ejercicio de la semana»: cuentan las sesiones marcadas como hechas (a mano o solas al pasar su hora).
  */
+// Colores apagados (los tonos suaves de las asignaturas de Estudios)
+const tone = (c) => `color-mix(in srgb, ${c} 66%, #FFFFFF)`
+
 export default function Workouts({ data }) {
   const today = todayISO()
   const sports = sportsOf(data)
@@ -20,7 +23,7 @@ export default function Workouts({ data }) {
   const ranking = [...by.values()].sort((a, b) => b.min - a.min)
   const total = ranking.reduce((n, r) => n + r.min, 0)
   let acc = 0
-  const stops = ranking.map((r) => { const a = (acc / total) * 360; acc += r.min; return `${colorOf(sports, r.sport)} ${a}deg ${(acc / total) * 360}deg` }).join(', ')
+  const stops = ranking.map((r) => { const a = (acc / total) * 360; acc += r.min; return `${tone(colorOf(sports, r.sport))} ${a}deg ${(acc / total) * 360}deg` }).join(', ')
 
   return (
     <div className="wk-wheel">
@@ -38,7 +41,7 @@ export default function Workouts({ data }) {
         </div>
         {ranking.length > 0 && (
           <ul className="wk-legend">
-            {ranking.map((r, i) => <li key={r.sport} className={i === 0 ? 'is-top' : ''}><i style={{ background: colorOf(sports, r.sport) }} /><span className="w-ellipsis">{r.sport}</span><em>{fmtHM(r.min)}</em><b>{Math.round((r.min / total) * 100)}%</b></li>)}
+            {ranking.map((r, i) => <li key={r.sport} className={i === 0 ? 'is-top' : ''}><i style={{ background: tone(colorOf(sports, r.sport)) }} /><span className="w-ellipsis">{r.sport}</span><em>{fmtHM(r.min)}</em><b>{Math.round((r.min / total) * 100)}%</b></li>)}
           </ul>
         )}
       </div>

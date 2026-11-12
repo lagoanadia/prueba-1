@@ -7,9 +7,9 @@ import { colorOf, sportsOf } from './sports.js'
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const WEEK = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 // Los colores de las asignaturas de Estudios: verde y amarillo de su paleta
-const BOTH = '#1FA463'
-const SPORT = 'color-mix(in srgb, #1FA463 45%, #FFFFFF)'
-const STEPS = '#EAB308'
+const BOTH = 'color-mix(in srgb, #1FA463 72%, #FFFFFF)'
+const SPORT = 'color-mix(in srgb, #1FA463 38%, #FFFFFF)'
+const STEPS = 'color-mix(in srgb, #EAB308 62%, #FFFFFF)'
 
 /**
  * Constancia: el mes con su forma de calendario, en cuadraditos. Un día cuenta si has hecho deporte o has llegado a tu objetivo de pasos:
@@ -39,7 +39,7 @@ export default function Consistency({ data }) {
   const days = Array.from({ length: n }, (_, i) => i + 1)
   const elapsed = days.filter((d) => iso(d) <= today)
   const met = elapsed.filter((d) => state(d) !== 'none').length
-  const colors = { both: BOTH, sport: filter !== 'all' && filter !== 'steps' ? colorOf(sports, filter) : SPORT, steps: STEPS, none: 'var(--soft)' }
+  const colors = { both: BOTH, sport: filter !== 'all' && filter !== 'steps' ? `color-mix(in srgb, ${colorOf(sports, filter)} 66%, #FFFFFF)` : SPORT, steps: STEPS, none: 'var(--soft)' }
 
   return (
     <div className="sa-consist">
@@ -54,7 +54,7 @@ export default function Consistency({ data }) {
         {days.map((d) => {
           const s = state(d)
           const future = iso(d) > today
-          return <span key={d} className={`cs-day ${future ? 'is-future' : ''} ${iso(d) === today ? 'is-today' : ''}`} style={s !== 'none' ? { background: colors[s], color: s === 'both' || (filter !== 'all' && filter !== 'steps') ? '#fff' : '#5F6368' } : undefined} title={`${d} de ${MONTHS[m]}`} aria-label={`${d} de ${MONTHS[m]}`} />
+          return <span key={d} className={`cs-day ${future ? 'is-future' : ''} ${iso(d) === today ? 'is-today' : ''}`} style={s !== 'none' ? { background: colors[s], color: '#3C4043' } : undefined} title={`${d} de ${MONTHS[m]}`} aria-label={`${d} de ${MONTHS[m]}`} />
         })}
       </div>
       <div className="sa-legend">
