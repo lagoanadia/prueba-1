@@ -81,6 +81,27 @@ export default function Pills({ data, update }) {
       )}
       {view === 'cards' && pills.length > 0 && (
         <div className="pl-cards">
+          {pills.some((p) => p.kind !== 'treatment') && (
+            <div className="pl-dailybox">
+              <div className="pl-lab">Cada día</div>
+            <div className="pl-shelf">
+              {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind !== 'treatment').map(([p, pi]) => {
+                const it = itemsOf(p)[0]
+                const all = it.times.every((t) => isDone(p, it, t))
+                return (
+                  <div key={p.id} className="pl-med" style={{ '--c': colorOf(p, pi) }}>
+                    <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
+                    <span className="pl-capwrap"><Capsule done={all} /></span>
+                    <b className={`pl-medname ${all ? 'is-done' : ''}`}>{p.name}</b>
+                    <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
+                  </div>
+                )
+              })}
+            </div>
+            </div>
+          )}
+          {pills.some((p) => p.kind === 'treatment') && (
+            <div className="pl-treats">
           {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind === 'treatment').map(([p, pi]) => {
             const color = colorOf(p, pi)
             const left = daysLeft(p)
@@ -109,21 +130,6 @@ export default function Pills({ data, update }) {
                 </div>
               )
           })}
-          {pills.some((p) => p.kind !== 'treatment') && <div className="pl-lab">Cada día</div>}
-          {pills.some((p) => p.kind !== 'treatment') && (
-            <div className="pl-shelf">
-              {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind !== 'treatment').map(([p, pi]) => {
-                const it = itemsOf(p)[0]
-                const all = it.times.every((t) => isDone(p, it, t))
-                return (
-                  <div key={p.id} className="pl-med" style={{ '--c': colorOf(p, pi) }}>
-                    <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-                    <span className="pl-capwrap"><Capsule done={all} /></span>
-                    <b className={`pl-medname ${all ? 'is-done' : ''}`}>{p.name}</b>
-                    <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
-                  </div>
-                )
-              })}
             </div>
           )}
         </div>

@@ -3024,3 +3024,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-donut { container-type: size; }
 .wk-hole b { font-size: clamp(10px, 10cqw, 22px); white-space: nowrap; overflow-wrap: normal; }
 .wk-hole span { font-size: clamp(8px, 5.4cqw, 12px); }
+/* Pastillero: los medicamentos de cada día a la izquierda y el tratamiento a su derecha (si no cabe, uno bajo otro) */
+.pl-cards { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.pl-dailybox { flex: 0 1 auto; max-width: 252px; display: flex; flex-direction: column; gap: 6px; }
+.pl-dailybox .pl-lab { margin-top: 0; }
+.pl-treats { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* Entrenamientos: la rueda un poco más grande */
+.wk-donut { width: min(68cqh, 38cqw, 250px); height: min(68cqh, 38cqw, 250px); }
+.wk-wheel { min-height: 320px; }
+.wk-donut { width: min(66cqh, 38cqw, 240px); height: min(66cqh, 38cqw, 240px); }
