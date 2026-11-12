@@ -141,11 +141,13 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   if (appendRef) {
     appendRef.current = (payload) => {
       const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
-      const p = typeof payload === 'string' ? { type: 'text', text: payload } : payload
-      let made
-      if (p.type === 'table') made = [{ ...newBlock('table'), rows: p.rows }]
-      else if (p.items) made = p.items.map((t) => newBlock(p.type, esc(t)))
-      else made = [newBlock(p.type, esc(p.text))]
+      const one = (p) => {
+        if (p.type === 'table') return [{ ...newBlock('table'), rows: p.rows }]
+        if (p.items) return p.items.map((t) => newBlock(p.type, esc(t)))
+        return [newBlock(p.type, esc(p.text))]
+      }
+      const list = Array.isArray(payload) ? payload : [typeof payload === 'string' ? { type: 'text', text: payload } : payload]
+      const made = list.flatMap(one) // varios trozos (título + texto…) entran juntos y en su orden
       const last = blocks[blocks.length - 1]
       if (last && last.type === 'text' && !strip(last.html)) commit([...blocks.slice(0, -1), ...made]) // el bloque vacío del final se aprovecha
       else commit([...blocks, ...made])
