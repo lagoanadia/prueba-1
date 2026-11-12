@@ -5,7 +5,7 @@ import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
 import { fmtHM, fromMin, toMin } from './healthUtils.js'
 
-const MIN_H = 36 // alto mínimo de una hora en pantalla: el horario crece para llenar el widget y no baja de esto
+const MIN_H = 16 // el horario se adapta al espacio disponible del widget; solo en casos extremos baja de este alto por hora
 const SNAP = 15 // minutos: las sesiones se ajustan de 15 en 15
 const MIN_SESSION = 15
 const DEFAULT_MIN = 60
