@@ -2987,3 +2987,21 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-med .pl-chips2 { flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .pl-med .pl-del { position: absolute; top: -6px; right: 4px; opacity: 0; } .pl-med:hover .pl-del, .pl-med .pl-del:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .pl-capsule { transition: none; } }
+/* Constancia más grande: los cuadraditos ocupan todo el espacio posible */
+.sa-consist { min-height: 440px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 92px)); gap: 6px; }
+.cs-filters button { font-size: 13px; padding: 6px 15px; }
+/* Pastillero: cada medicamento de cada día es un cuadrado con una cápsula grande; si hay más, se reparten en filas y el widget crece */
+.pl-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; background: none; padding: 0; border-bottom: 0; border-radius: 0; justify-content: stretch; }
+.pl-med { width: auto; aspect-ratio: 1; container-type: inline-size; justify-content: center; gap: 4cqw; padding: 6cqw; background: #F8F9FA; border-radius: 20px; box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--c) 45%, #FFFFFF); }
+.pl-capwrap { height: auto; width: 100%; padding: 8cqw 0 4cqw; }
+.pl-capsule { width: 68cqw; height: auto; }
+.pl-medname { font-size: clamp(11px, 9cqw, 16px); } .pl-med .pl-chip { font-size: clamp(10.5px, 8cqw, 14px); padding: 2px 12px; }
+.pl-med .pl-del { top: 6px; right: 8px; }
+/* Entrenamientos más grande */
+.wk-wheel { min-height: 420px; }
+.wk-donut { width: min(70cqh, 40cqw, 340px); height: min(70cqh, 40cqw, 340px); }
+.wk-hole b { font-size: clamp(14px, 4.2cqw, 28px); } .wk-hole span { font-size: clamp(9px, 2.1cqw, 14px); }
+.wk-legend { width: min(46cqw, 340px); gap: 9px; } .wk-legend li { font-size: clamp(12px, 2.9cqw, 17px); } .wk-legend i { width: 13px; height: 13px; }
+.wk-range button { font-size: 13.5px; padding: 6px 16px; }
+@container (max-width: 330px) { .wk-donut { width: min(50cqh, 66cqw, 300px); height: min(50cqh, 66cqw, 300px); } }
