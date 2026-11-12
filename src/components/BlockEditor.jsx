@@ -32,6 +32,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const [exporting, setExporting] = useState(false)
   const [drag, setDrag] = useState(null) // { id, over, after } al arrastrar un bloque por su asa
   const [rowMenu, setRowMenu] = useState(null) // id del bloque con el menú del asa abierto
+  const [rowUp, setRowUp] = useState(false) // el menú se abre hacia arriba si el asa está en la parte baja
   const refs = useRef({})
   const pageRef = useRef(null)
 
@@ -68,6 +69,19 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const pr = page.getBoundingClientRect()
     if (y < pr.top + 50) page.scrollTop -= 14
     else if (y > pr.bottom - 50) page.scrollTop += 14
+  }
+  // Cambiar el tipo de un bloque conservando su texto (texto, títulos, listas, tareas, cita, destacado, código)
+  const CONVERTIBLE = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout', 'code']
+  const toPlain = (b) => (b.type === 'code' ? b.code ?? '' : (b.html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'))
+  const convert = (id, type) => {
+    commit(blocks.map((b) => {
+      if (b.id !== id || b.type === type) return b
+      const html = b.type === 'code' ? sanitize((b.code ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>')) : b.html ?? ''
+      if (type === 'code') return { ...newBlock('code'), id, code: toPlain(b) }
+      return { id, type, html, ...(type === 'todo' ? { checked: false } : {}) }
+    }))
+    setRowMenu(null)
+    setFocusId(id)
   }
   const duplicate = (id) => { const i = indexOf(id); const b = blocks[i]; const n = [...blocks]; n.splice(i + 1, 0, { ...b, id: crypto.randomUUID() }); commit(n); setRowMenu(null) }
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
@@ -167,7 +181,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
             <span className="row-tools">
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
-                onClick={(e) => { e.stopPropagation(); setRowMenu(rowMenu === b.id ? null : b.id) }}
+                onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowMenu(rowMenu === b.id ? null : b.id) }}
                 onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }) }}
                 onDragEnd={() => setDrag(null)}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">{[3, 7, 11].flatMap((y) => [4.5, 9.5].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" />))}</svg>
@@ -175,7 +189,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               {rowMenu === b.id && (
                 <>
                   <span className="row-backdrop" onClick={(e) => { e.stopPropagation(); setRowMenu(null) }} />
-                  <span className="card row-menu" role="menu">
+                  <span className={`card row-menu ${rowUp ? 'up' : ''}`} role="menu">
+                    {CONVERTIBLE.includes(b.type) && (
+                      <>
+                        <span className="row-menu-t">Tipo de bloque</span>
+                        {BLOCK_TYPES.filter((t) => CONVERTIBLE.includes(t.type)).map((t) => (
+                          <button key={t.type} role="menuitemradio" aria-checked={b.type === t.type} className={b.type === t.type ? 'on' : ''} onClick={() => convert(b.id, t.type)}><Icon name={t.icon} size={16} />{t.label}</button>
+                        ))}
+                        <hr className="row-menu-sep" />
+                      </>
+                    )}
                     {b.type !== 'image' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
                     <button role="menuitem" onClick={() => { setRowMenu(null); remove(b.id) }}><Icon name="trash" size={16} />Eliminar</button>
                   </span>
