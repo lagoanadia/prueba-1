@@ -2894,3 +2894,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 /* Días pasados: solo un poco más oscuros, sin apagar nada */
 .sa-plan-col.is-past { background: #EBECEF; }
 .sa-plan-days b.is-past { color: #9AA0A6; }
+/* Deportes con los colores de las asignaturas: suaves al estar libres, el color pleno al hacerlos */
+.sa-bubble > button:first-child { background: color-mix(in srgb, var(--c) 45%, #fff); }
+.sa-sess { background: color-mix(in srgb, var(--c) 45%, #fff); }
+.sa-sess.is-done, .sa-plan-col.is-past .sa-sess.is-done { background: var(--c); filter: none; box-shadow: none; }
+.sa-sess.is-done > b { color: #fff; }
