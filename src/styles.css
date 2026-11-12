@@ -3033,3 +3033,17 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-donut { width: min(68cqh, 38cqw, 250px); height: min(68cqh, 38cqw, 250px); }
 .wk-wheel { min-height: 320px; }
 .wk-donut { width: min(66cqh, 38cqw, 240px); height: min(66cqh, 38cqw, 240px); }
+/* Pastillero: medicamentos de cada día más grandes y uno debajo de otro; tratamiento más estrecho */
+.pl-dailybox { max-width: 172px; }
+.pl-shelf { grid-template-columns: 160px; justify-content: start; }
+.pl-med { width: 160px; padding: 12px 8px 14px; gap: 8px; }
+.pl-capsule { width: 104px; }
+.pl-medname { font-size: 14px; } .pl-med .pl-chip { font-size: 12.5px; padding: 3px 14px; }
+.pl-treats { flex: 1 1 260px; max-width: 420px; }
+/* Entrenamientos: Semana / Mes a la izquierda de la rueda, y la rueda más grande */
+.wk-wheel { flex-direction: row; justify-content: flex-start; align-items: center; gap: 20px; min-height: 340px; }
+.wk-range { align-self: center; flex-direction: column; border-radius: 18px; padding: 4px; }
+.wk-range button { width: 100%; text-align: center; }
+.wk-wheel-body { flex: 1; min-width: 0; justify-content: center; }
+.wk-donut { width: min(80cqh, 36cqw, 300px); height: min(80cqh, 36cqw, 300px); }
+@container (max-width: 420px) { .wk-wheel { flex-direction: column; } .wk-range { flex-direction: row; } .wk-donut { width: min(54cqh, 60cqw, 240px); height: min(54cqh, 60cqw, 240px); } }
