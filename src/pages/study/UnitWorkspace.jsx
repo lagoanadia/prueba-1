@@ -231,7 +231,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               </button>
             ))}
             {tab !== 'recursos' && layouts()}
-            <button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'shrink' : 'expand'} size={20} /></button>
+            <div className="layouts ws-mode"><button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'shrink' : 'expand'} size={20} /></button></div>
           </div>
 
           {tab === 'estudio' && (

@@ -2781,7 +2781,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .ws-resize { flex: none; width: 10px; margin: 0 -13px; cursor: col-resize; position: relative; z-index: 2; touch-action: none; }
 .ws-resize::after { content: ''; position: absolute; left: 4px; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: transparent; transition: background .15s; }
 .ws-resize:hover::after, .ws-resize:active::after { background: #3185FC; }
-.ws-full-btn.on { background: #DDEBFE; } .ws-full-btn.on svg { stroke: #1D4E9E; }
+.ws-mode { margin-left: auto; } .layouts + .ws-mode { margin-left: 6px; }
+.ws-mode .icon-btn { width: 34px; height: 34px; }
+.file-frame { overflow: hidden; }
 @media (max-width: 899px) { .ws-resize { display: none; } }
 /* Vista previa en páginas A4 seguidas */
 .xp-pages { display: flex; flex-direction: column; gap: 18px; }
