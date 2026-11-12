@@ -1,3 +1,4 @@
+import useExitEdit from '../hooks/useExitEdit.js'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
@@ -50,6 +51,7 @@ export default function AreaScreen({ area, showTitle = true }) {
     updateData((d) => ({ ...d, healthAllOpen: true, healthWidgetsAdded: true }))
   }, [area.id, board?.isNew, Boolean(board)]) // eslint-disable-line react-hooks/exhaustive-deps
   const [editing, setEditing] = useState(false)
+  useExitEdit(editing, () => setEditing(false), '.widget, .customize, .popup, .gallery, .ghost') // pulsar fuera termina la edición
   const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
   const gridRef = useRef(null)

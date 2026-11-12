@@ -3,6 +3,7 @@ import TopActions from '../../components/TopActions.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
 import Icon from '../../components/Icon.jsx'
 import useBlockDrag from '../../hooks/useBlockDrag.js'
+import useExitEdit from '../../hooks/useExitEdit.js'
 import { progressFor, soft, SUBJECT_PALETTE } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
 import QuickNote from './QuickNote.jsx'
@@ -55,13 +56,7 @@ export default function Planner({ data, update, openSubject }) {
 
   const setBlocks = (fn) => update((d) => ({ ...d, planner: { ...(d.planner ?? {}), blocks: fn(d.planner?.blocks ?? DEFAULT_BLOCKS) } }))
   const dnd = useBlockDrag(setBlocks, editing)
-  // Pulsar fuera de los bloques termina la edición
-  useEffect(() => {
-    if (!editing) return undefined
-    const h = (e) => { if (e.target.closest('.plan-block, .add-square, .customize, .popup')) return; setEditing(false); setAdding(false) }
-    document.addEventListener('pointerdown', h)
-    return () => document.removeEventListener('pointerdown', h)
-  }, [editing])
+  useExitEdit(editing, () => { setEditing(false); setAdding(false) }) // pulsar fuera termina la edición
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (blk) => {

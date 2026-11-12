@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import BlockEdit from '../../components/BlockEdit.jsx'
+import useBlockDrag from '../../hooks/useBlockDrag.js'
+import useExitEdit from '../../hooks/useExitEdit.js'
 import Icon from '../../components/Icon.jsx'
 import TopActions from '../../components/TopActions.jsx'
 import { daysUntil, formatShort, lastDays, todayISO } from '../../lib/dates.js'
@@ -34,6 +36,8 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
   useEffect(() => { if (!project?.timerStart) return; const id = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(id) }, [project?.timerStart])
+  const dnd = useBlockDrag((fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) })), editing)
+  useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   if (!project) return null
 
   const change = (fn) => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? fn(p) : p)) }))
@@ -176,7 +180,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.filter((b) => PARTS[b.type]).map((b, i) => (
-          <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls}`} aria-label={PARTS[b.type].label}>
+          <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls} ${dnd.cls(b)}`} aria-label={PARTS[b.type].label} {...dnd.props(b)}>
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b.id)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {PARTS[b.type].render()}
           </section>

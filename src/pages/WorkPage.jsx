@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import TopActions from '../components/TopActions.jsx'
 import BlockEdit from '../components/BlockEdit.jsx'
+import useBlockDrag from '../hooks/useBlockDrag.js'
+import useExitEdit from '../hooks/useExitEdit.js'
 import Icon from '../components/Icon.jsx'
 import Focus from '../widgets/trabajo/Focus.jsx'
 import QuickNote from './study/QuickNote.jsx'
@@ -37,6 +39,8 @@ export default function WorkPage({ data, update }) {
   const [open, setOpen] = useState(null) // proyecto abierto por dentro
 
   const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(d.workBlocks ?? DEFAULT_BLOCKS) }))
+  const dnd = useBlockDrag(setBlocks, editing)
+  useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (blk) => {
@@ -91,7 +95,7 @@ export default function WorkPage({ data, update }) {
 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
-          <section key={b.id} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'}>
+          <section key={b.id} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'} ${dnd.cls(b)}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'} {...dnd.props(b)}>
             {BLOCKS[b.type] && <span className="wk-badge" title={BLOCKS[b.type].label}><Icon name={BLOCKS[b.type].icon} size={18} /></span>}
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {render(b)}
