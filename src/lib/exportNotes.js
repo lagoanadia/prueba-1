@@ -43,6 +43,7 @@ ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, 
 .x-table td + td, .x-table th + th { border-left: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
 .x-table tr + tr td { border-top: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
 .x-img { max-width: 100%; max-height: 420px; border-radius: var(--r); display: block; margin: 0 auto; }
+.x-link { border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); padding: 8px 14px; } .x-link a { color: var(--c); font-weight: 600; text-decoration: none; } .x-link span { display: block; font-size: 11px; color: #5F6368; }
 .x-hr { border: 0; border-top: 2px solid color-mix(in srgb, var(--c) 30%, #fff); margin: 14px 0; }
 .x-sheet b, .x-sheet strong { font-weight: 700; } .x-sheet mark { background: #FFF3B0; }
 .x-sheet ul, .x-sheet ol { margin: 0; padding-left: 20px; }`
@@ -65,6 +66,7 @@ export function blockHtml(b, n, imgs) {
       return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""></div>` : ''
+    case 'link': return b.url ? `<div class="x-b x-link"><a href="${esc(b.url)}">${esc(b.title || b.url)}</a>${b.title ? `<span>${esc(b.url)}</span>` : ''}</div>` : ''
     case 'divider': return '<hr class="x-hr">'
     default: return `<div class="x-b x-text">${rich(b.html)}</div>`
   }
