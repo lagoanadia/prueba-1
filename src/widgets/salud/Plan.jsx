@@ -5,7 +5,7 @@ import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
 import { fmtHM, fromMin, toMin } from './healthUtils.js'
 
-const H = 46 // alto de una hora en pantalla
+const MIN_H = 36 // alto mínimo de una hora en pantalla: el horario crece para llenar el widget y no baja de esto
 const SNAP = 15 // minutos: las sesiones se ajustan de 15 en 15
 const MIN_SESSION = 15
 const DEFAULT_MIN = 60
@@ -53,6 +53,8 @@ export default function Plan({ data, update }) {
   const sessions = data.planSessions ?? []
   const sports = sportsOf(data)
   const [cfg, setCfg] = useState(false)
+  const gridRef = useRef(null)
+  const [H, setH] = useState(46) // alto de una hora: lo reparte el horario para ocupar todo el alto del widget
   const [dropDay, setDropDay] = useState(null) // columna resaltada mientras arrastras un deporte
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
@@ -62,6 +64,15 @@ export default function Plan({ data, update }) {
   const total = Math.max(1, view.to - view.from)
   const lo = view.from * 60
   const hi = view.to * 60
+  useLayoutEffect(() => {
+    const el = gridRef.current
+    if (!el) return undefined
+    const fit = () => setH(Math.max(MIN_H, el.clientHeight / total))
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [total])
 
   const saveView = (patch) => update((d) => ({ ...d, planView: { ...DEFAULT_VIEW, ...(d.planView ?? {}), ...patch } }))
   const addSport = (name) => { const n = name.trim(); if (n) update((d) => ({ ...d, sports: sportsOf(d).includes(n) ? sportsOf(d) : [...sportsOf(d), n] })); setNewSport(null) }
@@ -193,13 +204,15 @@ export default function Plan({ data, update }) {
       <div className="sa-plan-days" style={{ '--c': shownDays.length }}>
         <span />{shownDays.map((i) => <b key={i} className={`${week[i] === today ? 'is-today' : ''} ${week[i] < today ? 'is-past' : ''}`}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
       </div>
-      <div className="sa-plan-grid" style={{ '--c': shownDays.length, '--h': `${total * H}px` }}>
-        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} className={guide && (view.from + k) * 60 >= guide.from && (view.from + k) * 60 <= guide.to ? 'is-lit' : ''} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
+      <div className="sa-plan-grid" ref={gridRef} style={{ '--c': shownDays.length, '--minh': `${total * MIN_H}px` }}>
+        <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
         {guide && (
           <>
-            <div className="sa-band" style={{ top: ((guide.from - lo) / 60) * H, height: ((guide.to - guide.from) / 60) * H, '--c': guide.c }} />
-            <span className="sa-guide-t" style={{ top: ((guide.from - lo) / 60) * H }}>{fromMin(guide.from)}</span>
-            <span className="sa-guide-t" style={{ top: ((guide.to - lo) / 60) * H }}>{fromMin(guide.to)}</span>
+            {[guide.from, guide.to].map((m, k) => (
+              <span key={k} className="sa-thread" style={{ top: ((m - lo) / 60) * H, '--c': guide.c }}>
+                <em>{fromMin(m)}</em>
+              </span>
+            ))}
           </>
         )}
         {shownDays.map((i) => {

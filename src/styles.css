@@ -2899,3 +2899,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-sess { background: color-mix(in srgb, var(--c) 45%, #fff); }
 .sa-sess.is-done, .sa-plan-col.is-past .sa-sess.is-done { background: var(--c); filter: none; box-shadow: none; }
 .sa-sess.is-done > b { color: #fff; }
+/* El horario ocupa todo el alto del widget; las horas se reparten solas */
+.sa-plan { flex: 1; min-height: 0; }
+.sa-plan-grid { flex: 1 1 auto; height: auto; min-height: var(--minh); }
+/* Al estirar una sesión: un hilito al empezar y otro al acabar, con la hora en el color de ese deporte */
+.sa-band, .sa-guide, .sa-guide-t { display: none; }
+.sa-thread { position: absolute; left: 0; right: 0; height: 0; z-index: 6; pointer-events: none; border-top: 2px solid var(--c); }
+.sa-thread em { position: absolute; left: 0; top: 0; transform: translateY(-50%); width: 40px; text-align: center; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; background: var(--c); border-radius: 8px; padding: 1px 0; }
+.sa-plan-hours span.is-lit { color: #9AA0A6; font-weight: 400; }
