@@ -2741,3 +2741,29 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-chips2 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .pl-chip { border: 1.5px solid var(--c); background: #fff; color: var(--text); border-radius: 14px; padding: 3px 12px; font: 600 12px Poppins, sans-serif; cursor: pointer; transition: background .15s, color .15s; } .pl-chip.is-done { background: var(--c); color: #fff; }
 .pl-drow .pl-del { position: static; flex: none; } .pl-drow:hover .pl-del, .pl-drow .pl-del:focus-visible { opacity: 1; }
+
+/* Plan semanal: mover sesiones arrastrando */
+.sa-sess { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sa-sess.is-moving { z-index: 3; cursor: grabbing; box-shadow: 0 8px 20px rgba(0, 0, 0, .18); transform: scale(1.03); pointer-events: none; }
+
+/* Modo edición (todas las áreas): fila con lo que falta y arrastrar bloques */
+.add-square.add-row { grid-column: 1 / -1; min-height: 0; cursor: default; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px 16px; animation: rise .35s var(--ease) both; }
+.add-square.add-row:hover { background: #FFFFFF; }
+.add-row-plus { width: 40px; height: 40px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; flex: none; color: var(--muted); }
+.add-row-list { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px; scrollbar-width: thin; }
+.add-row .add-tile { flex: none; flex-direction: row; padding: 10px 16px; font-size: 14px; gap: 8px; touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: grab; }
+.add-row .add-tile .dot { width: 10px; height: 10px; border-radius: 50%; }
+.add-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: translate(-50%, -50%) rotate(-2deg); background: #FFFFFF; border: 2px solid var(--blue); border-radius: 16px; padding: 10px 16px; font: 600 14px Poppins, sans-serif; box-shadow: 0 10px 30px rgba(0, 0, 0, .18); }
+.plan-grid.is-editing .plan-block { cursor: grab; user-select: none; -webkit-user-select: none; transition: opacity .2s, transform .2s var(--ease); }
+.plan-grid.is-editing .plan-block.is-dragging { opacity: .45; transform: scale(.97); cursor: grabbing; }
+.grid-editing .add-row { align-self: start; }
+@media (prefers-reduced-motion: reduce) { .add-square.add-row, .plan-grid.is-editing .plan-block { animation: none; transition: none; } }
+
+/* Estudios · modo zen: solo el PDF y los apuntes, ocupando toda la pantalla */
+.ws-zen-btn { margin-bottom: 4px; }
+.ws.ws-zen { position: fixed; inset: 0; z-index: 900; background: #F8F9FA; padding: 14px 18px 18px; height: auto; min-height: 0; animation: fade .25s ease both; }
+.ws-zen .ws-body { gap: 0; }
+.ws-zen-bar { display: flex; align-items: center; gap: 10px; padding: 0 4px 4px; }
+.ws-zen-bar > b { flex: 1; min-width: 0; font-size: 15px; color: var(--muted); }
+.ws-zen-bar .layouts { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .ws.ws-zen { animation: none; } }

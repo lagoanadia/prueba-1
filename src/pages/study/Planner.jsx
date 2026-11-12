@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import TopActions from '../../components/TopActions.jsx'
+import AddRow from '../../components/AddRow.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
+import useEditBoard from '../../hooks/useEditBoard.js'
 import Icon from '../../components/Icon.jsx'
 import { progressFor, soft, SUBJECT_PALETTE } from './helpers.js'
 import Deliveries from './Deliveries.jsx'
@@ -15,30 +17,17 @@ const DEFAULT_BLOCKS = [
   { id: 'note-1', type: 'note', span: 1 },
   { id: 'schedule', type: 'schedule', span: 3 },
 ]
-/** Ancho (1-3 columnas) del primer hueco libre del tablero; si no hay hueco, una fila entera. */
-function freeSpan(blocks) {
-  let col = 0
-  for (const b of blocks) {
-    const w = Math.min(b.span, 3)
-    if (col + w > 3) { if (col > 0) return 3 - col; col = 0 }
-    col += w
-    if (col === 3) col = 0
-  }
-  return col > 0 ? 3 - col : 3
-}
-
 const LABELS = { entregas: 'Próximas entregas', examenes: 'Exámenes', tools: 'Herramientas', schedule: 'Horario' }
 const ICONS = { entregas: 'doc', examenes: 'exam', tools: 'link', schedule: 'clock' }
 
 /**
  * Planificador de estudios: asignaturas arriba y debajo bloques que se pueden personalizar
- * (mover, cambiar de tamaño, quitar, añadir notas). El botón del tablero activa el modo edición.
+ * (arrastrar para mover, cambiar de tamaño, quitar, añadir). El botón del tablero activa el modo edición.
  */
 export default function Planner({ data, update, openSubject }) {
   const subjects = data.subjects ?? []
   const blocks = data.planner?.blocks ?? DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
-  const [adding, setAdding] = useState(false) // selector abierto dentro del cuadrado vacío
   const [short, setShort] = useState('')
 
   // Los exámenes ahora son un widget aparte: si ya tenías exámenes guardados, se añade el bloque una sola vez para que sigan a la vista
@@ -59,8 +48,14 @@ export default function Planner({ data, update, openSubject }) {
     setBlocks((b) => b.filter((x) => x.id !== blk.id))
     if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
   }
-  const addBlock = (type) => { setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'schedule' ? 3 : 1 }]); setAdding(false) }
+  // before = id del bloque delante del que se coloca (al arrastrarlo); sin él, al final
+  const addBlock = (type, before = null) => setBlocks((b) => {
+    const blk = { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'schedule' ? 3 : 1 }
+    const at = before ? b.findIndex((x) => x.id === before) : -1
+    return at < 0 ? [...b, blk] : [...b.slice(0, at), blk, ...b.slice(at)]
+  })
   const missing = Object.keys(LABELS).filter((t) => !blocks.some((b) => b.type === t))
+  const edit = useEditBoard({ editing, setEditing, setBlocks, onAdd: addBlock })
 
   const addSubject = (e) => {
     e.preventDefault()
@@ -85,7 +80,7 @@ export default function Planner({ data, update, openSubject }) {
         <h1 className="sr-only">Planificador de estudios</h1>
         <span />
         <TopActions><div className="page-actions">
-          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setAdding(false) }}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
             aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
             <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
           </button>
@@ -111,37 +106,14 @@ export default function Planner({ data, update, openSubject }) {
 
       <div className={`plan-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
-          <section key={b.id} className={`plan-block span-${b.span} ${b.type === 'note' ? 'is-note' : 'card'}`}>
+          <section key={b.id} {...edit.blockProps(b.id)} className={`plan-block span-${b.span} ${b.type === 'note' ? 'is-note' : 'card'} ${edit.dragId === b.id ? 'is-dragging' : ''}`}>
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {render(b)}
           </section>
         ))}
-        {editing && <AddSquare span={freeSpan(blocks)} open={adding} onOpen={setAdding} options={[{ type: 'note', label: 'Nota', icon: 'note' }, ...missing.map((t) => ({ type: t, label: LABELS[t], icon: ICONS[t] }))]} onPick={addBlock} />}
+        {editing && <AddRow options={[{ type: 'note', label: 'Nota', icon: 'note' }, ...missing.map((t) => ({ type: t, label: LABELS[t], icon: ICONS[t] }))]} onPick={(t) => addBlock(t)} tileDown={edit.tileDown} ghost={edit.ghost} />}
       </div>
     </div>
   )
 }
 
-/**
- * Cuadrado vacío con un + que ocupa el hueco libre. Al pulsarlo se abre dentro un selector
- * con lo que puedes añadir (notas siempre; el resto solo si no lo tienes ya).
- */
-function AddSquare({ span, open, onOpen, options, onPick }) {
-  if (!open) {
-    return (
-      <button className={`add-square span-${span}`} onClick={() => onOpen(true)} aria-label="Añadir un bloque" title="Añadir un bloque">
-        <span className="add-square-plus"><Icon name="plus" size={30} /></span>
-      </button>
-    )
-  }
-  return (
-    <div className={`add-square is-open span-${span}`} role="group" aria-label="Elige qué añadir">
-      <button className="icon-btn add-square-close" onClick={() => onOpen(false)} aria-label="Cancelar"><Icon name="close" size={20} /></button>
-      <div className="add-square-grid">
-        {options.map((o) => (
-          <button key={o.type} className="add-tile" onClick={() => onPick(o.type)}><Icon name={o.icon} size={28} /><span>{o.label}</span></button>
-        ))}
-      </div>
-    </div>
-  )
-}

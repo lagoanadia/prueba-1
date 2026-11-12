@@ -33,6 +33,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
   const [layout, setLayout] = useState('split')
+  const [zen, setZen] = useState(false) // modo zen: solo el PDF y los apuntes, a pantalla completa
   const [open, setOpen] = useState(() => new Set([unit.id])) // unidades desplegadas
   const menuRef = useRef(null)
   const notesIn = useRef(null) // función de los apuntes para pegar texto copiado del PDF
@@ -49,6 +50,25 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [addMenu])
+
+  // Modo zen: pantalla completa del navegador (si se puede); Esc o salir de pantalla completa lo cierra
+  const toggleZen = () => {
+    const on = !zen
+    setZen(on)
+    try {
+      if (on) document.documentElement.requestFullscreen?.()?.catch(() => {})
+      else if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {})
+    } catch { /* sin pantalla completa: se queda en la ventana */ }
+  }
+  useEffect(() => {
+    if (!zen) return undefined
+    const onKey = (e) => { if (e.key === 'Escape') { setZen(false); if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {}) } }
+    const onFs = () => { if (!document.fullscreenElement) setZen(false) }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('fullscreenchange', onFs)
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs) }
+  }, [zen])
+  useEffect(() => () => { if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {}) }, [])
 
   const changeU = (fn) => changeUnit(update, subject.id, unit.id, fn)
   const setPractices = (fn) => changeU((u) => ({ ...u, practices: fn(practicesOf(u)) }))
@@ -134,15 +154,15 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   )
 
   return (
-    <div className="ws">
-      <nav className="crumbs" aria-label="Ruta">
+    <div className={`ws ${zen ? 'ws-zen' : ''}`}>
+      {!zen && <nav className="crumbs" aria-label="Ruta">
         <button className="crumb" onClick={back}><i style={{ background: subject.color }} />{subject.short}</button>
         <Icon name="right" size={14} color="#9AA0A6" />
         <span className="crumb is-current" aria-current="page">{unit.name}</span>
-      </nav>
+      </nav>}
 
       <div className="ws-body">
-        {panel && (
+        {panel && !zen && (
           <aside className="card ws-panel" aria-label="Unidades y temas">
             <b className="ws-subject" style={{ borderColor: subject.color }}>{subject.short}</b>
             {subject.units.map((u) => {
@@ -184,6 +204,13 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
         )}
 
         <div className="ws-main">
+          {zen ? (
+            <div className="ws-zen-bar">
+              <b className="w-ellipsis">{tab === 'practicas' ? practice?.name : topic?.name}</b>
+              {layouts()}
+              <button className="icon-btn" onClick={toggleZen} aria-label="Salir del modo zen" title="Salir del modo zen (Esc)"><Icon name="close" /></button>
+            </div>
+          ) : (
           <div className="ws-tabs" role="tablist">
             <button className="icon-btn ws-toggle" onClick={() => setPanel(!panel)} aria-label={panel ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panel} title={panel ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
             {TABS.map(([id, icon, label]) => (
@@ -192,7 +219,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               </button>
             ))}
             {tab !== 'recursos' && layouts()}
+            {tab !== 'recursos' && (tab === 'practicas' ? practice : topic) && <button className="icon-btn ws-zen-btn" onClick={toggleZen} aria-label="Modo zen" title="Modo zen: solo el PDF y los apuntes"><Icon name="expand" /></button>}
           </div>
+          )}
 
           {tab === 'estudio' && (
             topic

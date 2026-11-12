@@ -22,6 +22,10 @@ async function save(env, userId, entries) {
   await env.DATA.put(key(userId), JSON.stringify(entries.slice(-MAX_ENTRIES)))
 }
 
+// Qué puede crear el asistente (ver server/assistantContext.js → placeActions)
+const KINDS = ['task', 'assignment', 'meeting', 'note', 'subject', 'unit', 'topic', 'project', 'habit', 'sport', 'session', 'shopping']
+const str = (v) => (typeof v === 'string' ? v.trim().slice(0, 60) || null : null)
+
 /** Valida y normaliza una acción del asistente. Devuelve null si no vale. */
 export function cleanAction(a) {
   if (!AREA_IDS.includes(a?.area)) return null
@@ -34,9 +38,12 @@ export function cleanAction(a) {
     time: TIME_RE.test(a.time) ? a.time : null,
     done: a.done === true,
     // Para colocarlo en su sitio (ver server/assistantContext.js)
-    kind: ['task', 'assignment', 'meeting', 'note'].includes(a.kind) ? a.kind : 'note',
-    project: typeof a.project === 'string' ? a.project.trim().slice(0, 60) || null : null,
-    course: typeof a.course === 'string' ? a.course.trim().slice(0, 60) || null : null,
+    kind: KINDS.includes(a.kind) ? a.kind : 'note',
+    project: str(a.project),
+    course: str(a.course),
+    unit: str(a.unit), // unidad de una asignatura (para «topic»)
+    type: ['practica', 'examen', 'trabajo'].includes(a.type) ? a.type : null, // tipo de entrega
+    minutes: Number.isFinite(a.minutes) && a.minutes >= 5 && a.minutes <= 600 ? Math.round(a.minutes) : null,
   }
 }
 

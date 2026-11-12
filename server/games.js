@@ -118,6 +118,26 @@ async function makeCrossword(env, lang) {
   throw new Error('No he podido crear el crucigrama de hoy')
 }
 
+/**
+ * La lista de la IA nunca tiene todas las palabras: si escribes una que no está, se comprueba aquí
+ * (letras del panal + la del centro) y se pregunta a la IA si existe. La respuesta se guarda por palabra.
+ */
+export async function checkBeeWord(env, lang, date, raw) {
+  const word = strip(raw)
+  const bee = await dailyGame(env, 'bee', lang, date)
+  const set = new Set([bee.center, ...bee.letters])
+  if (word.length < 4 || !word.includes(bee.center) || ![...word].every((c) => set.has(c))) return { word, valid: false }
+  if (bee.words.includes(word)) return { word, valid: true }
+  const key = `beeword:${lang}:${word}`
+  const cached = await env.DATA.get(key)
+  if (cached) return { word, valid: cached === '1' }
+  const sys = `You validate words for a ${LANG[lang]} word game. Accents are removed, so "${word}" may stand for an accented spelling (e.g. CAMION = CAMIÓN). Is it a real ${LANG[lang]} word found in a standard dictionary (any common form: singular, plural, feminine, verb forms)? Proper nouns, abbreviations and words from other languages do not count. Answer only JSON: {"valid": true|false}`
+  const out = parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: word }], env, { json: true, temperature: 0 }))
+  const valid = out?.valid === true
+  await env.DATA.put(key, valid ? '1' : '0', { expirationTtl: 60 * 60 * 24 * 180 })
+  return { word, valid }
+}
+
 const MAKERS = { bee: makeBee, crossword: makeCrossword }
 /** El juego del día (creado la primera vez que alguien lo pide ese día, y guardado). */
 export async function dailyGame(env, game, lang, date) {

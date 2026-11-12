@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchDaily, sendScore, shuffle, today } from './common.js'
+import { checkBeeWord, fetchDaily, sendScore, shuffle, today } from './common.js'
 
 const pointsOf = (w, pangrams) => (w.length === 4 ? 1 : w.length) + (pangrams.includes(w) ? 7 : 0)
 const RANKS = [[0, 'Empezando'], [0.08, 'Bien'], [0.2, 'Muy bien'], [0.4, 'Genial'], [0.7, 'Experta'], [1, 'Reina del panal']]
@@ -22,17 +22,22 @@ export default function Bee({ data, update }) {
   const score = found.reduce((a, w) => a + pointsOf(w, puzzle.pangrams), 0)
   const rank = [...RANKS].reverse().find(([p]) => score >= p * total)[1]
   const flash = (t) => { setMsg(t); setTimeout(() => setMsg(''), 1400) }
+  const accept = (w) => {
+    const next = [...found, w]
+    update((d) => ({ ...d, games: { ...(d.games ?? {}), bee: { date, found: [...new Set([...(d.games?.bee?.date === date ? d.games.bee.found : []), w])] } } }))
+    flash(puzzle.pangrams.includes(w) ? '¡Pangrama!' : `+${pointsOf(w, puzzle.pangrams)}`)
+    sendScore('bee', next.reduce((a, x) => a + pointsOf(x, puzzle.pangrams), 0))
+  }
   const submit = () => {
     const w = word.toUpperCase()
     setWord('')
     if (w.length < 4) return flash('Muy corta')
     if (!w.includes(puzzle.center)) return flash('Falta la letra del centro')
     if (found.includes(w)) return flash('Ya la tienes')
-    if (!puzzle.words.includes(w)) return flash('No está en la lista')
-    const next = [...found, w]
-    update((d) => ({ ...d, games: { ...(d.games ?? {}), bee: { date, found: next } } }))
-    flash(puzzle.pangrams.includes(w) ? '¡Pangrama!' : `+${pointsOf(w, puzzle.pangrams)}`)
-    sendScore('bee', next.reduce((a, x) => a + pointsOf(x, puzzle.pangrams), 0))
+    if (puzzle.words.includes(w)) return accept(w)
+    // La lista del día no tiene todas las palabras: si no está, se comprueba en el diccionario
+    setMsg('Comprobando…')
+    checkBeeWord(w).then((r) => (r.valid ? accept(w) : flash('No es una palabra válida'))).catch(() => flash('No se ha podido comprobar'))
   }
   const onKey = (e) => {
     if (e.key === 'Enter') return submit()

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
@@ -8,10 +8,13 @@ import { fmtHM, fromMin, toMin } from './healthUtils.js'
 const H = 46 // alto de una hora en pantalla
 const DEFAULT_VIEW = { from: 8, to: 23, days: [0, 1, 2, 3, 4, 5, 6] }
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const SNAP = 15 // al soltar, la sesión se coloca en cuartos de hora
+const zoomOf = (el) => parseFloat(getComputedStyle(el.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
 
 /**
  * Plan semanal como un horario: las horas que tú elijas (de 8:00 a 23:00 por defecto) en vertical y los días en columnas.
  * Añades sesiones (deporte, día, hora y minutos); tocar un hueco vacío crea una ahí; tocar una sesión la edita o la marca como hecha.
+ * Las sesiones se arrastran a otro día u hora, y un deporte soltado en el plan crea la sesión ahí mismo.
  */
 export default function Plan({ data, update }) {
   const today = todayISO()
@@ -46,16 +49,68 @@ export default function Plan({ data, update }) {
   }
   const addSport = (name) => { const n = name.trim(); if (n) update((d) => ({ ...d, sports: sportsOf(d).includes(n) ? sportsOf(d) : [...sportsOf(d), n] })); setNewSport(null) }
   const removeSport = (name) => update((d) => ({ ...d, sports: sportsOf(d).filter((x) => x !== name) }))
-  // Soltar un globito en una columna: abre la sesión en ese día y a esa hora (a medias horas)
+  // Minuto del día bajo el puntero en una columna (ajustado a cuartos de hora y dentro de las horas que se ven)
+  const minuteAt = (col, clientY, minus = 0, len = 30) => {
+    const r = col.getBoundingClientRect()
+    const m = Math.round((view.from * 60 + (((clientY - r.top) / zoomOf(col)) / H) * 60 - minus) / SNAP) * SNAP
+    return Math.min(Math.max(m, view.from * 60), view.to * 60 - Math.min(len, 60))
+  }
+  // Soltar un globito en una columna: la sesión se crea ahí mismo (1 hora); tocándola luego se edita
   const onDropSport = (e, day) => {
     e.preventDefault(); setDropDay(null)
     const sport = e.dataTransfer.getData('text/plain')
     if (!sport) return
-    const r = e.currentTarget.getBoundingClientRect()
-    const z = parseFloat(getComputedStyle(e.currentTarget.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
-    const m = Math.floor((view.from * 60 + (((e.clientY - r.top) / z) / H) * 60) / 30) * 30
-    open(null, day, fromMin(Math.min(Math.max(m, view.from * 60), view.to * 60 - 30)), sport)
+    const start = fromMin(minuteAt(e.currentTarget, e.clientY, 0, 60))
+    update((d) => ({ ...d, planSessions: [...(d.planSessions ?? []), { id: crypto.randomUUID(), done: {}, sport, day, start, min: 60 }] }))
   }
+
+  // Mover una sesión arrastrándola: con ratón al moverla; en el móvil, manteniéndola pulsada un momento
+  const [moving, setMoving] = useState(null) // { id, day, start } mientras la arrastras
+  const dragged = useRef(false) // evita que al soltar se abra la edición
+  const onSessDown = (e, s) => {
+    if (e.button > 0) return
+    const btn = e.currentTarget
+    const sx = e.clientX
+    const sy = e.clientY
+    const grab = (((sy - btn.getBoundingClientRect().top) / zoomOf(btn)) / H) * 60 // minutos entre el inicio y donde la has cogido
+    const touch = e.pointerType === 'touch'
+    let active = false
+    let last = { day: s.day, start: s.start }
+    const blockScroll = (ev) => { if (active) ev.preventDefault() }
+    const activate = () => { active = true; dragged.current = true; navigator.vibrate?.(8); setMoving({ id: s.id, ...last }) }
+    const timer = touch ? setTimeout(activate, 300) : 0
+    const onMove = (ev) => {
+      if (!active) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return
+        if (touch) { cleanup(); return } // se ha movido antes de tiempo: es un scroll
+        activate()
+      }
+      const col = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.sa-plan-col[data-day]')
+      if (!col) return
+      last = { day: Number(col.dataset.day), start: fromMin(minuteAt(col, ev.clientY, grab, s.min)) }
+      setMoving((m) => (m && m.day === last.day && m.start === last.start ? m : { id: s.id, ...last }))
+    }
+    const onUp = () => {
+      if (active && (last.day !== s.day || last.start !== s.start)) {
+        update((d) => ({ ...d, planSessions: (d.planSessions ?? []).map((x) => (x.id === s.id ? { ...x, ...last } : x)) }))
+      }
+      cleanup()
+    }
+    const cleanup = () => {
+      clearTimeout(timer)
+      setMoving(null)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', cleanup)
+      window.removeEventListener('touchmove', blockScroll)
+      setTimeout(() => { dragged.current = false }, 0)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', cleanup)
+    window.addEventListener('touchmove', blockScroll, { passive: false })
+  }
+  const placed = moving ? sessions.map((x) => (x.id === moving.id ? { ...x, day: moving.day, start: moving.start } : x)) : sessions
   const remove = (id) => { update((d) => ({ ...d, planSessions: (d.planSessions ?? []).filter((s) => s.id !== id), workouts: (d.workouts ?? []).filter((w) => w.planId !== id) })); setForm(null) }
   // Marcar hecha: guarda también el entrenamiento de ese día (así cuenta en Resumen y Constancia)
   const toggleDone = (s, date) => update((d) => {
@@ -101,16 +156,17 @@ export default function Plan({ data, update }) {
         {shownDays.map((i) => {
           const date = week[i]
           return (
-            <div key={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${dropDay === i ? 'is-drop' : ''}`} onClick={(e) => colClick(e, i)} role="presentation"
+            <div key={i} data-day={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${dropDay === i || moving?.day === i ? 'is-drop' : ''}`} onClick={(e) => colClick(e, i)} role="presentation"
               onDragOver={(e) => { e.preventDefault(); if (dropDay !== i) setDropDay(i) }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropDay(null) }} onDrop={(e) => onDropSport(e, i)}>
               {Array.from({ length: total }, (_, k) => <i key={k} style={{ top: k * H }} />)}
-              {sessions.filter((s) => s.day === i).map((s) => {
+              {placed.filter((s) => s.day === i).map((s) => {
                 const top = ((toMin(s.start) - view.from * 60) / 60) * H
                 const height = (s.min / 60) * H
                 if (top + height <= 0 || top >= total * H) return null
                 const done = Boolean(s.done?.[date])
                 return (
-                  <button key={s.id} className={`sa-sess ${done ? 'is-done' : ''}`} style={{ top: top + 2, height: height - 4, '--c': colorOf(sports, s.sport) }} onClick={() => open(s)} title="Toca para editar">
+                  <button key={s.id} className={`sa-sess ${done ? 'is-done' : ''} ${moving?.id === s.id ? 'is-moving' : ''}`} style={{ top: top + 2, height: height - 4, '--c': colorOf(sports, s.sport) }}
+                    onPointerDown={(e) => onSessDown(e, s)} onContextMenu={(e) => e.preventDefault()} onClick={() => { if (!dragged.current) open(sessions.find((x) => x.id === s.id)) }} title="Toca para editar · arrástrala para moverla">
                     <b>{s.sport}</b><span>{s.start}–{fromMin(toMin(s.start) + s.min)} · {s.min} min</span>{done && <em>Hecho</em>}
                   </button>
                 )
