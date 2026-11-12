@@ -52,7 +52,7 @@ export default function Consistency({ data }) {
         {days.map((d) => {
           const s = state(d)
           const future = iso(d) > today
-          return <span key={d} className={`cs-day ${future ? 'is-future' : ''} ${iso(d) === today ? 'is-today' : ''}`} style={s !== 'none' ? { background: colors[s], color: s === 'both' || (filter !== 'all' && filter !== 'steps') ? '#fff' : '#5F6368' } : undefined} title={`${d} de ${MONTHS[m]}`}>{d}</span>
+          return <span key={d} className={`cs-day ${future ? 'is-future' : ''} ${iso(d) === today ? 'is-today' : ''}`} style={s !== 'none' ? { background: colors[s], color: s === 'both' || (filter !== 'all' && filter !== 'steps') ? '#fff' : '#5F6368' } : undefined} title={`${d} de ${MONTHS[m]}`} aria-label={`${d} de ${MONTHS[m]}`} />
         })}
       </div>
       <div className="sa-legend">
