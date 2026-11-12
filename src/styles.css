@@ -2979,3 +2979,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-tcount { background: color-mix(in srgb, var(--tc, var(--c)) 30%, #FFFFFF); } 
 .pl-tcount b { color: color-mix(in srgb, var(--tc, var(--c)) 80%, #000); }
 .pl-tcard > .pl-bar { background: color-mix(in srgb, var(--tc, var(--c)) 22%, #FFFFFF); } .pl-tcard > .pl-bar i { background: color-mix(in srgb, var(--tc, var(--c)) 70%, #FFFFFF); }
+/* Medicamentos de cada día: estantería de cápsulas (como las botellas de los mensajes) */
+.pl-shelf { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 6px 4px; background: #F8F9FA; border-radius: 18px; padding: 16px 8px 12px; border-bottom: 5px solid #E3E5E8; }
+.pl-med { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: clamp(96px, 30%, 130px); }
+.pl-capwrap { height: 44px; display: grid; place-items: center; } .pl-capsule { transform: rotate(-26deg); overflow: visible; transition: transform .25s var(--ease); } .pl-med:hover .pl-capsule { transform: rotate(-14deg) scale(1.06); }
+.pl-medname { font-size: 12.5px; text-align: center; line-height: 1.2; overflow-wrap: anywhere; } .pl-medname.is-done { opacity: .55; }
+.pl-med .pl-chips2 { flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.pl-med .pl-del { position: absolute; top: -6px; right: 4px; opacity: 0; } .pl-med:hover .pl-del, .pl-med .pl-del:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .pl-capsule { transition: none; } }

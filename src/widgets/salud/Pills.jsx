@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { fromMin, toMin } from './healthUtils.js'
@@ -22,6 +22,24 @@ const keyOf = (it, t) => (it.legacy ? t : `${it.id}@${t}`)
 const endOf = (p) => addDays(p.start ?? todayISO(), Math.max(0, (p.days ?? 1) - 1))
 /** Días que le quedan a un tratamiento (contando hoy); null si es diario o suplemento. */
 const daysLeft = (p) => (p.kind === 'treatment' && p.days ? Math.max(0, daysUntil(endOf(p)) + 1) : null)
+
+/** Cápsula plana (como las botellas de los mensajes): dos mitades, brillo y algo inclinada; entera y suave al tomarla. */
+function Capsule({ done }) {
+  const id = useId().replace(/:/g, '')
+  const half = done ? 'color-mix(in srgb, var(--c) 62%, #FFFFFF)' : '#FFFFFF'
+  return (
+    <svg className="pl-capsule" width="62" height="31" viewBox="0 0 64 32" aria-hidden="true">
+      <defs><clipPath id={id}><rect x="2" y="4" width="60" height="24" rx="12" /></clipPath></defs>
+      <g clipPath={`url(#${id})`}>
+        <rect x="2" y="4" width="32" height="24" style={{ fill: 'color-mix(in srgb, var(--c) 62%, #FFFFFF)' }} />
+        <rect x="32" y="4" width="30" height="24" style={{ fill: half }} />
+        <rect x="32" y="4" width="2.5" height="24" style={{ fill: 'color-mix(in srgb, var(--c) 30%, #FFFFFF)', opacity: 0.55 }} />
+      </g>
+      <rect x="2" y="4" width="60" height="24" rx="12" fill="none" style={{ stroke: 'color-mix(in srgb, var(--c) 55%, #FFFFFF)' }} strokeWidth="1.5" />
+      <path d="M9 10.5h16" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".7" />
+    </svg>
+  )
+}
 
 const GridIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></svg>
 
@@ -92,16 +110,22 @@ export default function Pills({ data, update }) {
               )
           })}
           {pills.some((p) => p.kind !== 'treatment') && <div className="pl-lab">Cada día</div>}
-          {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind !== 'treatment').map(([p, pi]) => {
-            const it = itemsOf(p)[0]
-            return (
-              <div key={p.id} className="pl-drow" style={{ '--c': colorOf(p, pi) }}>
-                <b className={it.times.every((t) => isDone(p, it, t)) ? 'is-done' : ''}>{p.name}</b>
-                <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
-                <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-              </div>
-            )
-          })}
+          {pills.some((p) => p.kind !== 'treatment') && (
+            <div className="pl-shelf">
+              {pills.map((p, pi) => [p, pi]).filter(([p]) => p.kind !== 'treatment').map(([p, pi]) => {
+                const it = itemsOf(p)[0]
+                const all = it.times.every((t) => isDone(p, it, t))
+                return (
+                  <div key={p.id} className="pl-med" style={{ '--c': colorOf(p, pi) }}>
+                    <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
+                    <span className="pl-capwrap"><Capsule done={all} /></span>
+                    <b className={`pl-medname ${all ? 'is-done' : ''}`}>{p.name}</b>
+                    <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
       {view === 'day' && pills.length > 0 && (
