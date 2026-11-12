@@ -95,6 +95,20 @@ export async function loadImages(blocks) {
   return out
 }
 
+/**
+ * Documento completo para imprimir. El margen de la hoja (20 mm) no se pone con @page sino con una cabecera y un pie vacíos
+ * que se repiten en cada página: con @page margin 0 el navegador no escribe fecha, título, dirección ni número de página.
+ */
+export function printDocument(html, st, title) {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+<style>@page { size: A4; margin: 0; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pg { width: 100%; border-collapse: collapse; } .pg td { padding: 0; } .sp { height: 20mm; } .pg-in { padding: 0 20mm; }
+${sheetCss(st)}</style></head><body>
+<table class="pg"><thead><tr><td><div class="sp"></div></td></tr></thead><tbody><tr><td><div class="pg-in">${html}</div></td></tr></tbody><tfoot><tr><td><div class="sp"></div></td></tr></tfoot></table>
+</body></html>`
+}
+
 /** Imprime la hoja como PDF con el diálogo del navegador («Guardar como PDF»). */
 export async function printSheet(html, st, title) {
   const frame = document.createElement('iframe')
@@ -102,9 +116,7 @@ export async function printSheet(html, st, title) {
   document.body.appendChild(frame)
   const d = frame.contentDocument
   d.open()
-  d.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
-<style>@page { size: A4; margin: 20mm; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } ${sheetCss(st)}</style></head><body>${html}</body></html>`)
+  d.write(printDocument(html, st, title))
   d.close()
   try { await Promise.race([d.fonts.ready, new Promise((r) => setTimeout(r, 2500))]) } catch { /* sin fuentes */ }
   await new Promise((r) => setTimeout(r, 150))
