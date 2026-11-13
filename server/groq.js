@@ -9,6 +9,19 @@
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const DEFAULT_MODEL = 'openai/gpt-oss-120b'
 
+/**
+ * La clave tal cual se guardó en Cloudflare, pero limpia: al copiarla y pegarla a veces se cuelan
+ * un salto de línea invisible, comillas o la palabra "Bearer", y Groq la da por no válida.
+ */
+export function groqKey(env) {
+  const raw = env.GROQ_API_KEY
+  if (!raw) return ''
+  const key = String(raw).trim().replace(/^Bearer\s+/i, '').replace(/^["'“”]+|["'“”]+$/g, '').replace(/\s+/g, '')
+  // Pistas en los logs de Cloudflare (nunca la clave): si no empieza por gsk_ o mide raro, está mal copiada
+  if (!key.startsWith('gsk_') || key !== raw) console.warn(`GROQ_API_KEY: empieza por gsk_=${key.startsWith('gsk_')}, longitud=${key.length}, limpiada=${key !== raw}`)
+  return key
+}
+
 export class GroqError extends Error {
   constructor(status, detail) {
     super(`Groq API error ${status}: ${detail}`)
@@ -21,7 +34,7 @@ export class GroqError extends Error {
  * @returns {Promise<string>} el texto de la respuesta del modelo
  */
 export async function groqChat(messages, env, { temperature = 0.4, maxTokens = 2048, json = false, model } = {}) {
-  const apiKey = env.GROQ_API_KEY
+  const apiKey = groqKey(env)
   if (!apiKey) throw new Error('GROQ_API_KEY is not set')
 
   const response = await fetch(GROQ_URL, {
@@ -55,7 +68,7 @@ const TRANSCRIBE_MODEL = 'whisper-large-v3-turbo'
  * @returns {Promise<string>}
  */
 export async function groqTranscribe(audio, env, filename, lang = 'es', vocab = '') {
-  const apiKey = env.GROQ_API_KEY
+  const apiKey = groqKey(env)
   if (!apiKey) throw new Error('GROQ_API_KEY is not set')
 
   // Pista de contexto + tus nombres propios (asignaturas, proyectos…): así no escribe «agrícola» por «empresarial».
