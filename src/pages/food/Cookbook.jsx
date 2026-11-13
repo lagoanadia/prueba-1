@@ -16,6 +16,8 @@ export default function Cookbook({ data, update }) {
   const [hot, setHot] = useState(null) // índice de la letra bajo el ratón (para la onda)
   const [editing, setEditing] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [dragging, setDragging] = useState(false) // arrastrando una receta: aparece la papelera
+  const [over, setOver] = useState(false)
   const [q, setQ] = useState(null) // null = sin buscar · texto = buscando
   const searchRef = useRef(null)
   // Al empezar a buscar, el cursor pasa al buscador (al final del texto) para seguir escribiendo
@@ -30,14 +32,17 @@ export default function Cookbook({ data, update }) {
   const open = list.find((x) => x.id === active?.id) ?? list[0]
   const select = (id) => update((d) => ({ ...d, activeDish: id }))
   const save = (patch) => { update((d) => ({ ...d, dishes: dishesOf(d).map((x) => (x.id === open.id ? { ...x, ...patch } : x)) })); setEditing(false) }
-  const remove = () => {
-    if (!window.confirm(`¿Eliminar «${open.name}»? También saldrá del menú.`)) return
+  // Borra una receta (pide confirmación): también la quita del menú y del plan de cocina
+  const removeDish = (dish) => {
+    if (!dish || !window.confirm(`¿Eliminar «${dish.name}»? También saldrá del menú.`)) return
     update((d) => {
-      const menu = Object.fromEntries(Object.entries(d.menu ?? {}).map(([day, m]) => [day, Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v === open.id ? null : v]))]))
-      return { ...d, dishes: dishesOf(d).filter((x) => x.id !== open.id), menu, activeDish: null, batchPlan: (d.batchPlan ?? []).filter((b) => b.dish !== open.id) }
+      const menu = Object.fromEntries(Object.entries(d.menu ?? {}).map(([day, m]) => [day, Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v === dish.id ? null : v]))]))
+      return { ...d, dishes: dishesOf(d).filter((x) => x.id !== dish.id), menu, activeDish: null, batchPlan: (d.batchPlan ?? []).filter((b) => b.dish !== dish.id) }
     })
     setEditing(false)
   }
+  const remove = () => removeDish(open)
+  const dropOnTrash = (e) => { e.preventDefault(); setOver(false); setDragging(false); const id = e.dataTransfer.getData('text/dish'); removeDish(dishes.find((x) => x.id === id)) }
 
   return (
     <section className="card fd-card fd-cookbook" aria-label="Recetario" tabIndex={0}
@@ -76,18 +81,25 @@ export default function Cookbook({ data, update }) {
       <div className="fd-cards">
         {list.map((x) => (
           <button key={x.id} draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
-            onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copy' }}>
+            onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copyMove'; setDragging(true) }} onDragEnd={() => { setDragging(false); setOver(false) }}>
             <span className="fd-rec-name"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} />{x.name}</span>
             <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
           </button>
         ))}
       </div>
 
+      {dragging && (
+        <div className={`fd-trash ${over ? 'over' : ''}`} onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOver(true) }} onDragLeave={() => setOver(false)} onDrop={dropOnTrash}>
+          <Icon name="trash" size={20} color="#B3261E" />Suelta aquí para borrar
+        </div>
+      )}
+
       {open && (
         <div className="fd-detail">
           <div className="fd-detail-head">
             <h2>{open.name}</h2>
             <button className="fd-ib" onClick={() => setEditing(true)} aria-label="Editar receta" title="Editar receta"><Icon name="pen" size={16} /></button>
+            <button className="fd-ib" onClick={remove} aria-label="Borrar receta" title="Borrar receta"><Icon name="trash" size={16} color="#B3261E" /></button>
           </div>
           <div className="fd-tags">
             {open.for.map((m) => <span key={m} className="fd-chip is-on">{MEALS[m]}</span>)}

@@ -3113,3 +3113,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-capsule { width: 46cqw; }
 .pl-capwrap { padding: 4cqw 0 6cqw; }
 .wk-wheel { padding: 16px 24px 22px; gap: 32px; }
+
+/* Recetario: papelera para arrastrar una receta y borrarla */
+.fd-trash { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; padding: 12px; border: 2px dashed #E8A5A0; border-radius: 16px; color: #B3261E; background: #FDECEA; font-size: 13px; font-weight: 500; transition: transform .2s var(--ease), background .2s var(--ease); }
+.fd-trash.over { background: #F9D0CC; transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .fd-trash { transition: none; } .fd-trash.over { transform: none; } }
