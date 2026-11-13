@@ -2999,11 +2999,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 /* Medicamentos de cada día: estantería de cápsulas (como las botellas de los mensajes) */
 .pl-shelf { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 6px 4px; background: #F8F9FA; border-radius: 18px; padding: 16px 8px 12px; border-bottom: 5px solid #E3E5E8; }
 .pl-med { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: clamp(96px, 30%, 130px); }
-.pl-capwrap { height: 44px; display: grid; place-items: center; } .pl-capsule { transform: rotate(-26deg); overflow: visible; transition: transform .25s var(--ease); } .pl-med:hover .pl-capsule { transform: rotate(-14deg) scale(1.06); }
+.pl-capwrap { height: 44px; display: grid; place-items: center; } .pl-cap { transform: rotate(-26deg); transition: transform .25s var(--ease); } .pl-med:hover .pl-cap { transform: rotate(-14deg) scale(1.06); } .pl-capsule { overflow: visible; }
 .pl-medname { font-size: 12.5px; text-align: center; line-height: 1.2; overflow-wrap: anywhere; } .pl-medname.is-done { opacity: .55; }
 .pl-med .pl-chips2 { flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .pl-med .pl-del { position: absolute; top: -6px; right: 4px; opacity: 0; } .pl-med:hover .pl-del, .pl-med .pl-del:focus-visible { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .pl-capsule { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pl-cap { transition: none; } }
 /* Constancia más grande: los cuadraditos ocupan todo el espacio posible */
 .sa-consist { min-height: 440px; }
 .cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 92px)); gap: 6px; }
@@ -3012,7 +3012,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; background: none; padding: 0; border-bottom: 0; border-radius: 0; justify-content: stretch; }
 .pl-med { width: auto; aspect-ratio: 1; container-type: inline-size; justify-content: center; gap: 4cqw; padding: 6cqw; background: #F8F9FA; border-radius: 20px; box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--c) 45%, #FFFFFF); }
 .pl-capwrap { height: auto; width: 100%; padding: 8cqw 0 4cqw; }
-.pl-capsule { width: 68cqw; height: auto; }
+.pl-cap { width: 68cqw; height: auto; }
 .pl-medname { font-size: clamp(11px, 9cqw, 16px); } .pl-med .pl-chip { font-size: clamp(10.5px, 8cqw, 14px); padding: 2px 12px; }
 .pl-med .pl-del { top: 6px; right: 8px; }
 /* Entrenamientos más grande */
@@ -3035,7 +3035,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 /* Cuadrados del pastillero con medidas fijas (los cqw del propio contenedor no sirven para su padding) */
 .pl-med { container-type: normal; padding: 10px 6px 12px; gap: 6px; justify-content: center; }
 .pl-capwrap { width: 100%; padding: 6px 0 2px; height: auto; }
-.pl-capsule { width: 78px; height: auto; }
+.pl-cap { width: 78px; height: auto; }
 .pl-medname { font-size: 12.5px; } .pl-med .pl-chip { font-size: 11.5px; padding: 2px 11px; }
 /* El texto del centro de la rueda se ajusta al tamaño de la rueda */
 .wk-donut { container-type: size; }
@@ -3054,7 +3054,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-dailybox { max-width: 172px; }
 .pl-shelf { grid-template-columns: 160px; justify-content: start; }
 .pl-med { width: 160px; padding: 12px 8px 14px; gap: 8px; }
-.pl-capsule { width: 104px; }
+.pl-cap { width: 104px; }
 .pl-medname { font-size: 14px; } .pl-med .pl-chip { font-size: 12.5px; padding: 3px 14px; }
 .pl-treats { flex: 1 1 260px; max-width: 420px; }
 /* Entrenamientos: Semana / Mes a la izquierda de la rueda, y la rueda más grande */
@@ -3073,7 +3073,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-shelf { flex: 1; display: grid; grid-template-columns: 1fr; grid-auto-rows: minmax(120px, 1fr); justify-content: stretch; gap: 10px; }
 .pl-cards:not(:has(.pl-treats)) .pl-shelf { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .pl-med { width: auto; height: auto; aspect-ratio: auto; container-type: inline-size; padding: 10px 8px 12px; }
-.pl-capsule { width: 62cqw; height: auto; }
+.pl-cap { width: 62cqw; height: auto; }
 .pl-medname { font-size: clamp(12px, 8.5cqw, 20px); } .pl-med .pl-chip { font-size: clamp(11px, 6.5cqw, 16px); padding: 3px 14px; }
 .pl-treats { max-width: none; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .pl-treats .pl-tcard { flex: 1; min-height: 0; }
@@ -3101,7 +3101,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-cards { gap: 22px; }
 .pl-dailybox, .pl-treats { padding: 0; }
 .pl-shelf { grid-auto-rows: minmax(110px, 150px); align-content: start; gap: 12px; }
-.pl-capsule { width: 50cqw; }
+.pl-cap { width: 50cqw; }
 .pl-capwrap { padding: 6cqw 0 9cqw; }
 .pl-medname { font-size: clamp(12px, 7.5cqw, 17px); } .pl-med .pl-chip { font-size: clamp(11px, 6cqw, 14px); }
 .pl-treats .pl-tcard { padding: 14px 14px 8px; }
@@ -3110,7 +3110,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-side { padding-right: 6px; }
 .pl-shelf { grid-auto-rows: minmax(144px, auto); }
 .pl-med { height: auto; min-height: 144px; justify-content: center; padding: 12px 8px 14px; }
-.pl-capsule { width: 46cqw; }
+.pl-cap { width: 46cqw; }
 .pl-capwrap { padding: 4cqw 0 6cqw; }
 .wk-wheel { padding: 16px 24px 22px; gap: 32px; }
 
@@ -3118,3 +3118,13 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .fd-trash { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; padding: 12px; border: 2px dashed #E8A5A0; border-radius: 16px; color: #B3261E; background: #FDECEA; font-size: 13px; font-weight: 500; transition: transform .2s var(--ease), background .2s var(--ease); }
 .fd-trash.over { background: #F9D0CC; transform: scale(1.02); }
 @media (prefers-reduced-motion: reduce) { .fd-trash { transition: none; } .fd-trash.over { transform: none; } }
+
+/* Cápsula del pastillero: la hora va dentro, en la mitad derecha; al tomarla se llena y la hora pasa a blanco */
+.pl-cap { position: relative; display: inline-block; line-height: 0; container-type: inline-size; }
+.pl-cap .pl-capsule { display: block; width: 100%; height: auto; }
+.pl-cap-times { position: absolute; top: 12.5%; bottom: 12.5%; left: 52%; right: 4%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; }
+.pl-cap-t { border: 0; background: transparent; padding: 0 2cqw; border-radius: 99px; font: 600 11.5cqw/1.15 Poppins, sans-serif; color: var(--text); cursor: pointer; transition: color .2s, background .2s; }
+.pl-cap-times:has(.pl-cap-t + .pl-cap-t) .pl-cap-t { font-size: 10cqw; }
+.pl-cap.is-done .pl-cap-t { color: #fff; }
+.pl-cap-t.is-done { color: #fff; background: color-mix(in srgb, var(--c) 85%, #000); }
+.pl-cap.is-done .pl-cap-t.is-done { background: transparent; }

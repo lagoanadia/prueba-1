@@ -24,10 +24,11 @@ const endOf = (p) => addDays(p.start ?? todayISO(), Math.max(0, (p.days ?? 1) - 
 const daysLeft = (p) => (p.kind === 'treatment' && p.days ? Math.max(0, daysUntil(endOf(p)) + 1) : null)
 
 /** Cápsula plana (como las botellas de los mensajes): dos mitades, brillo y algo inclinada; entera y suave al tomarla. */
-function Capsule({ done }) {
+function Capsule({ done, children }) {
   const id = useId().replace(/:/g, '')
   const half = done ? 'color-mix(in srgb, var(--c) 62%, #FFFFFF)' : '#FFFFFF'
   return (
+    <span className={`pl-cap ${done ? 'is-done' : ''}`}>
     <svg className="pl-capsule" width="62" height="31" viewBox="0 0 64 32" aria-hidden="true">
       <defs><clipPath id={id}><rect x="2" y="4" width="60" height="24" rx="12" /></clipPath></defs>
       <g clipPath={`url(#${id})`}>
@@ -38,6 +39,8 @@ function Capsule({ done }) {
       <rect x="2" y="4" width="60" height="24" rx="12" fill="none" style={{ stroke: 'color-mix(in srgb, var(--c) 55%, #FFFFFF)' }} strokeWidth="1.5" />
       <path d="M9 10.5h16" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".7" />
     </svg>
+    <span className="pl-cap-times">{children}</span>
+    </span>
   )
 }
 
@@ -91,9 +94,10 @@ export default function Pills({ data, update }) {
                 return (
                   <div key={p.id} className="pl-med" style={{ '--c': colorOf(p, pi) }}>
                     <button className="pl-del" onClick={() => remove(p)} aria-label={`Quitar ${p.name}`} title="Quitar"><Icon name="trash" size={13} /></button>
-                    <span className="pl-capwrap"><Capsule done={all} /></span>
+                    <span className="pl-capwrap"><Capsule done={all}>
+                      {it.times.map((t) => <button key={t} className={`pl-cap-t ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}
+                    </Capsule></span>
                     <b className={`pl-medname ${all ? 'is-done' : ''}`}>{p.name}</b>
-                    <span className="pl-chips2">{it.times.map((t) => <button key={t} className={`pl-chip ${isDone(p, it, t) ? 'is-done' : ''}`} onClick={() => toggle(p, it, t)} aria-pressed={isDone(p, it, t)} title={isDone(p, it, t) ? 'Tomada' : 'Toca cuando la tomes'}>{t}</button>)}</span>
                   </div>
                 )
               })}
