@@ -32,13 +32,13 @@ export const guessIcon = (name) => GUESS.find(([re]) => re.test(plain(name ?? ''
 export const iconOf = (data, name) => (ICONS[data.sportIcons?.[name]] ? data.sportIcons[name] : guessIcon(name))
 
 /**
- * Icono como imagen CSS para estamparlo de fondo: dos iconos por baldosa (ancho doble), torcidos en diagonal
- * en sentidos opuestos y con poca opacidad. url("data:image/svg+xml,…")
+ * Icono como imagen CSS para estamparlo de fondo: uno por baldosa (con aire a los lados), todos torcidos en diagonal
+ * en el mismo sentido y con poca opacidad; repetido da una fila con el mismo espacio entre iconos. url("data:image/svg+xml,…")
  */
 export const stampOf = (name, color = '#202124', opacity = 0.32) => {
   const ic = ICONS[name] ?? ICONS.bolt
   const body = (ic.c ?? []).map(([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`).join('') + ic.d.map((d) => `<path d="${d}"/>`).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 72 36" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-28 12 12)">${body}</g><g transform="translate(36 0) rotate(28 12 12)">${body}</g></svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-9 -6 42 36" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-28 12 12)">${body}</g></svg>`
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
