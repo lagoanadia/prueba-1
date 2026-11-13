@@ -3497,3 +3497,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-sess .sa-ico { display: flex; align-items: center; justify-content: center; pointer-events: none; color: var(--text); }
 .sa-sess.is-short:has(.sa-ico) { align-items: center; }
 .sa-tip b { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Ciclo: los cuadrados se pueden tocar (marcar o quitar el periodo de ese día) */
+.sa-days button { aspect-ratio: 1; padding: 0; border: 0; border-radius: 25%; background: #F9DDFF; cursor: pointer; transition: transform .12s var(--ease), background .15s; }
+.sa-days button:hover { transform: scale(1.12); } .sa-days button.is-period { background: #E58BD7; } .sa-days button.is-now { outline: 2px solid var(--text); outline-offset: 1px; }
+
+/* Arrastrar bloques: con el dedo también (sin que la página se desplace) y la copia que sigue al puntero */
+.plan-grid.is-editing .plan-block { touch-action: none; user-select: none; }
+.block-ghost { box-shadow: var(--shadow-lg); opacity: .95; cursor: grabbing; }
