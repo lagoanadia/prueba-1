@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getFriends } from '../../services/friendsService.js'
+import Empty from './Empty.jsx'
 import { useShared } from './SharedCtx.js'
 import { formatShort, daysUntil } from '../../lib/dates.js'
 import { progressOf, projectsOf } from '../../widgets/trabajo/projects.js'
@@ -41,6 +42,7 @@ export default function ProjectsBlock({ data, update, openProject }) {
 
   return (
     <div className="wk-projects">
+      {projects.length === 0 && !adding && <Empty icon="trabajo" text="Crea tu primer proyecto, solo o con amigos" action="Nuevo proyecto" onAction={() => setAdding(true)} />}
       <div className="wk-chips">
         {projects.map((p, i) => {
           const c = colorOf(data, p.id)

@@ -1,6 +1,7 @@
 import Select from '../../components/Select.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Empty from './Empty.jsx'
 import Icon from '../../components/Icon.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
 import { STATES, projectsOf, updateTask } from '../../widgets/trabajo/projects.js'
@@ -84,7 +85,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); window.removeEventListener('touchmove', block) }
   }, [today, update])
 
-  if (!projects.length) return <p className="muted wk-empty"><Icon name="trabajo" size={20} /> Crea un proyecto para empezar</p>
+  if (!projects.length) return <Empty icon="board" text="Tus tareas aparecerán aquí cuando crees un proyecto" />
 
   const card = (t) => {
     const c = colorOf(data, t.projectId)

@@ -1,6 +1,7 @@
 import { locale } from '../../i18n/index.js'
 import { addDays, daysUntil, formatShort, todayISO, weekStart } from '../../lib/dates.js'
 import { projectsOf } from '../../widgets/trabajo/projects.js'
+import Empty from './Empty.jsx'
 import { colorOf } from './shared.js'
 
 const MIN_WEEKS = 10
@@ -13,7 +14,7 @@ const MAX_WEEKS = 40
 export default function Timeline({ data, openProject }) {
   const today = todayISO()
   const projects = projectsOf(data)
-  if (!projects.length) return <p className="muted tl-empty">Crea un proyecto para ver su cronograma</p>
+  if (!projects.length) return <Empty icon="chart" text="Aquí verás tus proyectos en el tiempo, con sus fechas e hitos" />
 
   const dates = projects.flatMap((p) => [p.deadline, ...(p.milestones ?? []).map((m) => m.date)]).filter(Boolean)
   const start = addDays(weekStart(today), -7)

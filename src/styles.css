@@ -3201,3 +3201,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .agenda-tools { display: inline-flex; align-items: center; gap: 6px; }
 .wk-agenda-plan .agenda-now { position: absolute; left: 0; right: 0; height: 2px; background: #E84855; pointer-events: none; z-index: 3; }
 .wk-block.wk-projects { flex-wrap: wrap; } .wk-block.wk-projects > .wk-title { flex: 0 0 100%; width: 100%; }
+
+/* Bloques vacíos de Trabajo */
+.wk-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 18px 12px; text-align: center; width: 100%; }
+.wk-empty-ic { width: 64px; height: 64px; border-radius: 50%; background: #FDECEE; display: grid; place-items: center; }
+.wk-empty-t { font-size: 14px; color: #5F6368; max-width: 320px; }
+.wk-projects:has(.wk-empty-state) .wk-chips:has(> .wk-plus:only-child) { display: none; }
