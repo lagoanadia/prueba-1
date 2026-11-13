@@ -5,6 +5,7 @@
 const ICONS = {
   dumbbell: { d: ['M6.5 8v8', 'M17.5 8v8', 'M3.5 10v4', 'M20.5 10v4', 'M6.5 12h11'] },
   run: { c: [[16, 4.500, 1.900]], d: ['M14.500 8.500l-3.200 5.500', 'M14.200 9.200l3.800 2.300 1.800-1.700', 'M13.600 9.500l-4 .9-2.200 2.600', 'M11.300 14l3.400 1.800-.8 4.500', 'M11.300 14l-2.700 3.300-3.800-.8'] },
+  walk: { c: [[13, 4.500, 1.900]], d: ['M13 8.200l-.4 6', 'M12.900 9.200l3 2.800', 'M12.900 9.200l-3 2.600', 'M12.600 14.200l-2.600 6', 'M12.600 14.200l3 2.200.4 4'] },
   bike: { c: [[6, 16, 3.500], [18, 16, 3.500]], d: ['M6 16l4-7h5l3 7', 'M10 9l3 7', 'M9 6.500h2.500'] },
   swim: { c: [[8.500, 7, 1.800]], d: ['M10 9.500l4 2 3-2.500', 'M3 17c1.500 1.200 3 1.200 4.500 0s3-1.200 4.500 0 3 1.200 4.500 0 3-1.200 4.500 0'] },
   yoga: { c: [[12, 4.800, 1.800]], d: ['M12 8v5', 'M5 8.800l7 2.600 7-2.600', 'M12 13c-.5 2.800-2.800 4-6 4.200', 'M12 13c.5 2.800 2.800 4 6 4.200'] },
@@ -22,7 +23,7 @@ const GUESS = [
   [/corr|run|trot|atlet/, 'run'], [/bici|cicl|bike|spinn/, 'bike'], [/nata|swim|piscin|agua/, 'swim'],
   [/yoga|pilat|estir|stretch|medit|relaj/, 'yoga'], [/futbol|football|soccer|balon ?pie/, 'ball'], [/basket|balonc/, 'basket'],
   [/tenis|padel|raquet|badm|squash/, 'tennis'], [/box|kick|karate|judo|mma|artes marc/, 'boxing'],
-  [/senderis|monta|hiking|trek|escal|caminat|andar|paseo/, 'mountain'], [/gim|pesa|fuerza|crossfit|gym|muscul|calistenia/, 'dumbbell'],
+  [/camin|andar|paseo|pasos|walk/, 'walk'], [/senderis|monta|hiking|trek|escal/, 'mountain'], [/gim|pesa|fuerza|crossfit|gym|muscul|calistenia/, 'dumbbell'],
   [/cardio|hiit|zumba|baile|danza|dance|aerobic/, 'heart'],
 ]
 const plain = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -35,10 +36,10 @@ export const iconOf = (data, name) => (ICONS[data.sportIcons?.[name]] ? data.spo
  * Icono como imagen CSS para estamparlo de fondo: uno por baldosa (con aire a los lados), todos torcidos en diagonal
  * en el mismo sentido y con poca opacidad; repetido da una fila con el mismo espacio entre iconos. url("data:image/svg+xml,…")
  */
-export const stampOf = (name, color = '#202124', opacity = 0.32) => {
+export const stampOf = (name, color = '#202124', opacity = 0.55) => {
   const ic = ICONS[name] ?? ICONS.bolt
   const body = (ic.c ?? []).map(([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`).join('') + ic.d.map((d) => `<path d="${d}"/>`).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-9 -6 42 36" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-28 12 12)">${body}</g></svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -4 36 32" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-22 12 12)">${body}</g></svg>`
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
