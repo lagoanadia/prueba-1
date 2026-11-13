@@ -3207,3 +3207,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-empty-ic { width: 64px; height: 64px; border-radius: 50%; background: #FDECEE; display: grid; place-items: center; }
 .wk-empty-t { font-size: 14px; color: #5F6368; max-width: 320px; }
 .wk-projects:has(.wk-empty-state) .wk-chips:has(> .wk-plus:only-child) { display: none; }
+/* Pomodoro de Trabajo: el círculo se ve grande y se va llenando */
+.wk-block.wk-focus .wk-focus { margin-top: 0; height: auto; min-height: 250px; }
+.wk-block.wk-focus .focus-T .focus-ring-wrap, .wk-block.wk-focus .focus-L .focus-ring-wrap { width: min(100%, 190px); max-height: none; }
+.wk-block.wk-focus .focus-ring { --soft: #E9ECEF; font-size: 15px; }
+.wk-block.wk-focus .focus-ring::before { inset: 8%; }
+.wk-block.wk-focus .focus-time { font-size: 2em; }
