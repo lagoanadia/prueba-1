@@ -14,6 +14,9 @@ export const GAMES = { wordle: 6, sudoku: 1000, bee: 400, crossword: 1000 }
 export const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }
 // Accesorios exclusivos: se consiguen con secretos, por tu cumpleaños o como regalo
 export const SECRETS = { halo: 'Cerrar 3 días', starclip: 'Cerrar 10 días', partyhat: 'Tu cumpleaños', sprout: 'Compartir algo por primera vez' }
+// Piezas: ganar el día en un juego (contra al menos un amigo) = 1 pieza; cada 5 piezas, uno de estos accesorios (en orden)
+export const PRIZES = ['laurel', 'medal', 'wizard', 'tiara']
+export const PIECES_PER_PRIZE = 5
 const MAX_POSTS = 500 // lo que se guarda de cada persona (se ve entero en su perfil)
 const FEED_MS = 30 * 86_400_000 // en el feed, cada publicación dura un mes (en el perfil del amigo siguen todas)
 const MAX_TEXT = 300
@@ -23,7 +26,7 @@ const get = async (env, key, fallback) => (await env.DATA.get(key, 'json')) ?? f
 const put = (env, key, value) => env.DATA.put(key, JSON.stringify(value))
 const id = () => crypto.randomUUID()
 const clip = (t, n = MAX_TEXT) => (typeof t === 'string' ? t.trim().slice(0, n) : '')
-const DEFAULT_SOCIAL = { birthday: null, shareMood: true, shareTower: true, tower: [], unlocks: [], gifts: [], session: null }
+const DEFAULT_SOCIAL = { birthday: null, shareMood: true, shareTower: true, tower: [], unlocks: [], gifts: [], session: null, wins: [], winsChecked: null, winNews: [] }
 export const getSocial = async (env, uid) => ({ ...DEFAULT_SOCIAL, ...(await get(env, `social:${uid}`, {})) })
 const saveSocial = (env, uid, s) => put(env, `social:${uid}`, s)
 const weekStartOf = (iso) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10) }
@@ -104,6 +107,37 @@ export async function friendPosts(env, me, username) {
   return { posts: posts.sort((a, b) => b.at - a.at) }
 }
 
+/**
+ * Reparte las piezas de los días ya terminados (hasta ayer) que aún no se habían mirado.
+ * Ganas un día en un juego si tu puntuación es la más alta (los empates ganan todos) y jugó al menos un amigo.
+ * Lo calcula el servidor con las puntuaciones guardadas: no se puede falsificar desde el navegador.
+ */
+async function awardPieces(env, me, mine, friends, allScores, today) {
+  const yesterday = addDays(today, -1)
+  let day = mine.winsChecked ? addDays(mine.winsChecked, 1) : addDays(today, -7)
+  if (day < addDays(today, -7)) day = addDays(today, -7)
+  let changed = false
+  for (; day <= yesterday; day = addDays(day, 1)) {
+    for (const g of Object.keys(GAMES)) {
+      const mineScore = allScores[me]?.[g]?.[day]
+      if (!mineScore) continue
+      const others = friends.map((f) => allScores[f]?.[g]?.[day]).filter((v) => v != null)
+      if (!others.length || mineScore < Math.max(...others)) continue
+      const key = `${day}:${g}`
+      if (mine.wins.includes(key)) continue
+      mine.wins = [...mine.wins, key]
+      const prize = mine.wins.length % PIECES_PER_PRIZE === 0 ? PRIZES[mine.wins.length / PIECES_PER_PRIZE - 1] : null
+      if (prize && !mine.unlocks.includes(prize)) mine.unlocks = [...mine.unlocks, prize]
+      mine.winNews = [...mine.winNews, { day, game: g, prize }].slice(-10)
+    }
+    changed = true
+  }
+  if (changed) { mine.winsChecked = yesterday; await saveSocial(env, me, mine) }
+  const count = mine.wins.length
+  const earned = Math.floor(count / PIECES_PER_PRIZE)
+  return { count, inRow: count % PIECES_PER_PRIZE, of: PIECES_PER_PRIZE, next: earned < PRIZES.length, news: mine.winNews }
+}
+
 /** Todo lo que ve la pantalla de Amigos. `today` lo manda el navegador (fecha local). */
 export async function socialState(env, me, today) {
   const cache = new Map()
@@ -149,8 +183,9 @@ export async function socialState(env, me, today) {
   // Ranking semanal de juegos (tú y tus amigos): suma de los puntos de cada día de esta semana
   const ws = weekStartOf(today)
   const ranking = {}
+  const allScores = {}
   for (const uid of [me, ...friends]) {
-    const sc = await get(env, `scores:${uid}`, {})
+    const sc = (allScores[uid] = await get(env, `scores:${uid}`, {}))
     const u = await publicUser(env, uid, cache)
     if (!u.username && uid !== me) continue
     for (const g of Object.keys(GAMES)) {
@@ -160,11 +195,12 @@ export async function socialState(env, me, today) {
     }
   }
   Object.values(ranking).forEach((l) => l.sort((a, b) => b.points - a.points))
+  const pieces = await awardPieces(env, me, mine, friends, allScores, today)
 
   const gifts = await Promise.all(mine.gifts.filter((g) => !g.seen).map(async (g) => ({ ...g, from: await publicUser(env, g.from, cache) })))
   return {
     me: { birthday: mine.birthday, shareMood: mine.shareMood, shareTower: mine.shareTower, tower: mine.tower, unlocks: mine.unlocks, session: mine.session && mine.session.endsAt > Date.now() ? mine.session : null, isBirthday: mine.birthday === mmdd },
-    friends: people, feed: feed.slice(0, 80), challenges, gifts, ranking,
+    friends: people, feed: feed.slice(0, 80), challenges, gifts, ranking, pieces,
   }
 }
 
@@ -259,6 +295,12 @@ export async function act(env, me, body, today) {
     if (!r.unlocks.includes(body.item)) r.unlocks = [...r.unlocks, body.item]
     r.gifts = [...r.gifts, { id: id(), from: me, item: body.item, text: clip(body.text, 120), at: Date.now(), seen: false }].slice(-50)
     await saveSocial(env, to, r)
+    return { ok: true }
+  }
+  if (a === 'seenPieces') {
+    const s = await getSocial(env, me)
+    s.winNews = []
+    await saveSocial(env, me, s)
     return { ok: true }
   }
   if (a === 'seenGifts') {

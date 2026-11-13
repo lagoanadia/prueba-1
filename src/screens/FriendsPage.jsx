@@ -11,7 +11,7 @@ import { sanitize } from '../lib/richText.js'
 
 const MOOD = { bueno: ['#3DDC97', 'Bien'], regular: ['#F9DC5C', 'Regular'], malo: ['#E84855', 'Mal'] }
 const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }
-const SECRETS = { sprout: ['Brote', 'Comparte algo por primera vez'], halo: ['Aureola', 'Cierra 3 días'], starclip: ['Estrella', 'Cierra 10 días'], partyhat: ['Gorro de fiesta', 'Llega con tu cumpleaños'] }
+const SECRETS = { sprout: ['Brote', 'Comparte algo por primera vez'], halo: ['Aureola', 'Cierra 3 días'], starclip: ['Estrella', 'Cierra 10 días'], partyhat: ['Gorro de fiesta', 'Llega con tu cumpleaños'], laurel: ['Laurel', '5 piezas'], medal: ['Medalla', '10 piezas'], wizard: ['Gorro de mago', '15 piezas'], tiara: ['Tiara', '20 piezas'] }
 const TABS = [['feed', 'Feed'], ['retos', 'Retos'], ['edificio', 'Edificio'], ['ajustes', 'Ajustes']]
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'ahora' : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} días` }
 const ring = (mood) => (mood ? MOOD[mood][0] : '#E8EAED')
@@ -230,23 +230,94 @@ function FriendProfile({ f, back, onSheet, run }) {
 // ---------- Retos ----------
 const GAME_NAMES = { wordle: 'Palabra del día', sudoku: 'Sudoku', bee: 'Spelling Bee', crossword: 'Mini crucigrama' }
 
+const GAME_KEYS = Object.keys(GAME_NAMES)
+const chevron = (d) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+
+/** Ranking semanal en forma de podio, un juego cada vez; las flechas pasan de un juego a otro. */
+function Podium({ ranking }) {
+  const games = GAME_KEYS.filter((g) => ranking[g]?.length)
+  const [i, setI] = useState(0)
+  if (!games.length) return <div className="card feed-card"><b>Ranking de la semana</b><span className="muted">Juega a los juegos del Journal y compite con tus amigos.</span></div>
+  const k = ((i % games.length) + games.length) % games.length
+  const g = games[k]
+  const list = ranking[g]
+  // Orden del podio: 2.º · 1.º · 3.º
+  const spots = [[list[1], 2], [list[0], 1], [list[2], 3]]
+  return (
+    <div className="card feed-card podium-card">
+      <div className="podium-top">
+        <b>Ranking de la semana</b>
+        {games.length > 1 ? (
+          <div className="podium-nav">
+            <button onClick={() => setI(k - 1)} aria-label="Juego anterior">{chevron('M15 5L8 12L15 19')}</button>
+            <span>{GAME_NAMES[g]}</span>
+            <button onClick={() => setI(k + 1)} aria-label="Juego siguiente">{chevron('M9 5L16 12L9 19')}</button>
+          </div>
+        ) : <span className="podium-game">{GAME_NAMES[g]}</span>}
+      </div>
+      {games.length > 1 && <div className="podium-dots">{games.map((x, j) => <i key={x} className={j === k ? 'on' : ''} />)}</div>}
+      <div className="podium" key={g}>
+        {spots.map(([p, pos]) => (
+          <div key={pos} className={`podium-col p${pos} ${p?.me ? 'me' : ''}`}>
+            {p && <>
+              <span className="podium-av">
+                {pos === 1 && <svg className="podium-crown" width="28" height="20" viewBox="0 0 30 22" aria-hidden="true"><path d="M3 18L5 5L11 11L15 3L19 11L25 5L27 18Z" fill="#F9DC5C" stroke="#202124" strokeWidth="1.8" strokeLinejoin="round" /></svg>}
+                <Avatar avatar={p.avatar} size={pos === 1 ? 56 : 46} />
+              </span>
+              <b className="podium-name">{p.me ? 'Tú' : '@' + p.username}</b>
+              <span className="podium-pts">{p.points}</span>
+            </>}
+            <span className="podium-step">{pos}</span>
+          </div>
+        ))}
+      </div>
+      {list.length > 3 && <div className="podium-rest">{list.slice(3, 6).map((p, j) => <span key={p.username ?? j}><b>{j + 4}</b> {p.me ? 'Tú' : '@' + p.username} · {p.points}</span>)}</div>}
+    </div>
+  )
+}
+
+const PIECE = 'M4 8h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4H4v-4a2 2 0 1 0 0-4z'
+const piece = (on, size = 40) => <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill={on ? '#F9DC5C' : '#F1F3F4'} stroke={on ? '#202124' : '#C9CDD2'} strokeWidth="1.4" strokeLinejoin="round" strokeDasharray={on ? undefined : '2 2'}><path d={PIECE} /></svg>
+
+/** Piezas: 1 por cada día ganado en un juego; cada 5, un accesorio sorpresa. */
+function Pieces({ pieces, run }) {
+  const news = pieces.news ?? []
+  const prize = news.find((n) => n.prize)
+  return (
+    <div className="card feed-card pieces-card">
+      <b>Piezas</b>
+      <span className="muted pieces-rule">1 win = 1 pieza · 5 piezas = 1 sorpresa</span>
+      <div className="pieces-row">
+        <div className="pieces-left">
+          <div className="pieces-set">{Array.from({ length: pieces.of }, (_, j) => <span key={j}>{piece(j < pieces.inRow)}</span>)}</div>
+          <b className="pieces-count">{pieces.inRow} / {pieces.of}</b>
+          <span className="bar"><span style={{ width: `${(pieces.inRow / pieces.of) * 100}%`, background: '#F9DC5C' }} /></span>
+        </div>
+        <div className="pieces-prize" aria-label="Próximo premio">
+          <span className="pieces-box">{pieces.next ? <svg width="48" height="38" viewBox="0 0 56 44" aria-hidden="true"><path d="M8 34L14 8L22 20L28 4L34 20L42 8L48 34Z" fill="#202124" opacity=".12" /><rect x="6" y="34" width="44" height="6" rx="3" fill="#202124" opacity=".12" /></svg> : '✓'}</span>
+          <span className="w-hint">{pieces.next ? 'Próximo: ???' : 'Todo conseguido'}</span>
+        </div>
+      </div>
+      {news.length > 0 && (
+        <div className="pieces-news">
+          {piece(true, 30)}
+          <span>
+            <b>{news.length === 1 ? `¡Ganaste el ${GAME_NAMES[news[0].game]}!` : `¡${news.length} victorias!`}</b><br />
+            <span className="muted">+{news.length} {news.length === 1 ? 'pieza' : 'piezas'}{prize ? ` · ¡Nuevo accesorio: ${SECRETS[prize.prize]?.[0]}! Está en Perfil` : ''}</span>
+          </span>
+          <button className="toast-x" onClick={() => run('seenPieces')} aria-label="Cerrar">×</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Challenges({ state, run, onNew }) {
   const ranking = state.ranking ?? {}
   return (
     <div className="feed">
-      <div className="card feed-card">
-        <b>Ranking de juegos de la semana</b>
-        {Object.keys(ranking).length ? (
-          <div className="rank-games">
-            {Object.entries(GAME_NAMES).filter(([g]) => ranking[g]?.length).map(([g, name]) => (
-              <div key={g} className="rank-game">
-                <b>{name}</b>
-                {ranking[g].slice(0, 5).map((p, i) => <div key={p.username ?? i} className={`rank-row ${p.me ? 'me' : ''}`}><span className="rank-pos">{i + 1}</span><Avatar avatar={p.avatar} size={24} /><span>{p.me ? 'Tú' : '@' + p.username}</span><b>{p.points}</b></div>)}
-              </div>
-            ))}
-          </div>
-        ) : <span className="muted">Juega a los juegos del Journal (Palabra del día, Sudoku, Spelling Bee, Mini crucigrama) y compite con tus amigos.</span>}
-      </div>
+      <Podium ranking={ranking} />
+      {state.pieces && <Pieces pieces={state.pieces} run={run} />}
       {state.challenges.map((c) => (
         <div key={c.id} className="card feed-card">
           <div className="w-row"><b>{c.title}</b><span className="muted">{c.target} esta semana</span></div>

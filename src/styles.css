@@ -3706,3 +3706,36 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .feed-icon:hover { background: #E8EAED; } .feed-icon:active { transform: scale(.94); } .feed-icon.on { background: #DDEBFE; } .feed-icon small { font-size: 12px; font-weight: 700; }
 .feed-del { background: #FDECEE; } .feed-del:hover { background: #FAD9DD; } .feed-react .feed-comments { margin-left: auto; }
 .fp-posts { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; } .fp-posts-title { font-size: 17px; }
+
+/* ---------- Ranking en podio y piezas ---------- */
+.podium-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.podium-nav { display: flex; align-items: center; gap: 6px; }
+.podium-nav span, .podium-game { min-width: 118px; text-align: center; font-size: 14px; font-weight: 600; }
+.podium-nav button { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--soft); color: var(--muted); display: grid; place-items: center; cursor: pointer; transition: transform .15s var(--ease); }
+.podium-nav button:active { transform: scale(.9); }
+.podium-dots { display: flex; justify-content: flex-end; gap: 5px; margin-right: 36px; }
+.podium-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--ring); transition: width .2s var(--ease); }
+.podium-dots i.on { width: 16px; background: var(--text); }
+.podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; padding-top: 26px; animation: fade .25s ease both; }
+.podium-col { display: flex; flex-direction: column; align-items: center; width: min(110px, 30%); }
+.podium-av { position: relative; display: inline-flex; border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,.12); margin-bottom: 4px; }
+.podium-crown { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); }
+.podium-name { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium-pts { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.podium-step { width: 100%; border-radius: 14px 14px 6px 6px; display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #FFFFFF; }
+.p1 .podium-step { height: 78px; background: #F2C14E; }
+.p2 .podium-step { height: 56px; background: #B9C3D3; }
+.p3 .podium-step { height: 40px; background: #D9A27A; }
+.podium-col.me .podium-name { color: var(--blue); }
+.podium-rest { display: flex; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; font-size: 13px; color: var(--muted); }
+.podium-rest b { color: var(--text); }
+.pieces-rule { font-size: 13px; }
+.pieces-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.pieces-left { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pieces-set { display: flex; gap: 2px; flex-wrap: wrap; }
+.pieces-count { font-size: 14px; }
+.pieces-prize { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pieces-box { width: 76px; height: 76px; border-radius: 18px; background: #FFFFFF; box-shadow: var(--shadow); display: grid; place-items: center; font-size: 26px; font-weight: 700; color: #3DDC97; }
+.pieces-news { display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-radius: 16px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 13px; animation: rise .3s var(--ease) both; }
+.pieces-news > span { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .podium, .pieces-news { animation: none; } }

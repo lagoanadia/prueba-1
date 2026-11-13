@@ -23,6 +23,8 @@ export const AVATAR_OPTIONS = {
     { id: 'cap', label: 'Gorra' }, { id: 'beanie', label: 'Gorro' }, { id: 'headphones', label: 'Cascos' }, { id: 'crown', label: 'Corona' },
     // Exclusivos: solo si los has conseguido (secretos, cumpleaños o regalos)
     { id: 'halo', label: 'Aureola', exclusive: true }, { id: 'starclip', label: 'Estrella', exclusive: true }, { id: 'partyhat', label: 'Gorro de fiesta', exclusive: true }, { id: 'sprout', label: 'Brote', exclusive: true },
+    // Premios de los juegos: uno cada 5 piezas (ganar el día contra tus amigos)
+    { id: 'laurel', label: 'Laurel', exclusive: true }, { id: 'medal', label: 'Medalla', exclusive: true }, { id: 'wizard', label: 'Gorro de mago', exclusive: true }, { id: 'tiara', label: 'Tiara', exclusive: true },
   ],
   outfit: [
     { id: 'tee', label: 'Camiseta' }, { id: 'vneck', label: 'Pico' }, { id: 'turtleneck', label: 'Cuello alto' }, { id: 'shirt', label: 'Camisa' },
