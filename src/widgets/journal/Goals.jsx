@@ -1,6 +1,7 @@
 import AddPopup from '../AddPopup.jsx'
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
+import { getLang } from '../../i18n/index.js'
 
 const pct = (g) => Math.min(100, Math.round((g.current / g.target) * 100))
 // "Leer 12 libros este año" -> "libros" (la palabra que va después del número)
@@ -17,6 +18,8 @@ export default function Goals({ size, data, update }) {
   const change = (id, delta) => update((d) => ({ ...d, goals: d.goals.map((g) => (g.id === id ? { ...g, current: Math.max(0, Math.min(g.target, g.current + delta)) } : g)) }))
   const remove = (id) => update((d) => ({ ...d, goals: d.goals.filter((g) => g.id !== id) }))
   const add = (g) => update((d) => ({ ...d, goals: [...(d.goals ?? []), { id: crypto.randomUUID(), current: 0, ...g }] }))
+  // Papelera en cada meta (pide confirmación: borrar no se puede deshacer)
+  const del = (g) => <button className="mini goal-del" onClick={() => window.confirm(getLang() === 'en' ? `Delete "${g.name}"?` : `¿Borrar «${g.name}»?`) && remove(g.id)} aria-label="Borrar meta" title="Borrar"><Icon name="trash" size={15} color="currentColor" /></button>
   const addBtn = <AddPopup label="Nueva meta">{(close) => <GoalForm onSave={(g) => { add(g); close() }} />}</AddPopup>
 
   // S: la primera meta; tocar el anillo suma uno
@@ -46,7 +49,7 @@ export default function Goals({ size, data, update }) {
               {size === 'L' && goals.length > 1 && <>
                 <button className="mini" onClick={() => move(g.id, -1)} disabled={i === 0} aria-label="Subir"><span style={{ display: 'inline-flex', transform: 'rotate(180deg)' }}><Icon name="down" size={12} /></span></button>
               </>}
-              {size === 'L' && <button className="mini mini-del" onClick={() => remove(g.id)} aria-label={`Quitar ${g.name}`}><Icon name="trash" size={13} color="#B3261E" /></button>}
+              {del(g)}
             </div>
           </li>
         ))}
