@@ -8,7 +8,7 @@ export default function Crossword({ data, update }) {
   const [error, setError] = useState('')
   const [sel, setSel] = useState(null) // { r, c, dir }
   const [now, setNow] = useState(Date.now())
-  const [checked, setChecked] = useState(false) // tras «Comprobar», las letras mal salen en rojo
+  const [checked, setChecked] = useState(false) // tras «Comprobar»: las letras bien salen en verde y las mal en rojo
   const input = useRef(null)
   useEffect(() => { fetchDaily('crossword').then(setCw).catch((e) => setError(e.message)) }, [date])
   const saved = data.games?.crossword?.date === date ? data.games.crossword : null
@@ -83,7 +83,7 @@ export default function Crossword({ data, update }) {
       </div>
       <div className="cwd-grid" style={{ '--w': cw.w }} onKeyDown={onKey}>
         {cw.cells.map((row, r) => row.map((on, c) => on ? (
-          <button key={r + '-' + c} className={`cwd-cell ${sel && sel.r === r && sel.c === c ? 'is-sel' : inActive(r, c) ? 'word' : ''} ${done ? 'ok' : ''} ${checked && fill[r][c] && fill[r][c] !== cw.solution[r][c] ? 'bad' : ''}`} onClick={() => tap(r, c)} aria-label={`Casilla ${r + 1}, ${c + 1}`}>
+          <button key={r + '-' + c} className={`cwd-cell ${sel && sel.r === r && sel.c === c ? 'is-sel' : inActive(r, c) ? 'word' : ''} ${done ? 'ok' : ''} ${checked && fill[r][c] ? (fill[r][c] === cw.solution[r][c] ? 'good' : 'bad') : ''}`} onClick={() => tap(r, c)} aria-label={`Casilla ${r + 1}, ${c + 1}`}>
             {numAt[`${r},${c}`] && <i>{numAt[`${r},${c}`]}</i>}{fill[r][c]}
           </button>
         ) : <span key={r + '-' + c} className="cwd-block" />))}

@@ -22,7 +22,7 @@ export default function Steps({ size, data, update }) {
     return (
       <div className="sa-steps st-M">
         <div className="st-left">
-          <div><span className="sa-label">Hoy</span><b className="sa-big">{fmtNum(steps[today] ?? 0)}<small> pasos</small></b></div>
+          <div><span className="sa-label">Hoy · <button type="button" className="st-goal" onClick={setGoal} title="Cambiar el objetivo">objetivo {fmtNum(goal)}</button></span><b className="sa-big">{fmtNum(steps[today] ?? 0)}<small> pasos</small></b></div>
           <div className="st-prog" role="img" aria-label={`${pct}% del objetivo de ${fmtNum(goal)} pasos`}><i style={{ width: `${pct}%` }} /></div>
           <form className="sa-row st-form" onSubmit={save}><input type="number" min="0" inputMode="numeric" placeholder="Pasos de hoy" value={val} onChange={(e) => setVal(e.target.value)} aria-label="Pasos de hoy" /><button className="sa-btn" disabled={val === ''}>Guardar</button></form>
         </div>

@@ -1,0 +1,9 @@
+Listas de palabras (words5-es.txt, words-bee-es.txt): sacadas de «an-array-of-spanish-words» (MIT),
+sin tildes (la Ñ se conserva), en mayúsculas, una por línea. words5-es: solo las de 5 letras (Palabra oculta);
+words-bee-es: de 4 a 10 letras con 7 letras distintas como máximo (Spelling Bee).
+
+MIT License — Copyright (c) the an-array-of-spanish-words authors.
+Se concede permiso, libre de cargos, a cualquier persona que obtenga una copia de este software y de los archivos de
+documentación asociados, para utilizarlo sin restricción, incluyendo copiar, modificar, fusionar, publicar, distribuir,
+sublicenciar y/o vender copias, siempre que se incluya este aviso de copyright y de permiso. EL SOFTWARE SE ENTREGA «TAL CUAL»,
+SIN GARANTÍA DE NINGÚN TIPO.

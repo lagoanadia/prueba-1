@@ -1,4 +1,5 @@
 import { locale } from '../../i18n/index.js'
+import TimePicker from '../../components/TimePicker.jsx'
 import { useEffect, useRef, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import MeetingExtras from './MeetingExtras.jsx'
@@ -263,9 +264,9 @@ export default function AgendaBlock({ data, update, projectId = null }) {
           <input autoFocus placeholder="Reunión con…" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} maxLength={60} aria-label="Título" />
           <span className="agenda-times">
             <Icon name="clock" size={16} />
-            <input type="time" value={draft.start} step={SNAP * 60} onChange={(e) => e.target.value && setDraft({ ...draft, start: e.target.value })} aria-label="Empieza" />
+            <TimePicker value={draft.start} step={SNAP} onChange={(v) => setDraft({ ...draft, start: v })} label="Empieza" />
             <span>–</span>
-            <input type="time" value={draft.end} step={SNAP * 60} onChange={(e) => e.target.value && setDraft({ ...draft, end: e.target.value })} aria-label="Acaba" />
+            <TimePicker value={draft.end} step={SNAP} onChange={(v) => setDraft({ ...draft, end: v })} label="Acaba" />
           </span>
           {!projectId && !draft._shared && (
             <span className="agenda-colors">

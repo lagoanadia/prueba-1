@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TimePicker from '../../components/TimePicker.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import { todayISO } from '../../lib/dates.js'
@@ -48,7 +49,7 @@ export default function Reunion({ data, update, projectId }) {
       <input className="rn-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} placeholder="¿De qué es la reunión?" aria-label="Título de la reunión" />
       <div className="rn-when">
         <label className="rn-field"><Icon name="calendario" size={16} /><input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha" /></label>
-        <label className="rn-field"><Icon name="clock" size={16} /><input type="time" value={start} step={900} onChange={(e) => e.target.value && setStart(e.target.value)} aria-label="Empieza" /><span>–</span><input type="time" value={end} step={900} onChange={(e) => e.target.value && setEnd(e.target.value)} aria-label="Acaba" /></label>
+        <label className="rn-field"><Icon name="clock" size={16} /><TimePicker className="tp-flat" value={start} step={15} onChange={setStart} label="Empieza" /><span>–</span><TimePicker className="tp-flat" value={end} step={15} onChange={setEnd} label="Acaba" /></label>
       </div>
       {members.length > 0 ? (
         <>

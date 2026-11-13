@@ -60,6 +60,7 @@ export default function AreaScreen({ area, showTitle = true }) {
   const cards = useRef(new Map()) // id -> elemento del widget (para animar)
   const lastRects = useRef(new Map())
   const available = widgetsFor(area.id)
+  const addable = available.filter((w) => !board?.layout.some((x) => x.type === w.type)) // cada widget solo se puede tener una vez
 
   /*
    * Animación FLIP (First, Last, Invert, Play): cuando cambia el orden o el tamaño,
@@ -233,7 +234,7 @@ export default function AreaScreen({ area, showTitle = true }) {
           {board.layout.map((w, i) => (
             <WidgetCard key={w.id} w={w} i={i} data={board.data} editing={editing} isDragged={drag?.id === w.id} api={stableApi} />
           ))}
-          {editing && <AddSquare open={adding} onOpen={setAdding} options={available.map((w) => ({ type: w.type, label: w.name, icon: w.icon ?? 'board' }))} onPick={add} />}
+          {editing && addable.length > 0 && <AddSquare open={adding} onOpen={setAdding} options={addable.map((w) => ({ type: w.type, label: w.name, icon: w.icon ?? 'board' }))} onPick={add} />}
         </div>
       )}
 
@@ -309,13 +310,15 @@ function useFitRows(ref, size, deps) {
     }
     measure()
     const t = setTimeout(measure, 300) // por si el contenido llega un poco después
+    const t2 = setTimeout(measure, 1500)
+    document.fonts?.ready.then(measure) // al cargar la letra del diseño el texto ocupa otro alto: se vuelve a medir
     const ro = new ResizeObserver(() => measure())
     ro.observe(el.parentElement) // al cambiar el ancho de la rejilla, el texto se recoloca
     // Si el contenido cambia por dentro (p. ej. se despliega un formulario), el widget se vuelve a medir
     let pending = 0
     const mo = new MutationObserver(() => { clearTimeout(pending); pending = setTimeout(measure, 60) })
     mo.observe(el, { childList: true, subtree: true })
-    return () => { clearTimeout(t); clearTimeout(pending); ro.disconnect(); mo.disconnect() }
+    return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(pending); ro.disconnect(); mo.disconnect() }
   }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 }
 

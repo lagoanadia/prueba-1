@@ -3579,3 +3579,82 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pt-blk { container-type: inline-size; } @container (max-width: 74px) { .pt-blk em { display: none; } }
 .wo-M .wo-donut { width: 108px; } .wo-M .wo-hole { width: 74%; height: 74%; padding: 4px; } .wo-M .wo-hole span { display: none; } .wo-M .wo-hole b { font-size: 13px; }
 .wo-side .wk-range { flex-direction: row; align-self: flex-start; border-radius: 16px; padding: 3px; } .wo-side .wk-range button { width: auto; }
+
+/* Mood tracker M: cómo estás hoy a la izquierda y las dos últimas semanas a la derecha */
+.mood-M { flex: 1; min-height: 0; display: flex; align-items: center; gap: 16px; }
+.mood-M .chips { flex-direction: column; align-items: stretch; flex: none; width: 124px; gap: 6px; flex-wrap: nowrap; }
+.mood-M .chips .chip { text-align: left; }
+.mood-M .fill { flex: 1; align-self: stretch; }
+
+/* Crucigrama: «Comprobar» marca en verde lo que está bien y en rojo lo que está mal */
+.cwd-cell.good { background: #CFF3DF; color: #0F6B45; }
+.cwd-cell.bad { background: #FFD6DA; color: #B3261E; }
+
+/* Spelling Bee: el panal se adapta al espacio disponible (pantalla pequeña o grande) */
+.bee { --hw: clamp(66px, min(19vw, 19vh), 120px); gap: 10px; }
+.bee .hive { width: calc(var(--hw) * 2.85); height: calc(var(--hw) * 2.77); margin: 4px auto; }
+.bee .hex { width: var(--hw); height: calc(var(--hw) * .903); font-size: calc(var(--hw) * .34); }
+.bee .hex.center { left: var(--hw); top: calc(var(--hw) * .935); }
+.bee .hex.h0 { left: var(--hw); top: 0; } .bee .hex.h1 { left: calc(var(--hw) * 1.855); top: calc(var(--hw) * .468); } .bee .hex.h2 { left: calc(var(--hw) * 1.855); top: calc(var(--hw) * 1.403); }
+.bee .hex.h3 { left: var(--hw); top: calc(var(--hw) * 1.871); } .bee .hex.h4 { left: calc(var(--hw) * .145); top: calc(var(--hw) * 1.403); } .bee .hex.h5 { left: calc(var(--hw) * .145); top: calc(var(--hw) * .468); }
+.bee .bee-word { font-size: clamp(24px, 5vh, 34px); min-height: 40px; }
+.bee .bee-actions .pill { padding: 8px 20px; font-size: 15px; }
+.bee .bee-found { flex: 1; min-height: 48px; align-content: flex-start; font-size: 14px; padding-top: 4px; }
+
+/* Minijuegos en M (2×1): arte pequeño, nombre y estado, y «Jugar» como botón (antes el dibujo se salía y se cortaba) */
+.game-M { gap: 12px; padding: 8px 14px; }
+.game-M .game-art { width: 56px; height: 56px; }
+.game-M .game-name { font-size: 17px; }
+.game-M .game-status { font-size: 12.5px; }
+.game-M .game-go { padding: 6px 16px; border-radius: 16px; background: color-mix(in srgb, var(--c) 22%, #FFFFFF); font-size: 14px; }
+.game-M::after { width: 120px; height: 120px; right: -34px; bottom: -50px; }
+.bee .hive { margin: 10px auto 12px; }
+
+/* Resumen: las cuatro tarjetas, centradas en el alto del widget */
+.sa-summary { flex: 1; align-content: center; }
+/* Entrenamientos: aire bajo el título; el texto de la rueda se ajusta a su hueco (si no cabe en una línea, baja a otra) */
+.wo-M { padding-top: 10px; } .wo-M .wo-donut { width: 96px; }
+.wo-donut { container-type: inline-size; }
+.wo-hole { width: 72%; height: 72%; padding: 6% ; }
+.wo-hole span { font-size: clamp(9px, 7cqw, 12px); }
+.wo-hole b { font-size: clamp(11px, 12cqw, 22px); white-space: normal; overflow-wrap: anywhere; line-height: 1.1; text-overflow: clip; }
+.wo-M .wo-hole { width: 76%; height: 76%; }
+
+/* Todos los tamaños hacen todo: ajustes */
+.cy-btns { display: inline-flex; gap: 6px; } .cy-M .sa-btn.is-soft { padding: 5px 12px; font-size: 13px; white-space: nowrap; } .cy-M .sa-btn.is-soft.on { background: #F9DDFF; }
+.cy-M { padding-top: 2px; } .cy-M .cy-top { padding-right: 56px; }
+.st-goal { border: 0; background: none; padding: 0; font: inherit; font-size: inherit; color: var(--blue); font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.wo-M .wo-side { gap: 6px; min-height: 0; max-height: 100%; } .wo-M .wo-legend { overflow-y: auto; min-height: 0; grid-template-columns: 14px minmax(0, 1fr) auto auto; column-gap: 12px; row-gap: 6px; flex: 1 1 auto; align-content: start; }
+.wo-M .wk-range button { padding: 3px 12px; font-size: 12px; }
+.wo-T .wk-range { align-self: center; } .wo-T .wo-legend { overflow-y: auto; max-height: 90px; }
+
+/* Todos los tamaños hacen todo: ajustes */
+.cy-btns { display: inline-flex; gap: 6px; } .cy-M .sa-btn.is-soft { padding: 5px 12px; font-size: 13px; white-space: nowrap; } .cy-M .sa-btn.is-soft.on { background: #F9DDFF; }
+.cy-M .cy-top { padding-right: 56px; }
+.cy-chip.is-none { background: var(--soft); color: var(--muted); }
+.cy-ring.is-muted .cy-ring-in b { color: #9AA0A6; } .cy-ring-hit { position: absolute; inset: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: background .15s; } .cy-ring-hit:hover { background: rgba(229, 139, 215, .12); }
+.sa-days button.is-ghost { background: #E8EAED; } .sa-days button.is-ghost:hover { background: #F6C9EE; }
+.st-goal { border: 0; background: none; padding: 0; font: inherit; font-size: inherit; color: var(--blue); font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.wo-M .wo-side { gap: 6px; min-height: 0; max-height: 100%; } .wo-M .wo-legend { overflow-y: auto; min-height: 0; grid-template-columns: 14px minmax(0, 1fr) auto auto; column-gap: 12px; row-gap: 6px; flex: 1 1 auto; align-content: start; }
+.wo-M .wk-range button { padding: 3px 12px; font-size: 12px; }
+.wo-T .wk-range { align-self: center; } .wo-T .wo-legend { overflow-y: auto; max-height: 90px; }
+
+/* Pasos: el campo es lo bastante ancho para que se lea «Pasos de hoy» entero */
+.sa-steps:not(.st-M) input[type=number] { width: 170px; max-width: 100%; }
+/* Cápsulas del tiempo: las botellas (y la carita de quien las manda) nunca se cortan, en ningún tamaño */
+.cap-shelf .cap-row { padding-top: 14px; }
+.widget:not(.w-L) .cap-row .bottle { width: auto; } .widget:not(.w-L) .cap-row .bottle .bottle-art { width: auto; height: clamp(34px, 30cqh, 64px); }
+.w-L .cap-shelves { overflow: visible; flex: none; }
+
+/* Selector de hora (misma estética que Select y DatePicker) */
+.tp { gap: 2px; padding: 1px 4px 1px 10px; cursor: text; }
+.tp-in { width: 52px; border: 0; background: none; font: inherit; font-weight: 600; text-align: center; color: var(--text); outline: none; padding: 4px 0; }
+.tp-btn { width: 28px; height: 28px; border: 0; border-radius: 50%; background: none; display: inline-grid; place-items: center; cursor: pointer; padding: 0; flex: none; } .tp-btn:hover { background: rgba(0, 0, 0, .06); }
+.tp:focus-within { border-color: var(--text); }
+.tp.tp-flat { border-color: transparent; background: none; padding-left: 4px; } .tp.tp-flat:hover, .tp.tp-flat:focus-within { background: var(--soft); }
+.cy-chip, .cy-phase { text-transform: none; }
+.tp-pop { position: fixed; z-index: 70; display: flex; gap: 6px; padding: 8px; background: #FFFFFF; border-radius: 18px; box-shadow: var(--shadow-lg); animation: sel-in .22s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: top center; }
+.tp-col { width: 64px; max-height: 232px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; }
+.tp-opt { border: 0; background: none; font: 600 14px Poppins, sans-serif; padding: 7px 0; border-radius: 12px; cursor: pointer; text-align: center; color: var(--text); transition: background .15s; }
+.tp-opt:hover { background: color-mix(in srgb, var(--c) 22%, #FFFFFF); } .tp-opt.on { background: var(--c); color: #FFFFFF; }
+@media (prefers-reduced-motion: reduce) { .tp-pop { animation: none; } }

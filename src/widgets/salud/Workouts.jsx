@@ -37,30 +37,34 @@ export default function Workouts({ size, data }) {
       </div>
     </div>
   )
-  const rows = size === 'L' ? ranking : ranking.slice(0, 3)
-  const legend = rows.length > 0 && (
+  // Todos los deportes y el cambio semana/mes están en cualquier tamaño (en los pequeños, la lista se desplaza)
+  const wide = size !== 'T'
+  const legend = ranking.length > 0 && (
     <ul className="wo-legend">
-      {rows.map((r) => (
+      {ranking.map((r) => (
         <li key={r.sport}>
           <i style={{ background: tone(colorOf(sports, r.sport)) }} />
           <span className="wo-name" title={r.sport}>{r.sport}</span>
-          {size === 'L' && <em>{fmtHM(r.min)}</em>}
+          {wide && <em>{fmtHM(r.min)}</em>}
           <b>{Math.round((r.min / total) * 100)}%</b>
         </li>
       ))}
     </ul>
   )
+  const toggle = (
+    <div className="wk-range" role="group" aria-label="Periodo">
+      <button className={range === 'week' ? 'on' : ''} onClick={() => setRange('week')} aria-pressed={range === 'week'}>Semana</button>
+      <button className={range === 'month' ? 'on' : ''} onClick={() => setRange('month')} aria-pressed={range === 'month'}>Mes</button>
+    </div>
+  )
 
-  if (size === 'T') return <div className="wo wo-T">{donut}{legend}</div>
-  if (size === 'M') return <div className="wo wo-M">{donut}{legend}</div>
+  if (size === 'T') return <div className="wo wo-T">{donut}{toggle}{legend}</div>
+  if (size === 'M') return <div className="wo wo-M">{donut}<div className="wo-side">{toggle}{legend}</div></div>
   return (
     <div className="wo wo-L">
       {donut}
       <div className="wo-side">
-        <div className="wk-range" role="group" aria-label="Periodo">
-          <button className={range === 'week' ? 'on' : ''} onClick={() => setRange('week')} aria-pressed={range === 'week'}>Semana</button>
-          <button className={range === 'month' ? 'on' : ''} onClick={() => setRange('month')} aria-pressed={range === 'month'}>Mes</button>
-        </div>
+        {toggle}
         {legend}
         {ranking.length > 0 && <div className="wo-total"><span>Total {range === 'week' ? 'de la semana' : 'del mes'}</span><b>{fmtHM(total)}</b><small>{entries.length} {entries.length === 1 ? 'sesión' : 'sesiones'}</small></div>}
       </div>

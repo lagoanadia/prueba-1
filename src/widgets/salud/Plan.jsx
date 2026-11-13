@@ -43,35 +43,6 @@ function SessName({ text, max = 15, single = false }) {
   return <b ref={ref} className="sa-name">{text}</b>
 }
 
-/** Plan en M: solo lo de hoy, en una línea de tiempo con la hora de ahora, y cuál es la siguiente sesión. */
-function PlanToday({ data, view, sessions, sports, today }) {
-  const dayIdx = (new Date(`${today}T12:00:00`).getDay() + 6) % 7
-  const mine = sessions.filter((s) => s.day === dayIdx).sort((a, b) => toMin(a.start) - toMin(b.start))
-  const lo = view.from * 60
-  const hi = view.to * 60
-  const now = new Date().getHours() * 60 + new Date().getMinutes()
-  const pct = (m) => `${Math.min(100, Math.max(0, ((m - lo) / (hi - lo)) * 100))}%`
-  const next = mine.find((s) => toMin(s.start) + s.min > now)
-  const ticks = [view.from, Math.round((view.from + view.to) / 2), view.to]
-  return (
-    <div className="pt">
-      <div className="pt-line" role="img" aria-label={mine.length ? `Hoy: ${mine.map((s) => `${s.sport} a las ${s.start}`).join(', ')}` : 'Hoy no hay nada planeado'}>
-        {mine.map((s) => (
-          <span key={s.id} className={`pt-blk ${s.done?.[today] ? 'is-done' : ''}`} style={{ left: pct(toMin(s.start)), width: `calc(${pct(toMin(s.start) + s.min)} - ${pct(toMin(s.start))})`, '--c': colorOf(sports, s.sport) }} title={`${s.sport} · ${s.start} – ${fromMin(toMin(s.start) + s.min)}`}>
-            <SportIcon name={iconOf(data, s.sport)} size={16} /><em>{s.sport}</em>
-          </span>
-        ))}
-        {now >= lo && now <= hi && <i className="pt-now" style={{ left: pct(now) }} />}
-      </div>
-      <div className="pt-ticks">{ticks.map((h) => <span key={h}>{h}:00</span>)}</div>
-      <div className="pt-foot">
-        <span className="sa-label">Hoy · {dayShort(today)} {Number(today.slice(8))}</span>
-        <span className={`cy-chip pt-next ${next ? '' : 'is-none'}`}>{mine.length === 0 ? 'Hoy descansas' : next ? `Siguiente: ${next.sport} ${next.start}` : 'Hoy ya está hecho'}</span>
-      </div>
-    </div>
-  )
-}
-
 /**
  * Ejercicio de la semana, como un horario (las horas y días que tú elijas):
  *  - Los deportes son globitos: arrástralos a un día y una hora y la sesión queda puesta ahí (también tocándolos).
@@ -79,7 +50,7 @@ function PlanToday({ data, view, sessions, sports, today }) {
  *  - Agárrala por el centro y llévala donde quieras (otro día, otra hora); sin solaparse con otras.
  *  - Tocarla la marca como hecha (se oscurece con su color; cuenta en Resumen y Constancia) y la × la quita. Nada de ventanas.
  */
-export default function Plan({ size, data, update }) {
+export default function Plan({ data, update }) {
   const today = todayISO()
   const week = weekDays(today)
   const view = { ...DEFAULT_VIEW, ...(data.planView ?? {}) }
@@ -244,8 +215,6 @@ export default function Plan({ size, data, update }) {
   }, [sessions])
 
   const shown = sessions.map((s) => (live?.id === s.id ? { ...s, ...live } : s))
-
-  if (size === 'M') return <PlanToday data={data} view={view} sessions={sessions} sports={sports} today={today} />
 
   return (
     <div className="sa-plan">

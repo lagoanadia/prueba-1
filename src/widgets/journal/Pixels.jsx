@@ -1,10 +1,11 @@
 import AddPopup from '../AddPopup.jsx'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import MonthGrid, { EMPTY, OneWeek, TwoWeeks } from '../MonthGrid.jsx'
 import YearGrid, { YearMass } from '../YearGrid.jsx'
 import Icon from '../../components/Icon.jsx'
 import Chips from '../Chips.jsx'
 import { lastDays, streak, todayISO } from '../../lib/dates.js'
+import { sinceFromData } from '../since.js'
 
 const COLORS = ['#3185FC', '#EFABFF', '#F9DC5C', '#3DDC97', '#E84855']
 const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
@@ -29,6 +30,8 @@ export default function Pixels({ size, data, update, config, setConfig }) {
   const pick = (id) => { setCurrent(id); setConfig?.({ habit: id }) }
   const [menu, setMenu] = useState(false)
   const swipeX = useRef(null)
+  const since = sinceFromData(data, today)
+  useEffect(() => { if (!data.since) update((d) => (d.since ? d : { ...d, since })) }, []) // eslint-disable-line react-hooks/exhaustive-deps -- se guarda el día en que empezaste
 
   const toggle = (day) => update((d) => {
     const days = d.pixels?.[habit.id] ?? []
@@ -133,7 +136,7 @@ export default function Pixels({ size, data, update, config, setConfig }) {
           <div className="slide-in fill" key={habit.id + range + yearView}>
             {range === 'semana' && <OneWeek colorFor={color} onDay={toggle} />}
             {range === 'mes' && <MonthGrid colorFor={color} onDay={toggle} />}
-            {range === 'año' && (yearView === 'masa' ? <YearMass colorFor={color} onDay={toggle} /> : <YearGrid colorFor={color} onDay={toggle} />)}
+            {range === 'año' && (yearView === 'masa' ? <YearMass colorFor={color} onDay={toggle} since={since} /> : <YearGrid colorFor={color} onDay={toggle} since={since} />)}
           </div>
         </>
       )}

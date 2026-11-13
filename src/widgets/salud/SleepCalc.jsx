@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TimePicker from '../../components/TimePicker.jsx'
 import { fmtHM, fromMin, toMin } from './healthUtils.js'
 
 const CYCLE = 90 // minutos por ciclo de sueño
@@ -19,7 +20,7 @@ export default function SleepCalc({ size, data, update }) {
     <div className={`sa-sleepcalc sc-${size}`}>
       <form className="sa-row" onSubmit={calc}>
         <span className="sa-label">Quiero despertarme a las</span>
-        <input type="time" value={wake} onChange={(e) => setWake(e.target.value)} aria-label="Hora de despertarme" />
+        <TimePicker value={wake} onChange={setWake} label="Hora de despertarme" />
         <button className="sa-btn">Calcular</button>
       </form>
       {shown && (

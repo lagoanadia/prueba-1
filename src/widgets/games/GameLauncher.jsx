@@ -55,7 +55,7 @@ function Launcher({ game, size, data, update }) {
           <b className="game-name">{name}</b>
           <span className="game-status">{status}</span>
         </span>
-        <span className="game-go">{status === 'Sin empezar' ? 'Jugar' : status.startsWith('Resuelto') ? 'Ver' : 'Seguir'} →</span>
+        <span className="game-go">{status === 'Sin empezar' ? 'Jugar' : status.startsWith('Resuelto') ? 'Ver' : 'Seguir'}</span>
       </button>
       {open && createPortal(
         <div className="popup game-popup" role="dialog" aria-modal="true" aria-label={name}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import TimePicker from '../../components/TimePicker.jsx'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { DEFAULT_BREAK, DEFAULT_CLASS, fmt, normalizeTimetable, spans, toMin } from './timetable.js'
@@ -103,9 +104,9 @@ export default function Schedule({ data, update, subjects }) {
             </span>
             <span className="tt-time tt-time-edit">
               <span className="tt-times">
-                <input type="time" className="tt-in tt-start" key={`s${i}${times[i].start}`} defaultValue={fmt(times[i].start).padStart(5, '0')} onBlur={(e) => setStartAt(i, e.target.value)} aria-label="Hora de inicio" />
+                <TimePicker className="tp-flat tt-start" value={fmt(times[i].start).padStart(5, '0')} onChange={(v) => setStartAt(i, v)} label="Hora de inicio" />
                 <span className="tt-dash">–</span>
-                <input type="time" className="tt-in tt-end" key={`e${row.dur}${times[i].start}`} defaultValue={fmt(times[i].end).padStart(5, '0')} onBlur={(e) => setEnd(i, e.target.value)} aria-label="Hora de fin" />
+                <TimePicker className="tp-flat tt-end" value={fmt(times[i].end).padStart(5, '0')} onChange={(v) => setEnd(i, v)} label="Hora de fin" />
               </span>
               <span className="tt-dur-step">
                 <button type="button" className="mini" onClick={() => setDur(i, row.dur - 5)} aria-label="5 minutos menos">−</button>
