@@ -221,7 +221,10 @@ export default function Plan({ data, update }) {
         ) : (
           <button type="button" className="sa-range" onClick={() => setEditRange(true)} aria-label="Cambiar la franja horaria" title="Cambiar la franja horaria">{fromMin(lo)} – {fromMin(hi)}</button>
         )}
-        <button className="sa-btn is-soft sa-cfg" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><Icon name="sliders" size={20} strokeWidth={3} color="#202124" /></button>
+        <button className="sa-btn is-soft sa-cfg" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><svg width="28" height="28" viewBox="0 0 24 24" fill="#202124" aria-hidden="true">{/* el icono clásico de ajustes: dos barras con su deslizador cuadrado */}
+          <rect x="2" y="5.6" width="10.5" height="2.8" rx="1.4" /><rect x="13.8" y="3.8" width="5.6" height="6.4" rx="1.6" /><rect x="20.7" y="5.6" width="1.6" height="2.8" rx=".8" />
+          <rect x="1.7" y="15.6" width="1.6" height="2.8" rx=".8" /><rect x="4.6" y="13.8" width="5.6" height="6.4" rx="1.6" /><rect x="11.5" y="15.6" width="10.5" height="2.8" rx="1.4" />
+        </svg></button>
       </div>
       <div className="sa-sportbar" aria-label="Deportes: arrástralos al plan">
         {sports.map((sp) => (
