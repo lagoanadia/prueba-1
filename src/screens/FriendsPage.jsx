@@ -6,7 +6,7 @@ import { FriendsBox, FriendsProvider } from '../components/Friends.jsx'
 import useFriendRequests from '../hooks/useFriendRequests.js'
 import useAllBoards from '../hooks/useAllBoards.js'
 import useSocial from '../hooks/useSocial.js'
-import { EMOJIS } from '../services/socialService.js'
+import { EMOJIS, SOCIAL_EVENT, getFriendPosts } from '../services/socialService.js'
 import { sanitize } from '../lib/richText.js'
 
 const MOOD = { bueno: ['#3DDC97', 'Bien'], regular: ['#F9DC5C', 'Regular'], malo: ['#E84855', 'Mal'] }
@@ -44,7 +44,7 @@ export default function FriendsPage() {
   return (
     <div className="friends-page">
       {open ? (
-        <FriendProfile f={open} back={() => setFriend(null)} onSheet={(kind) => setSheet({ kind, friend: open })} />
+        <FriendProfile f={open} back={() => setFriend(null)} onSheet={(kind) => setSheet({ kind, friend: open })} run={run} />
       ) : (
         <>
           <div className="fp-strip">
@@ -69,15 +69,6 @@ export default function FriendsPage() {
 
 // ---------- Feed ----------
 function Feed({ state, run }) {
-  const { change } = useAllBoards(true, ['comida'])
-  const [comments, setComments] = useState(null)
-  const [reading, setReading] = useState(null)
-  const [saved, setSaved] = useState({})
-  const saveRecipe = (p) => {
-    const r = p.data
-    change('comida', (d) => ({ ...d, dishes: [...(d.dishes ?? []), { id: crypto.randomUUID(), name: r.name, for: r.for?.length ? r.for : ['comida'], time: r.time ?? null, ingredients: r.ingredients ?? [], steps: r.steps ?? [] }] }))
-    setSaved({ ...saved, [p.id]: true })
-  }
   const birthdays = state.friends.filter((f) => f.birthday)
   const studying = state.friends.filter((f) => f.session)
 
@@ -102,7 +93,25 @@ function Feed({ state, run }) {
           <span><b>@{f.username}</b> está estudiando{f.session.label ? ` ${f.session.label}` : ''} · quedan {Math.max(1, Math.round((f.session.endsAt - Date.now()) / 60000))} min</span>
         </div>
       ))}
-      {state.feed.map((p) => (
+      <PostList posts={state.feed} run={run} empty={<div className="card feed-card feed-empty"><b>El feed está tranquilo</b><span className="muted">Cuando tú o tus amigos compartáis una receta, unos apuntes o algo bueno del día, aparecerá aquí durante un mes. Busca el botón «Compartir».</span></div>} />
+    </div>
+  )
+}
+
+/** Publicaciones (las del feed o todas las de un amigo): reaccionar, comentar, abrir apuntes, guardar recetas y dejar de compartir lo tuyo. */
+function PostList({ posts, run, empty = null }) {
+  const { change } = useAllBoards(true, ['comida'])
+  const [comments, setComments] = useState(null)
+  const [reading, setReading] = useState(null)
+  const [saved, setSaved] = useState({})
+  const saveRecipe = (p) => {
+    const r = p.data
+    change('comida', (d) => ({ ...d, dishes: [...(d.dishes ?? []), { id: crypto.randomUUID(), name: r.name, for: r.for?.length ? r.for : ['comida'], time: r.time ?? null, ingredients: r.ingredients ?? [], steps: r.steps ?? [] }] }))
+    setSaved({ ...saved, [p.id]: true })
+  }
+  return (
+    <>
+      {posts.map((p) => (
         <article key={p.id} className="card feed-card">
           <header className="feed-who">
             <Avatar avatar={p.from.avatar} size={38} />
@@ -118,15 +127,18 @@ function Feed({ state, run }) {
                 {e}{p.reactions[e].n > 0 && <small>{p.reactions[e].n}</small>}
               </button>
             ))}
-            <button className="text-link feed-comments" onClick={() => setComments(p.id === comments ? null : p.id)}>{p.comments.length === 1 ? '1 comentario' : p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'}</button>
-            {p.mine && <button className="text-link" onClick={() => run('unpost', { id: p.id })}>Dejar de compartir</button>}
+            <button className={`feed-icon feed-comments ${comments === p.id ? 'on' : ''}`} onClick={() => setComments(p.id === comments ? null : p.id)} aria-expanded={comments === p.id}
+              aria-label={p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'} title={p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'}>
+              <Icon name="chat" size={18} />{p.comments.length > 0 && <small>{p.comments.length}</small>}
+            </button>
+            {p.mine && <button className="feed-icon feed-del" onClick={() => window.confirm('¿Dejar de compartir esto?') && run('unpost', { id: p.id })} aria-label="Dejar de compartir" title="Dejar de compartir"><Icon name="trash" size={16} color="#B3261E" /></button>}
           </footer>
           {comments === p.id && <Comments p={p} run={run} />}
         </article>
       ))}
-      {state.feed.length === 0 && <div className="card feed-card feed-empty"><b>El feed está tranquilo</b><span className="muted">Cuando tú o tus amigos compartáis una receta, unos apuntes o algo bueno del día, aparecerá aquí. Busca el botón «Compartir».</span></div>}
+      {posts.length === 0 && empty}
       {reading && <ReadDoc p={reading} onClose={() => setReading(null)} />}
-    </div>
+    </>
   )
 }
 
@@ -184,7 +196,14 @@ function ReadDoc({ p, onClose }) {
 }
 
 // ---------- Perfil de un amigo ----------
-function FriendProfile({ f, back, onSheet }) {
+function FriendProfile({ f, back, onSheet, run }) {
+  const [posts, setPosts] = useState(null)
+  useEffect(() => {
+    const load = () => getFriendPosts(f.username).then((r) => setPosts(r.posts ?? [])).catch(() => setPosts((p) => p ?? []))
+    load()
+    window.addEventListener(SOCIAL_EVENT, load) // al reaccionar o comentar se pone al día
+    return () => window.removeEventListener(SOCIAL_EVENT, load)
+  }, [f.username])
   return (
     <div className="fp-profile">
       <button className="back-link" onClick={back}><Icon name="back" size={18} /> Amigos</button>
@@ -200,6 +219,10 @@ function FriendProfile({ f, back, onSheet }) {
         <button className="pill pill-pink" onClick={() => onSheet('gift')}>Regalar</button>
       </div>
       <div className="card fp-tower"><b>Su edificio</b><Tower blocks={f.tower} /><span className="muted">{f.tower.length} días cerrados</span></div>
+      <div className="fp-posts">
+        <b className="fp-posts-title">Todo lo que ha publicado</b>
+        {posts === null ? <div className="spinner" aria-label="Cargando" /> : <PostList posts={posts} run={run} empty={<div className="card feed-card feed-empty"><span className="muted">Aún no ha compartido nada contigo.</span></div>} />}
+      </div>
     </div>
   )
 }

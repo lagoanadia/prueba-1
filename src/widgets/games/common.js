@@ -19,3 +19,11 @@ export const sendScore = (game, value) => social('score', { game, value }).then(
 /** Reto del día preparado por el servidor (Spelling Bee y crucigrama). */
 export const fetchDaily = (game) => request(`/api/games?game=${game}&lang=${lang()}&date=${today()}`)
 export const clock = (s) => { const t = Math.max(0, Math.round(s || 0)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}` }
+
+/** Definición cortita de una palabra (la pide al servidor y se acuerda de las que ya ha visto). Devuelve null si no la encuentra. */
+const defs = new Map()
+export const defineWord = async (word) => {
+  const key = `${lang()}:${word.toLowerCase()}`
+  if (!defs.has(key)) defs.set(key, request(`/api/define?word=${encodeURIComponent(word.toLowerCase())}&lang=${lang()}`).then((r) => r.definition ?? null).catch(() => { defs.delete(key); return undefined }))
+  return defs.get(key)
+}

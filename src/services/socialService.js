@@ -2,6 +2,7 @@ import { request } from './api.js'
 import { todayISO } from '../lib/dates.js'
 
 export const getSocial = () => request(`/api/social?today=${todayISO()}`)
+export const getFriendPosts = (username) => request(`/api/social?posts=${encodeURIComponent(username)}`)
 export const social = (action, body = {}) => request('/api/social', { method: 'POST', body: { action, today: todayISO(), ...body } })
 export const EMOJIS = ['👏', '🔥', '❤️', '😂']
 

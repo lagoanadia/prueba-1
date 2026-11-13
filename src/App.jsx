@@ -1,4 +1,5 @@
 import { syncAllFiles } from './lib/fileStore.js'
+import UndoToast from './components/UndoToast.jsx'
 import { useEffect, useState } from 'react'
 import LoginScreen from './screens/LoginScreen.jsx'
 import DesktopApp from './screens/DesktopApp.jsx'
@@ -82,6 +83,7 @@ export default function App() {
   return (
     <div className={settings.bigText ? 'big-text' : undefined}>
       {isDesktop ? <DesktopApp {...props} /> : <MobileApp {...props} />}
+      <UndoToast />
       <VoiceOverlay open={voiceOpen} onClose={closeVoice} firstName={firstName} assistant={assistant} modal={isDesktop} />
       {error && <p className="toast" role="alert">{error}</p>}
     </div>

@@ -5,7 +5,7 @@ import Avatar from '../../components/Avatar.jsx'
 import MeetingExtras from './MeetingExtras.jsx'
 import History from '../../components/History.jsx'
 import Icon from '../../components/Icon.jsx'
-import useMediaQuery from '../../hooks/useMediaQuery.js'
+import { useBox } from '../../widgets/useBox.js'
 import { addDays, dayShort, formatShort, todayISO, weekStart } from '../../lib/dates.js'
 import Modal from '../food/Modal.jsx'
 import { projectsOf } from '../../widgets/trabajo/projects.js'
@@ -29,7 +29,7 @@ const MEETING = '#3185FC'
  */
 export default function AgendaBlock({ data, update, projectId = null }) {
   const today = todayISO()
-  const narrow = useMediaQuery('(max-width: 899px)')
+  const [rootRef, rootBox] = useBox() // el nº de días que se ven depende del ancho del propio bloque (no de la pantalla)
   const [anchor, setAnchor] = useState(today)
   const [draft, setDraft] = useState(null) // reunión que se está nombrando o cambiando
   const [now, setNow] = useState(() => new Date())
@@ -59,7 +59,14 @@ export default function AgendaBlock({ data, update, projectId = null }) {
   const milestones = projects.filter((p) => !projectId || p.id === projectId).flatMap((p) => (p.milestones ?? []).map((m) => ({ ...m, projectId: p.id, c: colorOf(data, p.id) })))
   const wk = Array.from({ length: 7 }, (_, i) => addDays(weekStart(anchor), i))
   const shownIdx = view.days.slice().sort((a, b) => a - b)
-  const days = narrow ? [anchor] : shownIdx.map((i) => wk[i])
+  // Días que caben con aire (cada columna, 88 px como mínimo): si no caben todos, se ve una ventana de días seguidos desde «anchor»
+  const fit = rootBox.w ? Math.max(1, Math.min(shownIdx.length, Math.floor((rootBox.w - 48) / 88))) : shownIdx.length
+  const windowed = fit < shownIdx.length
+  const days = !windowed ? shownIdx.map((i) => wk[i]) : (() => {
+    const out = []
+    for (let k = 0; k < 14 && out.length < fit; k++) { const d = addDays(anchor, k); if (shownIdx.includes((new Date(`${d}T12:00:00`).getDay() + 6) % 7)) out.push(d) }
+    return out
+  })()
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const thisWeek = weekStart(anchor) === weekStart(today)
   const colorFor = (ev) => (ev.kind !== 'meeting' && ev.projectId && ev.by && sh.color(ev.projectId, ev.by)) || (ev.projectId ? colorOf(data, ev.projectId) : ev.color ?? MEETING)
@@ -180,14 +187,14 @@ export default function AgendaBlock({ data, update, projectId = null }) {
 
   const shown = events.map((x) => (live?.id === x.id ? { ...x, ...live } : x))
   const past = events.filter((x) => x.date < today).sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start)).slice(0, 80)
-  const step = narrow ? 1 : 7
+  const step = windowed ? fit : 7
   const range = `${new Date(`${days[0]}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}${days.length > 1 ? ` – ${new Date(`${days.at(-1)}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}` : ''}`
 
   return (
-    <div className="sa-plan wk-agenda-plan">
+    <div className="sa-plan wk-agenda-plan" ref={rootRef}>
       <div className="sa-row sa-split">
         <span className="agenda-nav">
-          <button className="icon-btn" onClick={() => setAnchor(addDays(anchor, -step))} disabled={narrow ? anchor <= today : thisWeek} aria-label="Anterior"><Icon name="left" size={18} /></button>
+          <button className="icon-btn" onClick={() => setAnchor(addDays(anchor, -step))} disabled={windowed ? anchor <= today : thisWeek} aria-label="Anterior"><Icon name="left" size={18} /></button>
           <button className="pill pill-sm" onClick={() => setAnchor(today)} disabled={days.includes(today)}>Hoy</button>
           <button className="icon-btn" onClick={() => setAnchor(addDays(anchor, step))} aria-label="Siguiente"><Icon name="right" size={18} /></button>
           <span className="muted agenda-range">{range}</span>

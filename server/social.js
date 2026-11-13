@@ -14,7 +14,8 @@ export const GAMES = { wordle: 6, sudoku: 1000, bee: 400, crossword: 1000 }
 export const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }
 // Accesorios exclusivos: se consiguen con secretos, por tu cumpleaños o como regalo
 export const SECRETS = { halo: 'Cerrar 3 días', starclip: 'Cerrar 10 días', partyhat: 'Tu cumpleaños', sprout: 'Compartir algo por primera vez' }
-const MAX_POSTS = 100
+const MAX_POSTS = 500 // lo que se guarda de cada persona (se ve entero en su perfil)
+const FEED_MS = 30 * 86_400_000 // en el feed, cada publicación dura un mes (en el perfil del amigo siguen todas)
 const MAX_TEXT = 300
 const MAX_DATA = 20_000
 
@@ -83,6 +84,26 @@ async function dayStatus(env, uid, today) {
   return { total: items.length, done: items.filter((i) => i.done).length, color: AREA_COLORS[top] ?? '#3185FC' }
 }
 
+/** Una publicación tal como la ve `me` (reacciones, comentarios y quién la hizo). */
+async function shapePost(env, me, uid, p, cache) {
+  const reactions = Object.fromEntries(EMOJIS.map((e) => [e, { n: (p.reactions?.[e] ?? []).length, mine: (p.reactions?.[e] ?? []).includes(me) }]))
+  const comments = await Promise.all((p.comments ?? []).map(async (c) => ({ id: c.id, text: c.text, at: c.at, from: await publicUser(env, c.from, cache) })))
+  return { id: p.id, kind: p.kind, data: p.data, text: p.text, at: p.at, mine: uid === me, private: p.to !== 'feed', from: await publicUser(env, uid, cache), reactions, comments }
+}
+
+/** Todo lo que un amigo ha publicado alguna vez y que tú puedes ver (en el feed o para ti), más reciente primero. Es lo que se ve en su perfil. */
+export async function friendPosts(env, me, username) {
+  const uid = await findUserId(env, normalizeUsername(username ?? ''))
+  if (!uid || (uid !== me && !(await getFriendIds(env, me)).includes(uid))) return { posts: [] }
+  const cache = new Map()
+  const posts = []
+  for (const p of await get(env, `posts:${uid}`, [])) {
+    if (uid !== me && p.to !== 'feed' && !p.to.includes(me)) continue
+    posts.push(await shapePost(env, me, uid, p, cache))
+  }
+  return { posts: posts.sort((a, b) => b.at - a.at) }
+}
+
 /** Todo lo que ve la pantalla de Amigos. `today` lo manda el navegador (fecha local). */
 export async function socialState(env, me, today) {
   const cache = new Map()
@@ -104,14 +125,13 @@ export async function socialState(env, me, today) {
     people.push({ ...u, mood, tower: s.shareTower ? s.tower.slice(-60) : [], birthday: s.birthday === mmdd ? 'today' : s.birthday === tomorrow ? 'tomorrow' : null, session: live })
   }
 
-  // Feed: lo tuyo y lo que tus amigos comparten contigo o con todos, más reciente primero
+  // Feed: lo tuyo y lo que tus amigos comparten contigo o con todos, del último mes, más reciente primero
   const feed = []
+  const since = Date.now() - FEED_MS
   for (const uid of [me, ...friends]) {
     for (const p of await get(env, `posts:${uid}`, [])) {
-      if (uid !== me && p.to !== 'feed' && !p.to.includes(me)) continue
-      const reactions = Object.fromEntries(EMOJIS.map((e) => [e, { n: (p.reactions?.[e] ?? []).length, mine: (p.reactions?.[e] ?? []).includes(me) }]))
-      const comments = await Promise.all((p.comments ?? []).map(async (c) => ({ id: c.id, text: c.text, at: c.at, from: await publicUser(env, c.from, cache) })))
-      feed.push({ id: p.id, kind: p.kind, data: p.data, text: p.text, at: p.at, mine: uid === me, private: p.to !== 'feed', from: await publicUser(env, uid, cache), reactions, comments })
+      if (p.at < since || (uid !== me && p.to !== 'feed' && !p.to.includes(me))) continue
+      feed.push(await shapePost(env, me, uid, p, cache))
     }
   }
   feed.sort((a, b) => b.at - a.at)

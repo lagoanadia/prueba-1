@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { undoable, insertAt } from '../../lib/undo.js'
 import Icon from '../../components/Icon.jsx'
 import { todayISO } from '../../lib/dates.js'
 import Modal from '../food/Modal.jsx'
@@ -41,7 +42,14 @@ export default function Accounting({ project, change }) {
     change((p) => ({ ...p, money: (p.money ?? []).some((x) => x.id === mv.id) ? p.money.map((x) => (x.id === mv.id ? mv : x)) : [...(p.money ?? []), mv] }))
     setYm(form.date.slice(0, 7)); setForm(null)
   }
-  const remove = (id) => { if (window.confirm('¿Borrar este movimiento?')) { change((p) => ({ ...p, money: (p.money ?? []).filter((x) => x.id !== id) })); setForm(null) } }
+  const remove = (id) => {
+    const list = project.money ?? []
+    const mv = list.find((x) => x.id === id)
+    const idx = list.findIndex((x) => x.id === id)
+    change((p) => ({ ...p, money: (p.money ?? []).filter((x) => x.id !== id) }))
+    setForm(null)
+    if (mv) undoable(`Movimiento «${mv.concept}» eliminado`, () => change((p) => ({ ...p, money: insertAt(p.money, mv, idx) })))
+  }
   const summaryText = () => `${project.name} · ${monthName(ym)}\nIngresos: ${eur(cur.inn)}\nGastos: ${eur(cur.out)}\nBeneficio: ${eur(cur.profit)}\nHoras: ${hours.toFixed(1)} h${rate != null ? ` · ${eur(rate)}/h` : ''}\n\n${items.map((x) => `${x.date} ${x.kind === 'in' ? '+' : '-'}${eur(x.amount)} ${x.concept}`).join('\n')}`
 
   return (

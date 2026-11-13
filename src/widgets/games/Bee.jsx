@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getLang } from '../../i18n/index.js'
-import { fetchDaily, sendScore, shuffle, today } from './common.js'
+import { defineWord, fetchDaily, sendScore, shuffle, today } from './common.js'
 
 const pointsOf = (w, isPan) => (w.length === 4 ? 1 : w.length) + (isPan(w) ? 7 : 0)
 const RANKS = [[0, 'Empezando'], [0.08, 'Bien'], [0.2, 'Muy bien'], [0.4, 'Genial'], [0.7, 'Experta'], [1, 'Reina del panal']]
@@ -21,6 +21,9 @@ export default function Bee({ data, update }) {
   const [order, setOrder] = useState(0)
   const [msg, setMsg] = useState('')
   const [dict, setDict] = useState(null)
+  const [open, setOpen] = useState(false) // lista de palabras encontradas desplegada (como en el Spelling Bee del NYT)
+  const [defFor, setDefFor] = useState(null) // palabra de la que se ve la definición
+  const [defText, setDefText] = useState(undefined) // undefined = buscando · null = no se encontró
   const keyRef = useRef(null)
   useEffect(() => { fetchDaily('bee').then(setPuzzle).catch((e) => setError(e.message)) }, [date])
   useEffect(() => { if (getLang() !== 'en') loadDict().then(setDict).catch(() => {}) }, [])
@@ -47,6 +50,10 @@ export default function Bee({ data, update }) {
   const scoreOf = (list) => list.reduce((a, w) => a + pointsOf(w, isPan), 0)
   const score = scoreOf(found)
   const rank = [...RANKS].reverse().find(([p]) => score >= p * total)[1]
+  const showDef = (w) => {
+    setDefFor(w); setDefText(undefined)
+    defineWord(w).then((t) => setDefText((cur) => (t === undefined ? null : t)))
+  }
   const flash = (t) => { setMsg(t); setTimeout(() => setMsg(''), 1400) }
   const submit = () => {
     const w = word.toUpperCase()
@@ -72,6 +79,27 @@ export default function Bee({ data, update }) {
     <div className="bee" onKeyDown={onKey} aria-label="Spelling Bee: escribe palabras con estas letras">
       <div className="w-row"><b className="bee-rank">{rank}</b><span className="w-hint">{score} puntos · {found.length} palabras</span></div>
       <div className="bar"><span style={{ width: `${Math.min(100, (score / total) * 100)}%`, background: '#F9DC5C' }} /></div>
+      <div className="bee-found-bar">
+        <button type="button" className="bee-found-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="bee-found-title">{found.length ? `Has encontrado ${found.length} ${found.length === 1 ? 'palabra' : 'palabras'}` : 'Aún no has encontrado palabras'}</span>
+          {!open && found.length > 0 && <span className="bee-found-peek">{[...found].slice(-4).reverse().map((w) => w.toLowerCase()).join(' · ')}</span>}
+          <svg className="bee-found-chev" width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+        {open && (
+          <div className="bee-found-panel" role="region" aria-label="Palabras encontradas">
+            {found.length === 0 ? <p className="w-hint">Todavía no hay ninguna. ¡Prueba con una!</p> : (
+              <div className="bee-found-grid">
+                {[...found].sort().map((w) => (
+                  <button type="button" key={w} className={`bee-w ${isPan(w) ? 'pan' : ''} ${defFor === w ? 'on' : ''}`} onClick={() => showDef(w)} aria-pressed={defFor === w}>{w.toLowerCase()}{isPan(w) && <i aria-hidden="true">★</i>}</button>
+                ))}
+              </div>
+            )}
+            <div className="bee-def" aria-live="polite">
+              {defFor ? <><b>{defFor.toLowerCase()}</b>{defText === undefined ? <span className="muted"> · buscando…</span> : defText ? <span> · {defText}</span> : <span className="muted"> · no he encontrado su definición</span>}</> : found.length > 0 && <span className="muted">Toca una palabra para ver su definición</span>}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="bee-word" aria-live="polite">{msg ? <span className="bee-msg">{msg}</span> : word ? [...word].map((ch, i) => <span key={i} className={ch === puzzle.center ? 'c' : ''}>{ch}</span>) : <span className="muted">Escribe…</span>}</div>
       <div className="hive">
         <button className="hex center" onClick={() => setWord(word + puzzle.center)}>{puzzle.center}</button>
@@ -82,7 +110,6 @@ export default function Bee({ data, update }) {
         <button className="pill" onClick={() => setOrder(order + 1)} aria-label="Mezclar letras">Mezclar</button>
         <button className="pill pill-on" onClick={submit}>Enviar</button>
       </div>
-      {found.length > 0 && <p className="bee-found">{[...found].sort().map((w) => <span key={w} className={isPan(w) ? 'pan' : ''}>{w.toLowerCase()}</span>)}</p>}
     </div>
   )
 }

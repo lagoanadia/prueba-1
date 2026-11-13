@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { undoable, insertAt } from '../../lib/undo.js'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getFriends } from '../../services/friendsService.js'
@@ -38,7 +39,13 @@ export default function ProjectsBlock({ data, update, openProject }) {
     setAdding(false)
   }
   const setDeadline = (id, deadline) => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, deadline } : p)) }))
-  const remove = (p) => { if (window.confirm(p.shared ? `¿Salir de «${p.name}»? Los demás lo siguen teniendo.` : `¿Borrar «${p.name}» y sus ${p.tasks.length} tareas?`)) update((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id), selectedProjects: (d.selectedProjects ?? []).filter((x) => x !== p.id) })) }
+  const remove = (p) => {
+    if (p.shared && !window.confirm(`¿Salir de «${p.name}»? Los demás lo siguen teniendo.`)) return // salir de uno compartido no se puede deshacer desde aquí
+    const idx = projects.findIndex((x) => x.id === p.id)
+    const wasSelected = (data.selectedProjects ?? []).includes(p.id)
+    update((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id), selectedProjects: (d.selectedProjects ?? []).filter((x) => x !== p.id) }))
+    if (!p.shared) undoable(`«${p.name}» eliminado${p.tasks.length ? ` con sus ${p.tasks.length} tareas` : ''}`, () => update((d) => ({ ...d, projects: insertAt(d.projects, p, idx), selectedProjects: wasSelected ? [...new Set([...(d.selectedProjects ?? []), p.id])] : d.selectedProjects ?? [] })))
+  }
 
   return (
     <div className="wk-projects">

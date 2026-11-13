@@ -1,4 +1,5 @@
 import ShareButton from '../../components/ShareButton.jsx'
+import { undoable, insertAt } from '../../lib/undo.js'
 import { docTitle } from './docs.js'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -11,7 +12,12 @@ export default function DocView({ project, docId, change, back }) {
   const d = (project.docs ?? []).find((x) => x.id === docId)
   if (!d) return null
   const save = (doc) => change((p) => ({ ...p, docs: p.docs.map((x) => (x.id === docId ? { ...x, doc, updatedAt: todayISO() } : x)) }))
-  const remove = () => { if (window.confirm('¿Borrar este documento?')) { change((p) => ({ ...p, docs: p.docs.filter((x) => x.id !== docId) })); back() } }
+  const remove = () => {
+    const idx = (project.docs ?? []).findIndex((x) => x.id === docId)
+    change((p) => ({ ...p, docs: p.docs.filter((x) => x.id !== docId) }))
+    undoable('Documento eliminado', () => change((p) => ({ ...p, docs: insertAt(p.docs, d, idx) })))
+    back()
+  }
   const k = DOC_KINDS[d.kind] ?? DOC_KINDS.blank
 
   return (
