@@ -3310,3 +3310,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-task { padding: 3px 10px; gap: 1px 6px; } .wk-task-title { font-size: 12px; font-weight: 600; } .wk-task-meta { font-size: 9.5px; gap: 3px; } .wk-ms-tag { font-size: 9.5px; padding: 0 6px 0 4px; max-width: 90px; } .wk-ms-tag i { width: 7px; height: 7px; }
 .wk-assignee svg { width: 15px; height: 15px; }
 .wk-bubble { padding: 3px 10px; font-size: 11.5px; } .wk-assign-bubbles { gap: 5px; }
+/* Hitos del cronograma: un palito baja del rombo y el nombre cuelga de él, a la derecha, sin pisar la línea de «hoy» */
+.tl-ms-wrap.is-btn, .tl-ms-wrap { overflow: visible; }
+.tl-row.has-labels .tl-ms-wrap::after { content: ''; position: absolute; left: 12px; top: 33px; width: 2px; height: 16px; background: var(--c); border-radius: 2px; }
+.tl-row.has-labels .tl-ms-label { top: 46px; left: 13px; transform: none; align-items: flex-start; text-align: left; padding-left: 6px; border-left: 2px solid transparent; }
+.tl-row.has-labels .tl-ms-wrap.below .tl-ms-label { top: 46px; }
+.tl-row.has-labels { height: 96px; }
