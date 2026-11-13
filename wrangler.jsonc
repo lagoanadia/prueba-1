@@ -20,6 +20,13 @@
     "GOOGLE_CLIENT_ID": "909832973896-6fin2g10n5847640kg9tn6fmrvdmiln5.apps.googleusercontent.com",
     "GROQ_MODEL": "openai/gpt-oss-120b"
   },
+  // Despliegues de prueba de cada rama (`wrangler preview`): las mismas variables públicas.
+  "previews": {
+    "vars": {
+      "GOOGLE_CLIENT_ID": "909832973896-6fin2g10n5847640kg9tn6fmrvdmiln5.apps.googleusercontent.com",
+      "GROQ_MODEL": "openai/gpt-oss-120b"
+    }
+  },
   // Los SECRETOS (SESSION_SECRET, GROQ_API_KEY) se ponen en el dashboard como tipo "Secret".
   // No borrar las variables que pongáis en el dashboard al desplegar.
   "keep_vars": true,
