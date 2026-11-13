@@ -11,6 +11,8 @@ import AgendaBlock from './work/AgendaBlock.jsx'
 import BoardBlock from './work/BoardBlock.jsx'
 import ProjectsBlock from './work/ProjectsBlock.jsx'
 import ProjectView from './work/ProjectView.jsx'
+import { SharedCtx } from './work/SharedCtx.js'
+import useSharedProjects from '../hooks/useSharedProjects.js'
 
 // Bloques de la página. span = ancho (1-3 columnas); tall = ocupa dos filas
 const DEFAULT_BLOCKS = [
@@ -32,7 +34,9 @@ const BLOCKS = {
  * Trabajo: todo en bloques del mismo estilo (como el planificador de Estudios), que se pueden
  * mover, ensanchar, quitar y añadir con el botón del tablero. Cada bloque se identifica con su icono.
  */
-export default function WorkPage({ data, update }) {
+export default function WorkPage({ data: boardData, update: boardUpdate }) {
+  // Los proyectos compartidos con amigos viven en el servidor y se mezclan aquí con los propios
+  const { data, update, api: shared } = useSharedProjects(boardData, boardUpdate)
   const blocks = data.workBlocks ?? DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
@@ -67,9 +71,10 @@ export default function WorkPage({ data, update }) {
     }
   }
 
-  if (open && (data.projects ?? []).some((p) => p.id === open)) return <ProjectView data={data} update={update} projectId={open} back={() => setOpen(null)} />
+  if (open && (data.projects ?? []).some((p) => p.id === open)) return <SharedCtx.Provider value={shared}><ProjectView data={data} update={update} projectId={open} back={() => setOpen(null)} /></SharedCtx.Provider>
 
   return (
+    <SharedCtx.Provider value={shared}>
     <div className="page work">
       <header className="page-head wk-head">
         <h1 className="sr-only">Trabajo</h1>
@@ -103,5 +108,6 @@ export default function WorkPage({ data, update }) {
         ))}
       </div>
     </div>
+    </SharedCtx.Provider>
   )
 }

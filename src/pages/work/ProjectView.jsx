@@ -12,6 +12,7 @@ import BoardBlock from './BoardBlock.jsx'
 import Milestones from './Milestones.jsx'
 import DocsBlock from './DocsBlock.jsx'
 import DocView from './DocView.jsx'
+import SharedBar from './SharedBar.jsx'
 import { PROJECT_COLORS, colorOf, soft } from './shared.js'
 
 const DEFAULT_BLOCKS = [
@@ -77,6 +78,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const PARTS = {
     head: { cls: 'card wk-block pv-head', label: 'Resumen', render: () => (
       <>
+      {project.shared && <SharedBar projectId={projectId} />}
       <div className="pv-ring" style={{ '--p': pct, '--c': c }} aria-label={`${pct}% hecho`}><b>{pct}%</b></div>
       <div className="pv-title">
         <input className="pv-name" defaultValue={project.name} maxLength={50} onBlur={(e) => e.target.value.trim() && change((p) => ({ ...p, name: e.target.value.trim() }))} aria-label="Nombre del proyecto" />

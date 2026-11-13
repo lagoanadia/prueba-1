@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
+import { getFriends } from '../../services/friendsService.js'
+import { useShared } from './SharedCtx.js'
 import { formatShort, daysUntil } from '../../lib/dates.js'
 import { progressOf, projectsOf } from '../../widgets/trabajo/projects.js'
 import { PROJECT_COLORS, colorOf, soft } from './shared.js'
@@ -9,17 +12,32 @@ export default function ProjectsBlock({ data, update, openProject }) {
   const projects = projectsOf(data)
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
+  const sh = useShared()
+  const [withFriends, setWithFriends] = useState(false) // proyecto colaborativo
+  const [friends, setFriends] = useState([])
+  const [picked, setPicked] = useState([])
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  useEffect(() => { if (withFriends && !friends.length) getFriends().then((r) => setFriends(r.friends ?? [])).catch(() => {}) }, [withFriends]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const add = (e) => {
+  const add = async (e) => {
     e.preventDefault()
     if (!name.trim()) return
     const id = crypto.randomUUID()
+    if (withFriends && picked.length) { // colaborativo: se crea en el servidor y los amigos lo ven al momento
+      setBusy(true); setErr('')
+      try {
+        await sh.create({ id, name: name.trim(), createdAt: new Date().toLocaleDateString('en-CA'), color: PROJECT_COLORS[projectsOf(data).length % PROJECT_COLORS.length], deadline: null, tasks: [] }, picked)
+        setName(''); setAdding(false); setWithFriends(false); setPicked([])
+      } catch (er) { setErr(er.message) } finally { setBusy(false) }
+      return
+    }
     update((d) => ({ ...d, projects: [...projectsOf(d), { id, name: name.trim(), createdAt: new Date().toLocaleDateString('en-CA'), color: PROJECT_COLORS[projectsOf(d).length % PROJECT_COLORS.length], deadline: null, tasks: [] }] }))
     setName('')
     setAdding(false)
   }
   const setDeadline = (id, deadline) => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, deadline } : p)) }))
-  const remove = (p) => { if (window.confirm(`¿Borrar «${p.name}» y sus ${p.tasks.length} tareas?`)) update((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id), selectedProjects: (d.selectedProjects ?? []).filter((x) => x !== p.id) })) }
+  const remove = (p) => { if (window.confirm(p.shared ? `¿Salir de «${p.name}»? Los demás lo siguen teniendo.` : `¿Borrar «${p.name}» y sus ${p.tasks.length} tareas?`)) update((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id), selectedProjects: (d.selectedProjects ?? []).filter((x) => x !== p.id) })) }
 
   return (
     <div className="wk-projects">
@@ -36,19 +54,33 @@ export default function ProjectsBlock({ data, update, openProject }) {
                 <span className="wk-pct">{pct}%</span>
                 <span className="bar"><span style={{ width: `${pct}%`, background: c }} /></span>
                 <span className="muted wk-meta"><Icon name="check" size={14} />{done}/{total}</span>
+                {p.shared && <span className="wk-shared" title="Proyecto con amigos">{(sh.meta(p.id)?.members ?? []).slice(0, 4).map((m) => <Avatar key={m.username} avatar={m.avatar} size={20} />)}</span>}
               </button>
               <label className={`wk-deadline ${left != null && left < 0 && pct < 100 ? 'is-late' : ''}`} title="Fecha límite" style={{ background: soft(c, 25) }}>
                 <Icon name="calendario" size={14} />{p.deadline ? formatShort(p.deadline).replace(/^\S+ /, '') : '—'}
                 <input type="date" value={p.deadline ?? ''} onChange={(e) => setDeadline(p.id, e.target.value || null)} aria-label={`Fecha límite de ${p.name}`} />
               </label>
-              <button className="wk-x" onClick={() => remove(p)} aria-label={`Borrar ${p.name}`}><Icon name="close" size={12} /></button>
+              <button className="wk-x" onClick={() => remove(p)} aria-label={p.shared ? `Salir de ${p.name}` : `Borrar ${p.name}`} title={p.shared ? 'Salir del proyecto' : 'Borrar'}><Icon name="close" size={12} /></button>
             </div>
           )
         })}
         {adding ? (
           <form className="wk-add" onSubmit={add}>
             <input autoFocus placeholder="Proyecto" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => !name && setAdding(false)} maxLength={40} aria-label="Nombre del proyecto" />
-            <button className="icon-btn on" disabled={!name.trim()} aria-label="Crear proyecto"><Icon name="check" size={18} /></button>
+            <button type="button" className={`icon-btn ${withFriends ? 'on' : ''}`} onClick={() => setWithFriends(!withFriends)} aria-pressed={withFriends} aria-label="Con amigos" title="Con amigos"><Icon name="amigos" size={18} /></button>
+            <button className="icon-btn on" disabled={!name.trim() || busy || (withFriends && !picked.length)} aria-label="Crear proyecto"><Icon name="check" size={18} /></button>
+            {withFriends && (
+              <div className="wk-friends" role="group" aria-label="Con quién">
+                {friends.length === 0 && <span className="muted">Aún no tienes amigos añadidos</span>}
+                {friends.map((f) => (
+                  <button type="button" key={f.username} className={`wk-friend ${picked.includes(f.username) ? 'on' : ''}`} aria-pressed={picked.includes(f.username)}
+                    onClick={() => setPicked(picked.includes(f.username) ? picked.filter((x) => x !== f.username) : [...picked, f.username])}>
+                    <Avatar avatar={f.avatar} size={22} />{f.username}
+                  </button>
+                ))}
+                {err && <span className="wk-err" role="alert">{err}</span>}
+              </div>
+            )}
           </form>
         ) : (
           <button className="icon-btn wk-plus" onClick={() => setAdding(true)} aria-label="Nuevo proyecto" title="Nuevo proyecto"><Icon name="plus" size={20} /></button>
