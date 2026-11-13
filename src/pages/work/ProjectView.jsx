@@ -101,23 +101,25 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
     ) },
     milestones: { cls: 'card wk-block pv-ms-block', label: 'Cronograma', render: () => (
       <>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Cronograma</h3>
       <Milestones project={project} change={change} color={c} />
       </>
     ) },
     docs: { cls: 'card wk-block pv-docs', label: 'Documentos', render: () => (
       <>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Documentos</h3>
       <DocsBlock project={project} change={change} openDoc={setDocId} />
       </>
     ) },
     board: { cls: 'card wk-block wk-board', label: 'Tareas', render: () => (
       <>
-      <span className="wk-badge" title="Tareas"><Icon name="board" size={18} /></span>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Tareas</h3>
       <BoardBlock data={data} update={update} onlyProject={projectId} />
       </>
     ) },
     time: { cls: 'card wk-block pv-time', label: 'Tiempo', render: () => (
       <>
-      <span className="wk-badge" title="Tiempo"><Icon name="clock" size={18} /></span>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Tiempo</h3>
       <button className={`pv-timer ${project.timerStart ? 'is-running' : ''}`} onClick={toggleTimer} style={{ '--c': c }} aria-label={project.timerStart ? 'Parar cronómetro' : 'Empezar cronómetro'}>
         <span className="pv-clock">{fmtClock(running)}</span>
         <span className="muted">{project.timerStart ? 'parar' : 'empezar'}</span>
@@ -140,7 +142,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
     ) },
     links: { cls: 'card wk-block wk-tools', label: 'Enlaces', render: () => (
       <>
-      <span className="wk-badge" title="Enlaces del proyecto"><Icon name="link" size={18} /></span>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Enlaces</h3>
       <Tools data={linksData} update={linksUpdate} bare />
       </>
     ) },

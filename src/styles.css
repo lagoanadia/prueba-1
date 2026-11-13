@@ -3277,3 +3277,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tl-row:not(.has-labels) .tl-ms-wrap { top: 0; }
 
 .tl-past { display: inline-flex; align-items: center; gap: 4px; border: 0; background: #F1F3F4; border-radius: 99px; padding: 2px 9px; font: 500 11px Poppins, sans-serif; color: #5F6368; cursor: pointer; } .tl-past.on { background: #FDECEE; color: #202124; }
+
+/* Dentro de un proyecto cada bloque lleva su título con punto, así que los iconitos sobran */
+.project-view .wk-badge { display: none; }
+.project-view .wk-block > .wk-title { position: static; }
+.project-view .wk-tools .tools { padding-top: 0; }
+.project-view .pv-time { justify-content: flex-start; } .project-view .pv-time > .wk-title { margin-bottom: 4px; }
