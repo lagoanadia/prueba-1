@@ -51,13 +51,13 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       <FriendToast toast={toast} onOpen={() => setView('amigos')} onClose={dismiss} />
       {closed && <div className="toast" role="status"><span className="toast-block" />{closed}<button className="pill" onClick={() => setView('amigos')}>Ver</button></div>}
       <nav className={`sidebar ${iconsOnly ? 'sidebar-icons' : ''}`} aria-label="Navegación">
-        <NavItem id="inicio" label="Inicio" color="#FFFFFF" />
+        <NavItem id="inicio" label="Inicio" color="#FF8A5B" />
         <hr className="side-sep" />
         {visible.map((a) => <NavItem key={a.id} id={a.id} label={a.label} color={a.color} />)}
         <div style={{ flex: 1 }} />
         <hr className="side-sep" />
-        <NavItem id="amigos" label="Amigos" color="#FFFFFF" />
-        <NavItem id="calendario" label="Calendario" color="#FFFFFF" />
+        <NavItem id="amigos" label="Amigos" color="#A678F5" />
+        <NavItem id="calendario" label="Calendario" color="#FFB02E" />
         <NavItem id="perfil" label="Perfil" />
       </nav>
 
