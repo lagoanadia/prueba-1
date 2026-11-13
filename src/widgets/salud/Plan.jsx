@@ -275,7 +275,7 @@ export default function Plan({ data, update }) {
                 const done = Boolean(s.done?.[date])
                 const h = height - 2
                 const short = h < 40 // 1 h o menos cuando el horario va apretado: letra a la medida y una sola línea
-                const tiny = h < 22 // demasiado bajo para escribir con aire alrededor: bloque de color liso, sin texto
+                const tiny = short && s.min <= 15 // 15 min: bloque de color liso, sin texto (la tarjeta lo explica); el resto siempre lleva texto, más pequeño si hace falta
                 const end = fromMin(toMin(s.start) + s.min)
                 return (
                   <Fragment key={s.id}>
@@ -284,7 +284,7 @@ export default function Plan({ data, update }) {
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
                     onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    {!tiny && <SessName text={s.sport} max={short ? Math.max(9, Math.min(14, Math.floor((h - 10) / 1.1))) : 15} single={short} />}
+                    {!tiny && <SessName text={s.sport} max={short ? Math.max(6, Math.min(14, Math.floor((h - 6) / 1.1))) : 15} single={short} />}
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
