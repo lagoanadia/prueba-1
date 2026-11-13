@@ -53,8 +53,9 @@ export default function ProjectsBlock({ data, update, openProject }) {
                 <b>{p.name}</b>
                 <span className="wk-pct">{pct}%</span>
                 <span className="bar"><span style={{ width: `${pct}%`, background: c }} /></span>
-                <span className="muted wk-meta"><Icon name="check" size={14} />{done}/{total}</span>
-                {p.shared && <span className="wk-shared" title="Proyecto con amigos">{(sh.meta(p.id)?.members ?? []).slice(0, 4).map((m) => <Avatar key={m.username} avatar={m.avatar} size={20} />)}</span>}
+                <span className="muted wk-meta"><Icon name="check" size={14} />{done}/{total}
+                  {p.shared && <span className="wk-shared" title="Proyecto con amigos">{(sh.meta(p.id)?.members ?? []).slice(0, 3).map((m) => <Avatar key={m.username} avatar={m.avatar} size={16} />)}</span>}
+                </span>
               </button>
               <label className={`wk-deadline ${left != null && left < 0 && pct < 100 ? 'is-late' : ''}`} title="Fecha límite" style={{ background: soft(c, 25) }}>
                 <Icon name="calendario" size={14} />{p.deadline ? formatShort(p.deadline).replace(/^\S+ /, '') : '—'}

@@ -3173,3 +3173,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-who button.on { background: #FDECEE; color: #202124; }
 .wk-add-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .wk-cancel { border: 0; background: none; font: 500 13px Poppins, sans-serif; color: #5F6368; cursor: pointer; padding: 6px 10px; }
+
+/* Los avatares de un proyecto compartido van en la misma línea que las tareas: la tarjeta no crece */
+.wk-meta { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.wk-meta .wk-shared { margin-left: 6px; height: 16px; } .wk-meta .wk-shared svg { width: 16px; height: 16px; margin-left: -5px; }
