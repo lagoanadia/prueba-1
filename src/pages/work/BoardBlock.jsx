@@ -37,7 +37,10 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
   const me = members.find((m) => m.you)?.username ?? null
   const [who, setWho] = useState('all') // todo · mis tareas · las del resto
   const [over, setOver] = useState(null) // a quién se está soltando una tarea
+  const setOverRef = useRef(setOver)
+  const assignRef = useRef(null)
   const assign = (taskId, assignee) => update((d) => updateTask(d, sharedProject.id, taskId, { assignee: assignee || null }))
+  assignRef.current = sharedProject ? assign : null
   const mineOf = (t) => t.assignee === me
   const colorOfMember = (u) => (sharedProject && u ? sh.color(sharedProject.id, u) : null)
   const visible = (t) => who === 'all' || (who === 'mine' ? mineOf(t) : !mineOf(t))
@@ -76,6 +79,8 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
         if (!far) return
         s.active = true
       }
+      const row = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-assign]')
+      setOverRef.current(row ? row.dataset.assign || '_' : null)
       setDrag({ ...s, x: e.clientX, y: e.clientY, over: columnAt(e.clientX, e.clientY) })
     }
     const block = (e) => { if (press.current?.active) e.preventDefault() } // en táctil, que no se mueva la página mientras arrastras
@@ -85,6 +90,9 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
       if (!s) return
       clearTimeout(s.timer)
       if (!s.active) { setEditing({ projectId: s.task.projectId, taskId: s.task.id }); return } // fue un toque: abrir la ficha
+      const row = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-assign]')
+      setOverRef.current(null)
+      if (row && assignRef.current) { setDrag(null); assignRef.current(s.task.id, row.dataset.assign || null); return } // soltada sobre una persona (o «sin asignar»)
       const to = columnAt(e.clientX, e.clientY)
       setDrag(null)
       if (to && to !== s.task.status) update((d) => updateTask(d, s.task.projectId, s.task.id, { status: to, doneAt: to === 'done' ? today : null }))
@@ -109,13 +117,13 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
       <>
         {mixed && <span className="wk-tag"><span className="dot" style={{ background: c }} />{t.projectName}</span>}
         <span className="wk-task-title">{t.title}{t.assignee && members.find((m) => m.username === t.assignee) && <span className="wk-assignee" style={{ '--m': colorOfMember(t.assignee) }} title={`@${t.assignee}`}><Avatar avatar={members.find((m) => m.username === t.assignee).avatar} size={18} /></span>}</span>
-        <span className="wk-task-meta">
-          {ms && <span className="wk-ms-tag" style={{ '--c': c }} title={`Del hito «${ms.title}»`}><i />{ms.title}</span>}
-          <span className="wk-prio-word" style={{ background: soft(PRIORITY[t.priority], 35) }}>{PRIORITY_WORD[t.priority]}</span>
-          {t.due && <span className={`wk-due ${late ? 'is-late' : ''}`}>{late ? 'Vencida · ' : ''}{formatShort(t.due).replace(/^\S+ /, '')}</span>}
-          {subs.length > 0 && <span className="wk-subs">{subs.filter((s) => s.done).length}/{subs.length} subtareas</span>}
-          {t.notes && <span className="wk-subs">Notas</span>}
-        </span>
+        {(ms || late || subs.length > 0) && (
+          <span className="wk-task-meta">
+            {ms && <span className="wk-ms-tag" style={{ '--c': c }} title={`Del hito «${ms.title}»`}><i />{ms.title}</span>}
+            {late && <span className="wk-due is-late" title="Vencida">Vencida</span>}
+            {subs.length > 0 && <span className="wk-subs">{subs.filter((x) => x.done).length}/{subs.length}</span>}
+          </span>
+        )}
       </>
     )
   }
@@ -145,7 +153,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
           {[{ username: null, label: 'Sin asignar' }, ...members].map((m) => {
             const mine = sharedProject.tasks.filter((t) => t.status !== 'done' && (t.assignee ?? null) === m.username && (m.username === null ? who !== 'mine' : true))
             return (
-              <div key={m.username ?? 'none'} className={`wk-assign-row ${over === (m.username ?? '_') ? 'is-over' : ''}`}
+              <div key={m.username ?? 'none'} data-assign={m.username ?? ''} className={`wk-assign-row ${over === (m.username ?? '_') ? 'is-over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setOver(m.username ?? '_') }} onDragLeave={() => setOver(null)}
                 onDrop={(e) => { e.preventDefault(); setOver(null); const id = e.dataTransfer.getData('text/task'); if (id) assign(id, m.username) }}>
                 <span className="wk-assign-who" style={m.username ? { '--m': colorOfMember(m.username) } : undefined}>{m.username ? <span className="wk-ring"><Avatar avatar={m.avatar} size={26} /></span> : <Icon name="board" size={18} />}<b>{m.username ? (m.you ? 'Yo' : `@${m.username}`) : m.label}</b><i>{mine.length}</i></span>
@@ -167,8 +175,8 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
           <Select value={projectFor?.id} label="Proyecto" onChange={setTarget} options={shown.map((p) => ({ value: p.id, label: p.name, color: colorOf(data, p.id) }))} />
         )}
         <input placeholder="Nueva tarea" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} aria-label="Nueva tarea" />
-        <label className={`icon-btn wk-date ${due ? 'on' : ''}`} title={due ? formatShort(due) : 'Fecha'}>
-          <Icon name="calendario" size={18} />
+        <label className={`wk-date-field ${due ? 'on' : ''}`} title="Fecha límite">
+          <Icon name="calendario" size={16} />
           <input type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Fecha de la tarea" />
         </label>
         <button className="icon-btn on" disabled={!title.trim()} aria-label="Añadir tarea"><Icon name="plus" size={20} /></button>

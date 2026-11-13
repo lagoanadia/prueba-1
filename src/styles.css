@@ -3302,3 +3302,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-ms-tag { display: inline-flex; align-items: center; gap: 5px; background: color-mix(in srgb, var(--c) 18%, #fff); border-radius: 99px; padding: 0 8px 0 5px; font-weight: 600; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wk-ms-tag i, .wk-ms-dia { width: 9px; height: 9px; border: 2px solid var(--c, #E84855); border-radius: 2px; background: #fff; transform: rotate(45deg) scale(.85); flex: none; display: inline-block; }
 .wk-ms-dia { margin-right: 6px; --c: #E84855; vertical-align: middle; }
+
+/* Fecha de la tarea: un campo claro dd/mm/aaaa */
+.wk-date-field { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--line); border-radius: 99px; padding: 5px 12px; background: #fff; cursor: pointer; } .wk-date-field.on { border-color: #E84855; background: #FDECEE; }
+.wk-date-field input { border: 0; outline: none; background: transparent; font: 500 13px Poppins, sans-serif; color: #202124; width: 118px; padding: 0; cursor: pointer; }
+/* Tareas todavía más pequeñas y visuales */
+.wk-task { padding: 3px 10px; gap: 1px 6px; } .wk-task-title { font-size: 12px; font-weight: 600; } .wk-task-meta { font-size: 9.5px; gap: 3px; } .wk-ms-tag { font-size: 9.5px; padding: 0 6px 0 4px; max-width: 90px; } .wk-ms-tag i { width: 7px; height: 7px; }
+.wk-assignee svg { width: 15px; height: 15px; }
+.wk-bubble { padding: 3px 10px; font-size: 11.5px; } .wk-assign-bubbles { gap: 5px; }
