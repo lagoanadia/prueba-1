@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { STATES, projectsOf } from '../../widgets/trabajo/projects.js'
+import Avatar from '../../components/Avatar.jsx'
 import { colorOf, soft } from './shared.js'
+import { useShared } from './SharedCtx.js'
 
 const PRIORITY = [['baja', '#3DDC97'], ['media', '#F9DC5C'], ['alta', '#E84855']]
 const STATE_ICON = { todo: 'list', doing: 'clock', done: 'check' }
@@ -16,6 +18,8 @@ export default function TaskEditor({ data, update, projectId, taskId, onClose })
   const project = projectsOf(data).find((p) => p.id === projectId)
   const task = project?.tasks.find((t) => t.id === taskId)
   const [sub, setSub] = useState('')
+  const sh = useShared()
+  const members = project?.shared ? sh.meta(projectId)?.members ?? [] : []
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
   if (!task) return null
 
@@ -61,6 +65,25 @@ export default function TaskEditor({ data, update, projectId, taskId, onClose })
             <input type="date" value={task.due ?? ''} onChange={(e) => set({ due: e.target.value || null })} aria-label="Fecha" />
           </label>
         </div>
+
+        {members.length > 0 && (
+          <div className="te-row te-assign" role="radiogroup" aria-label="Asignada a">
+            <button role="radio" aria-checked={!task.assignee} className={`seg-chip ${!task.assignee ? 'on' : ''}`} onClick={() => set({ assignee: null })}>Sin asignar</button>
+            {members.map((m) => (
+              <button key={m.username} role="radio" aria-checked={task.assignee === m.username} className={`seg-chip te-member ${task.assignee === m.username ? 'on' : ''}`} style={{ '--m': sh.color(projectId, m.username) }} onClick={() => set({ assignee: m.username })}>
+                <Avatar avatar={m.avatar} size={18} />{m.you ? 'Yo' : `@${m.username}`}
+              </button>
+            ))}
+          </div>
+        )}
+        {(project?.milestones ?? []).length > 0 && (
+          <div className="te-row te-assign" role="radiogroup" aria-label="Hito">
+            <button role="radio" aria-checked={!task.milestoneId} className={`seg-chip ${!task.milestoneId ? 'on' : ''}`} onClick={() => set({ milestoneId: null })}>Sin hito</button>
+            {project.milestones.map((m) => (
+              <button key={m.id} role="radio" aria-checked={task.milestoneId === m.id} className={`seg-chip ${task.milestoneId === m.id ? 'on' : ''}`} onClick={() => set({ milestoneId: m.id })}><i className="wk-ms-dia" style={{ '--c': c }} />{m.title}</button>
+            ))}
+          </div>
+        )}
 
         <textarea className="te-notes" placeholder="Notas, enlaces, detalles…" value={task.notes ?? ''} rows={3} onChange={(e) => set({ notes: e.target.value })} maxLength={2000} aria-label="Notas" />
 

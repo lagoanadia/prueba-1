@@ -3316,3 +3316,10 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tl-row.has-labels .tl-ms-label { top: 46px; left: 13px; transform: none; align-items: flex-start; text-align: left; padding-left: 6px; border-left: 2px solid transparent; }
 .tl-row.has-labels .tl-ms-wrap.below .tl-ms-label { top: 46px; }
 .tl-row.has-labels { height: 96px; }
+
+/* Globos de reparto: editar y borrar al pasar el ratón */
+.wk-bubble-wrap { position: relative; display: inline-flex; }
+.wk-bubble-tools { position: absolute; top: -7px; right: -4px; display: none; gap: 2px; z-index: 2; } .wk-bubble-wrap:hover .wk-bubble-tools, .wk-bubble-wrap:focus-within .wk-bubble-tools { display: inline-flex; }
+.wk-bubble-tools button { width: 18px; height: 18px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.wk-bubble-tools button:last-child { color: #B3261E; }
+.te-assign { flex-wrap: wrap; gap: 6px; } .te-member { display: inline-flex; align-items: center; gap: 6px; } .te-member.on { box-shadow: 0 0 0 2px var(--m); }

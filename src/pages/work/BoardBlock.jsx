@@ -159,9 +159,15 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
                 <span className="wk-assign-who" style={m.username ? { '--m': colorOfMember(m.username) } : undefined}>{m.username ? <span className="wk-ring"><Avatar avatar={m.avatar} size={26} /></span> : <Icon name="board" size={18} />}<b>{m.username ? (m.you ? 'Yo' : `@${m.username}`) : m.label}</b><i>{mine.length}</i></span>
                 <span className="wk-assign-bubbles">
                   {mine.map((t) => (
-                    <button key={t.id} type="button" draggable className="wk-bubble" style={{ '--c': colorOfMember(m.username) ?? '#9AA0A6' }}
+                    <span key={t.id} className="wk-bubble-wrap">
+                      <button type="button" draggable className="wk-bubble" style={{ '--c': colorOfMember(m.username) ?? '#9AA0A6' }}
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/task', t.id) }}
                       onClick={() => assign(t.id, m.username === me ? null : me)} title={`${t.milestoneId ? `Del hito «${milestoneOf({ ...t, projectId: sharedProject.id })?.title ?? ''}» · ` : ''}${m.username === me ? 'Toca para soltarla' : 'Toca para asumirla tú'}`}>{t.milestoneId && <i className="wk-ms-dia" />}{t.title}</button>
+                      <span className="wk-bubble-tools">
+                        <button type="button" onClick={() => setEditing({ projectId: sharedProject.id, taskId: t.id })} aria-label={`Editar ${t.title}`} title="Editar"><Icon name="pen" size={11} strokeWidth={3} /></button>
+                        <button type="button" onClick={() => window.confirm(`¿Borrar «${t.title}»?`) && update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== sharedProject.id ? p : { ...p, tasks: p.tasks.filter((x) => x.id !== t.id) })) }))} aria-label={`Borrar ${t.title}`} title="Borrar"><Icon name="close" size={11} strokeWidth={3} /></button>
+                      </span>
+                    </span>
                   ))}
                   {mine.length === 0 && <span className="muted wk-assign-empty">{m.username ? 'Suelta aquí una tarea' : 'Todo repartido'}</span>}
                 </span>
