@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
+import { proposeTasksFromNotes } from '../../services/organizeService.js'
+import Timeline from './Timeline.jsx'
 
 const relative = (n) => (n === 0 ? 'hoy' : n === 1 ? 'mañana' : n > 0 ? `en ${n} días` : `hace ${-n} días`)
 const short = (iso) => formatShort(iso).replace(/^\S+ /, '')
@@ -31,13 +33,69 @@ function MilestonePopup({ initial, onSave, onDelete, onClose }) {
   )
 }
 
+/** Un hito abierto: notas libres → la IA las ordena en puntos → tú eliges cuáles pasan a pendientes (la IA solo propone). */
+function MilestonePanel({ project, m, change, onEdit, onClose }) {
+  const [notes, setNotes] = useState(m.notes ?? '')
+  const [prop, setProp] = useState(null) // [{ id, text, on }]
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const linked = project.tasks.filter((t) => t.milestoneId === m.id)
+  const saveNotes = () => notes !== (m.notes ?? '') && change((p) => ({ ...p, milestones: p.milestones.map((x) => (x.id === m.id ? { ...x, notes } : x)) }))
+  const order = async () => {
+    if (!notes.trim()) return
+    saveNotes(); setBusy(true); setErr('')
+    try { const { tasks } = await proposeTasksFromNotes(project.name, m.title, notes); setProp(tasks.map((text) => ({ id: crypto.randomUUID(), text, on: true }))) }
+    catch (e) { setErr(e.message || 'No se ha podido ordenar') } finally { setBusy(false) }
+  }
+  const chosen = (prop ?? []).filter((x) => x.on && x.text.trim())
+  const add = () => {
+    change((p) => ({ ...p, tasks: [...p.tasks, ...chosen.map((x) => ({ id: crypto.randomUUID(), title: x.text.trim(), priority: 'media', due: m.date || null, status: 'todo', milestoneId: m.id }))] }))
+    setProp(null)
+  }
+  const set = (id, patch) => setProp(prop.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  return (
+    <div className="ms-panel" role="region" aria-label={`Hito ${m.title}`}>
+      <div className="ms-panel-head"><b>{m.title}</b><span className="muted">{short(m.date)}</span><span className="ms-grow" />
+        <button className="icon-btn" onClick={onEdit} aria-label="Cambiar el hito" title="Cambiar el hito"><Icon name="pen" size={16} /></button>
+        <button className="icon-btn" onClick={onClose} aria-label="Cerrar el hito"><Icon name="close" size={16} /></button></div>
+      <textarea className="ms-notes" value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={saveNotes} rows={3} maxLength={4000} placeholder="Apunta lo que hay que hacer, tal cual te salga…" aria-label="Notas del hito" />
+      <div className="ms-panel-actions">
+        <button className="pill sh-save" onClick={order} disabled={busy || !notes.trim()}><Icon name="star" size={15} color="#fff" />{busy ? 'Ordenando…' : 'Ordenar con IA'}</button>
+        {err && <span className="wk-err" role="alert">{err}</span>}
+      </div>
+      {prop && (
+        <div className="ms-prop">
+          <span className="muted">Propuesta: tú decides qué pasa a pendientes</span>
+          {prop.map((x) => (
+            <div key={x.id} className={`ms-prop-it ${x.on ? '' : 'is-off'}`}>
+              <button type="button" className={`ms-chk ${x.on ? 'on' : ''}`} onClick={() => set(x.id, { on: !x.on })} aria-pressed={x.on} aria-label={x.on ? 'Quitar de la lista' : 'Incluir'}>{x.on && <Icon name="check" size={12} color="#fff" strokeWidth={3} />}</button>
+              <input value={x.text} maxLength={90} onChange={(e) => set(x.id, { text: e.target.value })} aria-label="Tarea" />
+            </div>
+          ))}
+          <button type="button" className="ms-more" onClick={() => setProp([...prop, { id: crypto.randomUUID(), text: '', on: true }])}><Icon name="plus" size={14} />Añadir otra</button>
+          <div className="ms-panel-actions">
+            <button className="pill" onClick={() => setProp(null)}>Cancelar</button>
+            <button className="pill sh-save" onClick={add} disabled={!chosen.length}>Añadir {chosen.length} a pendientes</button>
+          </div>
+        </div>
+      )}
+      {linked.length > 0 && (
+        <ul className="ms-linked" aria-label="Tareas de este hito">
+          {linked.map((t) => <li key={t.id} className={t.status === 'done' ? 'is-done' : ''}><Icon name="check" size={13} />{t.title}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /**
  * Hitos en una línea de tiempo: del inicio del proyecto a su fecha límite, con «hoy» marcado.
  * Tocar un hito lo abre para cambiarlo; el + añade uno nuevo.
  */
 export default function Milestones({ project, change, color }) {
   const today = todayISO()
-  const [editing, setEditing] = useState(null) // hito abierto (o uno nuevo)
+  const [editing, setEditing] = useState(null) // hito que se está cambiando (o uno nuevo)
+  const [openId, setOpenId] = useState(null) // hito desplegado
   const list = [...(project.milestones ?? [])].sort((a, b) => a.date.localeCompare(b.date))
   const next = list.find((m) => !m.done)
 
@@ -70,19 +128,11 @@ export default function Milestones({ project, change, color }) {
         <button className="icon-btn ms-plus" onClick={() => setEditing({ id: crypto.randomUUID(), title: '', date: '', done: false, isNew: true })} aria-label="Añadir hito" title="Añadir hito"><Icon name="plus" size={20} /></button>
       </div>
 
-      <div className="pv-timeline">
-        <span className="pv-line"><span style={{ width: at(today), background: color }} /></span>
-        <span className="pv-today" style={{ left: at(today) }} title={`Hoy, ${short(today)}`} />
-        {list.map((m, i) => (
-          <button key={m.id} className={`pv-mile ${i % 2 ? 'below' : ''} ${pos(m.date) > 88 ? 'edge-r' : pos(m.date) < 12 ? 'edge-l' : ''} ${m.done ? 'done' : ''} ${m.date < today && !m.done ? 'late' : ''} ${m === next ? 'next' : ''}`} style={{ left: at(m.date) }}
-            onClick={() => setEditing(m)} title={`${m.title} · ${formatShort(m.date)}`}>
-            <span className="pv-mile-label"><b>{m.title}</b><span>{short(m.date)}</span></span>
-            <span className="pv-dot" />
-          </button>
-        ))}
-        {!crowdStart && <span className="pv-edge pv-edge-start">{short(start)}</span>}
-        {!crowdEnd && <span className="pv-edge pv-edge-end">{project.deadline ? short(project.deadline) : '—'}</span>}
-      </div>
+      <Timeline data={{ projects: [project] }} labels openId={openId} onMilestone={(m) => setOpenId(openId === m.id ? null : m.id)} />
+
+      {list.find((m) => m.id === openId) && (
+        <MilestonePanel key={openId} project={project} m={list.find((m) => m.id === openId)} change={change} onEdit={() => setEditing(list.find((m) => m.id === openId))} onClose={() => setOpenId(null)} />
+      )}
 
       {editing && (
         <MilestonePopup initial={editing} onClose={() => setEditing(null)}

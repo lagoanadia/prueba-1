@@ -1,4 +1,6 @@
 import Select from '../../components/Select.jsx'
+import Avatar from '../../components/Avatar.jsx'
+import { useShared } from './SharedCtx.js'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Empty from './Empty.jsx'
@@ -29,8 +31,17 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
   const [drag, setDrag] = useState(null) // { task, x, y, w, over }
   const press = useRef(null)
   const projectFor = shown.find((p) => p.id === target) ?? shown[0]
+  const sh = useShared()
+  const sharedProject = onlyProject ? projects.find((p) => p.id === onlyProject && p.shared) : null
+  const members = sharedProject ? sh.meta(sharedProject.id)?.members ?? [] : []
+  const me = members.find((m) => m.you)?.username ?? null
+  const [who, setWho] = useState('all') // todo · mis tareas · las del resto
+  const [over, setOver] = useState(null) // a quién se está soltando una tarea
+  const assign = (taskId, assignee) => update((d) => updateTask(d, sharedProject.id, taskId, { assignee: assignee || null }))
+  const mineOf = (t) => t.assignee === me
+  const visible = (t) => who === 'all' || (who === 'mine' ? mineOf(t) : !mineOf(t))
 
-  const tasks = shown.flatMap((p) => p.tasks.map((t) => ({ ...t, projectId: p.id, projectName: p.name })))
+  const tasks = shown.flatMap((p) => p.tasks.map((t) => ({ ...t, projectId: p.id, projectName: p.name }))).filter((t) => !sharedProject || visible(t))
   const add = (e) => {
     e.preventDefault()
     if (!title.trim() || !projectFor) return
@@ -94,7 +105,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
     return (
       <>
         {mixed && <span className="wk-tag"><span className="dot" style={{ background: c }} />{t.projectName}</span>}
-        <span className="wk-task-title">{t.title}</span>
+        <span className="wk-task-title">{t.title}{t.assignee && members.find((m) => m.username === t.assignee) && <span className="wk-assignee" title={`@${t.assignee}`}><Avatar avatar={members.find((m) => m.username === t.assignee).avatar} size={18} /></span>}</span>
         <span className="wk-task-meta">
           <span className="wk-prio-word" style={{ background: soft(PRIORITY[t.priority], 35) }}>{PRIORITY_WORD[t.priority]}</span>
           {t.due && <span className={`wk-due ${late ? 'is-late' : ''}`}>{late ? 'Vencida · ' : ''}{formatShort(t.due).replace(/^\S+ /, '')}</span>}
@@ -115,6 +126,34 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
               <button key={p.id} className={`seg-chip ${on ? 'on' : ''}`} style={{ background: soft(colorOf(data, p.id), on ? 55 : 22) }} aria-pressed={on} onClick={() => toggleProject(p.id)}>
                 <span className="dot" style={{ background: colorOf(data, p.id), width: 8, height: 8 }} />{p.name}
               </button>
+            )
+          })}
+        </div>
+      )}
+      {sharedProject && (
+        <div className="wk-assign" aria-label="Repartir tareas">
+          <div className="wk-assign-top">
+            <span className="muted">Arrastra una tarea a una persona, o tócala para asumirla tú</span>
+            <span className="ag-who" role="group" aria-label="Qué tareas ver">
+              {[['all', 'Todo'], ['mine', 'Mías'], ['others', 'Del resto']].map(([k, l]) => <button key={k} type="button" className={who === k ? 'on' : ''} aria-pressed={who === k} onClick={() => setWho(k)}>{l}</button>)}
+            </span>
+          </div>
+          {[{ username: null, label: 'Sin asignar' }, ...members].map((m) => {
+            const mine = sharedProject.tasks.filter((t) => t.status !== 'done' && (t.assignee ?? null) === m.username && (m.username === null ? who !== 'mine' : true))
+            return (
+              <div key={m.username ?? 'none'} className={`wk-assign-row ${over === (m.username ?? '_') ? 'is-over' : ''}`}
+                onDragOver={(e) => { e.preventDefault(); setOver(m.username ?? '_') }} onDragLeave={() => setOver(null)}
+                onDrop={(e) => { e.preventDefault(); setOver(null); const id = e.dataTransfer.getData('text/task'); if (id) assign(id, m.username) }}>
+                <span className="wk-assign-who">{m.username ? <Avatar avatar={m.avatar} size={26} /> : <Icon name="board" size={18} />}<b>{m.username ? (m.you ? 'Yo' : `@${m.username}`) : m.label}</b><i>{mine.length}</i></span>
+                <span className="wk-assign-bubbles">
+                  {mine.map((t) => (
+                    <button key={t.id} type="button" draggable className="wk-bubble" style={{ '--c': PRIORITY[t.priority] }}
+                      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/task', t.id) }}
+                      onClick={() => assign(t.id, m.username === me ? null : me)} title={m.username === me ? 'Toca para soltarla' : m.username ? 'Toca para asumirla tú' : 'Toca para asumirla tú'}>{t.title}</button>
+                  ))}
+                  {mine.length === 0 && <span className="muted wk-assign-empty">{m.username ? 'Suelta aquí una tarea' : 'Todo repartido'}</span>}
+                </span>
+              </div>
             )
           })}
         </div>

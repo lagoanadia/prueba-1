@@ -25,6 +25,7 @@ import ingredients from './routes/ingredients.js'
 import recipes from './routes/recipes.js'
 import files from './routes/files.js'
 import projects from './routes/projects.js'
+import tasknotes from './routes/tasknotes.js'
 
 const ROUTES = {
   '/api/auth/google': google,
@@ -44,6 +45,7 @@ const ROUTES = {
   '/api/recipes': recipes,
   '/api/files': files,
   '/api/projects': projects,
+  '/api/tasknotes': tasknotes,
 }
 
 export default {

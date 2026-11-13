@@ -99,6 +99,7 @@ export default function useSharedProjects(data, update) {
     saveVersion: async (id, note) => { await flush(id); await saveSharedVersion(id, note); await refresh() },
     restore: async (id, n) => { await flush(id); await restoreSharedVersion(id, n); await refresh() },
     invite: async (id, members) => { await inviteShared(id, members); await refresh() },
+    me: shared.map((r) => r.meta.members.find((m) => m.you)?.username).find(Boolean) ?? null, // mi nombre de usuario (si estoy en algún proyecto compartido)
     error,
   }), [shared, error, refresh, flush]) // eslint-disable-line react-hooks/exhaustive-deps
 

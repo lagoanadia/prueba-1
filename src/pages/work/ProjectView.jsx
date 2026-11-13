@@ -13,12 +13,13 @@ import Milestones from './Milestones.jsx'
 import DocsBlock from './DocsBlock.jsx'
 import DocView from './DocView.jsx'
 import SharedBar from './SharedBar.jsx'
+import AgendaBlock from './AgendaBlock.jsx'
 import { PROJECT_COLORS, colorOf, soft } from './shared.js'
 
 const DEFAULT_BLOCKS = [
   { id: 'head', type: 'head', span: 3 }, { id: 'milestones', type: 'milestones', span: 3 }, { id: 'docs', type: 'docs', span: 3 },
   { id: 'board', type: 'board', span: 2 }, { id: 'time', type: 'time', span: 1 },
-  { id: 'note', type: 'note', span: 1 }, { id: 'links', type: 'links', span: 1 }, { id: 'meetings', type: 'meetings', span: 1 },
+  { id: 'note', type: 'note', span: 1 }, { id: 'links', type: 'links', span: 1 }, { id: 'meetings', type: 'meetings', span: 3 },
 ]
 const ICONS = { head: 'trabajo', milestones: 'star', docs: 'doc', board: 'board', time: 'clock', note: 'note', links: 'link', meetings: 'calendario' }
 
@@ -56,7 +57,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const left = project.deadline ? daysUntil(project.deadline) : null
   const time = project.time ?? {}
   const totalMin = Object.values(time).reduce((a, b) => a + b, 0)
-  const meetings = (data.meetings ?? []).filter((m) => m.projectId === projectId && m.date >= today).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+  const meetings = [...(data.meetings ?? []).filter((m) => m.projectId === projectId), ...(project.meetings ?? [])].filter((m) => m.date >= today).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
 
   // Cronómetro: se guarda la hora de inicio, así sigue contando aunque cierres la app
   const running = project.timerStart ? Math.floor((Date.now() - project.timerStart) / 1000) : 0
@@ -98,7 +99,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
       </div>
       </>
     ) },
-    milestones: { cls: 'card wk-block pv-ms-block', label: 'Hitos', render: () => (
+    milestones: { cls: 'card wk-block pv-ms-block', label: 'Cronograma', render: () => (
       <>
       <Milestones project={project} change={change} color={c} />
       </>
@@ -143,18 +144,10 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
       <Tools data={linksData} update={linksUpdate} bare />
       </>
     ) },
-    meetings: { cls: 'card wk-block pv-meetings', label: 'Reuniones', render: () => (
+    meetings: { cls: 'card wk-block pv-agenda', label: 'Agenda', render: () => (
       <>
-      <span className="wk-badge" title="Próximas reuniones"><Icon name="calendario" size={18} /></span>
-      <ul>
-        {meetings.map((m) => (
-          <li key={m.id} style={{ borderColor: c }}>
-            <b>{m.title}</b>
-            <span className="muted">{m.date === today ? 'Hoy' : formatShort(m.date)} · {m.start}–{m.end}</span>
-          </li>
-        ))}
-        {meetings.length === 0 && <li className="muted pv-empty">Apúntalas en la agenda con el color del proyecto</li>}
-      </ul>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Agenda</h3>
+      <AgendaBlock data={data} update={update} projectId={projectId} />
       </>
     ) },
   }

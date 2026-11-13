@@ -3215,3 +3215,65 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-block.wk-focus .focus-ring::before { inset: 8%; }
 .wk-block.wk-focus .focus-time { font-size: 2em; }
 .wk-block.wk-focus { height: auto; container-type: normal; flex-direction: column; font-size: inherit; }
+
+/* Hitos: la barra se ve más y el hito se despliega con notas e IA */
+.pv-line { height: 10px; top: 70px; border-radius: 5px; background: color-mix(in srgb, var(--c) 18%, #E3E5E8); }
+.pv-line span { border-radius: 5px; }
+.pv-mile[aria-expanded="true"] .pv-dot { background: var(--c); }
+.ms-panel { background: #F8F9FA; border-radius: 18px; padding: 12px 14px; margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+.ms-panel-head { display: flex; align-items: center; gap: 8px; } .ms-panel-head b { font-size: 15px; } .ms-grow { flex: 1; }
+.ms-notes { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 12px; resize: vertical; outline: none; background: #fff; } .ms-notes:focus { border-color: #E84855; }
+.ms-panel-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.ms-prop { display: flex; flex-direction: column; gap: 6px; }
+.ms-prop-it { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 12px; padding: 6px 10px; } .ms-prop-it.is-off { opacity: .5; } .ms-prop-it.is-off input { text-decoration: line-through; }
+.ms-prop-it input { flex: 1; border: 0; outline: none; font: inherit; font-size: 14px; background: transparent; min-width: 0; }
+.ms-chk { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #D5D8DC; background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; } .ms-chk.on { background: #E84855; border-color: #E84855; }
+.ms-more { align-self: flex-start; border: 0; background: none; font: 500 13px Poppins, sans-serif; color: #5F6368; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+.ms-linked { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; } .ms-linked li { display: inline-flex; align-items: center; gap: 5px; background: #fff; border-radius: 99px; padding: 3px 10px; font-size: 12.5px; } .ms-linked li.is-done { opacity: .5; text-decoration: line-through; }
+/* Cronograma: los hitos son rombos, como en la línea de tiempo del proyecto */
+.tl-ms { border-radius: 4px; transform: rotate(45deg) scale(.72); margin-left: -10px; }
+
+/* Agenda: filtro, hitos en rombo, etiquetas y notas */
+.ag-who { display: inline-flex; background: #F1F3F4; border-radius: 99px; padding: 2px; } .ag-who button { border: 0; background: transparent; border-radius: 99px; padding: 4px 11px; font: 500 12px Poppins, sans-serif; color: #5F6368; cursor: pointer; } .ag-who button.on { background: #fff; color: #202124; box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+.ag-ms-cell { display: flex; flex-direction: column; gap: 2px; align-items: center; min-width: 0; }
+.ag-ms { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #202124; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-ms i { width: 14px; height: 14px; border: 3px solid var(--c); border-radius: 3px; background: #fff; transform: rotate(45deg) scale(.7); flex: none; } .ag-ms.is-done i { background: var(--c); }
+.ag-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ag-tag { display: inline-flex; align-items: center; border-radius: 99px; background: color-mix(in srgb, var(--c) 20%, #fff); box-shadow: 0 0 0 1.5px transparent; } .ag-tag.on { background: color-mix(in srgb, var(--c) 55%, #fff); box-shadow: 0 0 0 1.5px var(--c); }
+.ag-tag > button:first-child { border: 0; background: none; font: 500 12.5px Poppins, sans-serif; padding: 4px 4px 4px 11px; cursor: pointer; }
+.ag-tag-x { border: 0; background: none; width: 20px; height: 20px; display: none; place-items: center; cursor: pointer; padding: 0; } .ag-tag:hover .ag-tag-x, .ag-tag-x:focus-visible { display: grid; } .ag-tag:not(:hover) > button:first-child { padding-right: 11px; }
+.ag-tag-add { border: 1.5px dashed #9AA0A6; border-radius: 99px; background: #fff; padding: 3px 11px; font: 500 12.5px Poppins, sans-serif; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+.ag-tag-in { border: 1.5px solid var(--line); border-radius: 99px; padding: 4px 12px; font: inherit; font-size: 12.5px; width: 140px; outline: none; }
+.ag-note { width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 10px; resize: vertical; outline: none; } .ag-note:focus { border-color: #E84855; }
+.ag-evtags { position: absolute; left: 8px; bottom: 5px; display: flex; gap: 3px; pointer-events: none; } .ag-evtags i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #fff; }
+.agenda-edit { flex-wrap: wrap; }
+.pv-agenda { min-height: 0; }
+
+/* Tareas de proyectos compartidos: globitos que se reparten arrastrándolos */
+.wk-assign { display: flex; flex-direction: column; gap: 6px; background: #F8F9FA; border-radius: 18px; padding: 10px; margin-bottom: 8px; }
+.wk-assign-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12.5px; padding: 0 2px; }
+.wk-assign-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 8px; border-radius: 14px; padding: 6px 8px; background: #fff; transition: background .15s, outline-color .15s; outline: 2px dashed transparent; outline-offset: -2px; }
+.wk-assign-row.is-over { background: #FDECEE; outline-color: #E84855; }
+.wk-assign-who { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; min-width: 0; } .wk-assign-who b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .wk-assign-who i { font-style: normal; font-size: 11px; background: #F1F3F4; border-radius: 99px; padding: 1px 7px; color: #5F6368; }
+.wk-assign-bubbles { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; align-items: center; }
+.wk-bubble { border: 0; border-radius: 99px; padding: 5px 13px; font: 600 12.5px Poppins, sans-serif; background: color-mix(in srgb, var(--c) 35%, #fff); cursor: grab; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); color: #202124; } .wk-bubble:active { cursor: grabbing; transform: scale(.97); }
+.wk-assign-empty { font-size: 12px; }
+.wk-assignee { display: inline-flex; vertical-align: middle; margin-left: 6px; } .wk-assignee svg { border-radius: 50%; }
+@media (max-width: 899px) { .wk-assign-row { grid-template-columns: 1fr; } }
+
+/* Cronograma de un proyecto (antes «Hitos»): mismo diseño que el cronograma general */
+.tl-row.has-labels { height: 84px; } .tl-row.has-labels .tl-bar { top: 18px; }
+.tl-name.is-static { cursor: default; }
+.tl-ms-wrap { position: absolute; top: 0; bottom: 0; width: 0; border: 0; background: none; padding: 0; font: inherit; }
+.tl-ms-wrap .tl-ms { left: 0; top: 17px; } .tl-ms-wrap.is-btn { cursor: pointer; } .tl-ms-wrap.is-btn:hover .tl-ms, .tl-ms-wrap.is-open .tl-ms { background: var(--c); }
+.tl-ms-wrap .tl-ms { transform: rotate(45deg) scale(.82); }
+.tl-ms-label { position: absolute; top: 40px; left: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; line-height: 1.15; white-space: nowrap; font-size: 11px; pointer-events: none; } .tl-ms-label b { font-size: 12px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; } .tl-ms-label span { color: #80868B; font-weight: 600; }
+.tl-ms-wrap.below .tl-ms-label { top: 56px; }
+.ms-line .tl { margin-top: 4px; }
+.tl-row:not(.has-labels) .tl-ms-wrap .tl-ms { top: 12px; }
+.wk-assign-top { padding-left: 34px; min-height: 28px; }
+.tl-ms-wrap { width: 26px; margin-left: -13px; }
+.tl-ms-wrap .tl-ms { left: 13px; } .tl-ms-wrap .tl-ms-label { left: 13px; }
+.tl-row:not(.has-labels) .tl-ms-wrap { top: 0; }
+
+.tl-past { display: inline-flex; align-items: center; gap: 4px; border: 0; background: #F1F3F4; border-radius: 99px; padding: 2px 9px; font: 500 11px Poppins, sans-serif; color: #5F6368; cursor: pointer; } .tl-past.on { background: #FDECEE; color: #202124; }
