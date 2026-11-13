@@ -65,10 +65,12 @@ export default function ProjectsBlock({ data, update, openProject }) {
           )
         })}
         {adding ? (
-          <form className="wk-add" onSubmit={add}>
-            <input autoFocus placeholder="Proyecto" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => !name && setAdding(false)} maxLength={40} aria-label="Nombre del proyecto" />
-            <button type="button" className={`icon-btn ${withFriends ? 'on' : ''}`} onClick={() => setWithFriends(!withFriends)} aria-pressed={withFriends} aria-label="Con amigos" title="Con amigos"><Icon name="amigos" size={18} /></button>
-            <button className="icon-btn on" disabled={!name.trim() || busy || (withFriends && !picked.length)} aria-label="Crear proyecto"><Icon name="check" size={18} /></button>
+          <form className="wk-add wk-add-card" onSubmit={add}>
+            <input autoFocus placeholder="Nombre del proyecto" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} aria-label="Nombre del proyecto" />
+            <div className="wk-who" role="group" aria-label="Quién participa">
+              <button type="button" className={!withFriends ? 'on' : ''} aria-pressed={!withFriends} onClick={() => setWithFriends(false)}><Icon name="perfil" size={16} />Solo yo</button>
+              <button type="button" className={withFriends ? 'on' : ''} aria-pressed={withFriends} onClick={() => setWithFriends(true)}><Icon name="amigos" size={16} />Con amigos</button>
+            </div>
             {withFriends && (
               <div className="wk-friends" role="group" aria-label="Con quién">
                 {friends.length === 0 && <span className="muted">Aún no tienes amigos añadidos</span>}
@@ -78,9 +80,13 @@ export default function ProjectsBlock({ data, update, openProject }) {
                     <Avatar avatar={f.avatar} size={22} />{f.username}
                   </button>
                 ))}
-                {err && <span className="wk-err" role="alert">{err}</span>}
               </div>
             )}
+            {err && <span className="wk-err" role="alert">{err}</span>}
+            <div className="wk-add-actions">
+              <button type="button" className="wk-cancel" onClick={() => { setAdding(false); setName(''); setWithFriends(false); setPicked([]); setErr('') }}>Cancelar</button>
+              <button className="pill sh-save" disabled={!name.trim() || busy || (withFriends && !picked.length)}><Icon name="check" size={16} color="#fff" />Crear</button>
+            </div>
           </form>
         ) : (
           <button className="icon-btn wk-plus" onClick={() => setAdding(true)} aria-label="Nuevo proyecto" title="Nuevo proyecto"><Icon name="plus" size={20} /></button>

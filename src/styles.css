@@ -3164,3 +3164,12 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 @media (prefers-reduced-motion: reduce) { .sh-live i { animation: none; } }
 .sh-bar .w-history { position: static; }
 .sh-bar .sh-save { white-space: nowrap; }
+
+/* Formulario de proyecto nuevo: tarjeta ordenada en vez de una fila apretada */
+.wk-add-card { flex-direction: column; align-items: stretch; gap: 10px; width: min(440px, 100%); background: #F8F9FA; border-radius: 18px; padding: 12px; }
+.wk-add-card input { width: 100%; box-sizing: border-box; border-width: 1.5px; }
+.wk-who { display: flex; gap: 4px; background: #fff; border-radius: 99px; padding: 3px; box-shadow: 0 0 0 1.5px var(--line); }
+.wk-who button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; border-radius: 99px; padding: 7px 10px; font: 500 13px Poppins, sans-serif; cursor: pointer; color: #5F6368; transition: background .2s, color .2s; }
+.wk-who button.on { background: #FDECEE; color: #202124; }
+.wk-add-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.wk-cancel { border: 0; background: none; font: 500 13px Poppins, sans-serif; color: #5F6368; cursor: pointer; padding: 6px 10px; }
