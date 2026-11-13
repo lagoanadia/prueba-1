@@ -3439,9 +3439,27 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .sa-sess.is-tiny { padding: 0 6px; border-radius: 8px; }
 .sa-sess.is-short .sa-sess-x { width: var(--x); height: var(--x); top: 50%; transform: translateY(-50%); right: 3px; } .sa-sess.is-short .sa-sess-x svg { width: calc(var(--x) - 6px); height: calc(var(--x) - 6px); }
 .sa-sess.is-short .sa-rz { height: min(6px, 30%); }
-/* tarjeta flotante con el nombre y la hora (solo en sesiones cortas) */
-.sa-tip { position: absolute; left: 50%; transform: translate(-50%, -100%); z-index: 8; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 12px; border-radius: 12px; background: #FFFFFF; box-shadow: var(--shadow-lg), inset 0 -3px 0 var(--c); white-space: nowrap; font-size: 12px; animation: tip-in .15s var(--ease) both; }
+/* tarjeta flotante con el nombre y la hora (solo en sesiones cortas); el hueco hacia el bloque es parte de la tarjeta para poder pasar el ratón */
+.sa-tip { position: absolute; left: 50%; transform: translate(-50%, -100%); z-index: 8; padding-bottom: 6px; animation: tip-in .15s var(--ease) both; }
+.sa-tip.is-below { transform: translate(-50%, 0); padding: 6px 0 0; }
+.sa-tip-in { display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 12px; background: #FFFFFF; box-shadow: var(--shadow-lg), inset 0 -3px 0 var(--c); white-space: nowrap; font-size: 12px; }
+.sa-tip-txt { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 @keyframes tip-in { from { opacity: 0; } to { opacity: 1; } }
-.sa-tip.is-below { transform: translate(-50%, 0); }
-.sa-tip b { font-size: 13px; } .sa-tip span { color: var(--muted); font-weight: 600; }
+.sa-tip b { font-size: 13px; } .sa-tip-txt span { color: var(--muted); font-weight: 600; }
+.sa-tip-x { width: 22px; height: 22px; border: 0; border-radius: 50%; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.sa-sess.is-tiny .sa-sess-x { display: none !important; } /* sin sitio para la ×: se quita desde la tarjeta */
 @media (prefers-reduced-motion: reduce) { .sa-tip { animation: none; } }
+
+/* ===== Tablero de widgets: el cuadrado «+» es el mismo que en Estudios ===== */
+.grid > .add-square { min-height: 0; grid-column: span 1; }
+.grid > .add-square.is-open { grid-column: 1 / -1; grid-row: span 2; padding: 18px; }
+@media (max-width: 899px) { .grid > .add-square.is-open { grid-column: 1 / -1; } }
+
+/* Plan: franja horaria editable y botón de ajustes más marcado */
+.sa-range { border: 0; background: none; padding: 3px 8px; margin-left: -8px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+.sa-range:hover { background: var(--soft); color: var(--text); }
+.sa-range.is-edit { display: inline-flex; align-items: center; gap: 6px; padding: 0; margin: 0; cursor: default; }
+.sa-range.is-edit:hover { background: none; }
+.sa-range-ok { width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; } .sa-range-ok svg { stroke: #FFFFFF; }
+.sa-btn.sa-cfg { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 2px var(--text); background: var(--soft); transition: transform .15s var(--ease), background .15s; }
+.sa-btn.sa-cfg:hover { background: #FFFFFF; transform: rotate(-12deg); }

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
+import Select from '../../components/Select.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
@@ -55,12 +56,17 @@ export default function Plan({ data, update }) {
   const sessions = data.planSessions ?? []
   const sports = sportsOf(data)
   const [cfg, setCfg] = useState(false)
+  const [editRange, setEditRange] = useState(false) // true mientras se cambia la franja horaria tocando el texto
   const gridRef = useRef(null)
   const [H, setH] = useState(46) // alto de una hora: lo reparte el horario para ocupar todo el alto del widget
   const [dropDay, setDropDay] = useState(null) // columna resaltada mientras arrastras un deporte
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
   const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
+  const [pin, setPin] = useState(null) // tarjeta que se queda un momento tras un toque (en el móvil no hay «pasar por encima»)
+  const tipTimer = useRef(0)
+  const showTip = (id) => { clearTimeout(tipTimer.current); setTip(id) }
+  const hideTip = () => { clearTimeout(tipTimer.current); tipTimer.current = setTimeout(() => setTip(null), 120) } // un respiro para poder pasar del bloque a la tarjeta
   const [tip, setTip] = useState(null) // id de la sesión sobre la que está el puntero o el dedo (para la tarjeta con su hora)
   const [guide, setGuide] = useState(null) // { from, to, c }: tramo que se ilumina mientras estiras una sesión
   const shownDays = view.days.slice().sort((a, b) => a - b)
@@ -165,7 +171,7 @@ export default function Plan({ data, update }) {
     const end = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end)
       setLive(null); setGuide(null)
-      if (mode === 'body' && !moved) { toggleDone(s, week[s.day]); return }
+      if (mode === 'body' && !moved) { toggleDone(s, week[s.day]); setPin(s.id); setTimeout(() => setPin((p) => (p === s.id ? null : p)), 2500); return }
       if (Object.keys(patch).length) commit(s, patch)
     }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
@@ -205,8 +211,17 @@ export default function Plan({ data, update }) {
   return (
     <div className="sa-plan">
       <div className="sa-row sa-split">
-        <span className="sa-hint">{fromMin(lo)} – {fromMin(hi)}</span>
-        <button className="sa-btn is-soft" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><Icon name="sliders" size={15} /></button>
+        {editRange ? (
+          <span className="sa-range is-edit">
+            <Select value={view.from} label="Primera hora" onChange={(v) => saveView({ from: v })} options={Array.from({ length: view.to }, (_, h) => ({ value: h, label: `${String(h).padStart(2, '0')}:00` }))} />
+            <span aria-hidden="true">–</span>
+            <Select value={view.to} label="Última hora" onChange={(v) => saveView({ to: v })} options={Array.from({ length: 24 - view.from }, (_, k) => view.from + 1 + k).map((h) => ({ value: h, label: `${String(h).padStart(2, '0')}:00` }))} />
+            <button type="button" className="sa-range-ok" onClick={() => setEditRange(false)} aria-label="Listo" title="Listo"><Icon name="check" size={16} strokeWidth={3} color="#FFFFFF" /></button>
+          </span>
+        ) : (
+          <button type="button" className="sa-range" onClick={() => setEditRange(true)} aria-label="Cambiar la franja horaria" title="Cambiar la franja horaria">{fromMin(lo)} – {fromMin(hi)}</button>
+        )}
+        <button className="sa-btn is-soft sa-cfg" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><Icon name="sliders" size={20} strokeWidth={3} color="#202124" /></button>
       </div>
       <div className="sa-sportbar" aria-label="Deportes: arrástralos al plan">
         {sports.map((sp) => (
@@ -260,22 +275,25 @@ export default function Plan({ data, update }) {
                 const done = Boolean(s.done?.[date])
                 const h = height - 2
                 const short = h < 40 // 1 h o menos cuando el horario va apretado: letra a la medida y una sola línea
-                const tiny = h < 22 // casi una raya: la letra baja de tamaño y la hora va en la tarjeta flotante
+                const tiny = h < 22 // demasiado bajo para escribir con aire alrededor: bloque de color liso, sin texto
                 const end = fromMin(toMin(s.start) + s.min)
                 return (
                   <Fragment key={s.id}>
                   <div className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''} ${short ? 'is-short' : ''} ${tiny ? 'is-tiny' : ''}`} style={{ top: top + 1, height: h, '--c': colorOf(sports, s.sport), '--x': `${Math.max(10, Math.min(18, h - 4))}px` }}
-                    onPointerEnter={() => setTip(s.id)} onPointerLeave={() => setTip(null)} onFocus={() => setTip(s.id)} onBlur={() => setTip(null)}
+                    onPointerEnter={() => showTip(s.id)} onPointerLeave={hideTip} onFocus={() => showTip(s.id)} onBlur={hideTip}
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
                     onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    <SessName text={s.sport} max={short ? Math.max(8, Math.min(14, h - 8)) : 15} single={short} />
+                    {!tiny && <SessName text={s.sport} max={short ? Math.max(9, Math.min(14, Math.floor((h - 10) / 1.1))) : 15} single={short} />}
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
-                  {short && (tip === s.id || live?.id === s.id) && (
-                    <span className={`sa-tip ${top < 44 ? 'is-below' : ''}`} style={{ top: top < 44 ? top + h + 6 : top - 6, '--c': colorOf(sports, s.sport) }} aria-hidden="true">
-                      <b>{s.sport}</b><span>{fromMin(toMin(s.start))} – {end} · {fmtHM(s.min)}</span>
+                  {short && (tip === s.id || pin === s.id || live?.id === s.id) && (
+                    <span className={`sa-tip ${top < 44 ? 'is-below' : ''}`} style={{ top: top < 44 ? top + h : top, '--c': colorOf(sports, s.sport) }} onPointerEnter={() => showTip(s.id)} onPointerLeave={hideTip}>
+                      <span className="sa-tip-in">
+                        <span className="sa-tip-txt"><b>{s.sport}</b><span>{fromMin(toMin(s.start))} – {end} · {fmtHM(s.min)}</span></span>
+                        {tiny && <button type="button" className="sa-tip-x" onClick={() => remove(s.id)} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={12} strokeWidth={3} /></button>}
+                      </span>
                     </span>
                   )}
                   </Fragment>
