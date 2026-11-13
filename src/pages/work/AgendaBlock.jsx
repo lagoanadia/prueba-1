@@ -1,5 +1,6 @@
 import { locale } from '../../i18n/index.js'
 import { useEffect, useRef, useState } from 'react'
+import Avatar from '../../components/Avatar.jsx'
 import History from '../../components/History.jsx'
 import Icon from '../../components/Icon.jsx'
 import useMediaQuery from '../../hooks/useMediaQuery.js'
@@ -59,7 +60,7 @@ export default function AgendaBlock({ data, update, projectId = null }) {
   const days = narrow ? [anchor] : shownIdx.map((i) => wk[i])
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const thisWeek = weekStart(anchor) === weekStart(today)
-  const colorFor = (ev) => (ev.projectId && ev.by && sh.color(ev.projectId, ev.by)) || (ev.projectId ? colorOf(data, ev.projectId) : ev.color ?? MEETING)
+  const colorFor = (ev) => (ev.kind !== 'meeting' && ev.projectId && ev.by && sh.color(ev.projectId, ev.by)) || (ev.projectId ? colorOf(data, ev.projectId) : ev.color ?? MEETING)
   const tagColor = (pid, id) => tagsOf(pid).find((t) => t.id === id)?.color ?? '#9AA0A6'
   const bubbles = projectId
     ? [{ key: 'meeting', label: 'Reunión', projectId, c: colorOf(data, projectId) }, ...tagsOf(projectId).map((t) => ({ key: `tag:${t.id}`, label: t.name, projectId, c: t.color, tag: t.id }))]
@@ -231,11 +232,21 @@ export default function AgendaBlock({ data, update, projectId = null }) {
               const height = ((toMin(x.end) - toMin(x.start)) / 60) * H
               if (top + height <= 0 || top >= total * H) return null
               return (
-                <div key={x.id} className={`sa-sess ${live?.id === x.id ? 'is-live' : ''}`} style={{ top: top + 1, height: height - 2, '--c': colorFor(x) }}
+                <div key={x.id} className={`sa-sess ${x.kind === 'meeting' ? 'is-meeting' : ''} ${live?.id === x.id ? 'is-live' : ''}`} style={{ top: top + 1, height: height - 2, '--c': colorFor(x) }}
                   role="button" tabIndex={0} aria-label={`${x.title}, ${x.start} a ${x.end}. Toca para cambiarla`} title="Toca: cambiar · arrastra: mover · tira de los bordes: duración"
                   onPointerDown={(e) => pull(e, x, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDraft({ ...x }) } }}>
                   <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, x, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                  <b className="sa-name">{x.title}</b>
+                  {x.kind === 'meeting'
+                    ? (
+                      <span className={`ag-meet ${height <= 58 ? 'is-compact' : ''}`}>
+                        <span className="ag-meet-top"><Icon name="amigos" size={14} color="#fff" />{height > 58 && <em>{x.start}–{x.end}</em>}</span>
+                        <b>{x.title}</b>
+                        {height > 78 && (x.attendees ?? []).length > 0 && (
+                          <span className="ag-meet-av">{(x.attendees ?? []).map((u) => { const m = (sh.meta(x.projectId)?.members ?? []).find((y) => y.username === u); return m ? <Avatar key={u} avatar={m.avatar} size={20} /> : null })}</span>
+                        )}
+                      </span>
+                    )
+                    : <b className="sa-name">{x.title}</b>}
                   {height > 52 && (x.tags ?? []).length > 0 && <span className="ag-evtags">{(x.tags ?? []).map((id) => <i key={id} style={{ background: tagColor(x.projectId, id) }} title={tagsOf(x.projectId).find((t) => t.id === id)?.name} />)}</span>}
                   <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(x.id) }} aria-label={`Quitar ${x.title}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                   <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, x, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />

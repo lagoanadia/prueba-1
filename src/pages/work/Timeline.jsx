@@ -36,6 +36,19 @@ export default function Timeline({ data, openProject, onMilestone = null, openId
   const every = weeks > 18 ? 4 : weeks > 12 ? 2 : 1
   const sorted = (p) => [...(p.milestones ?? [])].filter((m) => inView(m.date)).sort((a, b) => a.date.localeCompare(b.date))
   const label = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })
+  const meetsOf = (p) => {
+    const seen = new Map()
+    for (const e of [...(data.meetings ?? []).filter((x) => x.projectId === p.id), ...(p.meetings ?? [])]) if (e.kind === 'meeting' && inView(e.date)) seen.set(e.id, e)
+    return [...seen.values()]
+  }
+  // Si dos marcas caen muy juntas, la segunda baja un nivel para que sus nombres no se pisen
+  const levelsOf = (p) => {
+    const marks = [...sorted(p).map((m) => ({ id: m.id, at: pos(m.date) })), ...meetsOf(p).map((e) => ({ id: e.id, at: pos(e.date) }))].sort((a, b) => a.at - b.at)
+    const last = []
+    const out = {}
+    for (const m of marks) { let l = 0; while (last[l] != null && m.at - last[l] < (labels ? 13 : 0)) l += 1; out[m.id] = l; last[l] = m.at }
+    return out
+  }
   // Un proyecto que ya acabó del todo no ocupa fila salvo que pidas ver lo pasado
   const rows = projects.filter((p) => past || !p.deadline || p.deadline >= today)
 
@@ -53,22 +66,30 @@ export default function Timeline({ data, openProject, onMilestone = null, openId
           const from = p.createdAt && p.createdAt > start ? p.createdAt : start
           const to = p.deadline ?? addDays(from, 28)
           const left = pos(from)
+          const lv = labels ? levelsOf(p) : {}
+          const maxLv = Math.max(0, ...Object.values(lv))
           const width = Math.max(1.5, pos(to > addDays(start, span) ? addDays(start, span) : to) - left)
           return (
-            <div key={p.id} className={`tl-row ${labels ? 'has-labels' : ''}`}>
+            <div key={p.id} className={`tl-row ${labels ? 'has-labels' : ''}`} style={labels ? { '--rows': maxLv } : undefined}>
               {labels ? <span className="tl-name is-static"><span className="dot" style={{ background: c }} />Proyecto</span> : <button className="tl-name" onClick={() => openProject?.(p.id)} title="Abrir proyecto"><span className="dot" style={{ background: c }} />{p.name}</button>}
               <div className="tl-lane" style={{ '--w': weeks }}>
                 <span className={`tl-bar ${p.deadline ? '' : 'is-open'}`} style={{ left: `${left}%`, width: `${width}%`, '--c': c }} title={p.deadline ? `Hasta el ${formatShort(p.deadline)}` : 'Sin fecha límite'} />
                 {sorted(p).map((m) => {
                   const Tag = onMilestone ? 'button' : 'span'
                   return (
-                    <Tag key={m.id} className={`tl-ms-wrap ${onMilestone ? 'is-btn' : ''} ${openId === m.id ? 'is-open' : ''}`} style={{ left: `${pos(m.date)}%`, '--c': c }} title={`${m.title} · ${formatShort(m.date)}`}
+                    <Tag key={m.id} className={`tl-ms-wrap ${onMilestone ? 'is-btn' : ''} ${openId === m.id ? 'is-open' : ''}`} style={{ left: `${pos(m.date)}%`, '--c': c, '--lv': lv[m.id] ?? 0 }} title={`${m.title} · ${formatShort(m.date)}`}
                       {...(onMilestone ? { type: 'button', onClick: () => onMilestone(m), 'aria-expanded': openId === m.id } : {})}>
                       <span className={`tl-ms ${m.done ? 'is-done' : ''}`} />
                       {labels && <span className="tl-ms-label"><b>{m.title}</b><span>{formatShort(m.date).replace(/^\S+ /, '')}</span></span>}
                     </Tag>
                   )
                 })}
+                {meetsOf(p).map((e) => (
+                  <span key={e.id} className="tl-meet" style={{ left: `${pos(e.date)}%`, '--c': c, '--lv': lv[e.id] ?? 0 }} title={`Reunión: ${e.title} · ${formatShort(e.date)} ${e.start}`}>
+                    <span className="tl-meet-ic"><Icon name="amigos" size={labels ? 20 : 17} color="#fff" /></span>
+                    {labels && <span className="tl-ms-label"><b>{e.title}</b><span>{formatShort(e.date).replace(/^\S+ /, '')} · {e.start}</span></span>}
+                  </span>
+                ))}
               </div>
             </div>
           )

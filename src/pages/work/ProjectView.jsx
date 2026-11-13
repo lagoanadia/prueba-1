@@ -14,14 +14,18 @@ import DocsBlock from './DocsBlock.jsx'
 import DocView from './DocView.jsx'
 import SharedBar from './SharedBar.jsx'
 import AgendaBlock from './AgendaBlock.jsx'
+import Accounting from './Accounting.jsx'
+import Reunion from './Reunion.jsx'
 import { PROJECT_COLORS, colorOf, soft } from './shared.js'
 
 const DEFAULT_BLOCKS = [
   { id: 'head', type: 'head', span: 3 }, { id: 'milestones', type: 'milestones', span: 3 }, { id: 'docs', type: 'docs', span: 3 },
   { id: 'board', type: 'board', span: 2 }, { id: 'time', type: 'time', span: 1 },
-  { id: 'note', type: 'note', span: 1 }, { id: 'links', type: 'links', span: 1 }, { id: 'meetings', type: 'meetings', span: 3 },
+  { id: 'reunion', type: 'reunion', span: 2 }, { id: 'note', type: 'note', span: 1 },
+  { id: 'accounting', type: 'accounting', span: 3 }, { id: 'links', type: 'links', span: 3 }, { id: 'meetings', type: 'meetings', span: 3 },
 ]
-const ICONS = { head: 'trabajo', milestones: 'star', docs: 'doc', board: 'board', time: 'clock', note: 'note', links: 'link', meetings: 'calendario' }
+const ICONS = { head: 'trabajo', milestones: 'star', docs: 'doc', board: 'board', time: 'clock', note: 'note', links: 'link', meetings: 'calendario', reunion: 'amigos', accounting: 'chart' }
+const NEW_BLOCKS = ['reunion', 'accounting'] // bloques nuevos: a quien ya tenía su distribución se le añaden al final una vez
 
 const fmtTime = (min) => (min >= 60 ? `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}` : `${min} min`)
 const fmtClock = (s) => `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -38,7 +42,8 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
   useEffect(() => { if (!project?.timerStart) return; const id = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(id) }, [project?.timerStart])
-  const dnd = useBlockDrag((fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) })), editing)
+  const withNew = (d) => (d.projectBlocks ? (d.projectBlocksNew ? d.projectBlocks : [...d.projectBlocks, ...DEFAULT_BLOCKS.filter((b) => NEW_BLOCKS.includes(b.type) && !d.projectBlocks.some((x) => x.type === b.type))]) : DEFAULT_BLOCKS)
+  const dnd = useBlockDrag((fn) => update((d) => ({ ...d, projectBlocksNew: true, projectBlocks: fn(withNew(d)) })), editing)
   useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   if (!project) return null
 
@@ -46,8 +51,8 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   if (docId && (project.docs ?? []).some((x) => x.id === docId)) return <DocView project={project} docId={docId} change={change} back={() => setDocId(null)} />
   const c = colorOf(data, projectId)
   // Distribución de bloques: la misma para todos los proyectos
-  const blocks = data.projectBlocks ?? DEFAULT_BLOCKS
-  const setBlocks = (fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) }))
+  const blocks = withNew(data)
+  const setBlocks = (fn) => update((d) => ({ ...d, projectBlocksNew: true, projectBlocks: fn(withNew(d)) }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (id) => setBlocks((b) => b.filter((x) => x.id !== id))
@@ -102,7 +107,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
     milestones: { cls: 'card wk-block pv-ms-block', label: 'Cronograma', render: () => (
       <>
       <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Cronograma</h3>
-      <Milestones project={project} change={change} color={c} />
+      <Milestones project={project} change={change} color={c} meetings={[...(data.meetings ?? []).filter((m) => m.projectId === projectId), ...(project.meetings ?? [])]} />
       </>
     ) },
     docs: { cls: 'card wk-block pv-docs', label: 'Documentos', render: () => (
@@ -144,6 +149,18 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
       <>
       <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Enlaces</h3>
       <Tools data={linksData} update={linksUpdate} bare />
+      </>
+    ) },
+    reunion: { cls: 'card wk-block pv-reunion', label: 'Reunión', render: () => (
+      <>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Reunión</h3>
+      <Reunion data={data} update={update} projectId={projectId} />
+      </>
+    ) },
+    accounting: { cls: 'card wk-block pv-acc', label: 'Contabilidad', render: () => (
+      <>
+      <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />Contabilidad</h3>
+      <Accounting project={project} change={change} />
       </>
     ) },
     meetings: { cls: 'card wk-block pv-agenda', label: 'Agenda', render: () => (

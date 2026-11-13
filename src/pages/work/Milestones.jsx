@@ -92,7 +92,7 @@ function MilestonePanel({ project, m, change, onEdit, onClose }) {
  * Hitos en una línea de tiempo: del inicio del proyecto a su fecha límite, con «hoy» marcado.
  * Tocar un hito lo abre para cambiarlo; el + añade uno nuevo.
  */
-export default function Milestones({ project, change, color }) {
+export default function Milestones({ project, change, color, meetings = [] }) {
   const today = todayISO()
   const [editing, setEditing] = useState(null) // hito que se está cambiando (o uno nuevo)
   const [openId, setOpenId] = useState(null) // hito desplegado
@@ -128,7 +128,7 @@ export default function Milestones({ project, change, color }) {
         <button className="icon-btn ms-plus" onClick={() => setEditing({ id: crypto.randomUUID(), title: '', date: '', done: false, isNew: true })} aria-label="Añadir hito" title="Añadir hito"><Icon name="plus" size={20} /></button>
       </div>
 
-      <Timeline data={{ projects: [project] }} labels openId={openId} onMilestone={(m) => setOpenId(openId === m.id ? null : m.id)} />
+      <Timeline data={{ projects: [project], meetings }} labels openId={openId} onMilestone={(m) => setOpenId(openId === m.id ? null : m.id)} />
 
       {list.find((m) => m.id === openId) && (
         <MilestonePanel key={openId} project={project} m={list.find((m) => m.id === openId)} change={change} onEdit={() => setEditing(list.find((m) => m.id === openId))} onClose={() => setOpenId(null)} />
