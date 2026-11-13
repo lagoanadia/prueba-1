@@ -11,13 +11,18 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo', ext
   const [url, setUrl] = useState(null)
   const [blob, setBlob] = useState(null)
   const [plain, setPlain] = useState(false) // si el PDF no se puede dibujar, se usa el visor del navegador
+  const [status, setStatus] = useState('') // 'loading' mientras llega del servidor · 'missing' si no está en ningún sitio
   const input = useRef(null)
 
   useEffect(() => {
     let cancelled = false
     let made = null
-    setUrl(null); setBlob(null); setPlain(false)
-    if (file?.id) getFile(file.id).then((b) => { if (b && !cancelled) { made = URL.createObjectURL(b); setUrl(made); setBlob(b) } }).catch(() => {})
+    setUrl(null); setBlob(null); setPlain(false); setStatus(file?.id ? 'loading' : '')
+    if (file?.id) {
+      getFile(file.id)
+        .then((b) => { if (cancelled) return; if (b) { made = URL.createObjectURL(b); setUrl(made); setBlob(b); setStatus('') } else setStatus('missing') })
+        .catch(() => { if (!cancelled) setStatus('missing') })
+    }
     return () => { cancelled = true; if (made) URL.revokeObjectURL(made) }
   }, [file?.id])
 
@@ -43,7 +48,8 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo', ext
       </div>
       {url
         ? (file.type?.startsWith('image/') ? <img className="file-img" src={url} alt={file.name} /> : blob && !plain ? <PdfPages blob={blob} name={file.name} onPickText={onPickText} onFallback={() => setPlain(true)} /> : <iframe className="file-view" src={url} title={file.name} />)
-        : <button className="file-empty" onClick={() => input.current?.click()}><Icon name="upload" size={36} /><span>{label}</span></button>}
+        : status === 'loading' ? <div className="file-empty"><span className="spinner" aria-label="Cargando" /></div>
+        : <button className="file-empty" onClick={() => input.current?.click()}><Icon name="upload" size={36} /><span>{status === 'missing' ? 'Solo está en el dispositivo donde lo subiste: ábrelo allí una vez o súbelo de nuevo' : label}</span></button>}
     </div>
   )
 }

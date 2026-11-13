@@ -19,3 +19,5 @@ export const sendScore = (game, value) => social('score', { game, value }).then(
 /** Reto del día preparado por el servidor (Spelling Bee y crucigrama). */
 export const fetchDaily = (game) => request(`/api/games?game=${game}&lang=${lang()}&date=${today()}`)
 export const clock = (s) => { const t = Math.max(0, Math.round(s || 0)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}` }
+/** Comprueba en el servidor una palabra del Spelling Bee que no venía en la lista. */
+export const checkBeeWord = (word) => request(`/api/games?game=bee&lang=${lang()}&date=${today()}`, { method: 'POST', body: { word } })

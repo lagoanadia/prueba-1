@@ -12,6 +12,7 @@ import { getProfile, saveAvatar, saveSettings } from './services/profileService.
 import { DEFAULT_AVATAR } from './data/avatar.js'
 import { DEFAULT_SETTINGS } from './data/settings.js'
 import { getLang, syncLang } from './i18n/index.js'
+import { syncLocalFiles } from './lib/fileStore.js'
 
 /**
  *   user === undefined -> cargando · null -> Login · objeto -> app
@@ -32,6 +33,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (user) syncLocalFiles() // PDF y fotos que solo estaban en este navegador -> al servidor
     if (user) getProfile().then((p) => { setAvatar(p.avatar); if (p.settings) { setSettings(p.settings); if (p.settings.lang && p.settings.lang !== getLang()) syncLang(p.settings.lang) } }).catch(() => {})
   }, [user])
 

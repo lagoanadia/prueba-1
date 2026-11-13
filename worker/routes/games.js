@@ -1,10 +1,11 @@
-// GET /api/games?game=bee|crossword&lang=es|en&date=YYYY-MM-DD  -> el reto del día (igual para todos)
-import { json, rejectMethod } from '../../server/http.js'
+// GET  /api/games?game=bee|crossword&lang=es|en&date=YYYY-MM-DD  -> el reto del día (igual para todos)
+// POST /api/games?game=bee&lang=…&date=…  { word }                 -> { word, valid } (palabra que no estaba en la lista)
+import { json, readJson, rejectMethod } from '../../server/http.js'
 import { getSessionUser } from '../../server/session.js'
-import { dailyGame, isGame } from '../../server/games.js'
+import { checkBeeWord, dailyGame, isGame } from '../../server/games.js'
 
 export default async function handler({ request, env }) {
-  const notAllowed = rejectMethod(request, ['GET'])
+  const notAllowed = rejectMethod(request, ['GET', 'POST'])
   if (notAllowed) return notAllowed
   const user = await getSessionUser(request, env)
   if (!user) return json({ error: 'No has iniciado sesión' }, 401)
@@ -18,6 +19,16 @@ export default async function handler({ request, env }) {
   // Solo hoy (± un día por la zona horaria): no se pueden pedir retos de otros días
   const d = (iso) => Date.parse(`${iso}T12:00:00Z`)
   if (Math.abs(d(date) - d(server)) > 864e5 * 1.5) return json({ error: 'Solo el reto de hoy' }, 400)
+  if (request.method === 'POST') {
+    if (game !== 'bee') return json({ error: 'Juego no válido' }, 400)
+    const word = String((await readJson(request))?.word ?? '').slice(0, 30)
+    try {
+      return json(await checkBeeWord(env, lang, date, word))
+    } catch (e) {
+      console.error(e)
+      return json({ error: 'No se ha podido comprobar la palabra' }, 502)
+    }
+  }
   try {
     return json(await dailyGame(env, game, lang, date))
   } catch (e) {
