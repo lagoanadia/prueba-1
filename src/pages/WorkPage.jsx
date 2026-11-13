@@ -4,7 +4,6 @@ import BlockEdit from '../components/BlockEdit.jsx'
 import useBlockDrag from '../hooks/useBlockDrag.js'
 import useExitEdit from '../hooks/useExitEdit.js'
 import Icon from '../components/Icon.jsx'
-import Focus from '../widgets/trabajo/Focus.jsx'
 import QuickNote from './study/QuickNote.jsx'
 import Tools from './study/Tools.jsx'
 import AgendaBlock from './work/AgendaBlock.jsx'
@@ -20,8 +19,7 @@ const DEFAULT_BLOCKS = [
   { id: 'projects', type: 'projects', span: 3 },
   { id: 'board', type: 'board', span: 3 },
   { id: 'timeline', type: 'timeline', span: 3 },
-  { id: 'agenda', type: 'agenda', span: 2, tall: true },
-  { id: 'focus', type: 'focus', span: 1 },
+  { id: 'agenda', type: 'agenda', span: 3 },
 ]
 const BLOCKS = {
   projects: { label: 'Proyectos', icon: 'trabajo' },
@@ -29,7 +27,6 @@ const BLOCKS = {
   timeline: { label: 'Cronograma', icon: 'chart' },
   agenda: { label: 'Agenda', icon: 'calendario' },
   tools: { label: 'Herramientas', icon: 'link' },
-  focus: { label: 'Pomodoro', icon: 'clock' },
 }
 
 /**
@@ -40,7 +37,9 @@ export default function WorkPage({ data: boardData, update: boardUpdate }) {
   // Los proyectos compartidos con amigos viven en el servidor y se mezclan aquí con los propios
   const { data, update, api: shared } = useSharedProjects(boardData, boardUpdate)
   // Si ya tenías tus bloques guardados, el Cronograma aparece tras las Tareas
-  const saved = data.workBlocks
+  // El Pomodoro ya no está en Trabajo: se quita de las distribuciones guardadas y la agenda ocupa el ancho que dejaba
+  const hadFocus = (data.workBlocks ?? []).some((b) => b.type === 'focus')
+  const saved = data.workBlocks && (hadFocus ? data.workBlocks.filter((b) => b.type !== 'focus').map((b) => (b.type === 'agenda' ? { ...b, span: 3, tall: false } : b)) : data.workBlocks)
   const blocks = saved ? (saved.some((b) => b.type === 'timeline') ? saved : saved.flatMap((b) => (b.type === 'board' ? [b, { id: 'timeline', type: 'timeline', span: 3 }] : [b]))) : DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
@@ -68,7 +67,6 @@ export default function WorkPage({ data: boardData, update: boardUpdate }) {
       case 'timeline': return <Timeline data={data} openProject={(id) => { setOpen(id); window.scrollTo?.({ top: 0 }) }} />
       case 'agenda': return <AgendaBlock data={data} update={update} />
       case 'tools': return <Tools data={data} update={update} bare />
-      case 'focus': return <div className="wk-focus"><Focus size="T" data={data} update={update} /></div>
       default: {
         const note = data.quickNotes?.[b.id] ?? { html: '' }
         return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
