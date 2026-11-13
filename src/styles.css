@@ -3400,3 +3400,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .mx-add { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 99px; padding: 4px 6px 4px 12px; background: #F8F9FA; } .mx-add input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px; } .mx-add input.is-bad { color: #B3261E; }
 .mx-hint { font-size: 12px; color: #80868B; }
 .mx-doc { display: inline-flex; align-items: center; gap: 5px; border: 0; background: #F1F3F4; border-radius: 99px; padding: 4px 11px; font: 500 12.5px Poppins, sans-serif; cursor: pointer; } .mx-doc.on { background: #FDECEE; box-shadow: 0 0 0 1.5px #E84855; }
+
+/* Proyecto: el color elegido tiñe la cabecera y se cambia desde un solo círculo que despliega el resto */
+.pv-colorpick { display: inline-flex; margin-left: 0; align-items: center; } .pv-colorpick .sc-dot { margin-left: 0; width: 28px; height: 28px; }
+.pv-colorpick .sc-pop { top: 38px; }
+.pv-head { position: relative; } .pv-head .pv-ring { background: conic-gradient(var(--c) calc(var(--p) * 1%), color-mix(in srgb, var(--c) 30%, #fff) 0); }
+.pv-head .pv-ring::before { background: color-mix(in srgb, var(--c) 28%, #FFFFFF); }

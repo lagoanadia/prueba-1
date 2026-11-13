@@ -41,6 +41,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const [docId, setDocId] = useState(initialDoc) // documento abierto
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
+  const [palette, setPalette] = useState(false) // selector de color del proyecto
   useEffect(() => { if (!project?.timerStart) return; const id = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(id) }, [project?.timerStart])
   const withNew = (d) => (d.projectBlocks ? (d.projectBlocksNew ? d.projectBlocks : [...d.projectBlocks, ...DEFAULT_BLOCKS.filter((b) => NEW_BLOCKS.includes(b.type) && !d.projectBlocks.some((x) => x.type === b.type))]) : DEFAULT_BLOCKS)
   const dnd = useBlockDrag((fn) => update((d) => ({ ...d, projectBlocksNew: true, projectBlocks: fn(withNew(d)) })), editing)
@@ -82,14 +83,27 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
 
   // Bloques de la página (el orden, ancho y cuáles se ven se pueden personalizar)
   const PARTS = {
-    head: { cls: 'card wk-block pv-head', label: 'Resumen', render: () => (
+    head: { cls: 'card wk-block pv-head', style: { background: soft(c, 28), boxShadow: 'none' }, label: 'Resumen', render: () => (
       <>
       {project.shared && <SharedBar projectId={projectId} />}
       <div className="pv-ring" style={{ '--p': pct, '--c': c }} aria-label={`${pct}% hecho`}><b>{pct}%</b></div>
       <div className="pv-title">
         <input className="pv-name" defaultValue={project.name} maxLength={50} onBlur={(e) => e.target.value.trim() && change((p) => ({ ...p, name: e.target.value.trim() }))} aria-label="Nombre del proyecto" />
-        <span className="pv-colors">
-          {PROJECT_COLORS.map((col) => <button key={col} className={`agenda-swatch ${col === c ? 'on' : ''}`} style={{ background: col }} onClick={() => change((p) => ({ ...p, color: col }))} aria-label="Color del proyecto" />)}
+        <span className="sc-wrap pv-colorpick">
+          <button className="sc-dot" style={{ background: c, '--c': c }} onClick={() => setPalette(!palette)} aria-expanded={palette} aria-label="Cambiar el color del proyecto" title="Cambiar color" />
+          {palette && (
+            <>
+              <span className="sc-back" onClick={() => setPalette(false)} />
+              <span className="card sc-pop" role="listbox" aria-label="Colores">
+                {PROJECT_COLORS.map((col) => (
+                  <button key={col} role="option" aria-selected={col === c} className={`sc-opt ${col === c ? 'on' : ''}`} style={{ background: col }} aria-label={`Color ${col}`}
+                    onClick={() => { change((p) => ({ ...p, color: col })); setPalette(false) }}>
+                    {col === c && <Icon name="check" size={14} color="#FFFFFF" strokeWidth={3.2} />}
+                  </button>
+                ))}
+              </span>
+            </>
+          )}
         </span>
       </div>
       <div className="pv-stats">
@@ -194,7 +208,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.filter((b) => PARTS[b.type]).map((b, i) => (
-          <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls} ${dnd.cls(b)}`} aria-label={PARTS[b.type].label} {...dnd.props(b)}>
+          <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls} ${dnd.cls(b)}`} aria-label={PARTS[b.type].label} style={PARTS[b.type].style} {...dnd.props(b)}>
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b.id)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {PARTS[b.type].render()}
           </section>
