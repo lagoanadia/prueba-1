@@ -23,6 +23,7 @@ import command from './routes/command.js'
 import organize from './routes/organize.js'
 import ingredients from './routes/ingredients.js'
 import recipes from './routes/recipes.js'
+import files from './routes/files.js'
 
 const ROUTES = {
   '/api/auth/google': google,
@@ -40,6 +41,7 @@ const ROUTES = {
   '/api/organize': organize,
   '/api/ingredients': ingredients,
   '/api/recipes': recipes,
+  '/api/files': files,
 }
 
 export default {

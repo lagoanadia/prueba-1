@@ -1,3 +1,4 @@
+import { syncAllFiles } from './lib/fileStore.js'
 import { useEffect, useState } from 'react'
 import LoginScreen from './screens/LoginScreen.jsx'
 import DesktopApp from './screens/DesktopApp.jsx'
@@ -32,6 +33,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (user) syncAllFiles() // sube los archivos que solo estaban en este navegador, para verlos desde otros ordenadores
     if (user) getProfile().then((p) => { setAvatar(p.avatar); if (p.settings) { setSettings(p.settings); if (p.settings.lang && p.settings.lang !== getLang()) syncLang(p.settings.lang) } }).catch(() => {})
   }, [user])
 
