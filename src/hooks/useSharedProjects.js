@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { merge3 } from '../lib/merge3.js'
 import { createShared, inviteShared, leaveShared, listShared, restoreSharedVersion, saveShared, saveSharedVersion } from '../services/projectsService.js'
 
+// Cada persona de un proyecto compartido tiene su color (por orden), para ver de un vistazo quién hace qué
+export const MEMBER_COLORS = ['#3185FC', '#3DDC97', '#FF9F43', '#EFABFF', '#F9DC5C', '#8E7CFF', '#E84855', '#6FC3F7']
 const POLL_MS = 5000 // cada cuánto se miran los cambios de los demás
 const SAVE_MS = 700 // espera antes de guardar mis cambios (así no se manda uno por tecla)
 
@@ -99,6 +101,7 @@ export default function useSharedProjects(data, update) {
     saveVersion: async (id, note) => { await flush(id); await saveSharedVersion(id, note); await refresh() },
     restore: async (id, n) => { await flush(id); await restoreSharedVersion(id, n); await refresh() },
     invite: async (id, members) => { await inviteShared(id, members); await refresh() },
+    color: (pid, username) => { const i = (sRef.current.find((r) => r.id === pid)?.meta.members ?? []).findIndex((m) => m.username === username); return i < 0 ? null : MEMBER_COLORS[i % MEMBER_COLORS.length] },
     me: shared.map((r) => r.meta.members.find((m) => m.you)?.username).find(Boolean) ?? null, // mi nombre de usuario (si estoy en algún proyecto compartido)
     error,
   }), [shared, error, refresh, flush]) // eslint-disable-line react-hooks/exhaustive-deps

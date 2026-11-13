@@ -42,7 +42,10 @@ export default function Timeline({ data, openProject, onMilestone = null, openId
   return (
     <div className="tl">
       <div className="tl-head"><span>{hasPast && <button type="button" className={`tl-past ${past ? 'on' : ''}`} onClick={() => setPast(!past)} aria-pressed={past} title={past ? 'Ocultar lo que ya pasó' : 'Ver lo que ya pasó (hasta 6 meses)'}><Icon name="history" size={14} />{past ? 'Ocultar pasado' : 'Ver pasado'}</button>}</span>
-        <div className="tl-weeks">{Array.from({ length: weeks }, (_, i) => <span key={i} style={{ left: `${(i / weeks) * 100}%` }}>{i % every === 0 ? label(addDays(start, i * 7)) : ''}</span>)}</div>
+        <div className="tl-weeks">
+          {!past && <span className="tl-hoy" style={{ left: 0 }}>hoy</span>}
+          {Array.from({ length: weeks }, (_, i) => (past || i > 0) && <span key={i} style={{ left: `${(i / weeks) * 100}%` }}>{i % every === 0 ? label(addDays(start, i * 7)) : ''}</span>)}
+        </div>
       </div>
       <div className="tl-body">
         {rows.map((p) => {
@@ -56,10 +59,10 @@ export default function Timeline({ data, openProject, onMilestone = null, openId
               {labels ? <span className="tl-name is-static"><span className="dot" style={{ background: c }} />Proyecto</span> : <button className="tl-name" onClick={() => openProject?.(p.id)} title="Abrir proyecto"><span className="dot" style={{ background: c }} />{p.name}</button>}
               <div className="tl-lane" style={{ '--w': weeks }}>
                 <span className={`tl-bar ${p.deadline ? '' : 'is-open'}`} style={{ left: `${left}%`, width: `${width}%`, '--c': c }} title={p.deadline ? `Hasta el ${formatShort(p.deadline)}` : 'Sin fecha límite'} />
-                {sorted(p).map((m, i) => {
+                {sorted(p).map((m) => {
                   const Tag = onMilestone ? 'button' : 'span'
                   return (
-                    <Tag key={m.id} className={`tl-ms-wrap ${onMilestone ? 'is-btn' : ''} ${i % 2 ? 'below' : ''} ${openId === m.id ? 'is-open' : ''}`} style={{ left: `${pos(m.date)}%`, '--c': c }} title={`${m.title} · ${formatShort(m.date)}`}
+                    <Tag key={m.id} className={`tl-ms-wrap ${onMilestone ? 'is-btn' : ''} ${openId === m.id ? 'is-open' : ''}`} style={{ left: `${pos(m.date)}%`, '--c': c }} title={`${m.title} · ${formatShort(m.date)}`}
                       {...(onMilestone ? { type: 'button', onClick: () => onMilestone(m), 'aria-expanded': openId === m.id } : {})}>
                       <span className={`tl-ms ${m.done ? 'is-done' : ''}`} />
                       {labels && <span className="tl-ms-label"><b>{m.title}</b><span>{formatShort(m.date).replace(/^\S+ /, '')}</span></span>}
@@ -70,7 +73,7 @@ export default function Timeline({ data, openProject, onMilestone = null, openId
             </div>
           )
         })}
-        <span className="tl-today" style={{ left: `calc(var(--tl-name) + (100% - var(--tl-name)) * ${pos(today) / 100})` }}><em>hoy</em></span>
+        <span className="tl-today" style={{ left: `calc(var(--tl-name) + (100% - var(--tl-name)) * ${pos(today) / 100})` }}>{past && <em>hoy</em>}</span>
       </div>
     </div>
   )

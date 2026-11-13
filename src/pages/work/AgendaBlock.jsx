@@ -59,7 +59,7 @@ export default function AgendaBlock({ data, update, projectId = null }) {
   const days = narrow ? [anchor] : shownIdx.map((i) => wk[i])
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const thisWeek = weekStart(anchor) === weekStart(today)
-  const colorFor = (ev) => (ev.projectId ? colorOf(data, ev.projectId) : ev.color ?? MEETING)
+  const colorFor = (ev) => (ev.projectId && ev.by && sh.color(ev.projectId, ev.by)) || (ev.projectId ? colorOf(data, ev.projectId) : ev.color ?? MEETING)
   const tagColor = (pid, id) => tagsOf(pid).find((t) => t.id === id)?.color ?? '#9AA0A6'
   const bubbles = projectId
     ? [{ key: 'meeting', label: 'Reunión', projectId, c: colorOf(data, projectId) }, ...tagsOf(projectId).map((t) => ({ key: `tag:${t.id}`, label: t.name, projectId, c: t.color, tag: t.id }))]

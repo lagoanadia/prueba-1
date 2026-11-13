@@ -39,6 +39,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
   const [over, setOver] = useState(null) // a quién se está soltando una tarea
   const assign = (taskId, assignee) => update((d) => updateTask(d, sharedProject.id, taskId, { assignee: assignee || null }))
   const mineOf = (t) => t.assignee === me
+  const colorOfMember = (u) => (sharedProject && u ? sh.color(sharedProject.id, u) : null)
   const visible = (t) => who === 'all' || (who === 'mine' ? mineOf(t) : !mineOf(t))
 
   const tasks = shown.flatMap((p) => p.tasks.map((t) => ({ ...t, projectId: p.id, projectName: p.name }))).filter((t) => !sharedProject || visible(t))
@@ -105,7 +106,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
     return (
       <>
         {mixed && <span className="wk-tag"><span className="dot" style={{ background: c }} />{t.projectName}</span>}
-        <span className="wk-task-title">{t.title}{t.assignee && members.find((m) => m.username === t.assignee) && <span className="wk-assignee" title={`@${t.assignee}`}><Avatar avatar={members.find((m) => m.username === t.assignee).avatar} size={18} /></span>}</span>
+        <span className="wk-task-title">{t.title}{t.assignee && members.find((m) => m.username === t.assignee) && <span className="wk-assignee" style={{ '--m': colorOfMember(t.assignee) }} title={`@${t.assignee}`}><Avatar avatar={members.find((m) => m.username === t.assignee).avatar} size={18} /></span>}</span>
         <span className="wk-task-meta">
           <span className="wk-prio-word" style={{ background: soft(PRIORITY[t.priority], 35) }}>{PRIORITY_WORD[t.priority]}</span>
           {t.due && <span className={`wk-due ${late ? 'is-late' : ''}`}>{late ? 'Vencida · ' : ''}{formatShort(t.due).replace(/^\S+ /, '')}</span>}
@@ -144,10 +145,10 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
               <div key={m.username ?? 'none'} className={`wk-assign-row ${over === (m.username ?? '_') ? 'is-over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setOver(m.username ?? '_') }} onDragLeave={() => setOver(null)}
                 onDrop={(e) => { e.preventDefault(); setOver(null); const id = e.dataTransfer.getData('text/task'); if (id) assign(id, m.username) }}>
-                <span className="wk-assign-who">{m.username ? <Avatar avatar={m.avatar} size={26} /> : <Icon name="board" size={18} />}<b>{m.username ? (m.you ? 'Yo' : `@${m.username}`) : m.label}</b><i>{mine.length}</i></span>
+                <span className="wk-assign-who" style={m.username ? { '--m': colorOfMember(m.username) } : undefined}>{m.username ? <span className="wk-ring"><Avatar avatar={m.avatar} size={26} /></span> : <Icon name="board" size={18} />}<b>{m.username ? (m.you ? 'Yo' : `@${m.username}`) : m.label}</b><i>{mine.length}</i></span>
                 <span className="wk-assign-bubbles">
                   {mine.map((t) => (
-                    <button key={t.id} type="button" draggable className="wk-bubble" style={{ '--c': PRIORITY[t.priority] }}
+                    <button key={t.id} type="button" draggable className="wk-bubble" style={{ '--c': colorOfMember(m.username) ?? '#9AA0A6' }}
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/task', t.id) }}
                       onClick={() => assign(t.id, m.username === me ? null : me)} title={m.username === me ? 'Toca para soltarla' : m.username ? 'Toca para asumirla tú' : 'Toca para asumirla tú'}>{t.title}</button>
                   ))}
@@ -177,7 +178,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
             <section key={s.id} data-state={s.id} className={`wk-col wk-col-${s.id} ${drag && drag.over === s.id ? 'is-over' : ''}`} aria-label={s.label}>
               <span className="wk-col-head">{s.id === 'done' ? 'Hechas' : s.label}<b>{list.length}</b></span>
               {list.map((t) => (
-                <div key={t.id} className={`wk-task ${drag?.task.id === t.id ? 'is-dragging' : ''}`} style={{ '--c': colorOf(data, t.projectId) }} role="button" tabIndex={0}
+                <div key={t.id} className={`wk-task ${drag?.task.id === t.id ? 'is-dragging' : ''}`} style={{ '--c': colorOf(data, t.projectId), ...(colorOfMember(t.assignee) ? { '--bub': soft(colorOfMember(t.assignee), 38) } : {}) }} role="button" tabIndex={0}
                   onPointerDown={(e) => onPointerDown(e, t)} onKeyDown={(e) => e.key === 'Enter' && setEditing({ projectId: t.projectId, taskId: t.id })}
                   onContextMenu={(e) => e.preventDefault()} title="Arrastra para cambiar de columna · toca para editar">
                   {card(t)}

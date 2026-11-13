@@ -3286,3 +3286,14 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .project-view .wk-block > .wk-title { position: static; }
 .project-view .wk-tools .tools { padding-top: 0; }
 .project-view .pv-time { justify-content: flex-start; } .project-view .pv-time > .wk-title { margin-bottom: 4px; }
+
+/* Cronograma: etiquetas de hito siempre en la misma línea; «hoy» en la cabecera */
+.tl-ms-wrap.below .tl-ms-label { top: 40px; }
+.tl-hoy { color: #E84855; font-weight: 700; }
+/* Tareas modo globo: pequeñas, en fila, con el color de quien las lleva */
+.wk-task { --bub: #fff; background: var(--bub); border-left: none; border-radius: 99px; padding: 5px 12px; gap: 2px 8px; flex-direction: row; flex-wrap: wrap; align-items: center; width: fit-content; max-width: 100%; }
+.wk-task-title { font-size: 13px; font-weight: 600; } .wk-task-meta { gap: 4px; font-size: 10.5px; } .wk-task .wk-prio-word { font-size: 10px; padding: 0 6px; }
+.wk-col { flex-direction: row; flex-wrap: wrap; align-content: flex-start; align-items: flex-start; gap: 6px; } .wk-col > .wk-col-head { flex: 0 0 100%; }
+.wk-assignee { --m: #9AA0A6; } .wk-ring { display: inline-flex; border-radius: 50%; box-shadow: 0 0 0 3px var(--m, #9AA0A6); } .wk-assignee svg { box-shadow: 0 0 0 2px var(--m); }
+.wk-assign-who .wk-ring svg { display: block; border-radius: 50%; }
+.sh-member svg { box-shadow: 0 0 0 2px var(--m, #9AA0A6); }

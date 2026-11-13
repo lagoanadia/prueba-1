@@ -51,7 +51,7 @@ export default function SharedBar({ projectId }) {
   return (
     <div className="sh-bar">
       <div className="sh-members" aria-label="Personas del proyecto">
-        {meta.members.map((m) => <span key={m.username} className="sh-member" title={`@${m.username}${m.owner ? ' · creó el proyecto' : ''}`}><Avatar avatar={m.avatar} size={30} /></span>)}
+        {meta.members.map((m) => <span key={m.username} className="sh-member" style={{ '--m': sh.color(projectId, m.username) }} title={`@${m.username}${m.owner ? ' · creó el proyecto' : ''}`}><Avatar avatar={m.avatar} size={30} /></span>)}
         {meta.mine && <button className="icon-btn sh-add" onClick={() => setPanel('invite')} aria-label="Invitar a un amigo" title="Invitar"><Icon name="plus" size={16} /></button>}
       </div>
       {editing && <span className="sh-live" role="status"><i />@{editing} está editando</span>}
