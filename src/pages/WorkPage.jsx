@@ -11,6 +11,7 @@ import AgendaBlock from './work/AgendaBlock.jsx'
 import BoardBlock from './work/BoardBlock.jsx'
 import ProjectsBlock from './work/ProjectsBlock.jsx'
 import ProjectView from './work/ProjectView.jsx'
+import Timeline from './work/Timeline.jsx'
 import { SharedCtx } from './work/SharedCtx.js'
 import useSharedProjects from '../hooks/useSharedProjects.js'
 
@@ -18,16 +19,17 @@ import useSharedProjects from '../hooks/useSharedProjects.js'
 const DEFAULT_BLOCKS = [
   { id: 'projects', type: 'projects', span: 3 },
   { id: 'board', type: 'board', span: 3 },
+  { id: 'timeline', type: 'timeline', span: 3 },
   { id: 'agenda', type: 'agenda', span: 2, tall: true },
-  { id: 'tools', type: 'tools', span: 1 },
   { id: 'focus', type: 'focus', span: 1 },
 ]
 const BLOCKS = {
   projects: { label: 'Proyectos', icon: 'trabajo' },
-  board: { label: 'Tablero', icon: 'board' },
+  board: { label: 'Tareas', icon: 'board' },
+  timeline: { label: 'Cronograma', icon: 'chart' },
   agenda: { label: 'Agenda', icon: 'calendario' },
   tools: { label: 'Herramientas', icon: 'link' },
-  focus: { label: 'Foco', icon: 'clock' },
+  focus: { label: 'Pomodoro', icon: 'clock' },
 }
 
 /**
@@ -37,12 +39,14 @@ const BLOCKS = {
 export default function WorkPage({ data: boardData, update: boardUpdate }) {
   // Los proyectos compartidos con amigos viven en el servidor y se mezclan aquí con los propios
   const { data, update, api: shared } = useSharedProjects(boardData, boardUpdate)
-  const blocks = data.workBlocks ?? DEFAULT_BLOCKS
+  // Si ya tenías tus bloques guardados, el Cronograma aparece tras las Tareas
+  const saved = data.workBlocks
+  const blocks = saved ? (saved.some((b) => b.type === 'timeline') ? saved : saved.flatMap((b) => (b.type === 'board' ? [b, { id: 'timeline', type: 'timeline', span: 3 }] : [b]))) : DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
   const [menu, setMenu] = useState(false)
   const [open, setOpen] = useState(null) // proyecto abierto por dentro
 
-  const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(d.workBlocks ?? DEFAULT_BLOCKS) }))
+  const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(blocks) }))
   const dnd = useBlockDrag(setBlocks, editing)
   useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
@@ -52,7 +56,7 @@ export default function WorkPage({ data: boardData, update: boardUpdate }) {
     if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
   }
   const addBlock = (type) => {
-    setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'board' || type === 'projects' ? 3 : type === 'agenda' ? 2 : 1, tall: type === 'agenda' }])
+    setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'board' || type === 'projects' || type === 'timeline' ? 3 : type === 'agenda' ? 2 : 1, tall: type === 'agenda' }])
     setMenu(false)
   }
   const missing = Object.keys(BLOCKS).filter((t) => !blocks.some((b) => b.type === t))
@@ -61,6 +65,7 @@ export default function WorkPage({ data: boardData, update: boardUpdate }) {
     switch (b.type) {
       case 'projects': return <ProjectsBlock data={data} update={update} openProject={(id) => { setOpen(id); window.scrollTo?.({ top: 0 }) }} />
       case 'board': return <BoardBlock data={data} update={update} />
+      case 'timeline': return <Timeline data={data} openProject={(id) => { setOpen(id); window.scrollTo?.({ top: 0 }) }} />
       case 'agenda': return <AgendaBlock data={data} update={update} />
       case 'tools': return <Tools data={data} update={update} bare />
       case 'focus': return <div className="wk-focus"><Focus size="T" data={data} update={update} /></div>
@@ -101,7 +106,7 @@ export default function WorkPage({ data: boardData, update: boardUpdate }) {
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
           <section key={b.id} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'} ${dnd.cls(b)}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'} {...dnd.props(b)}>
-            {BLOCKS[b.type] && <span className="wk-badge" title={BLOCKS[b.type].label}><Icon name={BLOCKS[b.type].icon} size={18} /></span>}
+            {BLOCKS[b.type] && <h3 className="w-title wk-title"><span className="dot" style={{ background: '#E84855' }} />{BLOCKS[b.type].label}</h3>}
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {render(b)}
           </section>

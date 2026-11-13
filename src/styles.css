@@ -3177,3 +3177,27 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 /* Los avatares de un proyecto compartido van en la misma línea que las tareas: la tarjeta no crece */
 .wk-meta { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .wk-meta .wk-shared { margin-left: 6px; height: 16px; } .wk-meta .wk-shared svg { width: 16px; height: 16px; margin-left: -5px; }
+
+/* Trabajo: cada bloque con su puntito y título, como los widgets de las demás áreas */
+.wk-block > .wk-title { font-size: 16px; margin: 0 0 12px; padding-left: 2px; color: #202124; }
+.wk-block > .wk-title .dot { width: 9px; height: 9px; }
+.wk-block.wk-agenda > .wk-title, .wk-block.wk-tools > .wk-title, .wk-block.wk-focus > .wk-title { position: static; }
+/* Cronograma */
+.tl { --tl-name: 130px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tl-head { display: grid; grid-template-columns: var(--tl-name) 1fr; font-size: 11px; color: #80868B; }
+.tl-weeks { position: relative; height: 16px; } .tl-weeks span { position: absolute; transform: translateX(0); white-space: nowrap; }
+.tl-body { position: relative; }
+.tl-row { display: grid; grid-template-columns: var(--tl-name) 1fr; align-items: center; height: 44px; border-top: 1px solid #F1F3F4; }
+.tl-name { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: 500 13px Poppins, sans-serif; text-align: left; cursor: pointer; min-width: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-name .dot { width: 9px; height: 9px; flex: none; }
+.tl-lane { position: relative; height: 100%; background: repeating-linear-gradient(90deg, transparent 0 calc(100% / var(--w, 10) - 1px), #F6F7F8 calc(100% / var(--w, 10) - 1px) calc(100% / var(--w, 10))); }
+.tl-bar { position: absolute; top: 13px; height: 18px; border-radius: 99px; background: color-mix(in srgb, var(--c) 55%, #fff); } .tl-bar.is-open { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 40%, #fff) 0 6px, color-mix(in srgb, var(--c) 22%, #fff) 6px 12px); }
+.tl-ms { position: absolute; top: 12px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: #fff; border: 3px solid var(--c); box-sizing: border-box; } .tl-ms.is-done { background: var(--c); }
+.tl-today { position: absolute; top: -4px; bottom: 0; width: 2px; background: #E84855; pointer-events: none; } .tl-today em { position: absolute; top: -14px; left: -12px; font-size: 10px; font-style: normal; color: #E84855; background: #fff; padding: 0 4px; }
+.tl-empty { margin: 4px 0; }
+/* Agenda como el plan de Salud */
+.wk-agenda-plan .sa-plan-col.is-today { background: #FDECEE; }
+.wk-agenda-plan .sa-plan-col.is-drop { outline-color: #E84855; background: #FDECEE; }
+.agenda-tools { display: inline-flex; align-items: center; gap: 6px; }
+.wk-agenda-plan .agenda-now { position: absolute; left: 0; right: 0; height: 2px; background: #E84855; pointer-events: none; z-index: 3; }
+.wk-block.wk-projects { flex-wrap: wrap; } .wk-block.wk-projects > .wk-title { flex: 0 0 100%; width: 100%; }
