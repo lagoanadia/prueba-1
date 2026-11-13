@@ -3123,8 +3123,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-cap { position: relative; display: inline-block; line-height: 0; container-type: inline-size; }
 .pl-cap .pl-capsule { display: block; width: 100%; height: auto; }
 .pl-cap-times { position: absolute; top: 12.5%; bottom: 12.5%; left: 52%; right: 4%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; }
-.pl-cap-t { border: 0; background: transparent; padding: 0 2cqw; border-radius: 99px; font: 600 11.5cqw/1.15 Poppins, sans-serif; color: var(--text); cursor: pointer; transition: color .2s, background .2s; }
-.pl-cap-times:has(.pl-cap-t + .pl-cap-t) .pl-cap-t { font-size: 10cqw; }
+.pl-cap-t { border: 0; background: transparent; padding: 0 2cqw; border-radius: 99px; font: 500 9cqw/1.15 Poppins, sans-serif; color: #80868B; cursor: pointer; transition: color .2s, background .2s; }
+.pl-cap-times:has(.pl-cap-t + .pl-cap-t) .pl-cap-t { font-size: 7.5cqw; }
 .pl-cap.is-done .pl-cap-t { color: #fff; }
 .pl-cap-t.is-done { color: #fff; background: color-mix(in srgb, var(--c) 85%, #000); }
 .pl-cap.is-done .pl-cap-t.is-done { background: transparent; }
