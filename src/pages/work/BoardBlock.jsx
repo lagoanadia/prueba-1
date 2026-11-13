@@ -99,8 +99,10 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
 
   if (!projects.length) return <Empty icon="board" text="Tus tareas aparecerán aquí cuando crees un proyecto" />
 
+  const milestoneOf = (t) => projects.find((p) => p.id === (t.projectId ?? onlyProject))?.milestones?.find((m) => m.id === t.milestoneId)
   const card = (t) => {
     const c = colorOf(data, t.projectId)
+    const ms = t.milestoneId ? milestoneOf(t) : null
     const subs = t.subtasks ?? []
     const late = t.status !== 'done' && t.due && t.due < today
     return (
@@ -108,6 +110,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
         {mixed && <span className="wk-tag"><span className="dot" style={{ background: c }} />{t.projectName}</span>}
         <span className="wk-task-title">{t.title}{t.assignee && members.find((m) => m.username === t.assignee) && <span className="wk-assignee" style={{ '--m': colorOfMember(t.assignee) }} title={`@${t.assignee}`}><Avatar avatar={members.find((m) => m.username === t.assignee).avatar} size={18} /></span>}</span>
         <span className="wk-task-meta">
+          {ms && <span className="wk-ms-tag" style={{ '--c': c }} title={`Del hito «${ms.title}»`}><i />{ms.title}</span>}
           <span className="wk-prio-word" style={{ background: soft(PRIORITY[t.priority], 35) }}>{PRIORITY_WORD[t.priority]}</span>
           {t.due && <span className={`wk-due ${late ? 'is-late' : ''}`}>{late ? 'Vencida · ' : ''}{formatShort(t.due).replace(/^\S+ /, '')}</span>}
           {subs.length > 0 && <span className="wk-subs">{subs.filter((s) => s.done).length}/{subs.length} subtareas</span>}
@@ -150,7 +153,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
                   {mine.map((t) => (
                     <button key={t.id} type="button" draggable className="wk-bubble" style={{ '--c': colorOfMember(m.username) ?? '#9AA0A6' }}
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/task', t.id) }}
-                      onClick={() => assign(t.id, m.username === me ? null : me)} title={m.username === me ? 'Toca para soltarla' : m.username ? 'Toca para asumirla tú' : 'Toca para asumirla tú'}>{t.title}</button>
+                      onClick={() => assign(t.id, m.username === me ? null : me)} title={`${t.milestoneId ? `Del hito «${milestoneOf({ ...t, projectId: sharedProject.id })?.title ?? ''}» · ` : ''}${m.username === me ? 'Toca para soltarla' : 'Toca para asumirla tú'}`}>{t.milestoneId && <i className="wk-ms-dia" />}{t.title}</button>
                   ))}
                   {mine.length === 0 && <span className="muted wk-assign-empty">{m.username ? 'Suelta aquí una tarea' : 'Todo repartido'}</span>}
                 </span>

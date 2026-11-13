@@ -3297,3 +3297,8 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wk-assignee { --m: #9AA0A6; } .wk-ring { display: inline-flex; border-radius: 50%; box-shadow: 0 0 0 3px var(--m, #9AA0A6); } .wk-assignee svg { box-shadow: 0 0 0 2px var(--m); }
 .wk-assign-who .wk-ring svg { display: block; border-radius: 50%; }
 .sh-member svg { box-shadow: 0 0 0 2px var(--m, #9AA0A6); }
+
+/* Una tarea que viene de un hito lo dice con su rombo y el nombre del hito */
+.wk-ms-tag { display: inline-flex; align-items: center; gap: 5px; background: color-mix(in srgb, var(--c) 18%, #fff); border-radius: 99px; padding: 0 8px 0 5px; font-weight: 600; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wk-ms-tag i, .wk-ms-dia { width: 9px; height: 9px; border: 2px solid var(--c, #E84855); border-radius: 2px; background: #fff; transform: rotate(45deg) scale(.85); flex: none; display: inline-block; }
+.wk-ms-dia { margin-right: 6px; --c: #E84855; vertical-align: middle; }
