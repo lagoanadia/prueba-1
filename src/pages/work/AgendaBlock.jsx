@@ -1,6 +1,7 @@
 import { locale } from '../../i18n/index.js'
 import { useEffect, useRef, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
+import MeetingExtras from './MeetingExtras.jsx'
 import History from '../../components/History.jsx'
 import Icon from '../../components/Icon.jsx'
 import useMediaQuery from '../../hooks/useMediaQuery.js'
@@ -133,7 +134,7 @@ export default function AgendaBlock({ data, update, projectId = null }) {
   const saveDraft = (ev) => {
     if (!ev.title.trim() || toMin(ev.end) <= toMin(ev.start)) return
     if (busy(ev.date, ev.id).some(([a, z]) => toMin(ev.start) < z && toMin(ev.end) > a)) return
-    commit(ev.id, { title: ev.title.trim(), start: ev.start, end: ev.end, projectId: ev.projectId, color: ev.color, tags: ev.tags ?? [], note: ev.note ?? '' })
+    commit(ev.id, { title: ev.title.trim(), start: ev.start, end: ev.end, projectId: ev.projectId, color: ev.color, tags: ev.tags ?? [], note: ev.note ?? '', ...(ev.kind === 'meeting' ? { links: ev.links ?? [], docs: ev.docs ?? [] } : {}) })
     setDraft(null)
   }
 
@@ -239,7 +240,7 @@ export default function AgendaBlock({ data, update, projectId = null }) {
                   {x.kind === 'meeting'
                     ? (
                       <span className={`ag-meet ${height <= 58 ? 'is-compact' : ''}`}>
-                        <span className="ag-meet-top"><Icon name="amigos" size={14} color="#fff" />{height > 58 && <em>{x.start}–{x.end}</em>}</span>
+                        <span className="ag-meet-top"><Icon name="amigos" size={14} color="#fff" />{((x.links ?? []).length > 0 || (x.docs ?? []).length > 0) && <Icon name="link" size={12} color="#fff" />}{height > 58 && <em>{x.start}–{x.end}</em>}</span>
                         <b>{x.title}</b>
                         {height > 78 && (x.attendees ?? []).length > 0 && (
                           <span className="ag-meet-av">{(x.attendees ?? []).map((u) => { const m = (sh.meta(x.projectId)?.members ?? []).find((y) => y.username === u); return m ? <Avatar key={u} avatar={m.avatar} size={20} /> : null })}</span>
@@ -288,7 +289,9 @@ export default function AgendaBlock({ data, update, projectId = null }) {
               : <input className="ag-tag-in" autoFocus value={newTag} maxLength={24} placeholder="Cuentas, clientes…" aria-label="Nueva etiqueta" onChange={(e) => setNewTag(e.target.value)}
                   onBlur={() => setNewTag(null)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = addTag(draft.projectId, newTag); if (t) setDraft({ ...draft, tags: [...(draft.tags ?? []), t.id] }); setNewTag(null) } if (e.key === 'Escape') setNewTag(null) }} />}
           </span>
-          <textarea className="ag-note" rows={2} maxLength={600} value={draft.note ?? ''} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="Nota (opcional)" aria-label="Nota" />
+          {draft.kind === 'meeting'
+            ? <MeetingExtras value={draft} onChange={(v) => setDraft({ ...draft, note: v.note, links: v.links, docs: v.docs })} docs={projects.find((p) => p.id === draft.projectId)?.docs ?? []} />
+            : <textarea className="ag-note" rows={2} maxLength={600} value={draft.note ?? ''} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="Nota (opcional)" aria-label="Nota" />}
           <span className="agenda-actions">
             <button type="button" className="icon-btn" onClick={() => remove(draft.id)} aria-label="Borrar"><Icon name="trash" size={18} /></button>
             <button type="button" className="icon-btn" onClick={() => setDraft(null)} aria-label="Cerrar"><Icon name="close" size={18} /></button>

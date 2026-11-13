@@ -3,6 +3,7 @@ import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
 import { todayISO } from '../../lib/dates.js'
 import { projectsOf } from '../../widgets/trabajo/projects.js'
+import MeetingExtras from './MeetingExtras.jsx'
 import { colorOf, toMin } from './shared.js'
 import { useShared } from './SharedCtx.js'
 
@@ -22,6 +23,7 @@ export default function Reunion({ data, update, projectId }) {
   const [invited, setInvited] = useState(null) // null = solo yo (todavía sin tocar)
   const [over, setOver] = useState(false)
   const [done, setDone] = useState('')
+  const [extras, setExtras] = useState({ note: '', links: [], docs: [] }) // notas, enlaces y documentos para la reunión
   if (!project) return null
   const guests = invited ?? (me ? [me] : [])
   const c = colorOf(data, projectId)
@@ -32,11 +34,11 @@ export default function Reunion({ data, update, projectId }) {
   const activate = (e) => {
     e.preventDefault()
     if (!ok) return
-    const ev = { id: crypto.randomUUID(), date, start, end, title: title.trim(), projectId, kind: 'meeting', attendees: guests, ...(project.shared ? { by: me } : {}) }
+    const ev = { id: crypto.randomUUID(), date, start, end, title: title.trim(), projectId, kind: 'meeting', attendees: guests, note: extras.note.trim(), links: extras.links, docs: extras.docs, ...(project.shared ? { by: me } : {}) }
     update((d) => (project.shared
       ? { ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, meetings: [...(p.meetings ?? []), ev] } : p)) }
       : { ...d, meetings: [...(d.meetings ?? []), ev] }))
-    setTitle(''); setInvited(null); setDone('Reunión activada: ya está en la agenda y en el cronograma')
+    setTitle(''); setInvited(null); setExtras({ note: '', links: [], docs: [] }); setDone('Reunión activada: ya está en la agenda y en el cronograma')
     setTimeout(() => setDone(''), 4000)
   }
   const person = (m) => members.find((x) => x.username === m)
@@ -69,6 +71,7 @@ export default function Reunion({ data, update, projectId }) {
           </div>
         </>
       ) : <span className="rn-hint">Con un proyecto compartido podrás invitar a tus amigos a la reunión.</span>}
+      <MeetingExtras value={extras} onChange={setExtras} docs={project.docs ?? []} />
       <div className="rn-actions">
         {done && <span className="rn-done" role="status">{done}</span>}
         <button className="pill sh-save" disabled={!ok}><Icon name="amigos" size={16} color="#fff" />Activar reunión</button>
