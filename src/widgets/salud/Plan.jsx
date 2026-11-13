@@ -301,7 +301,7 @@ export default function Plan({ data, update }) {
                 const short = h < 40 // 1 h o menos cuando el horario va apretado: letra a la medida y una sola línea
                 const iconMode = short && s.min < 60 // menos de 1 h: en vez del nombre, el icono del deporte estampado a lo largo de la barra (se ve siempre, aunque sean 15 min)
                 const tiny = iconMode && h < 20 // sin sitio para la × dentro: se quita desde la tarjeta al pasar o pulsar
-                const stamp = iconMode ? { backgroundImage: stampOf(iconOf(data, s.sport)), backgroundSize: `${Math.max(h, 10)}px ${Math.max(h, 10)}px`, backgroundRepeat: 'space', backgroundPosition: 'center' } : null
+                const stamp = iconMode ? { backgroundImage: stampOf(iconOf(data, s.sport)), backgroundSize: `${Math.max(h, 10) * 2}px ${Math.max(h, 10)}px`, backgroundRepeat: 'round no-repeat', backgroundPosition: 'center' } : null
                 const end = fromMin(toMin(s.start) + s.min)
                 return (
                   <Fragment key={s.id}>
