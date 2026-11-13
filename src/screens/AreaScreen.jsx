@@ -52,8 +52,8 @@ export default function AreaScreen({ area, showTitle = true }) {
     updateData((d) => ({ ...d, healthAllOpen: true, healthWidgetsAdded: true }))
   }, [area.id, board?.isNew, Boolean(board)]) // eslint-disable-line react-hooks/exhaustive-deps
   const [editing, setEditing] = useState(false)
-  useExitEdit(editing, () => setEditing(false), '.widget, .customize, .popup, .gallery, .ghost') // pulsar fuera termina la edición
-  const [gallery, setGallery] = useState(false)
+  useExitEdit(editing, () => { setEditing(false); setAdding(false) }, '.widget, .add-square, .customize, .popup, .ghost') // pulsar fuera termina la edición
+  const [adding, setAdding] = useState(false) // selector abierto dentro del cuadrado vacío
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
   const gridRef = useRef(null)
   const ghostRef = useRef(null)
@@ -98,9 +98,9 @@ export default function AreaScreen({ area, showTitle = true }) {
     navigator.vibrate?.(8) // pequeño "toque" en móviles que lo permiten
     updateLayout((l) => l.map((w) => (w.id === id ? { ...w, size } : w)))
   }
-  const add = (type, size) => {
-    updateLayout((l) => [...l, { id: crypto.randomUUID(), type, size }])
-    setGallery(false)
+  const add = (type) => {
+    updateLayout((l) => [...l, { id: crypto.randomUUID(), type, size: fitSize(type, 'M') }]) // entra en ancho; el dock de tamaños lo cambia
+    setAdding(false)
   }
 
   // ---------- Arrastrar ----------
@@ -174,19 +174,6 @@ export default function AreaScreen({ area, showTitle = true }) {
     startDragAfterThreshold(e, id, () => el.getBoundingClientRect())
   }
 
-  // Desde la galería: se cierra, el widget entra al tablero y sigue pegado al dedo.
-  const onGalleryPointerDown = (e, type, size) => {
-    if (e.button > 0) return
-    const el = e.currentTarget
-    const id = crypto.randomUUID()
-    startDragAfterThreshold(e, id, () => {
-      const r = el.getBoundingClientRect()
-      setGallery(false)
-      updateLayout((l) => [...l, { id, type, size }])
-      return r
-    })
-  }
-
   // Las tarjetas están memorizadas (memo): para que no se repinten sin motivo, les pasamos
   // funciones estables que leen siempre la última versión desde este ref.
   const api = useRef({})
@@ -246,18 +233,12 @@ export default function AreaScreen({ area, showTitle = true }) {
           {board.layout.map((w, i) => (
             <WidgetCard key={w.id} w={w} i={i} data={board.data} editing={editing} isDragged={drag?.id === w.id} api={stableApi} />
           ))}
-          {editing && (
-            <button className="widget w-S w-add" onClick={() => setGallery(true)} aria-label="Añadir widget">+</button>
-          )}
+          {editing && <AddSquare open={adding} onOpen={setAdding} options={available.map((w) => ({ type: w.type, label: w.name, icon: w.icon ?? 'board' }))} onPick={add} />}
         </div>
       )}
 
       {/* Portales: se pintan en <body> para cubrir toda la pantalla
           (si no, quedan "atrapados" dentro de contenedores con zoom o animaciones). */}
-      {gallery && createPortal(
-        <Gallery widgets={available} data={board.data} onAdd={add} onDragStart={onGalleryPointerDown} onClose={() => setGallery(false)} />,
-        document.body
-      )}
       {drag && dragged && createPortal(
         <div className="ghost" ref={ghostRef} style={{ zoom: drag.zoom, width: drag.w / drag.zoom, height: drag.h / drag.zoom }}>
           <WidgetView w={dragged} data={board.data} />
@@ -362,32 +343,25 @@ const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragge
   )
 })
 
-/** Galería: cada widget con vista previa real. Se puede arrastrar al tablero o pulsar «Añadir». */
-function Gallery({ widgets, data, onAdd, onDragStart, onClose }) {
-  const [sizes, setSizes] = useState({})
+/**
+ * Cuadrado vacío con un + dentro del tablero (mismo que en Estudios). Al pulsarlo se abre en su sitio
+ * con los widgets que puedes añadir: icono y nombre; entran en ancho y el tamaño se cambia con el dock.
+ */
+function AddSquare({ open, onOpen, options, onPick }) {
+  if (!open) {
+    return (
+      <button className="add-square" onClick={() => onOpen(true)} aria-label="Añadir un widget" title="Añadir un widget">
+        <span className="add-square-plus"><Icon name="plus" size={30} /></span>
+      </button>
+    )
+  }
   return (
-    <div className="gallery" role="dialog" aria-modal="true" aria-label="Añadir widget">
-      <div className="gallery-backdrop" onClick={onClose} />
-      <div className="gallery-panel">
-        <header className="area-head"><h2>Widgets</h2><button className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
-        <p className="w-hint gallery-tip">Arrastra un widget a tu tablero</p>
-        <div className="gallery-list">
-          {widgets.map((w) => {
-            const size = fitSize(w.type, sizes[w.type] ?? 'M')
-            return (
-              <div key={w.type} className="gallery-item">
-                <div className={`preview p-${size}`} onPointerDown={(e) => onDragStart(e, w.type, size)}>
-                  <WidgetView w={{ type: w.type, size }} data={data} />
-                </div>
-                <div className="gallery-ctrl">
-                  <b>{w.name}</b>
-                  <div className="seg">{sizesOf(w.type).map((s) => <button key={s} className={size === s ? 'on' : ''} onClick={() => setSizes({ ...sizes, [w.type]: s })}>{s}</button>)}</div>
-                  <button className="pill pill-on" onClick={() => onAdd(w.type, size)}>Añadir</button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+    <div className="add-square is-open" role="group" aria-label="Elige qué añadir">
+      <button className="icon-btn add-square-close" onClick={() => onOpen(false)} aria-label="Cancelar"><Icon name="close" size={20} /></button>
+      <div className="add-square-grid">
+        {options.map((o) => (
+          <button key={o.type} className="add-tile" onClick={() => onPick(o.type)}><Icon name={o.icon} size={28} /><span>{o.label}</span></button>
+        ))}
       </div>
     </div>
   )

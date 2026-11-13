@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useBox from '../../hooks/useBox.js'
 import { todayISO } from '../../lib/dates.js'
 import { getLang } from '../../i18n/index.js'
@@ -9,7 +9,8 @@ import { sendScore } from '../games/common.js'
  * Una palabra de 5 letras al día, 6 intentos. Colores de cada letra:
  *   verde = está y en su sitio · amarillo = está pero en otro sitio · gris = no está
  * Al terminar se enseña el significado (para seguir aprendiendo una palabra cada día).
- * No validamos contra un diccionario: vale cualquier combinación de 5 letras.
+ * En español solo se aceptan palabras que existan en el diccionario (src/data/words5-es.txt: las de 5 letras, sin tildes);
+ * se carga aparte, la primera vez que se abre el widget. En inglés vale cualquier combinación de 5 letras.
  */
 const WORDS = [
   ['ALBOR', 'Luz del alba; comienzo de algo.'], ['BRUMA', 'Niebla ligera, sobre todo en el mar.'],
@@ -44,6 +45,10 @@ const WORDS_EN = [
 const KEYS_ES = ['QWERTYUIOP', 'ASDFGHJKLÑ', '↵ZXCVBNM⌫']
 const KEYS_EN = ['QWERTYUIOP', 'ASDFGHJKL', '↵ZXCVBNM⌫']
 
+// Diccionario español de 5 letras: un archivo aparte que solo se descarga al abrir este widget
+let dictPromise = null
+const loadDict = () => (dictPromise ??= import('../../data/words5-es.txt?raw').then((m) => new Set(m.default.split('\n'))))
+
 const wordOfDay = (today) => { const list = getLang() === 'en' ? WORDS_EN : WORDS; return list[Math.floor(new Date(`${today}T12:00:00`).getTime() / 86400000) % list.length] }
 
 /** Compara un intento con la solución. Tiene en cuenta letras repetidas (como el Wordle original). */
@@ -66,6 +71,10 @@ export default function Word({ size, data, update }) {
   const game = data.wordle?.date === today ? data.wordle : { date: today, guesses: [] }
   const [current, setCurrent] = useState('')
   const [shake, setShake] = useState(false)
+  const [msg, setMsg] = useState('') // aviso breve («no está en el diccionario»)
+  const [dict, setDict] = useState(null)
+  useEffect(() => { if (getLang() !== 'en') loadDict().then(setDict).catch(() => {}) }, []) // si no carga, se deja jugar sin comprobar
+  const reject = (text) => { setShake(true); setMsg(text); setTimeout(() => setShake(false), 400); setTimeout(() => setMsg(''), 1800) }
   const areaRef = useRef(null)
   const area = useBox(areaRef)
   // Tamaño de casilla = el mayor que quepa en el hueco medido (5 de ancho, 6 de alto), con margen
@@ -87,7 +96,8 @@ export default function Word({ size, data, update }) {
     if (over) return
     if (k === '⌫') return setCurrent((c) => c.slice(0, -1))
     if (k === '↵') {
-      if (current.length < LEN) { setShake(true); setTimeout(() => setShake(false), 400); return }
+      if (current.length < LEN) return reject('Faltan letras')
+      if (dict && !dict.has(current) && current !== answer) return reject('No está en el diccionario')
       const guesses = [...game.guesses, current]
       update((d) => ({ ...d, wordle: { date: today, guesses } }))
       setCurrent('')
@@ -141,10 +151,13 @@ export default function Word({ size, data, update }) {
   return (
     <div className={`wordle wordle-${size}`} tabIndex={0} onKeyDown={onKeyDown} aria-label="Palabra oculta: escribe tu intento">
       <div className="wordle-area" ref={areaRef}>{board}</div>
+      {msg && <div className="wordle-msg" role="status">{msg}</div>}
       {over ? (
-        <div className="wordle-end">
-          <b>{answer[0] + answer.slice(1).toLowerCase()}</b>
-          <span className="w-hint">{meaning}</span>
+        <div className={`wordle-end ${won ? 'is-won' : 'is-lost'}`}>
+          <span className="we-kicker">{won ? `¡Acertada en ${game.guesses.length}/${TRIES}!` : 'Hoy no ha podido ser'}</span>
+          <div className="we-word" aria-label={answer}>{[...answer].map((ch, i) => <span key={i} style={{ '--d': `${i * 90}ms` }}>{ch}</span>)}</div>
+          <p className="we-meaning">{meaning}</p>
+          {won && <span className="we-confetti" aria-hidden="true">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ '--x': `${(i * 7 + 3) % 100}%`, '--d': `${(i % 5) * 120}ms`, '--c': ['#3DDC97', '#F9DC5C', '#3185FC', '#EFABFF', '#E84855'][i % 5] }} />)}</span>}
         </div>
       ) : (size === 'L' || size === 'T') ? (
         <div className="keyboard">
