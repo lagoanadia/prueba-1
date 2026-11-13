@@ -1152,6 +1152,14 @@ button.subject-card:hover { transform: translateY(-3px); }
 .ic-on .ic-line { stroke: #17171A; }
 .ic-on .ic-body { fill: #17171A; }
 .ic-on .ic-dot { fill: #17171A; }
+/* Menú: círculo pastel con el icono del color; al elegir el área, el círculo pasa a su color fuerte */
+.nv-area .ic { background: color-mix(in srgb, var(--c) 28%, #fff); transition: background .25s var(--ease); }
+.nv-area .ic .ic-line { stroke: color-mix(in srgb, var(--c) 70%, #000); }
+.nv-area .ic .ic-body { fill: var(--c); fill-opacity: .6; }
+.nv-area:hover:not(.on) { background: color-mix(in srgb, var(--c) 10%, #fff); }
+.nv-area.on .ic { background: var(--c); }
+.nv-area.on .ic .ic-line { stroke: #17171A; }
+.nv-area.on .ic .ic-body { fill: #fff; fill-opacity: .45; }
 .areas-set { gap: 0; max-width: none; margin-bottom: 0; }
 .areas-set .area-rows { gap: 8px; margin: 0; }
 .areas-set .area-row { padding: 6px 14px; gap: 12px; border-radius: 18px; }

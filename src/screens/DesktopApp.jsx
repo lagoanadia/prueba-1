@@ -32,16 +32,19 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   const pending = today.filter((i) => !i.done) // lo tachado sale de la lista y de la rueda
   const visible = AREAS.filter((a) => activeAreaIds(settings).includes(a.id)) // solo las activas, sin huecos
 
-  const NavItem = ({ id, label, color = '#F1F3F4' }) => (
-    <button className={`nv ${view === id ? 'on' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
-      style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} ${tint(color)}%, #FFFFFF)` } : undefined}>
-      <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : color === '#F1F3F4' ? '' : 'ic-on'}`} style={{ background: color }}>
+  const NavItem = ({ id, label, color = '#F1F3F4' }) => {
+    const isArea = color !== '#FFFFFF' && color !== '#F1F3F4' // las áreas: círculo pastel, más fuerte al elegirlas
+    return (
+    <button className={`nv ${view === id ? 'on' : ''} ${isArea ? 'nv-area' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
+      style={{ '--c': color, ...(view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} ${tint(color)}%, #FFFFFF)` } : {}) }}>
+      <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : color === '#F1F3F4' ? '' : 'ic-on'}`} style={isArea ? undefined : { background: color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
         {id === 'amigos' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </span>
       {!iconsOnly && label}
     </button>
-  )
+    )
+  }
 
   const area = visible.find((a) => a.id === view) // un área desactivada no se abre
 
