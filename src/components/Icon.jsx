@@ -65,7 +65,7 @@ const ICONS = {
 export default function Icon({ name, size = 26, color = '#5F6368', strokeWidth = 2.2 }) {
   const ic = ICONS[name]
   if (!ic) return null
-  const px = Math.round(size * 1.15) // un poco más grandes que el tamaño pedido
+  const px = Math.round(size * (size <= 20 ? 1.35 : 1.15)) // un poco más grandes; los pequeños, algo más
   return (
     <svg aria-hidden="true" width={px} height={px} viewBox="0 0 24 24" fill="none" stroke={color}
       strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
