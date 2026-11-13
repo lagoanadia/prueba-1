@@ -1,4 +1,5 @@
 import Select from '../../components/Select.jsx'
+import DatePicker from '../../components/DatePicker.jsx'
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import History from '../../components/History.jsx'
@@ -78,7 +79,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
           )}
           <input className="line-input" autoFocus placeholder={exams ? 'Qué examen es' : 'Qué hay que entregar'} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} />
           {!course && <Select value={form.course} label="Asignatura" onChange={(v) => setForm({ ...form, course: v })} options={subjects.map((s) => ({ value: s.short, label: s.short, color: s.color }))} />}
-          <input type="date" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} aria-label="Fecha" />
+          <DatePicker value={form.due} onChange={(v) => setForm({ ...form, due: v })} label="Fecha" color={exams ? '#3185FC' : undefined} />
           <button className="icon-btn on" aria-label="Guardar" title="Guardar" disabled={!form.title.trim() || !form.due}><Icon name="check" size={20} /></button>
           <button type="button" className="icon-btn" aria-label="Cancelar" title="Cancelar" onClick={() => setForm(null)}><Icon name="close" size={20} /></button>
         </form>

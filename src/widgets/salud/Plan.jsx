@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
@@ -14,18 +14,20 @@ const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const snap = (m) => Math.round(m / SNAP) * SNAP
 
 /** El nombre del deporte siempre se ve entero: la letra se encoge (de 15 a 7 px) hasta que la palabra cabe en la columna. */
-function SessName({ text }) {
+function SessName({ text, max = 15, single = false }) {
   const ref = useRef(null)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return undefined
     const fit = () => {
+      el.style.overflow = ''; el.style.textOverflow = ''
       // 1.º en una línea hasta 9 px; si no cabe, en varias líneas (sin partir ninguna palabra), encogiendo hasta que la palabra más larga quepa
       el.style.whiteSpace = 'nowrap'
-      let fs = 15
+      let fs = max
       el.style.fontSize = `${fs}px`
-      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 9) { fs -= 0.5; el.style.fontSize = `${fs}px` }
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > Math.min(9, max)) { fs -= 0.5; el.style.fontSize = `${fs}px` }
       if (el.scrollWidth <= el.clientWidth + 0.5) return
+      if (single) { el.style.overflow = 'hidden'; el.style.textOverflow = 'ellipsis'; return } // bloque corto: una línea y, si no cabe, puntos suspensivos (el nombre entero sale en la tarjeta flotante)
       el.style.whiteSpace = 'normal'
       fs = 12
       el.style.fontSize = `${fs}px`
@@ -35,7 +37,7 @@ function SessName({ text }) {
     const ro = new ResizeObserver(fit)
     ro.observe(el.parentElement)
     return () => ro.disconnect()
-  }, [text])
+  }, [text, max, single])
   return <b ref={ref} className="sa-name">{text}</b>
 }
 
@@ -59,6 +61,7 @@ export default function Plan({ data, update }) {
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
   const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
+  const [tip, setTip] = useState(null) // id de la sesión sobre la que está el puntero o el dedo (para la tarjeta con su hora)
   const [guide, setGuide] = useState(null) // { from, to, c }: tramo que se ilumina mientras estiras una sesión
   const shownDays = view.days.slice().sort((a, b) => a - b)
   const total = Math.max(1, view.to - view.from)
@@ -255,15 +258,27 @@ export default function Plan({ data, update }) {
                 const height = (s.min / 60) * H
                 if (top + height <= 0 || top >= total * H) return null
                 const done = Boolean(s.done?.[date])
+                const h = height - 2
+                const short = h < 40 // 1 h o menos cuando el horario va apretado: letra a la medida y una sola línea
+                const tiny = h < 22 // casi una raya: la letra baja de tamaño y la hora va en la tarjeta flotante
+                const end = fromMin(toMin(s.start) + s.min)
                 return (
-                  <div key={s.id} className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''}`} style={{ top: top + 1, height: height - 2, '--c': colorOf(sports, s.sport) }}
+                  <Fragment key={s.id}>
+                  <div className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''} ${short ? 'is-short' : ''} ${tiny ? 'is-tiny' : ''}`} style={{ top: top + 1, height: h, '--c': colorOf(sports, s.sport), '--x': `${Math.max(10, Math.min(18, h - 4))}px` }}
+                    onPointerEnter={() => setTip(s.id)} onPointerLeave={() => setTip(null)} onFocus={() => setTip(s.id)} onBlur={() => setTip(null)}
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
                     onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    <SessName text={s.sport} />
+                    <SessName text={s.sport} max={short ? Math.max(8, Math.min(14, h - 8)) : 15} single={short} />
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
+                  {short && (tip === s.id || live?.id === s.id) && (
+                    <span className={`sa-tip ${top < 44 ? 'is-below' : ''}`} style={{ top: top < 44 ? top + h + 6 : top - 6, '--c': colorOf(sports, s.sport) }} aria-hidden="true">
+                      <b>{s.sport}</b><span>{fromMin(toMin(s.start))} – {end} · {fmtHM(s.min)}</span>
+                    </span>
+                  )}
+                  </Fragment>
                 )
               })}
             </div>

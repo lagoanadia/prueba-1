@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import History from '../../components/History.jsx'
 import { daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { subjectsOf } from './study.js'
@@ -59,7 +60,7 @@ export default function Assignments({ size, data, update }) {
             {subjects.map((s) => <option key={s.id}>{s.short}</option>)}
           </select>
           <input placeholder="Nueva entrega" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} />
-          <input type="date" value={due} onChange={(e) => setDue(e.target.value)} style={{ flex: 'none' }} aria-label="Plazo" />
+          <DatePicker value={due} onChange={setDue} style={{ flex: 'none' }} label="Plazo" />
           <button className="mini mini-primary" disabled={!title.trim() || !due} aria-label="Añadir">+</button>
         </form>
       )}

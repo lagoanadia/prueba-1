@@ -3406,3 +3406,42 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pv-colorpick .sc-pop { top: 38px; }
 .pv-head { position: relative; } .pv-head .pv-ring { background: conic-gradient(var(--c) calc(var(--p) * 1%), color-mix(in srgb, var(--c) 30%, #fff) 0); }
 .pv-head .pv-ring::before { background: color-mix(in srgb, var(--c) 28%, #FFFFFF); }
+
+/* ===== Selector de fecha (mismo estilo que .sel / .sel-list) ===== */
+.sel.dp { gap: 6px; justify-content: flex-start; } .sel.dp.is-empty .sel-value { color: var(--muted); font-weight: 500; }
+.dp-pop { position: fixed; z-index: 70; box-sizing: border-box; padding: 10px; background: #FFFFFF; border-radius: 18px; box-shadow: var(--shadow-lg); font-size: 14px; outline: none; animation: sel-in .22s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: top center; }
+.dp-head { display: flex; align-items: center; gap: 4px; padding: 2px 2px 8px; }
+.dp-month { flex: 1; font-size: 15px; text-transform: capitalize; padding-left: 6px; }
+.dp-nav { width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); transition: background .15s, transform .15s var(--ease); }
+.dp-nav:hover { background: color-mix(in srgb, var(--c) 30%, #FFFFFF); } .dp-nav:active { transform: scale(.92); }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dp-wd { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+.dp-day { aspect-ratio: 1; min-height: 34px; border: 2px solid transparent; border-radius: 12px; background: none; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: background .15s, border-color .15s; }
+.dp-day.is-out { color: #B3B7BC; font-weight: 500; }
+.dp-day.is-hi { background: color-mix(in srgb, var(--c) 22%, #FFFFFF); }
+.dp-day.is-today { border-color: var(--text); }
+.dp-day.is-sel { background: var(--c); color: #FFFFFF; }
+.dp-day:disabled { opacity: .35; cursor: default; }
+.dp-foot { display: flex; justify-content: space-between; padding: 8px 4px 0; }
+.dp-foot button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--blue); cursor: pointer; padding: 4px 8px; border-radius: 10px; }
+.dp-foot button:hover:not(:disabled) { background: var(--soft); } .dp-foot button:disabled { color: #B3B7BC; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .dp-pop { animation: none; } }
+
+/* ===== Exámenes / Entregas: el contenido llena el bloque y queda centrado, con el pasador siempre abajo ===== */
+.plan-block > .deliv { flex: 1; min-height: 0; }
+.deliv .exam-count { flex: 1; justify-content: center; padding: 8px 0; }
+.deliv > .exam-pager { margin-top: auto; padding-top: 12px; }
+.deliv:has(.exam-count) .deliv-head { flex: none; }
+
+/* ===== Plan: sesiones cortas (1 h o menos) legibles ===== */
+.sa-sess.is-short { padding: 0 8px; justify-content: center; border-radius: 10px; }
+.sa-sess.is-short > b.sa-name { line-height: 1.1; }
+.sa-sess.is-tiny { padding: 0 6px; border-radius: 8px; }
+.sa-sess.is-short .sa-sess-x { width: var(--x); height: var(--x); top: 50%; transform: translateY(-50%); right: 3px; } .sa-sess.is-short .sa-sess-x svg { width: calc(var(--x) - 6px); height: calc(var(--x) - 6px); }
+.sa-sess.is-short .sa-rz { height: min(6px, 30%); }
+/* tarjeta flotante con el nombre y la hora (solo en sesiones cortas) */
+.sa-tip { position: absolute; left: 50%; transform: translate(-50%, -100%); z-index: 8; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 12px; border-radius: 12px; background: #FFFFFF; box-shadow: var(--shadow-lg), inset 0 -3px 0 var(--c); white-space: nowrap; font-size: 12px; animation: tip-in .15s var(--ease) both; }
+@keyframes tip-in { from { opacity: 0; } to { opacity: 1; } }
+.sa-tip.is-below { transform: translate(-50%, 0); }
+.sa-tip b { font-size: 13px; } .sa-tip span { color: var(--muted); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .sa-tip { animation: none; } }
