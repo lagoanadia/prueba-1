@@ -3485,3 +3485,15 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .wordle-M .we-kicker { display: none; }
 .wordle-M .we-word { font-size: 1.3em; }
 .wordle-M .wordle-end .we-meaning { font-size: .74em; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Iconos de deporte */
+.sa-bubble > button:first-child { display: inline-flex; align-items: center; gap: 6px; } .sa-bubble .sport-ic { flex: none; }
+.sa-newsport { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.sa-ico-btn { width: 32px; height: 32px; border: 1.5px solid var(--line); border-radius: 50%; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: var(--text); transition: border-color .15s; } .sa-ico-btn:hover, .sa-ico-btn[aria-expanded=true] { border-color: var(--text); }
+.sa-ico-grid { display: grid; grid-template-columns: repeat(4, 34px); gap: 4px; }
+.sa-ico-grid button { width: 34px; height: 34px; border: 2px solid transparent; border-radius: 12px; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: var(--text); transition: background .15s, border-color .15s; }
+.sa-ico-grid button:hover { background: #E8EAED; } .sa-ico-grid button.on { border-color: var(--text); background: #FFFFFF; }
+.sa-ico-pop { position: absolute; left: 0; top: calc(100% + 6px); z-index: 22; padding: 8px; border-radius: 16px; }
+.sa-sess .sa-ico { display: flex; align-items: center; justify-content: center; pointer-events: none; color: var(--text); }
+.sa-sess.is-short:has(.sa-ico) { align-items: center; }
+.sa-tip b { display: inline-flex; align-items: center; gap: 5px; }

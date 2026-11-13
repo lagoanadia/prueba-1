@@ -4,6 +4,7 @@ import Select from '../../components/Select.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
+import SportIcon, { ICON_KEYS, guessIcon, iconOf, stampOf } from './SportIcon.jsx'
 import { fmtHM, fromMin, toMin } from './healthUtils.js'
 
 const MIN_H = 16 // el horario se adapta al espacio disponible del widget; solo en casos extremos baja de este alto por hora
@@ -61,6 +62,8 @@ export default function Plan({ data, update }) {
   const [H, setH] = useState(46) // alto de una hora: lo reparte el horario para ocupar todo el alto del widget
   const [dropDay, setDropDay] = useState(null) // columna resaltada mientras arrastras un deporte
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
+  const [newIcon, setNewIcon] = useState(null) // icono elegido para el deporte nuevo (null = el que se adivina por el nombre)
+  const [iconPick, setIconPick] = useState(false) // selector de iconos abierto
   const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
   const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
   const [pin, setPin] = useState(null) // tarjeta que se queda un momento tras un toque (en el móvil no hay «pasar por encima»)
@@ -84,7 +87,12 @@ export default function Plan({ data, update }) {
   }, [total])
 
   const saveView = (patch) => update((d) => ({ ...d, planView: { ...DEFAULT_VIEW, ...(d.planView ?? {}), ...patch } }))
-  const addSport = (name) => { const n = name.trim(); if (n) update((d) => ({ ...d, sports: sportsOf(d).includes(n) ? sportsOf(d) : [...sportsOf(d), n] })); setNewSport(null) }
+  const addSport = (name, icon) => {
+    const n = name.trim()
+    if (n) update((d) => ({ ...d, sports: sportsOf(d).includes(n) ? sportsOf(d) : [...sportsOf(d), n], sportIcons: sportsOf(d).includes(n) ? (d.sportIcons ?? {}) : { ...(d.sportIcons ?? {}), [n]: icon ?? guessIcon(n) } }))
+    setNewSport(null); setNewIcon(null); setIconPick(false)
+  }
+  const setSportIcon = (sport, icon) => update((d) => ({ ...d, sportIcons: { ...(d.sportIcons ?? {}), [sport]: icon } }))
   const removeSport = (name) => update((d) => ({ ...d, sports: sportsOf(d).filter((x) => x !== name) }))
   // Poner una sesión directamente (solo lleva el deporte, el día, la hora y cuánto dura)
   const usual = (sport) => data.sportMin?.[sport] ?? DEFAULT_MIN // lo que sueles hacer de ese deporte
@@ -229,7 +237,7 @@ export default function Plan({ data, update }) {
       <div className="sa-sportbar" aria-label="Deportes: arrástralos al plan">
         {sports.map((sp) => (
           <span key={sp} className="sa-bubble" style={{ '--c': colorOf(sports, sp) }}>
-            <button type="button" draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', sp); setDurFor(null) }} onClick={() => setDurFor(durFor === sp ? null : sp)} aria-expanded={durFor === sp} title="Arrástralo al plan · pulsa para fijar cuánto sueles hacer">{sp}</button>
+            <button type="button" draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', sp); setDurFor(null) }} onClick={() => setDurFor(durFor === sp ? null : sp)} aria-expanded={durFor === sp} title="Arrástralo al plan · pulsa para fijar cuánto sueles hacer"><SportIcon name={iconOf(data, sp)} size={15} />{sp}</button>
             <button type="button" className="sa-bubble-x" onClick={() => removeSport(sp)} aria-label={`Quitar ${sp} de la lista`} title="Quitar de la lista"><Icon name="close" size={11} strokeWidth={3} /></button>
             {durFor === sp && (
               <>
@@ -241,6 +249,9 @@ export default function Plan({ data, update }) {
                     <b>{fmtHM(usual(sp))}</b>
                     <button type="button" onClick={() => setUsual(sp, usual(sp) + SNAP)} aria-label="Más tiempo">+</button>
                   </span>
+                  <span className="sa-ico-grid" role="radiogroup" aria-label={`Icono de ${sp}`}>
+                    {ICON_KEYS.map((k) => <button type="button" key={k} role="radio" aria-checked={iconOf(data, sp) === k} aria-label={k} className={iconOf(data, sp) === k ? 'on' : ''} onClick={() => setSportIcon(sp, k)}><SportIcon name={k} size={18} /></button>)}
+                  </span>
                   <button type="button" className="sa-btn" onClick={() => quickAdd(sp)}>Poner hoy</button>
                 </span>
               </>
@@ -249,7 +260,17 @@ export default function Plan({ data, update }) {
         ))}
         {newSport === null
           ? <button type="button" className="sa-bubble-add" onClick={() => setNewSport('')}><Icon name="plus" size={13} strokeWidth={2.8} /> Deporte</button>
-          : <input className="sa-bubble-in" autoFocus value={newSport} maxLength={30} placeholder="Deporte" aria-label="Nuevo deporte" onChange={(e) => setNewSport(e.target.value)} onBlur={() => addSport(newSport)} onKeyDown={(e) => { if (e.key === 'Enter') addSport(newSport); if (e.key === 'Escape') setNewSport(null) }} />}
+          : (
+            <span className="sa-newsport" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) addSport(newSport, newIcon) }}>
+              <button type="button" className="sa-ico-btn" onMouseDown={(e) => e.preventDefault()} onClick={() => setIconPick(!iconPick)} aria-label="Elegir icono del deporte" aria-expanded={iconPick} title="Elegir icono"><SportIcon name={newIcon ?? guessIcon(newSport)} size={18} /></button>
+              <input className="sa-bubble-in" autoFocus value={newSport} maxLength={30} placeholder="Deporte" aria-label="Nuevo deporte" onChange={(e) => setNewSport(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addSport(newSport, newIcon); if (e.key === 'Escape') { setNewSport(null); setNewIcon(null); setIconPick(false) } }} />
+              {iconPick && (
+                <span className="card sa-ico-pop sa-ico-grid" role="radiogroup" aria-label="Icono del deporte">
+                  {ICON_KEYS.map((k) => { const on = (newIcon ?? guessIcon(newSport)) === k; return <button type="button" key={k} role="radio" aria-checked={on} aria-label={k} className={on ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => { setNewIcon(k); setIconPick(false) }}><SportIcon name={k} size={20} /></button> })}
+                </span>
+              )}
+            </span>
+          )}
       </div>
       <div className="sa-plan-days" style={{ '--c': shownDays.length }}>
         <span />{shownDays.map((i) => <b key={i} className={`${week[i] === today ? 'is-today' : ''} ${week[i] < today ? 'is-past' : ''}`}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
@@ -278,23 +299,25 @@ export default function Plan({ data, update }) {
                 const done = Boolean(s.done?.[date])
                 const h = height - 2
                 const short = h < 40 // 1 h o menos cuando el horario va apretado: letra a la medida y una sola línea
-                const tiny = short && s.min <= 15 // 15 min: bloque de color liso, sin texto (la tarjeta lo explica); el resto siempre lleva texto, más pequeño si hace falta
+                const iconMode = short && s.min < 60 // menos de 1 h: en vez del nombre, el icono del deporte estampado a lo largo de la barra (se ve siempre, aunque sean 15 min)
+                const tiny = iconMode && h < 20 // sin sitio para la × dentro: se quita desde la tarjeta al pasar o pulsar
+                const stamp = iconMode ? { backgroundImage: stampOf(iconOf(data, s.sport)), backgroundSize: `${Math.max(h, 10)}px ${Math.max(h, 10)}px`, backgroundRepeat: 'space', backgroundPosition: 'center' } : null
                 const end = fromMin(toMin(s.start) + s.min)
                 return (
                   <Fragment key={s.id}>
-                  <div className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''} ${short ? 'is-short' : ''} ${tiny ? 'is-tiny' : ''}`} style={{ top: top + 1, height: h, '--c': colorOf(sports, s.sport), '--x': `${Math.max(10, Math.min(18, h - 4))}px` }}
+                  <div className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''} ${short ? 'is-short' : ''} ${tiny ? 'is-tiny' : ''}`} style={{ ...stamp, top: top + 1, height: h, '--c': colorOf(sports, s.sport), '--x': `${Math.max(10, Math.min(18, h - 4))}px` }}
                     onPointerEnter={() => showTip(s.id)} onPointerLeave={hideTip} onFocus={() => showTip(s.id)} onBlur={hideTip}
                     role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
                     onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
                     <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
-                    {!tiny && <SessName text={s.sport} max={short ? Math.max(6, Math.min(14, Math.floor((h - 6) / 1.1))) : 15} single={short} />}
+                                        {!iconMode && <SessName text={s.sport} max={short ? Math.max(6, Math.min(14, Math.floor((h - 6) / 1.1))) : 15} single={short} />}
                     <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
                     <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
                   </div>
                   {short && (tip === s.id || pin === s.id || live?.id === s.id) && (
                     <span className={`sa-tip ${top < 44 ? 'is-below' : ''}`} style={{ top: top < 44 ? top + h : top, '--c': colorOf(sports, s.sport) }} onPointerEnter={() => showTip(s.id)} onPointerLeave={hideTip}>
                       <span className="sa-tip-in">
-                        <span className="sa-tip-txt"><b>{s.sport}</b><span>{fromMin(toMin(s.start))} – {end} · {fmtHM(s.min)}</span></span>
+                        <span className="sa-tip-txt"><b><SportIcon name={iconOf(data, s.sport)} size={14} /> {s.sport}</b><span>{fromMin(toMin(s.start))} – {end} · {fmtHM(s.min)}</span></span>
                         {tiny && <button type="button" className="sa-tip-x" onClick={() => remove(s.id)} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={12} strokeWidth={3} /></button>}
                       </span>
                     </span>
