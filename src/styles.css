@@ -1148,6 +1148,11 @@ button.subject-card:hover { transform: translateY(-3px); }
 .sidebar-icons .side-sep { margin: 8px -12px; }
 .sidebar-icons .nv { justify-content: center; padding: 0; width: 56px; }
 .ic-white { box-shadow: 0 1px 3px rgba(60, 64, 67, .3); }
+/* Los iconos de los círculos de las áreas mantienen su tamaño */
+.ic svg { width: 26px; height: 26px; }
+/* Inicio, amigos y calendario: línea negra y cuerpo gris */
+.ic-white .ic-line { stroke: #17171A; }
+.ic-white .ic-body { fill: #9AA0A6; fill-opacity: .6; }
 /* Iconos sobre el círculo de color del área: en blanco */
 .ic-on .ic-line { stroke: #17171A; }
 .ic-on .ic-body { fill: #17171A; }

@@ -65,8 +65,9 @@ const ICONS = {
 export default function Icon({ name, size = 26, color = '#5F6368', strokeWidth = 2.2 }) {
   const ic = ICONS[name]
   if (!ic) return null
+  const px = Math.round(size * 1.15) // un poco más grandes que el tamaño pedido
   return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+    <svg aria-hidden="true" width={px} height={px} viewBox="0 0 24 24" fill="none" stroke={color}
       strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
       {ic.s && <path className="ic-body" d={ic.s} fill={color} fillOpacity=".38" stroke="none" />}
       <g className="ic-line">{ic.d.map((d) => <path key={d} d={d} strokeWidth={ic.dots ? 3 : undefined} />)}</g>
