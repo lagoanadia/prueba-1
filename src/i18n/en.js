@@ -30,7 +30,7 @@ const EN = {
   // ---- Voz
   'Hablar': 'Talk', 'Hablar con el asistente': 'Talk to the assistant', 'Asistente de voz': 'Voice assistant', 'Te estoy escuchando': "I'm listening", 'Dejar de escuchar': 'Stop listening',
   'Toca el círculo para hablar': 'Tap the circle to talk', 'Toca el círculo y cuéntame': 'Tap the circle and tell me', 'Transcripción': 'Transcript', 'Pulsa confirmar o di «sí»': 'Press confirm or say "yes"',
-  '¡Apuntado!': 'Saved!', 'No he podido transcribir el audio': "I couldn't transcribe the audio", 'No puedo acceder al micrófono. Dale permiso en el navegador.': "I can't access the microphone. Allow it in your browser.",
+  '¡Apuntado!': 'Saved!', 'No he podido transcribir el audio': "I couldn't transcribe the audio", 'Falta GROQ_API_KEY en el servidor': 'GROQ_API_KEY is missing on the server', 'La API key de Groq no es válida': 'The Groq API key is not valid', 'Se ha acabado la cuota de Groq por ahora. Prueba en un rato': 'Groq quota used up for now. Try again later', 'No he podido transcribir el audio. Inténtalo otra vez.': "I couldn't transcribe the audio. Try again.", '¿Borrar «{0}»?': 'Delete "{0}"?', 'No puedo acceder al micrófono. Dale permiso en el navegador.': "I can't access the microphone. Allow it in your browser.",
 
   // ---- Perfil y avatar
   'Avatar': 'Avatar', 'Aleatorio': 'Random', 'Avatar aleatorio': 'Random avatar', 'Cara': 'Face', 'Pelo': 'Hair', 'Gafas': 'Glasses', 'Extras': 'Extras', 'Ropa': 'Clothes', 'Fondo': 'Background',

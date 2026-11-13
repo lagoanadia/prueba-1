@@ -58,24 +58,31 @@ export async function groqTranscribe(audio, env, filename, lang = 'es', vocab = 
   const apiKey = env.GROQ_API_KEY
   if (!apiKey) throw new Error('GROQ_API_KEY is not set')
 
-  // La API de audio espera un formulario multipart, como un <form> con un <input type="file">.
-  const form = new FormData()
-  form.append('file', audio, filename)
-  form.append('model', TRANSCRIBE_MODEL)
-  form.append('response_format', 'json')
-  // Sin esto Whisper adivina el idioma y con audios cortos se equivoca (p. ej. lo toma por islandés).
-  form.append('language', lang === 'en' ? 'en' : 'es')
-  form.append('temperature', '0')
-  // Pista de contexto: ayuda a acertar con vocabulario y puntuación en español.
-  // Pista de contexto + tus nombres propios (asignaturas, proyectos…): así no escribe «agrícola» por «empresarial»
+  // Pista de contexto + tus nombres propios (asignaturas, proyectos…): así no escribe «agrícola» por «empresarial».
+  // Whisper solo admite ~224 tokens de pista: si nos pasamos, Groq rechaza el audio entero. Por eso se recorta.
   const base = lang === 'en' ? 'Voice notes for a personal planner: classes, exams, gym, habits, work and meals.' : 'Notas de voz en español para una agenda: clases, exámenes, gimnasio, hábitos, trabajo y comidas.'
-  form.append('prompt', vocab ? `${base} ${vocab}` : base)
+  const prompt = (vocab ? `${base} ${vocab}` : base).slice(0, 400)
 
-  const response = await fetch(TRANSCRIBE_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` }, // NO poner Content-Type: fetch lo genera con el "boundary"
-    body: form,
-  })
+  // La API de audio espera un formulario multipart, como un <form> con un <input type="file">.
+  const send = (withPrompt) => {
+    const form = new FormData()
+    form.append('file', audio, filename)
+    form.append('model', TRANSCRIBE_MODEL)
+    form.append('response_format', 'json')
+    // Sin esto Whisper adivina el idioma y con audios cortos se equivoca (p. ej. lo toma por islandés).
+    form.append('language', lang === 'en' ? 'en' : 'es')
+    form.append('temperature', '0')
+    if (withPrompt) form.append('prompt', prompt)
+    return fetch(TRANSCRIBE_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` }, // NO poner Content-Type: fetch lo genera con el "boundary"
+      body: form,
+    })
+  }
+
+  let response = await send(true)
+  // Si Groq rechaza la petición (400), se reintenta sin pista: mejor transcribir sin vocabulario que no transcribir
+  if (response.status === 400) { console.error('Whisper 400 con pista:', await response.text()); response = await send(false) }
 
   if (!response.ok) throw new GroqError(response.status, await response.text())
   const data = await response.json()

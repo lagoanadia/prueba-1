@@ -31,6 +31,11 @@ export default async function handler({ request, env }) {
     return json({ text })
   } catch (err) {
     console.error(err)
-    return json({ error: 'No he podido transcribir el audio. Inténtalo otra vez.' }, 502)
+    // Mensaje según la causa (sin dar detalles de la clave), para saber qué arreglar
+    const why = !env.GROQ_API_KEY ? 'Falta GROQ_API_KEY en el servidor'
+      : err.status === 401 ? 'La API key de Groq no es válida'
+      : err.status === 429 ? 'Se ha acabado la cuota de Groq por ahora. Prueba en un rato'
+      : 'No he podido transcribir el audio. Inténtalo otra vez.'
+    return json({ error: why }, 502)
   }
 }
