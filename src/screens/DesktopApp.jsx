@@ -35,7 +35,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
   const NavItem = ({ id, label, color = '#F1F3F4' }) => (
     <button className={`nv ${view === id ? 'on' : ''}`} aria-label={iconsOnly ? label : undefined} title={iconsOnly ? label : undefined} onClick={() => { setView(id); if (id === 'inicio') onHome?.() }} aria-current={view === id ? 'page' : undefined}
       style={view === id && id !== 'inicio' && id !== 'calendario' && color !== '#F1F3F4' ? { background: `color-mix(in srgb, ${color} ${tint(color)}%, #FFFFFF)` } : undefined}>
-      <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : ''}`} style={{ background: color }}>
+      <span className={`ic ${color === '#FFFFFF' ? 'ic-white' : color === '#F1F3F4' ? '' : 'ic-on'}`} style={{ background: color }}>
         {id === 'perfil' ? <Avatar avatar={avatar} size={40} /> : <Icon name={id} />}
         {id === 'amigos' && requests > 0 && <span className="notif-badge" aria-label={`${requests} peticiones de amistad`}>{requests}</span>}
       </span>

@@ -26,7 +26,7 @@ export default function AreasSettings({ settings, onSave }) {
           const on = settings.areas[a.id].active
           return (
             <li key={a.id} className={`card area-row ${on ? '' : 'is-off'}`}>
-              <span className="ic" style={{ background: on ? a.color : '#E8EAED' }}><Icon name={a.id} /></span>
+              <span className={`ic ${on ? 'ic-on' : ''}`} style={{ background: on ? a.color : '#E8EAED' }}><Icon name={a.id} /></span>
               <span className="area-row-text"><b>{a.label}</b><span className="muted">{DESC[a.id]}</span></span>
               <Switch on={on} label={`${on ? 'Desactivar' : 'Activar'} ${a.label}`} onClick={() => toggle(a.id)} />
             </li>

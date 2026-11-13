@@ -1148,6 +1148,10 @@ button.subject-card:hover { transform: translateY(-3px); }
 .sidebar-icons .side-sep { margin: 8px -12px; }
 .sidebar-icons .nv { justify-content: center; padding: 0; width: 56px; }
 .ic-white { box-shadow: 0 1px 3px rgba(60, 64, 67, .3); }
+/* Iconos sobre el círculo de color del área: en blanco */
+.ic-on .ic-line { stroke: #fff; }
+.ic-on .ic-body { fill: #fff; }
+.ic-on .ic-dot { fill: #fff; }
 .areas-set { gap: 0; max-width: none; margin-bottom: 0; }
 .areas-set .area-rows { gap: 8px; margin: 0; }
 .areas-set .area-row { padding: 6px 14px; gap: 12px; border-radius: 18px; }

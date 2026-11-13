@@ -63,7 +63,7 @@ export default function Onboarding({ area, flow, onDone }) {
     <div className="onboarding">
       <div className="ob-card">
         <div className="ob-top">
-          <span className="ic" style={{ background: area.color }}><Icon name={area.id} /></span>
+          <span className="ic ic-on" style={{ background: area.color }}><Icon name={area.id} /></span>
           <div className="ob-dots">{flow.steps.map((s, j) => <span key={s.id} className={j === i ? 'on' : j < i ? 'past' : ''} />)}</div>
           <button className="text-link ob-skip" onClick={() => finish({})}>Saltar</button>
         </div>
