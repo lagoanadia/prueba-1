@@ -3128,3 +3128,9 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-cap.is-done .pl-cap-t { color: #fff; }
 .pl-cap-t.is-done { color: #fff; background: color-mix(in srgb, var(--c) 85%, #000); }
 .pl-cap.is-done .pl-cap-t.is-done { background: transparent; }
+
+/* Pastillero: varias horas en fila, separadas por una rayita */
+.pl-med .pl-chips2 { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 0; }
+.pl-med .pl-chip { border: 0; background: transparent; color: #80868B; border-radius: 8px; padding: 2px 8px; font-weight: 500; }
+.pl-med .pl-chip + .pl-chip { border-left: 1.5px solid #D5D8DC; border-radius: 0 8px 8px 0; }
+.pl-med .pl-chip.is-done { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); color: var(--text); }
