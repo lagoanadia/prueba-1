@@ -15,7 +15,7 @@ const STEPS = 'color-mix(in srgb, #EAB308 62%, #FFFFFF)'
  * Constancia: el mes con su forma de calendario, en cuadraditos. Un día cuenta si has hecho deporte o has llegado a tu objetivo de pasos:
  * verde fuerte si las dos cosas, verde claro solo deporte, amarillo solo pasos. Los filtros enseñan solo pasos o un deporte concreto.
  */
-export default function Consistency({ data }) {
+export default function Consistency({ size, data }) {
   const [shift, setShift] = useState(0)
   const [filter, setFilter] = useState('all') // 'all' | 'steps' | nombre de un deporte
   const today = todayISO()
@@ -40,6 +40,22 @@ export default function Consistency({ data }) {
   const elapsed = days.filter((d) => iso(d) <= today)
   const met = elapsed.filter((d) => state(d) !== 'none').length
   const colors = { both: BOTH, sport: filter !== 'all' && filter !== 'steps' ? `color-mix(in srgb, ${colorOf(sports, filter)} 66%, #FFFFFF)` : SPORT, steps: STEPS, none: 'var(--soft)' }
+
+  // M: esta semana en siete círculos y cuántos días del mes has cumplido
+  if (size === 'M') {
+    const wk = weekDays(today)
+    const kind = (date) => { const sp = workouts.some((w) => w.date === date); const st = walked(date); return sp && st ? BOTH : sp ? SPORT : st ? STEPS : null }
+    const monthDays = Array.from({ length: Number(today.slice(8)) }, (_, i) => `${today.slice(0, 8)}${String(i + 1).padStart(2, '0')}`)
+    const done = monthDays.filter((d) => kind(d)).length
+    return (
+      <div className="sa-consist cs-M">
+        <div className="cs-week">
+          {wk.map((date, i) => <span key={date} className="cs-wk"><small>{WEEK[i]}</small><i className={date === today ? 'is-today' : ''} style={{ background: kind(date) ?? 'var(--soft)', opacity: date > today ? 0.45 : 1 }} title={`${date.slice(8)} de ${MONTHS[Number(date.slice(5, 7)) - 1].toLowerCase()}`} /></span>)}
+        </div>
+        <div className="cs-sum"><b className="sa-big">{done}<small> de {monthDays.length} días</small></b><span className="sa-label">este mes</span></div>
+      </div>
+    )
+  }
 
   return (
     <div className="sa-consist">

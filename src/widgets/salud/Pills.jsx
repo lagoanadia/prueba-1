@@ -50,7 +50,7 @@ const GridIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="non
  * Pastillero: tratamientos (con cuenta atrás de días), medicación diaria y suplementos.
  * Dos vistas: tarjetas (una por medicamento) o el día en orden (qué toca y cuándo). El + despliega el formulario aquí mismo.
  */
-export default function Pills({ data, update }) {
+export default function Pills({ size, data, update }) {
   const today = todayISO()
   const pills = data.pills ?? []
   const view = data.pillsView === 'day' ? 'day' : 'cards'
@@ -70,6 +70,25 @@ export default function Pills({ data, update }) {
   const eventsOf = (p) => itemsOf(p).flatMap((it) => it.times.map((t) => ({ p, it, t }))).sort((a, b) => a.t.localeCompare(b.t) || a.it.name.localeCompare(b.it.name))
   const rows = pills.filter((p) => p.kind !== 'treatment' || daysLeft(p) !== 0 || !p.days)
     .flatMap(eventsOf).sort((a, b) => a.t.localeCompare(b.t) || a.it.name.localeCompare(b.it.name))
+
+  // M: la siguiente toma de hoy, cuántas llevas y un botón para marcarla (añadir o quitar medicamentos se hace en el tamaño grande)
+  if (size === 'M') {
+    const next = rows.find((r) => !isDone(r.p, r.it, r.t))
+    const taken = rows.filter((r) => isDone(r.p, r.it, r.t)).length
+    if (!rows.length) return <p className="sa-hint">Sin tomas hoy. Añade medicamentos en el tamaño grande.</p>
+    const pi = next ? pills.findIndex((x) => x.id === next.p.id) : 0
+    return (
+      <div className="pl-M" style={{ '--c': next ? colorOf(next.p, pi) : '#1FA463' }}>
+        {next ? <Capsule done={false} /> : <span className="pl-allok"><Icon name="check" size={20} color="#1F7A4D" strokeWidth={3} /></span>}
+        <div className="pl-M-info">
+          <span className="sa-label">{next ? `Siguiente · ${next.t}` : 'Hoy'}</span>
+          <b>{next ? next.it.name : 'Todo tomado'}</b>
+          <span className="pl-M-dots" aria-label={`${taken} de ${rows.length} tomas hechas hoy`}>{rows.map((r, i) => <i key={i} className={isDone(r.p, r.it, r.t) ? 'is-done' : ''} />)}<small>{taken} de {rows.length} hoy</small></span>
+        </div>
+        {next && <button className="sa-btn" onClick={() => toggle(next.p, next.it, next.t)}>Tomada</button>}
+      </div>
+    )
+  }
 
   return (
     <div className="pl">
