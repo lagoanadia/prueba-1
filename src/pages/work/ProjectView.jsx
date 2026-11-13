@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import AddRow from '../../components/AddRow.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
-import useEditBoard from '../../hooks/useEditBoard.js'
+import useBlockDrag from '../../hooks/useBlockDrag.js'
+import useExitEdit from '../../hooks/useExitEdit.js'
 import Icon from '../../components/Icon.jsx'
 import TopActions from '../../components/TopActions.jsx'
 import { daysUntil, formatShort, lastDays, todayISO } from '../../lib/dates.js'
@@ -34,14 +34,10 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const [tick, setTick] = useState(0)
   const [docId, setDocId] = useState(initialDoc) // documento abierto
   const [editing, setEditing] = useState(false)
-  const setBlocks = (fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) }))
-  const addBlock = (type, before = null) => setBlocks((b) => {
-    const blk = DEFAULT_BLOCKS.find((x) => x.type === type)
-    const at = before ? b.findIndex((x) => x.id === before) : -1
-    return at < 0 ? [...b, blk] : [...b.slice(0, at), blk, ...b.slice(at)]
-  })
-  const edit = useEditBoard({ editing, setEditing, setBlocks, onAdd: addBlock })
+  const [menu, setMenu] = useState(false)
   useEffect(() => { if (!project?.timerStart) return; const id = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(id) }, [project?.timerStart])
+  const dnd = useBlockDrag((fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) })), editing)
+  useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   if (!project) return null
 
   const change = (fn) => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? fn(p) : p)) }))
@@ -49,9 +45,11 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
   const c = colorOf(data, projectId)
   // Distribución de bloques: la misma para todos los proyectos
   const blocks = data.projectBlocks ?? DEFAULT_BLOCKS
+  const setBlocks = (fn) => update((d) => ({ ...d, projectBlocks: fn(d.projectBlocks ?? DEFAULT_BLOCKS) }))
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (id) => setBlocks((b) => b.filter((x) => x.id !== id))
+  const addBlock = (type) => { setBlocks((b) => [...b, DEFAULT_BLOCKS.find((x) => x.type === type)]); setMenu(false) }
   const missing = DEFAULT_BLOCKS.map((b) => b.type).filter((t) => !blocks.some((b) => b.type === t))
   const { total, done, pct } = progressOf(project)
   const left = project.deadline ? daysUntil(project.deadline) : null
@@ -163,7 +161,18 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
     <div className="page work project-view" style={{ '--c': c }}>
       <button className="back-link" onClick={back}><Icon name="back" size={18} /> Trabajo</button>
       <TopActions><div className="page-actions">
-        <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
+        {editing && (
+          <div className="add-wrap">
+            <button className="icon-btn" onClick={() => setMenu(!menu)} aria-label="Añadir bloque" aria-expanded={menu} title="Añadir"><Icon name="plus" size={22} /></button>
+            {menu && (
+              <div className="card add-menu" role="menu">
+                {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={ICONS[t]} size={20} />{PARTS[t].label}</button>)}
+                {missing.length === 0 && <span className="muted add-empty">Ya están todos</span>}
+              </div>
+            )}
+          </div>
+        )}
+        <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setMenu(false) }}
           aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
           <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
         </button>
@@ -171,12 +180,11 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.filter((b) => PARTS[b.type]).map((b, i) => (
-          <section key={b.id} {...edit.blockProps(b.id)} className={`plan-block span-${b.span} ${PARTS[b.type].cls} ${edit.dragId === b.id ? 'is-dragging' : ''}`} aria-label={PARTS[b.type].label}>
+          <section key={b.id} className={`plan-block span-${b.span} ${PARTS[b.type].cls} ${dnd.cls(b)}`} aria-label={PARTS[b.type].label} {...dnd.props(b)}>
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b.id)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {PARTS[b.type].render()}
           </section>
         ))}
-        {editing && <AddRow options={missing.map((t) => ({ type: t, label: PARTS[t].label, icon: ICONS[t] }))} onPick={(t) => addBlock(t)} tileDown={edit.tileDown} ghost={edit.ghost} />}
       </div>
     </div>
   )

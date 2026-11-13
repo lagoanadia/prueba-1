@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import TopActions from '../components/TopActions.jsx'
-import AddRow from '../components/AddRow.jsx'
 import BlockEdit from '../components/BlockEdit.jsx'
-import useEditBoard from '../hooks/useEditBoard.js'
+import useBlockDrag from '../hooks/useBlockDrag.js'
+import useExitEdit from '../hooks/useExitEdit.js'
 import Icon from '../components/Icon.jsx'
 import Focus from '../widgets/trabajo/Focus.jsx'
 import QuickNote from './study/QuickNote.jsx'
@@ -35,22 +35,23 @@ const BLOCKS = {
 export default function WorkPage({ data, update }) {
   const blocks = data.workBlocks ?? DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
+  const [menu, setMenu] = useState(false)
   const [open, setOpen] = useState(null) // proyecto abierto por dentro
 
   const setBlocks = (fn) => update((d) => ({ ...d, workBlocks: fn(d.workBlocks ?? DEFAULT_BLOCKS) }))
+  const dnd = useBlockDrag(setBlocks, editing)
+  useExitEdit(editing, () => { setEditing(false); setMenu(false) }, '.plan-block, .page-actions, .customize, .popup')
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
   const removeBlock = (blk) => {
     setBlocks((b) => b.filter((x) => x.id !== blk.id))
     if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
   }
-  const addBlock = (type, before = null) => setBlocks((b) => {
-    const blk = { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'board' || type === 'projects' ? 3 : type === 'agenda' ? 2 : 1, tall: type === 'agenda' }
-    const at = before ? b.findIndex((x) => x.id === before) : -1
-    return at < 0 ? [...b, blk] : [...b.slice(0, at), blk, ...b.slice(at)]
-  })
+  const addBlock = (type) => {
+    setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'board' || type === 'projects' ? 3 : type === 'agenda' ? 2 : 1, tall: type === 'agenda' }])
+    setMenu(false)
+  }
   const missing = Object.keys(BLOCKS).filter((t) => !blocks.some((b) => b.type === t))
-  const edit = useEditBoard({ editing, setEditing, setBlocks, onAdd: addBlock })
 
   const render = (b) => {
     switch (b.type) {
@@ -74,7 +75,18 @@ export default function WorkPage({ data, update }) {
         <h1 className="sr-only">Trabajo</h1>
         <span />
         <TopActions><div className="page-actions">
-          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => setEditing(!editing)}
+          {editing && (
+            <div className="add-wrap">
+              <button className="icon-btn" onClick={() => setMenu(!menu)} aria-label="Añadir bloque" aria-expanded={menu} title="Añadir"><Icon name="plus" size={22} /></button>
+              {menu && (
+                <div className="card add-menu" role="menu">
+                  <button role="menuitem" onClick={() => addBlock('note')}><Icon name="note" size={20} />Nota</button>
+                  {missing.map((t) => <button role="menuitem" key={t} onClick={() => addBlock(t)}><Icon name={BLOCKS[t].icon} size={20} />{BLOCKS[t].label}</button>)}
+                </div>
+              )}
+            </div>
+          )}
+          <button className={`icon-btn customize ${editing ? 'customize-on' : ''}`} onClick={() => { setEditing(!editing); setMenu(false) }}
             aria-label={editing ? 'Terminar de personalizar' : 'Personalizar'} title={editing ? 'Listo' : 'Personalizar'}>
             <Icon name={editing ? 'check' : 'board'} color={editing ? '#FFFFFF' : '#202124'} />
           </button>
@@ -83,13 +95,12 @@ export default function WorkPage({ data, update }) {
 
       <div className={`plan-grid wk-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
-          <section key={b.id} {...edit.blockProps(b.id)} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'} ${edit.dragId === b.id ? 'is-dragging' : ''}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'}>
+          <section key={b.id} className={`plan-block wk-block wk-${b.type} span-${b.span} ${b.tall ? 'is-tall' : ''} ${b.type === 'note' ? 'is-note' : 'card'} ${dnd.cls(b)}`} aria-label={BLOCKS[b.type]?.label ?? 'Nota'} {...dnd.props(b)}>
             {BLOCKS[b.type] && <span className="wk-badge" title={BLOCKS[b.type].label}><Icon name={BLOCKS[b.type].icon} size={18} /></span>}
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} />}
             {render(b)}
           </section>
         ))}
-        {editing && <AddRow options={[{ type: 'note', label: 'Nota', icon: 'note' }, ...missing.map((t) => ({ type: t, label: BLOCKS[t].label, icon: BLOCKS[t].icon }))]} onPick={(t) => addBlock(t)} tileDown={edit.tileDown} ghost={edit.ghost} />}
       </div>
     </div>
   )

@@ -1,11 +1,11 @@
 // Importar recetas de un PDF: el modelo extrae las recetas del texto. Solo PROPONE; el usuario revisa y confirma.
-import { groqChat } from './groq.js'
+import { GroqError, groqChat } from './groq.js'
 
 const MEALS = ['desayuno', 'media', 'comida', 'merienda', 'cena']
 const clean = (s, n) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, n) : '')
 export const MAX_TEXT = 9000
 // Modelo con visión (lee fotos). Se puede cambiar con la variable GROQ_VISION_MODEL del Worker.
-const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+const VISION_MODELS = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct']
 export const MAX_IMAGE = 5_000_000 // caracteres del data URL (≈ 3,7 MB)
 
 function systemPrompt(lang) {
@@ -40,11 +40,22 @@ export async function extractRecipes({ text, image, lang }, env) {
   let raw
   if (image) {
     const ask = lang === 'en' ? 'Read the recipe(s) in this photo and reply with the JSON.' : 'Lee la(s) receta(s) de esta foto y responde con el JSON.'
-    raw = await groqChat(
-      [{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: [{ type: 'text', text: ask }, { type: 'image_url', image_url: { url: image } }] }],
-      env, { temperature: 0.1, maxTokens: 4096, model: env.GROQ_VISION_MODEL || VISION_MODEL })
+    const messages = [{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: [{ type: 'text', text: ask }, { type: 'image_url', image_url: { url: image } }] }]
+    // Si un modelo con visión ya no existe (400/404), se prueba el siguiente
+    const models = [...new Set([env.GROQ_VISION_MODEL, ...VISION_MODELS].filter(Boolean))]
+    let lastErr
+    for (const model of models) {
+      try { raw = await groqChat(messages, env, { temperature: 0.1, maxTokens: 4096, model }); break } catch (e) {
+        lastErr = e
+        if (!(e instanceof GroqError) || ![400, 404].includes(e.status)) throw e
+      }
+    }
+    if (raw === undefined) throw lastErr
   } else {
-    raw = await groqChat([{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: clean(text, MAX_TEXT) }], env, { json: true, temperature: 0.1, maxTokens: 4096 })
+    const messages = [{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: clean(text, MAX_TEXT) }]
+    // El modelo razona antes de responder: se le deja margen y, si el JSON no sale, se reintenta sin modo JSON
+    raw = await groqChat(messages, env, { json: true, temperature: 0.1, maxTokens: 8000 })
+    if (!parseJson(raw)) raw = await groqChat(messages, env, { temperature: 0.1, maxTokens: 8000 })
   }
   const parsed = parseJson(raw)
   if (!parsed) throw new Error(`Model returned invalid JSON: ${raw.slice(0, 200)}`)

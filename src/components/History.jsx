@@ -7,8 +7,9 @@ import Icon from './Icon.jsx'
  * Se guarda detrás de este icono de reloj y se ve en un pop-up.
  *
  * <History title="Botellas abiertas" items={[{ id, date, text }]} />
+ * Con `onRestore(id)` cada elemento lleva un + para recuperarlo (volver a ponerlo como pendiente).
  */
-export default function History({ title, items, empty = 'Nada todavía' }) {
+export default function History({ title, items, empty = 'Nada todavía', onRestore = null }) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -30,6 +31,7 @@ export default function History({ title, items, empty = 'Nada todavía' }) {
                 <li key={it.id}>
                   <span className="w-hint">{it.date}</span>
                   <span className="w-text">{it.text}</span>
+                  {onRestore && <button className="icon-btn hist-restore" onClick={() => onRestore(it.id)} aria-label={`Recuperar «${it.text}»`} title="Recuperar"><Icon name="plus" size={18} /></button>}
                 </li>
               ))}
             </ul>

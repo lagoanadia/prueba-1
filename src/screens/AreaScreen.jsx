@@ -1,8 +1,7 @@
+import useExitEdit from '../hooks/useExitEdit.js'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import AddRow from '../components/AddRow.jsx'
 import Icon from '../components/Icon.jsx'
-import { useExitOnBlank } from '../hooks/useEditBoard.js'
 import TopActions from '../components/TopActions.jsx'
 import useBoard from '../hooks/useBoard.js'
 import { WIDGETS, SIZES, fitSize, shownSize, sizesOf, widgetsFor } from '../widgets/registry.js'
@@ -29,8 +28,7 @@ const arrayMove = (list, from, to) => {
  * Modo personalizar (botón arriba a la derecha):
  *   - Arrastrar un widget        -> moverlo
  *   - Dock de tamaños (abajo)    -> S / M / L con animación de "muelle"
- *   - Fila «Añadir» (lo que no tienes) -> arrastrar una pieza la deja donde la sueltes (o tocarla)
- *   - Pulsar en blanco -> salir del modo personalizar
+ *   - Arrastrar desde la galería -> añadirlo donde lo sueltes (o pulsar «Añadir»)
  *   - ×                          -> quitarlo
  *
  * Rendimiento: mientras arrastras NO se vuelve a pintar React en cada movimiento.
@@ -39,10 +37,11 @@ const arrayMove = (list, from, to) => {
 export default function AreaScreen({ area, showTitle = true }) {
   const { board, error, saveError, retrySave, updateData, updateLayout } = useBoard(area.id)
 
-  // Salud: Sueño y Agua ya no existen; se quitan de los tableros guardados
+  // Salud: Sueño, Agua y Evolución ya no existen; se quitan de los tableros guardados
   useEffect(() => {
     if (area.id !== 'salud' || !board || board.isNew) return
-    if (board.layout.some((w) => w.type === 'sleep' || w.type === 'water')) updateLayout((l) => l.filter((w) => w.type !== 'sleep' && w.type !== 'water'))
+    const gone = ['sleep', 'water', 'progress']
+    if (board.layout.some((w) => gone.includes(w.type))) updateLayout((l) => l.filter((w) => !gone.includes(w.type)))
   }, [area.id, board?.layout]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Salud: se abren todos los widgets de Salud en grande, una sola vez (los que falten se añaden); luego puedes cambiarlos o quitarlos
@@ -53,6 +52,8 @@ export default function AreaScreen({ area, showTitle = true }) {
     updateData((d) => ({ ...d, healthAllOpen: true, healthWidgetsAdded: true }))
   }, [area.id, board?.isNew, Boolean(board)]) // eslint-disable-line react-hooks/exhaustive-deps
   const [editing, setEditing] = useState(false)
+  useExitEdit(editing, () => setEditing(false), '.widget, .customize, .popup, .gallery, .ghost') // pulsar fuera termina la edición
+  const [gallery, setGallery] = useState(false)
   const [drag, setDrag] = useState(null) // solo cambia al empezar/terminar: { id, w, h, zoom, x0, y0 }
   const gridRef = useRef(null)
   const ghostRef = useRef(null)
@@ -97,8 +98,10 @@ export default function AreaScreen({ area, showTitle = true }) {
     navigator.vibrate?.(8) // pequeño "toque" en móviles que lo permiten
     updateLayout((l) => l.map((w) => (w.id === id ? { ...w, size } : w)))
   }
-  const add = (type, size) => updateLayout((l) => [...l, { id: crypto.randomUUID(), type, size }])
-  useExitOnBlank(editing && !drag, () => setEditing(false)) // pulsar en blanco = «Listo»
+  const add = (type, size) => {
+    updateLayout((l) => [...l, { id: crypto.randomUUID(), type, size }])
+    setGallery(false)
+  }
 
   // ---------- Arrastrar ----------
   useEffect(() => {
@@ -171,13 +174,14 @@ export default function AreaScreen({ area, showTitle = true }) {
     startDragAfterThreshold(e, id, () => el.getBoundingClientRect())
   }
 
-  // Desde la fila «Añadir»: el widget entra al tablero y sigue pegado al puntero hasta que lo sueltas.
-  const onTileDown = (e, type, size) => {
+  // Desde la galería: se cierra, el widget entra al tablero y sigue pegado al dedo.
+  const onGalleryPointerDown = (e, type, size) => {
     if (e.button > 0) return
     const el = e.currentTarget
     const id = crypto.randomUUID()
     startDragAfterThreshold(e, id, () => {
       const r = el.getBoundingClientRect()
+      setGallery(false)
       updateLayout((l) => [...l, { id, type, size }])
       return r
     })
@@ -243,13 +247,17 @@ export default function AreaScreen({ area, showTitle = true }) {
             <WidgetCard key={w.id} w={w} i={i} data={board.data} editing={editing} isDragged={drag?.id === w.id} api={stableApi} />
           ))}
           {editing && (
-            <AddRow options={available.filter((w) => !board.layout.some((x) => x.type === w.type)).map((w) => ({ type: w.type, label: w.name, color: w.color }))}
-              onPick={(t) => add(t, fitSize(t, 'M'))} tileDown={(e, o) => onTileDown(e, o.type, fitSize(o.type, 'M'))} />
+            <button className="widget w-S w-add" onClick={() => setGallery(true)} aria-label="Añadir widget">+</button>
           )}
         </div>
       )}
 
-      {/* Portal: se pinta en <body> (si no, queda "atrapado" dentro de contenedores con zoom o animaciones) */}
+      {/* Portales: se pintan en <body> para cubrir toda la pantalla
+          (si no, quedan "atrapados" dentro de contenedores con zoom o animaciones). */}
+      {gallery && createPortal(
+        <Gallery widgets={available} data={board.data} onAdd={add} onDragStart={onGalleryPointerDown} onClose={() => setGallery(false)} />,
+        document.body
+      )}
       {drag && dragged && createPortal(
         <div className="ghost" ref={ghostRef} style={{ zoom: drag.zoom, width: drag.w / drag.zoom, height: drag.h / drag.zoom }}>
           <WidgetView w={dragged} data={board.data} />
@@ -354,3 +362,33 @@ const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragge
   )
 })
 
+/** Galería: cada widget con vista previa real. Se puede arrastrar al tablero o pulsar «Añadir». */
+function Gallery({ widgets, data, onAdd, onDragStart, onClose }) {
+  const [sizes, setSizes] = useState({})
+  return (
+    <div className="gallery" role="dialog" aria-modal="true" aria-label="Añadir widget">
+      <div className="gallery-backdrop" onClick={onClose} />
+      <div className="gallery-panel">
+        <header className="area-head"><h2>Widgets</h2><button className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
+        <p className="w-hint gallery-tip">Arrastra un widget a tu tablero</p>
+        <div className="gallery-list">
+          {widgets.map((w) => {
+            const size = fitSize(w.type, sizes[w.type] ?? 'M')
+            return (
+              <div key={w.type} className="gallery-item">
+                <div className={`preview p-${size}`} onPointerDown={(e) => onDragStart(e, w.type, size)}>
+                  <WidgetView w={{ type: w.type, size }} data={data} />
+                </div>
+                <div className="gallery-ctrl">
+                  <b>{w.name}</b>
+                  <div className="seg">{sizesOf(w.type).map((s) => <button key={s} className={size === s ? 'on' : ''} onClick={() => setSizes({ ...sizes, [w.type]: s })}>{s}</button>)}</div>
+                  <button className="pill pill-on" onClick={() => onAdd(w.type, size)}>Añadir</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}

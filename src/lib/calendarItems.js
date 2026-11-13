@@ -45,7 +45,7 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to }
   }))
   // Estudios: entregas
   ;(d('estudios').assignments ?? []).filter((a) => inRange(a.due)).forEach((a) => items.push({
-    key: 'a' + a.id, date: a.due, title: a.course ? `${a.title} · ${a.course}` : a.title, type: 'entrega', area: 'estudios', done: a.done,
+    key: 'a' + a.id, date: a.due, title: a.course ? `${a.title} · ${a.course}` : a.title, type: 'entrega', area: 'estudios', done: Boolean(a.done || a.tick),
     toggle: () => change('estudios', (x) => ({ ...x, assignments: x.assignments.map((y) => (y.id !== a.id ? y : { ...y, done: !y.done, doneAt: y.done ? null : a.due })) })),
   }))
   // Salud: el plan semanal, repetido en cada semana del rango

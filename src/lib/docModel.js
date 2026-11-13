@@ -15,6 +15,7 @@ export const BLOCK_TYPES = [
   { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code programa' },
   { type: 'table', label: 'Tabla', icon: 'table', hint: 'tabla table filas columnas' },
   { type: 'image', label: 'Foto', icon: 'img', hint: 'foto imagen image picture' },
+  { type: 'link', label: 'Enlace', icon: 'link', hint: 'enlace link url web pagina' },
   { type: 'divider', label: 'Divisor', icon: 'close', hint: 'divisor linea separador ---' },
 ]
 const plain = (html) => String(html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
@@ -24,6 +25,7 @@ export const newBlock = (type = 'text', html = '') => ({
   ...(type === 'todo' ? { checked: false } : {}),
   ...(type === 'table' ? { rows: [['', '', ''], ['', '', '']] } : {}),
   ...(type === 'image' ? { file: null } : {}),
+  ...(type === 'link' ? { url: '', title: '' } : {}),
   ...(type === 'code' ? { code: '', lang: 'JavaScript', theme: savedTheme() } : {}),
 })
 

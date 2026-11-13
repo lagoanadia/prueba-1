@@ -1,20 +1,50 @@
-import { useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import Modal from '../../pages/food/Modal.jsx'
 import { dayShort, todayISO, weekDays } from '../../lib/dates.js'
 import { colorOf, sportsOf } from './sports.js'
 import { fmtHM, fromMin, toMin } from './healthUtils.js'
 
-const H = 46 // alto de una hora en pantalla
+const MIN_H = 16 // el horario se adapta al espacio disponible del widget; solo en casos extremos baja de este alto por hora
+const SNAP = 15 // minutos: las sesiones se ajustan de 15 en 15
+const MIN_SESSION = 15
+const DEFAULT_MIN = 60
 const DEFAULT_VIEW = { from: 8, to: 23, days: [0, 1, 2, 3, 4, 5, 6] }
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-const SNAP = 15 // al soltar, la sesión se coloca en cuartos de hora
-const zoomOf = (el) => parseFloat(getComputedStyle(el.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
+const snap = (m) => Math.round(m / SNAP) * SNAP
+
+/** El nombre del deporte siempre se ve entero: la letra se encoge (de 15 a 7 px) hasta que la palabra cabe en la columna. */
+function SessName({ text }) {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const fit = () => {
+      // 1.º en una línea hasta 9 px; si no cabe, en varias líneas (sin partir ninguna palabra), encogiendo hasta que la palabra más larga quepa
+      el.style.whiteSpace = 'nowrap'
+      let fs = 15
+      el.style.fontSize = `${fs}px`
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 9) { fs -= 0.5; el.style.fontSize = `${fs}px` }
+      if (el.scrollWidth <= el.clientWidth + 0.5) return
+      el.style.whiteSpace = 'normal'
+      fs = 12
+      el.style.fontSize = `${fs}px`
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 6) { fs -= 0.5; el.style.fontSize = `${fs}px` }
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el.parentElement)
+    return () => ro.disconnect()
+  }, [text])
+  return <b ref={ref} className="sa-name">{text}</b>
+}
 
 /**
- * Plan semanal como un horario: las horas que tú elijas (de 8:00 a 23:00 por defecto) en vertical y los días en columnas.
- * Añades sesiones (deporte, día, hora y minutos); tocar un hueco vacío crea una ahí; tocar una sesión la edita o la marca como hecha.
- * Las sesiones se arrastran a otro día u hora, y un deporte soltado en el plan crea la sesión ahí mismo.
+ * Ejercicio de la semana, como un horario (las horas y días que tú elijas):
+ *  - Los deportes son globitos: arrástralos a un día y una hora y la sesión queda puesta ahí (también tocándolos).
+ *  - Tira del borde de arriba o de abajo de una sesión para hacerla más corta o más larga: se ilumina la línea de la hora y sale cuál es.
+ *  - Agárrala por el centro y llévala donde quieras (otro día, otra hora); sin solaparse con otras.
+ *  - Tocarla la marca como hecha (se oscurece con su color; cuenta en Resumen y Constancia) y la × la quita. Nada de ventanas.
  */
 export default function Plan({ data, update }) {
   const today = todayISO()
@@ -22,96 +52,68 @@ export default function Plan({ data, update }) {
   const view = { ...DEFAULT_VIEW, ...(data.planView ?? {}) }
   const sessions = data.planSessions ?? []
   const sports = sportsOf(data)
-  const [form, setForm] = useState(null) // null | { id?, sport, day, start, min }
   const [cfg, setCfg] = useState(false)
+  const gridRef = useRef(null)
+  const [H, setH] = useState(46) // alto de una hora: lo reparte el horario para ocupar todo el alto del widget
   const [dropDay, setDropDay] = useState(null) // columna resaltada mientras arrastras un deporte
   const [newSport, setNewSport] = useState(null) // null | texto del deporte que estás escribiendo
+  const [durFor, setDurFor] = useState(null) // deporte cuyo tiempo habitual se está ajustando
+  const [live, setLive] = useState(null) // { id, start?, min? } mientras tiras de una sesión
+  const [guide, setGuide] = useState(null) // { from, to, c }: tramo que se ilumina mientras estiras una sesión
   const shownDays = view.days.slice().sort((a, b) => a - b)
   const total = Math.max(1, view.to - view.from)
+  const lo = view.from * 60
+  const hi = view.to * 60
+  useLayoutEffect(() => {
+    const el = gridRef.current
+    if (!el) return undefined
+    const fit = () => setH(Math.max(MIN_H, el.clientHeight / total))
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [total])
 
   const saveView = (patch) => update((d) => ({ ...d, planView: { ...DEFAULT_VIEW, ...(d.planView ?? {}), ...patch } }))
-  const open = (s, day, start, sport) => {
-    const f = s ? { ...s } : { sport: sport ?? sports[0] ?? '', day: day ?? shownDays[0] ?? 0, start: start ?? fromMin(view.from * 60), min: 60 }
-    setForm({ ...f, end: fromMin(toMin(f.start) + f.min) })
-  }
-  const save = (e) => {
-    e.preventDefault()
-    const min = toMin(form.end) - toMin(form.start)
-    const { end: _e, ...rest } = form
-    const f = { ...rest, sport: form.sport.trim(), min }
-    if (!f.sport || min < 5) return
-    update((d) => {
-      const list = d.planSessions ?? []
-      const next = f.id ? list.map((s) => (s.id === f.id ? { ...s, ...f } : s)) : [...list, { id: crypto.randomUUID(), done: {}, ...f }]
-      return { ...d, planSessions: next, sports: sportsOf(d).includes(f.sport) ? sportsOf(d) : [...sportsOf(d), f.sport] }
-    })
-    setForm(null)
-  }
   const addSport = (name) => { const n = name.trim(); if (n) update((d) => ({ ...d, sports: sportsOf(d).includes(n) ? sportsOf(d) : [...sportsOf(d), n] })); setNewSport(null) }
   const removeSport = (name) => update((d) => ({ ...d, sports: sportsOf(d).filter((x) => x !== name) }))
-  // Minuto del día bajo el puntero en una columna (ajustado a cuartos de hora y dentro de las horas que se ven)
-  const minuteAt = (col, clientY, minus = 0, len = 30) => {
-    const r = col.getBoundingClientRect()
-    const m = Math.round((view.from * 60 + (((clientY - r.top) / zoomOf(col)) / H) * 60 - minus) / SNAP) * SNAP
-    return Math.min(Math.max(m, view.from * 60), view.to * 60 - Math.min(len, 60))
+  // Poner una sesión directamente (solo lleva el deporte, el día, la hora y cuánto dura)
+  const usual = (sport) => data.sportMin?.[sport] ?? DEFAULT_MIN // lo que sueles hacer de ese deporte
+  const setUsual = (sport, min) => update((d) => ({ ...d, sportMin: { ...(d.sportMin ?? {}), [sport]: Math.min(Math.max(min, MIN_SESSION), 600) } }))
+  // Tramos ya ocupados de un día (las sesiones no se pueden solapar)
+  const busy = (day, ignoreId) => sessions.filter((x) => x.day === day && x.id !== ignoreId).map((x) => [toMin(x.start), toMin(x.start) + x.min]).sort((a, b) => a[0] - b[0])
+  const place = (sport, day, startMin, min = usual(sport)) => {
+    const others = busy(day)
+    const drop = Math.min(Math.max(snap(startMin), lo), hi - MIN_SESSION)
+    let start = drop
+    for (const [a, b] of others) if (start >= a && start < b) start = b // cae encima de otra: empieza donde acaba esa
+    const next = others.find(([a]) => a >= start)
+    let len = Math.min(min, hi - start, next ? next[0] - start : Infinity)
+    if (len < MIN_SESSION) { // no hay hueco detrás: se intenta justo antes del punto donde la soltaste
+      const prevEnd = Math.max(lo, ...others.filter(([, b]) => b <= drop).map(([, b]) => b))
+      start = Math.max(prevEnd, drop - min)
+      len = drop - start
+      if (len < MIN_SESSION) return // no cabe en ese hueco
+    }
+    update((d) => ({ ...d, planSessions: [...(d.planSessions ?? []), { id: crypto.randomUUID(), done: {}, sport, day, start: fromMin(start), min: len }] }))
   }
-  // Soltar un globito en una columna: la sesión se crea ahí mismo (1 hora); tocándola luego se edita
+  // Soltar un globito en una columna
   const onDropSport = (e, day) => {
     e.preventDefault(); setDropDay(null)
     const sport = e.dataTransfer.getData('text/plain')
     if (!sport) return
-    const start = fromMin(minuteAt(e.currentTarget, e.clientY, 0, 60))
-    update((d) => ({ ...d, planSessions: [...(d.planSessions ?? []), { id: crypto.randomUUID(), done: {}, sport, day, start, min: 60 }] }))
+    const r = e.currentTarget.getBoundingClientRect()
+    const z = parseFloat(getComputedStyle(e.currentTarget.closest('.d-app') ?? document.body).zoom) || 1 // la vista de escritorio va con zoom
+    place(sport, day, lo + (((e.clientY - r.top) / z) / H) * 60)
   }
-
-  // Mover una sesión arrastrándola: con ratón al moverla; en el móvil, manteniéndola pulsada un momento
-  const [moving, setMoving] = useState(null) // { id, day, start } mientras la arrastras
-  const dragged = useRef(false) // evita que al soltar se abra la edición
-  const onSessDown = (e, s) => {
-    if (e.button > 0) return
-    const btn = e.currentTarget
-    const sx = e.clientX
-    const sy = e.clientY
-    const grab = (((sy - btn.getBoundingClientRect().top) / zoomOf(btn)) / H) * 60 // minutos entre el inicio y donde la has cogido
-    const touch = e.pointerType === 'touch'
-    let active = false
-    let last = { day: s.day, start: s.start }
-    const blockScroll = (ev) => { if (active) ev.preventDefault() }
-    const activate = () => { active = true; dragged.current = true; navigator.vibrate?.(8); setMoving({ id: s.id, ...last }) }
-    const timer = touch ? setTimeout(activate, 300) : 0
-    const onMove = (ev) => {
-      if (!active) {
-        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return
-        if (touch) { cleanup(); return } // se ha movido antes de tiempo: es un scroll
-        activate()
-      }
-      const col = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.sa-plan-col[data-day]')
-      if (!col) return
-      last = { day: Number(col.dataset.day), start: fromMin(minuteAt(col, ev.clientY, grab, s.min)) }
-      setMoving((m) => (m && m.day === last.day && m.start === last.start ? m : { id: s.id, ...last }))
-    }
-    const onUp = () => {
-      if (active && (last.day !== s.day || last.start !== s.start)) {
-        update((d) => ({ ...d, planSessions: (d.planSessions ?? []).map((x) => (x.id === s.id ? { ...x, ...last } : x)) }))
-      }
-      cleanup()
-    }
-    const cleanup = () => {
-      clearTimeout(timer)
-      setMoving(null)
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', cleanup)
-      window.removeEventListener('touchmove', blockScroll)
-      setTimeout(() => { dragged.current = false }, 0)
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', cleanup)
-    window.addEventListener('touchmove', blockScroll, { passive: false })
+  // Tocar un globito: se pone hoy (o el primer día visible) a la próxima hora en punto
+  const quickAdd = (sport) => {
+    const now = new Date()
+    const day = shownDays.includes((now.getDay() + 6) % 7) ? (now.getDay() + 6) % 7 : shownDays[0] ?? 0
+    place(sport, day, Math.min(Math.max(Math.ceil((now.getHours() * 60 + now.getMinutes()) / 60) * 60, lo), hi - Math.min(usual(sport), hi - lo)))
+    setDurFor(null)
   }
-  const placed = moving ? sessions.map((x) => (x.id === moving.id ? { ...x, day: moving.day, start: moving.start } : x)) : sessions
-  const remove = (id) => { update((d) => ({ ...d, planSessions: (d.planSessions ?? []).filter((s) => s.id !== id), workouts: (d.workouts ?? []).filter((w) => w.planId !== id) })); setForm(null) }
+  const remove = (id) => update((d) => ({ ...d, planSessions: (d.planSessions ?? []).filter((s) => s.id !== id), workouts: (d.workouts ?? []).filter((w) => w.planId !== id) }))
   // Marcar hecha: guarda también el entrenamiento de ese día (así cuenta en Resumen y Constancia)
   const toggleDone = (s, date) => update((d) => {
     const was = Boolean(s.done?.[date])
@@ -121,27 +123,107 @@ export default function Plan({ data, update }) {
       workouts: was ? (d.workouts ?? []).filter((w) => !(w.planId === s.id && w.date === date)) : [...(d.workouts ?? []), { id: crypto.randomUUID(), planId: s.id, date, sport: s.sport, min: s.min, notes: '' }],
     }
   })
-  const colClick = (e, day) => {
-    if (e.target !== e.currentTarget) return
-    const y = e.nativeEvent.offsetY
-    const m = Math.floor((view.from * 60 + (y / H) * 60) / 30) * 30
-    open(null, day, fromMin(m))
+  const commit = (s, patch) => update((d) => ({
+    ...d,
+    planSessions: (d.planSessions ?? []).map((x) => (x.id === s.id ? { ...x, ...patch } : x)),
+    workouts: (d.workouts ?? []).map((w) => (w.planId === s.id && patch.min ? { ...w, min: patch.min } : w)), // lo ya hecho sigue la misma duración
+  }))
+
+  // Tirar de una sesión: bordes = duración · centro = moverla libremente (un toque sin mover la marca como hecha)
+  const pull = (e, s, mode) => {
+    e.preventDefault(); e.stopPropagation()
+    const grid = e.currentTarget.closest('.sa-plan-grid')
+    const scale = grid.getBoundingClientRect().height / grid.offsetHeight || 1
+    const s0 = toMin(s.start)
+    const m0 = s.min
+    const y0 = e.clientY
+    const x0 = e.clientX
+    const others = busy(s.day, s.id)
+    const prevEnd = Math.max(lo, ...others.filter(([, b]) => b <= s0).map(([, b]) => b)) // no se pasa de la sesión de antes…
+    const nextStart = Math.min(hi, ...others.filter(([a]) => a >= s0 + m0).map(([a]) => a)) // …ni de la de después
+    let patch = {}
+    let moved = false
+    const show = (from, len) => { setLive({ id: s.id, ...patch }); setGuide({ from, to: from + len, c: colorOf(sports, s.sport) }) }
+    const move = (ev) => {
+      const dm = ((ev.clientY - y0) / scale / H) * 60
+      if (mode === 'bottom') { patch = { min: Math.min(Math.max(snap(m0 + dm), MIN_SESSION), nextStart - s0) }; show(s0, patch.min) }
+      else if (mode === 'top') { const ns = Math.min(Math.max(snap(s0 + dm), prevEnd), s0 + m0 - MIN_SESSION); patch = { start: fromMin(ns), min: s0 + m0 - ns }; show(ns, patch.min) }
+      else {
+        if (!moved && Math.abs(ev.clientY - y0) < 4 && Math.abs(ev.clientX - x0) < 4) return // todavía es un toque
+        moved = true
+        const ns = Math.min(Math.max(snap(s0 + dm), lo), hi - m0)
+        const col = document.elementsFromPoint(ev.clientX, ev.clientY).find((n) => n.classList?.contains('sa-plan-col'))
+        const day = col ? Number(col.dataset.day) : (patch.day ?? s.day)
+        if (busy(day, s.id).some(([a, b]) => ns < b && ns + m0 > a)) return // ahí ya hay otra sesión: se queda donde estaba
+        patch = { start: fromMin(ns), day }
+        show(ns, m0)
+      }
+    }
+    const end = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end)
+      setLive(null); setGuide(null)
+      if (mode === 'body' && !moved) { toggleDone(s, week[s.day]); return }
+      if (Object.keys(patch).length) commit(s, patch)
+    }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
+
+  // Marcar solas las sesiones cuando pasa su hora (sin tocar las que tú ya has marcado o desmarcado a mano)
+  const upd = useRef(update)
+  upd.current = update
+  const sref = useRef(sessions)
+  sref.current = sessions
+  useEffect(() => {
+    const run = () => {
+      const now = new Date()
+      const day = now.toLocaleDateString('en-CA')
+      const mins = now.getHours() * 60 + now.getMinutes()
+      const wk = weekDays(day)
+      const isDue = (x) => { const date = wk[x.day]; return date && x.done?.[date] === undefined && (date < day || (date === day && mins >= toMin(x.start) + x.min)) }
+      if (!sref.current.some(isDue)) return // nada que marcar: no se guarda nada
+      upd.current((d) => {
+        const due = (d.planSessions ?? []).filter(isDue)
+        if (!due.length) return d
+        const entries = due.filter((x) => !(d.workouts ?? []).some((w) => w.planId === x.id && w.date === wk[x.day])).map((x) => ({ id: crypto.randomUUID(), planId: x.id, date: wk[x.day], sport: x.sport, min: x.min, notes: '' }))
+        return {
+          ...d,
+          planSessions: d.planSessions.map((x) => (isDue(x) ? { ...x, done: { ...(x.done ?? {}), [wk[x.day]]: true } } : x)),
+          workouts: [...(d.workouts ?? []), ...entries],
+        }
+      })
+    }
+    run()
+    const id = setInterval(run, 60000)
+    return () => clearInterval(id)
+  }, [sessions])
+
+  const shown = sessions.map((s) => (live?.id === s.id ? { ...s, ...live } : s))
 
   return (
     <div className="sa-plan">
       <div className="sa-row sa-split">
-        <span className="sa-hint">{fromMin(view.from * 60)} – {fromMin(view.to * 60)}</span>
-        <span className="sa-row">
-          <button className="sa-btn is-soft" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><Icon name="sliders" size={15} /></button>
-          <button className="sa-btn" onClick={() => open(null)}><Icon name="plus" size={14} /> Añadir sesión</button>
-        </span>
+        <span className="sa-hint">{fromMin(lo)} – {fromMin(hi)}</span>
+        <button className="sa-btn is-soft" onClick={() => setCfg(true)} aria-label="Horas y días que se ven" title="Horas y días"><Icon name="sliders" size={15} /></button>
       </div>
       <div className="sa-sportbar" aria-label="Deportes: arrástralos al plan">
         {sports.map((sp) => (
           <span key={sp} className="sa-bubble" style={{ '--c': colorOf(sports, sp) }}>
-            <button type="button" draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', sp) }} onClick={() => open(null, undefined, undefined, sp)} title="Arrástralo al plan (o toca para añadirlo)">{sp}</button>
+            <button type="button" draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', sp); setDurFor(null) }} onClick={() => setDurFor(durFor === sp ? null : sp)} aria-expanded={durFor === sp} title="Arrástralo al plan · pulsa para fijar cuánto sueles hacer">{sp}</button>
             <button type="button" className="sa-bubble-x" onClick={() => removeSport(sp)} aria-label={`Quitar ${sp} de la lista`} title="Quitar de la lista"><Icon name="close" size={11} strokeWidth={3} /></button>
+            {durFor === sp && (
+              <>
+                <span className="sa-dur-back" onClick={() => setDurFor(null)} />
+                <span className="card sa-dur" role="dialog" aria-label={`Tiempo habitual de ${sp}`} onKeyDown={(e) => e.key === 'Escape' && setDurFor(null)}>
+                  <span className="sa-dur-t">Lo que sueles hacer</span>
+                  <span className="sa-dur-row">
+                    <button type="button" onClick={() => setUsual(sp, usual(sp) - SNAP)} aria-label="Menos tiempo">−</button>
+                    <b>{fmtHM(usual(sp))}</b>
+                    <button type="button" onClick={() => setUsual(sp, usual(sp) + SNAP)} aria-label="Más tiempo">+</button>
+                  </span>
+                  <button type="button" className="sa-btn" onClick={() => quickAdd(sp)}>Poner hoy</button>
+                </span>
+              </>
+            )}
           </span>
         ))}
         {newSport === null
@@ -149,50 +231,45 @@ export default function Plan({ data, update }) {
           : <input className="sa-bubble-in" autoFocus value={newSport} maxLength={30} placeholder="Deporte" aria-label="Nuevo deporte" onChange={(e) => setNewSport(e.target.value)} onBlur={() => addSport(newSport)} onKeyDown={(e) => { if (e.key === 'Enter') addSport(newSport); if (e.key === 'Escape') setNewSport(null) }} />}
       </div>
       <div className="sa-plan-days" style={{ '--c': shownDays.length }}>
-        <span />{shownDays.map((i) => <b key={i} className={week[i] === today ? 'is-today' : ''}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
+        <span />{shownDays.map((i) => <b key={i} className={`${week[i] === today ? 'is-today' : ''} ${week[i] < today ? 'is-past' : ''}`}>{dayShort(week[i])} {Number(week[i].slice(8))}</b>)}
       </div>
-      <div className="sa-plan-grid" style={{ '--c': shownDays.length, '--h': `${total * H}px` }}>
+      <div className="sa-plan-grid" ref={gridRef} style={{ '--c': shownDays.length, '--minh': `${total * MIN_H}px` }}>
         <div className="sa-plan-hours">{Array.from({ length: total + 1 }, (_, k) => <span key={k} style={{ top: k * H }}>{view.from + k}:00</span>)}</div>
+        {guide && (
+          <>
+            {[guide.from, guide.to].map((m, k) => (
+              <span key={k} className="sa-thread" style={{ top: ((m - lo) / 60) * H, '--c': guide.c }}>
+                <em>{fromMin(m)}</em>
+              </span>
+            ))}
+          </>
+        )}
         {shownDays.map((i) => {
           const date = week[i]
           return (
-            <div key={i} data-day={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${dropDay === i || moving?.day === i ? 'is-drop' : ''}`} onClick={(e) => colClick(e, i)} role="presentation"
+            <div key={i} data-day={i} className={`sa-plan-col ${date === today ? 'is-today' : ''} ${date < today ? 'is-past' : ''} ${dropDay === i ? 'is-drop' : ''}`} role="presentation"
               onDragOver={(e) => { e.preventDefault(); if (dropDay !== i) setDropDay(i) }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropDay(null) }} onDrop={(e) => onDropSport(e, i)}>
               {Array.from({ length: total }, (_, k) => <i key={k} style={{ top: k * H }} />)}
-              {placed.filter((s) => s.day === i).map((s) => {
-                const top = ((toMin(s.start) - view.from * 60) / 60) * H
+              {shown.filter((s) => s.day === i).map((s) => {
+                const top = ((toMin(s.start) - lo) / 60) * H
                 const height = (s.min / 60) * H
                 if (top + height <= 0 || top >= total * H) return null
                 const done = Boolean(s.done?.[date])
                 return (
-                  <button key={s.id} className={`sa-sess ${done ? 'is-done' : ''} ${moving?.id === s.id ? 'is-moving' : ''}`} style={{ top: top + 2, height: height - 4, '--c': colorOf(sports, s.sport) }}
-                    onPointerDown={(e) => onSessDown(e, s)} onContextMenu={(e) => e.preventDefault()} onClick={() => { if (!dragged.current) open(sessions.find((x) => x.id === s.id)) }} title="Toca para editar · arrástrala para moverla">
-                    <b>{s.sport}</b><span>{s.start}–{fromMin(toMin(s.start) + s.min)} · {s.min} min</span>{done && <em>Hecho</em>}
-                  </button>
+                  <div key={s.id} className={`sa-sess ${done ? 'is-done' : ''} ${live?.id === s.id ? 'is-live' : ''}`} style={{ top: top + 1, height: height - 2, '--c': colorOf(sports, s.sport) }}
+                    role="button" tabIndex={0} aria-label={`${s.sport}, ${s.start} a ${fromMin(toMin(s.start) + s.min)}. Toca para marcarla como hecha`} title="Toca: hecha · arrastra: mover · tira de los bordes: duración"
+                    onPointerDown={(e) => pull(e, s, 'body')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDone(s, date) } }}>
+                    <span className="sa-rz sa-rz-t" onPointerDown={(e) => pull(e, s, 'top')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
+                    <SessName text={s.sport} />
+                    <button type="button" className="sa-sess-x" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); remove(s.id) }} aria-label={`Quitar ${s.sport}`} title="Quitar"><Icon name="close" size={11} strokeWidth={3} /></button>
+                    <span className="sa-rz sa-rz-b" onPointerDown={(e) => pull(e, s, 'bottom')} onClick={(e) => e.stopPropagation()} aria-hidden="true" />
+                  </div>
                 )
               })}
             </div>
           )
         })}
       </div>
-
-      {form && (
-        <Modal title={form.id ? 'Editar sesión' : 'Nueva sesión'} icon="clock" onClose={() => setForm(null)}>
-          <form className="fd-form" onSubmit={save}>
-            <input className="fd-input" autoFocus list="sa-sports" placeholder="Deporte o actividad" value={form.sport} maxLength={30} onChange={(e) => setForm({ ...form, sport: e.target.value })} aria-label="Deporte" />
-            <datalist id="sa-sports">{sports.map((s) => <option key={s} value={s} />)}</datalist>
-            <div className="fd-chips">{DAY_LABELS.map((d, i) => <button type="button" key={d} className={`fd-chip ${form.day === i ? 'is-on' : ''}`} onClick={() => setForm({ ...form, day: i })}>{d}</button>)}</div>
-            <div className="fd-row"><span className="fd-hint">de</span><input type="time" className="fd-input" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} aria-label="Hora de inicio" /><span className="fd-hint">hasta</span><input type="time" className="fd-input" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} aria-label="Hora de fin" /></div>
-            <span className="fd-hint">{toMin(form.end) - toMin(form.start) >= 5 ? fmtHM(toMin(form.end) - toMin(form.start)) : 'La hora de fin tiene que ser posterior a la de inicio'}</span>
-            <div className="fd-row">
-              {form.id && <button type="button" className="fd-circle fd-danger" onClick={() => remove(form.id)} aria-label="Borrar sesión" title="Borrar"><Icon name="trash" size={20} /></button>}
-              {form.id && <button type="button" className="fd-pill" onClick={() => { toggleDone(sessions.find((x) => x.id === form.id), week[form.day]); setForm(null) }}><Icon name="check" size={14} />{sessions.find((x) => x.id === form.id)?.done?.[week[form.day]] ? 'Quitar «hecho»' : 'Marcar hecha esta semana'}</button>}
-              <span className="fd-grow" />
-              <button className="fd-ok" disabled={!form.sport.trim() || toMin(form.end) - toMin(form.start) < 5} aria-label="Guardar" title="Guardar"><Icon name="check" size={20} /></button>
-            </div>
-          </form>
-        </Modal>
-      )}
 
       {cfg && (
         <Modal title="Horas y días" icon="sliders" onClose={() => setCfg(false)}>

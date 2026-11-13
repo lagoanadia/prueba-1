@@ -3,6 +3,7 @@ import Icon from './Icon.jsx'
 import ExportDialog from './ExportDialog.jsx'
 import CodeBlock from './blocks/CodeBlock.jsx'
 import ImageBlock from './blocks/ImageBlock.jsx'
+import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
 import { BLOCK_TYPES, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
@@ -11,10 +12,17 @@ import { sanitize } from '../lib/richText.js'
 const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
 // Sin tildes ni mayúsculas, para que «tit» encuentre «Título»
 const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+/** Tipos de bloque cuya palabra empieza por lo escrito (primero los que coinciden con el nombre) */
+const filterTypes = (text) => {
+  const q = norm(text).trim()
+  if (!q) return BLOCK_TYPES
+  const starts = (txt) => norm(txt).split(/[^a-z0-9]+/).some((w) => w.startsWith(q))
+  return BLOCK_TYPES.filter((t) => starts(t.label) || starts(t.hint)).sort((a, b) => Number(starts(b.label)) - Number(starts(a.label)))
+}
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
-const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : false)
+const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
 
 /**
  * Editor de documentos por bloques (estilo Notion).
@@ -32,6 +40,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const [exporting, setExporting] = useState(false)
   const [drag, setDrag] = useState(null) // { id, over, after } al arrastrar un bloque por su asa
   const [rowMenu, setRowMenu] = useState(null) // id del bloque con el menú del asa abierto
+  const [rowQ, setRowQ] = useState('') // lo escrito en el menú del asa para buscar un tipo
+  const [rowI, setRowI] = useState(0)
+  const [rowUp, setRowUp] = useState(false) // el menú se abre hacia arriba si el asa está en la parte baja
   const refs = useRef({})
   const pageRef = useRef(null)
 
@@ -69,17 +80,36 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (y < pr.top + 50) page.scrollTop -= 14
     else if (y > pr.bottom - 50) page.scrollTop += 14
   }
+  // Cambiar el tipo de un bloque conservando su texto (texto, títulos, listas, tareas, cita, destacado, código)
+  const CONVERTIBLE = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout', 'code']
+  const toPlain = (b) => (b.type === 'code' ? b.code ?? '' : (b.html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'))
+  const convert = (id, type) => {
+    const cur = blocks.find((b) => b.id === id)
+    if (!cur || cur.type === type) { setRowMenu(null); return }
+    if (CONVERTIBLE.includes(cur.type) && CONVERTIBLE.includes(type)) {
+      // texto ↔ títulos, listas, tareas, cita, destacado y código: el texto se conserva
+      commit(blocks.map((b) => {
+        if (b.id !== id) return b
+        const html = b.type === 'code' ? sanitize((b.code ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>')) : b.html ?? ''
+        if (type === 'code') return { ...newBlock('code'), id, code: toPlain(b) }
+        return { id, type, html, ...(type === 'todo' ? { checked: false } : {}) }
+      }))
+      setFocusId(id)
+    } else {
+      // tabla, foto, enlace, divisor…: ocupan el sitio si el bloque está vacío; si no, se añaden debajo sin perder lo que hay
+      const nb = newBlock(type)
+      if (isEmpty(cur)) commit(blocks.map((b) => (b.id === id ? { ...nb, id } : b)))
+      else { const n = [...blocks]; n.splice(indexOf(id) + 1, 0, nb); commit(n) }
+      setFocusId(isEmpty(cur) ? id : nb.id)
+    }
+    setRowMenu(null)
+  }
   const duplicate = (id) => { const i = indexOf(id); const b = blocks[i]; const n = [...blocks]; n.splice(i + 1, 0, { ...b, id: crypto.randomUUID() }); commit(n); setRowMenu(null) }
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
 
   // Al escribir tras «+» o «/» se quedan solo los tipos cuya palabra empieza por lo escrito (primero los del nombre)
-  const options = useMemo(() => {
-    if (!menu) return []
-    const q = norm(menu.q).trim()
-    if (!q) return BLOCK_TYPES
-    const starts = (txt) => norm(txt).split(/[^a-z0-9]+/).some((w) => w.startsWith(q))
-    return BLOCK_TYPES.filter((t) => starts(t.label) || starts(t.hint)).sort((a, b) => Number(starts(b.label)) - Number(starts(a.label)))
-  }, [menu?.q])
+  const options = useMemo(() => (menu ? filterTypes(menu.q) : []), [menu?.q])
+  const rowOptions = useMemo(() => filterTypes(rowQ), [rowQ])
 
   // Convierte el bloque vacío donde escribiste «+» o «/» en el tipo elegido
   const pick = (type) => {
@@ -139,11 +169,18 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   // Texto que llega de fuera (seleccionado en el PDF): se añade al final como un párrafo
   if (appendRef) {
-    appendRef.current = (text) => {
-      const html = sanitize(String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
+    appendRef.current = (payload) => {
+      const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
+      const one = (p) => {
+        if (p.type === 'table') return [{ ...newBlock('table'), rows: p.rows }]
+        if (p.items) return p.items.map((t) => newBlock(p.type, esc(t)))
+        return [newBlock(p.type, esc(p.text))]
+      }
+      const list = Array.isArray(payload) ? payload : [typeof payload === 'string' ? { type: 'text', text: payload } : payload]
+      const made = list.flatMap(one) // varios trozos (título + texto…) entran juntos y en su orden
       const last = blocks[blocks.length - 1]
-      if (last && last.type === 'text' && !strip(last.html)) commit(blocks.map((b) => (b.id === last.id ? { ...b, html } : b)))
-      else commit([...blocks, newBlock('text', html)])
+      if (last && last.type === 'text' && !strip(last.html)) commit([...blocks.slice(0, -1), ...made]) // el bloque vacío del final se aprovecha
+      else commit([...blocks, ...made])
     }
   }
 
@@ -160,7 +197,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
             <span className="row-tools">
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
-                onClick={(e) => { e.stopPropagation(); setRowMenu(rowMenu === b.id ? null : b.id) }}
+                onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowQ(''); setRowI(0); setRowMenu(rowMenu === b.id ? null : b.id) }}
                 onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }) }}
                 onDragEnd={() => setDrag(null)}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">{[3, 7, 11].flatMap((y) => [4.5, 9.5].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" />))}</svg>
@@ -168,7 +205,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               {rowMenu === b.id && (
                 <>
                   <span className="row-backdrop" onClick={(e) => { e.stopPropagation(); setRowMenu(null) }} />
-                  <span className="card row-menu" role="menu">
+                  <span className={`card row-menu ${rowUp ? 'up' : ''}`} role="menu">
+                    <input className="row-menu-q" autoFocus value={rowQ} placeholder="Tipo de bloque… (escribe para buscar)" aria-label="Buscar un tipo de bloque"
+                      onChange={(e) => { setRowQ(e.target.value); setRowI(0) }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') { e.preventDefault(); setRowI((rowI + 1) % Math.max(rowOptions.length, 1)) }
+                        else if (e.key === 'ArrowUp') { e.preventDefault(); setRowI((rowI - 1 + rowOptions.length) % Math.max(rowOptions.length, 1)) }
+                        else if (e.key === 'Enter') { e.preventDefault(); if (rowOptions[rowI]) convert(b.id, rowOptions[rowI].type) }
+                        else if (e.key === 'Escape') setRowMenu(null)
+                      }} />
+                    {rowOptions.map((t, k) => (
+                      <button key={t.type} role="menuitemradio" aria-checked={b.type === t.type} className={`${b.type === t.type ? 'on' : ''} ${k === rowI ? 'hi' : ''}`} onMouseEnter={() => setRowI(k)} onClick={() => convert(b.id, t.type)}><Icon name={t.icon} size={16} />{t.label}</button>
+                    ))}
+                    {rowOptions.length === 0 && <span className="row-menu-t">Sin resultados</span>}
+                    <hr className="row-menu-sep" />
                     {b.type !== 'image' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
                     <button role="menuitem" onClick={() => { setRowMenu(null); remove(b.id) }}><Icon name="trash" size={16} />Eliminar</button>
                   </span>
@@ -183,6 +233,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'divider' && <hr className="block-divider" tabIndex={0} onKeyDown={(e) => (e.key === 'Backspace' || e.key === 'Delete') && remove(b.id)} />}
                 {b.type === 'code' && <CodeBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
+                {b.type === 'link' && <LinkBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
                 {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
                 {TEXTY.includes(b.type) && (
                   <Line block={b} refCb={(el) => { if (el) refs.current[b.id] = el }} focus={focusId === b.id} done={() => setFocusId(null)}

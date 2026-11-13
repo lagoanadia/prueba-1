@@ -17,7 +17,6 @@ import Pixels from './journal/Pixels.jsx'
 import { BeeWidget, CrosswordWidget, SudokuWidget } from './games/GameLauncher.jsx'
 import Plan from './salud/Plan.jsx'
 import Workouts from './salud/Workouts.jsx'
-import Progress from './salud/Progress.jsx'
 import Projects from './trabajo/Projects.jsx'
 import Kanban from './trabajo/Kanban.jsx'
 import Priorities from './trabajo/Priorities.jsx'
@@ -52,9 +51,8 @@ export const WIDGETS = {
   bee: { area: 'journal', name: 'Spelling Bee', color: '#F9DC5C', component: BeeWidget },
   crossword: { area: 'journal', name: 'Mini crucigrama', color: '#E84855', component: CrosswordWidget },
   good: { area: 'journal', name: 'Una cosa buena del día', color: '#3DDC97', component: Good },
-  plan: { sizes: ['M', 'L'], area: 'salud', name: 'Plan semanal', color: '#3DDC97', component: Plan },
+  plan: { sizes: ['M', 'L'], area: 'salud', name: 'Ejercicio de la semana', color: '#3DDC97', component: Plan },
   workouts: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },
-  progress: { sizes: ['T', 'M', 'L'], area: 'salud', name: 'Evolución', color: '#3185FC', component: Progress },
   cycle: { sizes: ['M', 'L'], area: 'salud', name: 'Ciclo menstrual', color: '#EFABFF', component: Cycle },
   sleepcalc: { sizes: ['M', 'L'], area: 'salud', name: 'Calculadora de sueño', color: '#8E7CFF', component: SleepCalc },
   pills: { sizes: ['M', 'L'], area: 'salud', name: 'Pastillero', color: '#3DDC97', component: Pills },
@@ -99,7 +97,7 @@ export const widgetsFor = (area) => Object.entries(WIDGETS).filter(([, w]) => w.
 // Tablero inicial de cada área (hasta que el usuario lo personaliza).
 const DEFAULTS = {
   journal: [['mood', 'L'], ['goals', 'L'], ['bottle', 'L'], ['pixels', 'L'], ['good', 'M'], ['word', 'M']],
-  salud: [['plan', 'L'], ['workouts', 'L'], ['progress', 'M']],
+  salud: [['plan', 'L'], ['workouts', 'L']],
   trabajo: [['projects', 'L'], ['kanban', 'L'], ['priorities', 'M'], ['focus', 'M'], ['deadlines', 'M']],
   comida: [['menu', 'L'], ['recipe', 'L'], ['dishes', 'T'], ['shopping', 'T'], ['batch', 'M']],
   estudios: [['subjects', 'L'], ['syllabus', 'L'], ['timetable', 'L'], ['assignments', 'L'], ['resources', 'M']],

@@ -5,9 +5,9 @@ import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import ShareButton from '../../components/ShareButton.jsx'
-import { useFocusMode, usePanel } from '../../screens/focus.js'
+import { usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
-import { changeSubject, changeUnit, practicesOf, soft } from './helpers.js'
+import { changeSubject, changeUnit, practicesOf, reorderUnits, soft } from './helpers.js'
 
 // Orden de las pestañas: Temario y apuntes · Prácticas · Recursos (al final)
 const TABS = [['estudio', 'split', 'Temario y apuntes'], ['practicas', 'code', 'Prácticas'], ['recursos', 'link', 'Recursos']]
@@ -28,12 +28,31 @@ const LAYOUTS = [['pdf', true, false, 'Solo el PDF del profe'], ['split', true, 
  * (con una casilla para marcar lo estudiado). Arriba, la ruta Asignatura › Unidad para volver atrás.
  */
 export default function UnitWorkspace({ data, update, subject, unit, route, go, back }) {
-  useFocusMode(true)
   const [panel, setPanel] = usePanel()
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
   const [layout, setLayout] = useState('split')
-  const [zen, setZen] = useState(false) // modo zen: solo el PDF y los apuntes, a pantalla completa
+  const [full, setFull] = useState(false) // modo estudio: la ventana ocupa toda la pantalla
+  const [panelW, setPanelW] = useState(() => { try { return Math.min(480, Math.max(150, Number(localStorage.getItem('ws-panel-w')) || 250)) } catch { return 250 } })
+  const wsRef = useRef(null)
+  useEffect(() => { if (!full) return undefined; const k = (e) => e.key === 'Escape' && setFull(false); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [full])
+  // Ajustar el ancho del panel de unidades arrastrando su borde; si se hace muy pequeño, se cierra y queda el icono
+  const startResize = (e) => {
+    e.preventDefault()
+    const z = parseFloat(getComputedStyle(wsRef.current?.closest('.d-app') ?? document.body).zoom) || 1
+    const x0 = e.clientX
+    const w0 = panelW
+    let last = w0
+    const move = (ev) => {
+      const raw = w0 + (ev.clientX - x0) / z
+      if (raw < 110) { end(); setPanel(false); return }
+      last = Math.min(480, Math.max(150, raw))
+      setPanelW(last)
+    }
+    const end = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); try { localStorage.setItem('ws-panel-w', String(Math.round(last))) } catch { /* sin guardado */ } }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+  }
   const [open, setOpen] = useState(() => new Set([unit.id])) // unidades desplegadas
   const menuRef = useRef(null)
   const notesIn = useRef(null) // función de los apuntes para pegar texto copiado del PDF
@@ -50,25 +69,6 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
     document.addEventListener('pointerdown', close)
     return () => document.removeEventListener('pointerdown', close)
   }, [addMenu])
-
-  // Modo zen: pantalla completa del navegador (si se puede); Esc o salir de pantalla completa lo cierra
-  const toggleZen = () => {
-    const on = !zen
-    setZen(on)
-    try {
-      if (on) document.documentElement.requestFullscreen?.()?.catch(() => {})
-      else if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {})
-    } catch { /* sin pantalla completa: se queda en la ventana */ }
-  }
-  useEffect(() => {
-    if (!zen) return undefined
-    const onKey = (e) => { if (e.key === 'Escape') { setZen(false); if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {}) } }
-    const onFs = () => { if (!document.fullscreenElement) setZen(false) }
-    document.addEventListener('keydown', onKey)
-    document.addEventListener('fullscreenchange', onFs)
-    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs) }
-  }, [zen])
-  useEffect(() => () => { if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {}) }, [])
 
   const changeU = (fn) => changeUnit(update, subject.id, unit.id, fn)
   const setPractices = (fn) => changeU((u) => ({ ...u, practices: fn(practicesOf(u)) }))
@@ -117,6 +117,13 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
     if (drag.id === (drag.type === 'topic' ? topic?.id : practice?.id) && target.unitId !== drag.unitId) go({ ...route, unitId: target.unitId, tab: drag.type === 'topic' ? 'estudio' : 'practicas', itemId: drag.id })
     setDragging(null); setMark(null)
   }
+  // Reordenar las propias unidades arrastrando por su cabecera
+  const [dragUnit, setDragUnit] = useState(null) // { id, over, after }
+  const dropUnit = () => {
+    const d = dragUnit
+    setDragUnit(null)
+    if (d?.over && d.over !== d.id) changeSubject(update, subject.id, (sub) => ({ ...sub, units: reorderUnits(sub.units, d.id, d.over, d.after) }))
+  }
   const dragProps = (type, unitId, id) => ({
     draggable: true,
     onDragStart: (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); setDragging({ type, unitId, id }) },
@@ -154,26 +161,37 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   )
 
   return (
-    <div className={`ws ${zen ? 'ws-zen' : ''}`}>
-      {!zen && <nav className="crumbs" aria-label="Ruta">
+    <div className={`ws ${full ? 'ws-full' : ''}`} ref={wsRef}>
+      <nav className="crumbs" aria-label="Ruta">
         <button className="crumb" onClick={back}><i style={{ background: subject.color }} />{subject.short}</button>
         <Icon name="right" size={14} color="#9AA0A6" />
         <span className="crumb is-current" aria-current="page">{unit.name}</span>
-      </nav>}
+      </nav>
 
       <div className="ws-body">
-        {panel && !zen && (
-          <aside className="card ws-panel" aria-label="Unidades y temas">
+        {panel && (
+          <aside className="card ws-panel" aria-label="Unidades y temas" style={{ width: panelW }}>
             <b className="ws-subject" style={{ borderColor: subject.color }}>{subject.short}</b>
             {subject.units.map((u) => {
               const on = u.id === unit.id
               const isOpen = open.has(u.id)
               const ps = practicesOf(u)
               return (
-                <div key={u.id} className="tp-unit-wrap">
+                <div key={u.id} className={`tp-unit-wrap ${dragUnit?.id === u.id ? 'is-dragging' : ''} ${dragUnit?.over === u.id && dragUnit.id !== u.id ? (dragUnit.after ? 'u-after' : 'u-before') : ''}`}>
                   <div className={`tp-unit ${on ? 'on' : ''} ${mark?.end && mark.unitId === u.id ? 'drop-into' : ''}`}
-                    onDragOver={(e) => { if (!dragging) return; e.preventDefault(); setMark({ type: dragging.type, unitId: u.id, end: true }) }}
-                    onDrop={(e) => { if (!dragging) return; e.preventDefault(); moveItem(dragging, { unitId: u.id, end: true }); setOpen((o) => new Set([...o, u.id])) }}>
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', u.id); setDragUnit({ id: u.id, over: null, after: false }) }}
+                    onDragEnd={() => setDragUnit(null)}
+                    onDragOver={(e) => {
+                      if (dragUnit) { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY > r.top + r.height / 2; if (dragUnit.over !== u.id || dragUnit.after !== after) setDragUnit({ ...dragUnit, over: u.id, after }); return }
+                      if (!dragging) return
+                      e.preventDefault(); setMark({ type: dragging.type, unitId: u.id, end: true })
+                    }}
+                    onDrop={(e) => {
+                      if (dragUnit) { e.preventDefault(); dropUnit(); return }
+                      if (!dragging) return
+                      e.preventDefault(); moveItem(dragging, { unitId: u.id, end: true }); setOpen((o) => new Set([...o, u.id]))
+                    }}>
                     <button className="tp-chev" onClick={() => toggleOpen(u.id)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Plegar' : 'Desplegar'} ${u.name}`}><Icon name={isOpen ? 'down' : 'right'} size={16} /></button>
                     <button className="tp-uname w-ellipsis" onClick={() => { go({ ...route, unitId: u.id, itemId: null }); setOpen((s) => new Set([...s, u.id])) }}>{u.name}</button>
                     <button className="prio-x tp-pen" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`}><Icon name="pen" size={14} /></button>
@@ -202,15 +220,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
             </div>
           </aside>
         )}
+        {panel && <div className="ws-resize" role="separator" aria-orientation="vertical" aria-label="Cambiar el ancho del panel de unidades" onPointerDown={startResize} />}
 
         <div className="ws-main">
-          {zen ? (
-            <div className="ws-zen-bar">
-              <b className="w-ellipsis">{tab === 'practicas' ? practice?.name : topic?.name}</b>
-              {layouts()}
-              <button className="icon-btn" onClick={toggleZen} aria-label="Salir del modo zen" title="Salir del modo zen (Esc)"><Icon name="close" /></button>
-            </div>
-          ) : (
           <div className="ws-tabs" role="tablist">
             <button className="icon-btn ws-toggle" onClick={() => setPanel(!panel)} aria-label={panel ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panel} title={panel ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
             {TABS.map(([id, icon, label]) => (
@@ -219,9 +231,8 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               </button>
             ))}
             {tab !== 'recursos' && layouts()}
-            {tab !== 'recursos' && (tab === 'practicas' ? practice : topic) && <button className="icon-btn ws-zen-btn" onClick={toggleZen} aria-label="Modo zen" title="Modo zen: solo el PDF y los apuntes"><Icon name="expand" /></button>}
+            <div className="layouts ws-mode"><button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'shrink' : 'expand'} size={20} /></button></div>
           </div>
-          )}
 
           {tab === 'estudio' && (
             topic

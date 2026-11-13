@@ -16,9 +16,12 @@ export function sheetCss(st) {
   return `
 .x-sheet { font-family: ${FONTS[st.font] ?? FONTS.poppins}; color: #202124; font-size: 13px; line-height: 1.65; --c: ${c}; --r: ${r}px; }
 .x-sheet * { box-sizing: border-box; }
+.x-sheet { overflow-wrap: anywhere; word-break: break-word; } /* ningún texto se sale de la hoja, ni sin espacios */
 .x-head { font-size: 11px; color: #5F6368; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
+/* El texto sí puede continuar en la página siguiente; lo demás (tablas, código, fotos…) pasa entero */
+.x-text, .x-li, .x-quote { break-inside: auto; page-break-inside: auto; orphans: 3; widows: 3; }
 .x-pb { break-before: page; page-break-before: always; }
 .x-h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin: 6px 0 10px; break-after: avoid; }
 .x-h2 { font-size: 18px; font-weight: 700; color: var(--c); margin: 16px 0 6px; break-after: avoid; }
@@ -32,14 +35,15 @@ export function sheetCss(st) {
 .x-callout { background: color-mix(in srgb, var(--c) 12%, #fff); border-left: 4px solid var(--c); border-radius: ${Math.max(r - 2, 0)}px; padding: 10px 14px; }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
-.x-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
+.x-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
 .x-table th { background: var(--c); color: #fff; text-align: left; font-weight: 600; padding: 8px 12px; }
-.x-table td { padding: 8px 12px; }
+.x-table td { padding: 8px 12px; white-space: pre-wrap; } .x-table th { white-space: pre-wrap; }
 .x-table tr { break-inside: avoid; }
 ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, var(--c) 7%, #fff); }' : ''}
 .x-table td + td, .x-table th + th { border-left: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
 .x-table tr + tr td { border-top: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
 .x-img { max-width: 100%; max-height: 420px; border-radius: var(--r); display: block; margin: 0 auto; }
+.x-link { border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); padding: 8px 14px; } .x-link a { color: var(--c); font-weight: 600; text-decoration: none; } .x-link span { display: block; font-size: 11px; color: #5F6368; }
 .x-hr { border: 0; border-top: 2px solid color-mix(in srgb, var(--c) 30%, #fff); margin: 14px 0; }
 .x-sheet b, .x-sheet strong { font-weight: 700; } .x-sheet mark { background: #FFF3B0; }
 .x-sheet ul, .x-sheet ol { margin: 0; padding-left: 20px; }`
@@ -58,9 +62,11 @@ export function blockHtml(b, n, imgs) {
     case 'code': return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${esc(b.code)}</div>`
     case 'table': {
       const rows = b.rows ?? []
-      return `<div class="x-b"><table class="x-table">${rows.map((r, i) => `<tr>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
+      const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
+      return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""></div>` : ''
+    case 'link': return b.url ? `<div class="x-b x-link"><a href="${esc(b.url)}">${esc(b.title || b.url)}</a>${b.title ? `<span>${esc(b.url)}</span>` : ''}</div>` : ''
     case 'divider': return '<hr class="x-hr">'
     default: return `<div class="x-b x-text">${rich(b.html)}</div>`
   }
@@ -89,6 +95,20 @@ export async function loadImages(blocks) {
   return out
 }
 
+/**
+ * Documento completo para imprimir. El margen de la hoja (20 mm) no se pone con @page sino con una cabecera y un pie vacíos
+ * que se repiten en cada página: con @page margin 0 el navegador no escribe fecha, título, dirección ni número de página.
+ */
+export function printDocument(html, st, title) {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+<style>@page { size: A4; margin: 0; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pg { width: 100%; border-collapse: collapse; } .pg td { padding: 0; } .sp { height: 20mm; } .pg-in { padding: 0 20mm; }
+${sheetCss(st)}</style></head><body>
+<table class="pg"><thead><tr><td><div class="sp"></div></td></tr></thead><tbody><tr><td><div class="pg-in">${html}</div></td></tr></tbody><tfoot><tr><td><div class="sp"></div></td></tr></tfoot></table>
+</body></html>`
+}
+
 /** Imprime la hoja como PDF con el diálogo del navegador («Guardar como PDF»). */
 export async function printSheet(html, st, title) {
   const frame = document.createElement('iframe')
@@ -96,13 +116,50 @@ export async function printSheet(html, st, title) {
   document.body.appendChild(frame)
   const d = frame.contentDocument
   d.open()
-  d.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
-<style>@page { size: A4; margin: 20mm; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } ${sheetCss(st)}</style></head><body>${html}</body></html>`)
+  d.write(printDocument(html, st, title))
   d.close()
   try { await Promise.race([d.fonts.ready, new Promise((r) => setTimeout(r, 2500))]) } catch { /* sin fuentes */ }
   await new Promise((r) => setTimeout(r, 150))
   frame.contentWindow.focus()
   frame.contentWindow.print()
   setTimeout(() => frame.remove(), 60000)
+}
+
+// Alto útil de una página A4 con márgenes de 20 mm (a 96 dpi) y alto de línea del texto (13 px × 1,65)
+export const PAGE = { w: 794, h: 1123, m: 76, content: 971 }
+const LH = 21.45
+const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
+
+/**
+ * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
+ * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final.
+ * `items` = [{ top, bottom, type, force }] en orden. Devuelve [[desde, hasta], …] en px de la tira.
+ */
+export function paginate(items, total, H = PAGE.content) {
+  const pages = []
+  let start = 0
+  for (let guard = 0; guard < 300; guard++) {
+    let end = start + H
+    if (end >= total - 0.5) { pages.push([start, Math.max(total, start + 1)]); break }
+    const force = items.find((it) => it.force && it.top > start + 1 && it.top < end)
+    if (force) end = force.top
+    else {
+      const cross = items.find((it) => it.top < end - 0.5 && it.bottom > end + 0.5)
+      if (cross) {
+        if (SPLITTABLE.includes(cross.type)) {
+          const cut = cross.top + Math.floor((end - cross.top) / LH) * LH
+          end = cut - cross.top >= 2 * LH && cut > start ? cut : (cross.top > start ? cross.top : cut > start ? cut : end)
+        } else if (cross.top > start) end = cross.top
+      }
+      const last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop()
+      if (last && /^h[123]$/.test(last.type) && last.top > start && end - last.bottom < 30) end = last.top
+    }
+    if (end <= start + 1) end = start + H
+    pages.push([start, end])
+    const inside = items.find((it) => it.top < end - 0.5 && it.bottom > end + 0.5)
+    const next = items.find((it) => it.top >= end - 0.5)
+    start = inside ? end : next ? next.top : total
+    if (start >= total - 0.5) break
+  }
+  return pages.length ? pages : [[0, Math.max(total, 1)]]
 }

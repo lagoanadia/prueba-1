@@ -2741,29 +2741,358 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pl-chips2 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .pl-chip { border: 1.5px solid var(--c); background: #fff; color: var(--text); border-radius: 14px; padding: 3px 12px; font: 600 12px Poppins, sans-serif; cursor: pointer; transition: background .15s, color .15s; } .pl-chip.is-done { background: var(--c); color: #fff; }
 .pl-drow .pl-del { position: static; flex: none; } .pl-drow:hover .pl-del, .pl-drow .pl-del:focus-visible { opacity: 1; }
+/* Entregas: tocar la fila la marca como hecha (se ve un check y se desvanece) */
+.deliv-row.is-click { cursor: pointer; transition: opacity .45s var(--ease), transform .45s var(--ease), filter .2s; }
+.deliv-row.is-click:hover { filter: brightness(.97); }
+.deliv-row.is-finishing { opacity: 0; transform: translateX(10px); } .deliv-row.is-finishing .deliv-name { text-decoration: line-through; }
+.deliv-row.is-finishing .deliv-ic { background: #3DDC97 !important; }
+@media (prefers-reduced-motion: reduce) { .deliv-row.is-click { transition: none; } }
+/* Editar el tablero: los bloques se agarran enteros y se arrastran; su contenido no se toca mientras tanto */
+.plan-grid.is-editing .plan-block { cursor: grab; }
+.plan-grid.is-editing .plan-block:active { cursor: grabbing; }
+.plan-grid.is-editing .plan-block > :not(.w-remove):not(.block-move):not(.size-dock) { pointer-events: none; user-select: none; }
+.plan-block.is-dragging { opacity: .4; }
+.plan-block.drop-before::before, .plan-block.drop-after::after { content: ''; position: absolute; background: var(--blue); border-radius: 3px; z-index: 6; pointer-events: none; }
+.plan-block.drop-h.drop-before::before { left: -13px; top: 0; bottom: 0; width: 4px; } .plan-block.drop-h.drop-after::after { right: -13px; top: 0; bottom: 0; width: 4px; }
+.plan-block.drop-v.drop-before::before { top: -13px; left: 0; right: 0; height: 4px; } .plan-block.drop-v.drop-after::after { bottom: -13px; left: 0; right: 0; height: 4px; }
+.popup-list li:has(.hist-restore) { display: flex; align-items: center; gap: 10px; } .popup-list li:has(.hist-restore) .w-text { flex: 1; }
+.hist-restore { flex: none; background: var(--soft); }
+.popup-list li:has(.hist-restore) { flex-direction: row; flex-wrap: nowrap; text-align: left; }
+/* Entregas marcadas: sección «Entregadas» más oscura, debajo, hasta salir de la pantalla */
+.deliv-done { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.deliv-done .deliv-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.deliv-row.is-ticked { cursor: pointer; filter: saturate(.85) brightness(.9); } .deliv-row.is-ticked .deliv-name { text-decoration: line-through; opacity: .75; }
+.deliv-row.is-ticked:hover { filter: saturate(.85) brightness(.85); }
+/* Reordenar unidades arrastrando (tarjetas de la asignatura y panel del tema) */
+.unit-wrap { position: relative; }
+.unit-wrap.is-dragging, .tp-unit-wrap.is-dragging { opacity: .4; }
+.unit-wrap.drop-before::before, .unit-wrap.drop-after::after { content: ''; position: absolute; top: 0; bottom: 0; width: 4px; border-radius: 3px; background: #3185FC; z-index: 3; pointer-events: none; }
+.unit-wrap.drop-before::before { left: -10px; } .unit-wrap.drop-after::after { right: -10px; }
+.tp-unit-wrap { position: relative; }
+.tp-unit-wrap.u-before::before, .tp-unit-wrap.u-after::after { content: ''; position: absolute; left: 6px; right: 6px; height: 3px; border-radius: 2px; background: #3185FC; z-index: 3; pointer-events: none; }
+.tp-unit-wrap.u-before::before { top: -3px; } .tp-unit-wrap.u-after::after { bottom: -3px; }
+.tp-unit { cursor: grab; }
+/* Vista previa del PDF: una hoja A4 (794 px) con márgenes de 20 mm */
+.xp-sheet { width: 794px; max-width: none; padding: 76px; margin: 0 auto; }
+.xp-sheetwrap { overflow-x: hidden; }
+@media (max-width: 899px) { .xp-sheet { padding: 76px; } }
+/* Modo estudio: el espacio de trabajo ocupa toda la pantalla */
+.ws.ws-full { position: fixed; inset: 0; z-index: 80; height: auto; min-height: 0; background: #fff; padding: 14px 18px; }
+.ws-resize { flex: none; width: 10px; margin: 0 -13px; cursor: col-resize; position: relative; z-index: 2; touch-action: none; }
+.ws-resize::after { content: ''; position: absolute; left: 4px; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: transparent; transition: background .15s; }
+.ws-resize:hover::after, .ws-resize:active::after { background: #3185FC; }
+.ws-mode { margin-left: auto; } .layouts + .ws-mode { margin-left: 6px; }
+.ws-mode .icon-btn { width: 34px; height: 34px; }
+.file-frame { overflow: hidden; }
+@media (max-width: 899px) { .ws-resize { display: none; } }
+/* Vista previa en páginas A4 seguidas */
+.xp-pages { display: flex; flex-direction: column; gap: 18px; }
+.xp-page { position: relative; width: 794px; height: 1123px; flex: none; background: #fff; border-radius: 4px; box-shadow: 0 8px 28px rgba(60, 64, 67, .3); padding: 76px; }
+.xp-win { position: relative; width: 643px; overflow: hidden; }
+.xp-strip { width: 643px; position: relative; }
+.xp-pn { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font-size: 11px; color: #9AA0A6; }
+.xp-sheet { display: none; }
+.xp-tools { right: 6px; top: 2px; }
+/* Navegación entre hojas de la vista previa */
+.xp-left { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.xp-left .xp-sheetwrap { flex: 1; min-height: 0; }
+.xp-nav { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+.xp-nav .icon-btn { width: 32px; height: 32px; flex: none; } .xp-nav .icon-btn:disabled { opacity: .35; }
+.xp-nav b { flex: none; font-weight: 600; }
+.xp-jump { display: flex; gap: 4px; margin-left: 6px; overflow-x: auto; padding: 2px; scrollbar-width: thin; min-width: 0; }
+.xp-jump button { flex: none; min-width: 28px; height: 28px; border: 0; border-radius: 14px; background: #F1F3F4; font: 600 12px Poppins, sans-serif; cursor: pointer; color: var(--text); padding: 0 8px; } .xp-jump button.on { background: var(--blue); color: #fff; }
+/* Pasar a apuntes: tipo detectado (título, lista, tabla, texto) + botón */
+.pdfp-pick { padding: 0; gap: 0; overflow: hidden; }
+.pdfp-pick button { border: 0; background: none; color: #fff; font: 600 13px Poppins, sans-serif; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; cursor: pointer; }
+.pdfp-pick .pdfp-kind { background: rgba(255, 255, 255, .14); } .pdfp-pick .pdfp-kind:hover { background: rgba(255, 255, 255, .24); }
+.pdfp-pick button svg { stroke: #fff; }
+/* Mover bloques arrastrando en la vista previa del PDF */
+.xp-row { cursor: grab; } .xp-row:active { cursor: grabbing; }
+.xp-row.is-dragging { opacity: .35; }
+.xp-row.drop-before::before, .xp-row.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 3px; background: var(--blue); z-index: 5; pointer-events: none; }
+.xp-row.drop-before::before { top: -3px; } .xp-row.drop-after::after { bottom: -3px; }
+/* Celdas de tabla que crecen con el texto */
+.tb td textarea { display: block; width: 100%; border: none; background: none; font: inherit; padding: 9px 12px; outline: none; font-weight: inherit; resize: none; overflow: hidden; line-height: 1.4; white-space: pre-wrap; overflow-wrap: break-word; }
+.tb td textarea:focus { background: #EEF4FF; }
+.tb { table-layout: fixed; }
+.tb td.tb-end { width: 28px; }
+/* Bordes de tabla para cambiar el tamaño de columnas y filas */
+.tb td { position: relative; }
+.tb-rz { position: absolute; z-index: 2; opacity: 0; transition: opacity .12s; background: var(--blue); }
+.tb-rz-c { top: 0; bottom: 0; right: -3px; width: 6px; cursor: col-resize; border-radius: 3px; }
+.tb-rz-r { left: 0; right: 0; bottom: -3px; height: 6px; cursor: row-resize; border-radius: 3px; }
+.tb-rz:hover, .tb-rz:active { opacity: .85; }
+.tb td textarea { min-height: 100%; }
+/* Menú del asa: tipo de bloque */
+.row-menu { max-height: min(70vh, 420px); overflow-y: auto; }
+.row-menu-t { font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 4px 10px 2px; }
+.row-menu button.on { background: #DDEBFE; }
+.row-menu-sep { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; width: 100%; }
+.row-menu.up { top: auto; bottom: 28px; max-height: min(60vh, 420px); }
+/* Menú del asa con búsqueda, y bloque de enlace */
+.row-menu-q { border: 1.5px solid var(--line); border-radius: 12px; padding: 6px 10px; font: inherit; font-size: 13px; margin: 2px 2px 4px; width: calc(100% - 4px); min-width: 0; }
+.row-menu button.hi { background: var(--soft); } .row-menu button.on.hi { background: #DDEBFE; }
+.lk { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; margin: 4px 0; }
+.lk-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 14px; text-decoration: none; color: var(--text); background: #fff; transition: background .15s; } .lk-card:hover { background: var(--soft); }
+.lk-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .lk-t b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lk-t small { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lk-pen { opacity: 0; width: 32px; height: 32px; } .lk:hover .lk-pen, .lk-pen:focus-visible { opacity: 1; }
+.lk-edit { border: 1.5px dashed #C6CACE; border-radius: 14px; padding: 6px 10px; background: #fff; flex-wrap: wrap; }
+.lk-edit input { flex: 1 1 160px; min-width: 0; border: none; background: none; font: inherit; font-size: 15px; padding: 6px 4px; outline: none; }
+/* Todos los títulos de widgets, en todas las áreas, con el tamaño de los de Estudios */
+.widget > .w-title, .w-T > .w-title, .w-M > .w-title, .w-L > .w-title { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.w-S > .w-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.fd-title { font-size: 24px; font-weight: 600; } .fd-title b { font-weight: 600; }
+.widget > .w-title .dot, .fd-title .dot-food { width: 9px; height: 9px; }
+/* Ejercicio de la semana: sesiones que se estiran, tiempo habitual de cada deporte */
+.sa-sess { cursor: grab; touch-action: none; user-select: none; } .sa-sess.is-live { cursor: grabbing; z-index: 5; box-shadow: 0 6px 16px rgba(0, 0, 0, .22); }
+.sa-sess > b, .sa-sess > span:not(.sa-rz) { pointer-events: none; }
+.sa-rz { position: absolute; left: 0; right: 0; height: 9px; cursor: ns-resize; z-index: 2; } .sa-rz-t { top: 0; } .sa-rz-b { bottom: 0; }
+.sa-rz::after { content: ''; position: absolute; left: 50%; width: 22px; height: 3px; margin-left: -11px; border-radius: 2px; background: rgba(32, 33, 36, .35); opacity: 0; transition: opacity .12s; } .sa-rz-t::after { top: 2px; } .sa-rz-b::after { bottom: 2px; }
+.sa-sess:hover .sa-rz::after, .sa-sess.is-live .sa-rz::after { opacity: 1; }
+.sa-sess-x { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .85); display: none; place-items: center; cursor: pointer; padding: 0; z-index: 3; } .sa-sess:hover .sa-sess-x, .sa-sess-x:focus-visible { display: grid; }
+.sa-dur-back { position: fixed; inset: 0; z-index: 20; }
+.sa-dur { position: absolute; left: 0; top: calc(100% + 6px); z-index: 21; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 16px; white-space: nowrap; }
+.sa-dur-t { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.sa-dur-row { display: flex; align-items: center; gap: 12px; } .sa-dur-row b { min-width: 76px; text-align: center; font-size: 16px; }
+.sa-dur-row button { width: 30px; height: 30px; border: 0; border-radius: 50%; background: #F1F3F4; font: 600 18px Poppins, sans-serif; cursor: pointer; color: var(--text); }
+/* Al tirar del borde de una sesión se ilumina la línea de esa hora y se dice cuál es */
+.sa-sess { cursor: pointer; } .sa-sess > b { padding-right: 18px; } .sa-sess > svg { position: absolute; right: 6px; bottom: 5px; }
+.sa-guide { position: absolute; left: 40px; right: 0; height: 0; border-top: 2px solid #2FA36B; box-shadow: 0 0 10px rgba(47, 163, 107, .55); z-index: 6; pointer-events: none; }
+.sa-guide-t { position: absolute; left: 0; width: 40px; transform: translateY(-50%); text-align: center; font-size: 11px; font-weight: 700; color: #fff; background: #2FA36B; border-radius: 8px; padding: 1px 0; z-index: 7; pointer-events: none; }
+.sa-plan-hours span.is-lit { color: transparent; }
+.sa-sess > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Tramo iluminado al estirar una sesión (de la hora de empezar a la de acabar) */
+.sa-band { position: absolute; left: 40px; right: 0; z-index: 4; pointer-events: none; border-radius: 10px; background: color-mix(in srgb, var(--c) 38%, transparent); border-top: 2px solid color-mix(in srgb, var(--c) 70%, #2FA36B); border-bottom: 2px solid color-mix(in srgb, var(--c) 70%, #2FA36B); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent); }
+.sa-plan-hours span.is-lit { color: #1F7A4D; font-weight: 700; }
+/* El deporte con el tipo de letra de las filas de Estudios */
+.sa-sess > b { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.25; }
+.sa-sess { border-radius: 14px; padding: 6px 10px; }
+/* El tamaño del nombre se ajusta al ancho de la columna (hasta 15 px, como en Estudios) */
+.sa-plan-grid { container-type: inline-size; }
+.sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 5.4), 15px); padding-right: 0; }
+.sa-sess { padding: 6px 8px; }
+.sa-sess.is-live .sa-sess-x { display: none; }
+.sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 6), 15px); }
+/* Nombre del deporte: nunca cortado; la letra se ajusta sola al ancho */
+.sa-sess > b.sa-name { font-size: 15px; overflow: visible; text-overflow: clip; white-space: nowrap; padding-right: 0; }
+.sa-sess > b.sa-name { overflow-wrap: normal; word-break: normal; hyphens: none; }
+/* Sesión hecha: se ilumina con el color de su etiqueta; y se puede llevar libremente */
+.sa-sess { cursor: grab; touch-action: none; user-select: none; }
+.sa-sess.is-done { background: color-mix(in srgb, var(--c) 100%, #000 12%); filter: saturate(1.7); box-shadow: 0 0 0 2px var(--c), 0 0 16px var(--c); }
+.sa-sess.is-live { cursor: grabbing; }
+/* Sesión hecha: simplemente se oscurece (su mismo color, más profundo), sin check ni brillo */
+.sa-sess.is-done { background: color-mix(in srgb, var(--c) 100%, #000 24%); filter: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+.sa-sess.is-done { background: var(--c); filter: brightness(.8) saturate(1.7); box-shadow: none; }
+/* Los días de la semana que ya han pasado se ven apagados, grisáceos */
+.sa-plan-col.is-past { background: #E3E5E8; } .sa-plan-col.is-past > i { border-top-color: rgba(0, 0, 0, .07); }
+.sa-plan-col.is-past .sa-sess { filter: grayscale(.8) opacity(.85); }
+.sa-plan-col.is-past .sa-sess.is-done { filter: brightness(.8) saturate(1.7) grayscale(.75); }
+.sa-plan-days b.is-past { color: #B3B7BC; }
+/* Las sesiones de días pasados conservan su color (solo se apaga la columna) */
+.sa-plan-col.is-past .sa-sess { filter: none; }
+.sa-plan-col.is-past .sa-sess.is-done { filter: brightness(.8) saturate(1.7); }
+/* Días pasados: solo un poco más oscuros, sin apagar nada */
+.sa-plan-col.is-past { background: #EBECEF; }
+.sa-plan-days b.is-past { color: #9AA0A6; }
+/* Deportes con los colores de las asignaturas: suaves al estar libres, el color pleno al hacerlos */
+.sa-bubble > button:first-child { background: color-mix(in srgb, var(--c) 45%, #fff); }
+.sa-sess { background: color-mix(in srgb, var(--c) 45%, #fff); }
+.sa-sess.is-done, .sa-plan-col.is-past .sa-sess.is-done { background: var(--c); filter: none; box-shadow: none; }
+.sa-sess.is-done > b { color: #fff; }
+/* El horario ocupa todo el alto del widget; las horas se reparten solas */
+.sa-plan { flex: 1; min-height: 0; }
+.sa-plan-grid { flex: 1 1 auto; height: auto; min-height: var(--minh); }
+/* Al estirar una sesión: un hilito al empezar y otro al acabar, con la hora en el color de ese deporte */
+.sa-band, .sa-guide, .sa-guide-t { display: none; }
+.sa-thread { position: absolute; left: 0; right: 0; height: 0; z-index: 6; pointer-events: none; border-top: 2px solid var(--c); }
+.sa-thread em { position: absolute; left: 0; top: 0; transform: translateY(-50%); width: 40px; text-align: center; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; background: var(--c); border-radius: 8px; padding: 1px 0; }
+.sa-plan-hours span.is-lit { color: #9AA0A6; font-weight: 400; }
+/* En sesiones bajitas los bordes para estirar no se comen el centro (que sirve para marcar/mover) */
+.sa-rz { height: min(9px, 28%); }
+/* Entrenamientos: la rueda del deporte más practicado */
+.wk-wheel { display: flex; flex-direction: column; gap: 10px; }
+.wk-range { align-self: flex-start; display: inline-flex; gap: 2px; background: var(--soft); border-radius: 16px; padding: 3px; }
+.wk-range button { border: 0; border-radius: 13px; padding: 5px 14px; background: none; font: 600 12.5px Poppins, sans-serif; color: var(--text); cursor: pointer; } .wk-range button.on { background: #fff; box-shadow: 0 1px 3px rgba(60, 64, 67, .3); }
+.wk-wheel-body { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.wk-donut { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.wk-hole { width: 100px; height: 100px; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.15; padding: 6px; }
+.wk-hole span { font-size: 10.5px; color: var(--muted); } .wk-hole b { font-size: 16px; overflow-wrap: anywhere; }
+.wk-legend { flex: 1; min-width: 160px; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wk-legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; } .wk-legend li.is-top > span { font-weight: 700; }
+.wk-legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; } .wk-legend li > span { flex: 1; min-width: 0; } .wk-legend em { font-style: normal; color: var(--muted); } .wk-legend b { min-width: 34px; text-align: right; }
+.wk-legend .wk-total { border-top: 1px solid var(--line); padding-top: 6px; font-size: 12px; color: var(--muted); } .wk-legend .wk-total b { color: var(--text); }
+/* Constancia: el mes con forma de calendario */
+.cs-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.cs-filters button { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 16px; padding: 5px 13px; background: var(--soft); font: 600 12.5px Poppins, sans-serif; color: var(--text); cursor: pointer; } .cs-filters button.on { background: #202124; color: #fff; }
+.cs-filters i { width: 9px; height: 9px; border-radius: 50%; }
+.cs-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; width: min(100%, 380px); }
+.cs-wd { text-align: center; font-size: 11px; color: #9AA0A6; }
+.cs-day { aspect-ratio: 1; border-radius: 9px; background: var(--soft); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #5F6368; } .cs-day.is-future { opacity: .45; } .cs-day.is-today { box-shadow: 0 0 0 2px #202124; }
+.cs-day { font-size: 0; }
+/* Entrenamientos y Constancia: centrados y adaptados al espacio que tiene el widget */
+.wk-wheel { flex: 1; min-height: 0; container-type: size; align-items: center; justify-content: center; gap: 12px; }
+.wk-range { align-self: center; }
+.wk-wheel-body { justify-content: center; flex-wrap: nowrap; gap: 5cqw; max-width: 100%; }
+.wk-donut { width: min(68cqh, 36cqw, 240px); height: min(68cqh, 36cqw, 240px); aspect-ratio: 1; }
+.wk-hole { width: 66%; height: 66%; padding: 4px; } .wk-hole b { font-size: clamp(11px, 3.4cqw, 20px); } .wk-hole span { font-size: clamp(8px, 1.9cqw, 11px); }
+.wk-legend { flex: 0 1 auto; min-width: 0; width: min(46cqw, 260px); }
+.wk-legend li { font-size: clamp(11px, 2.4cqw, 14px); }
+@container (max-width: 330px) { .wk-wheel-body { flex-direction: column; } .wk-donut { width: min(46cqh, 62cqw, 220px); height: min(46cqh, 62cqw, 220px); } .wk-legend { width: 100%; } }
 
-/* Plan semanal: mover sesiones arrastrando */
-.sa-sess { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.sa-sess.is-moving { z-index: 3; cursor: grabbing; box-shadow: 0 8px 20px rgba(0, 0, 0, .18); transform: scale(1.03); pointer-events: none; }
-
-/* Modo edición (todas las áreas): fila con lo que falta y arrastrar bloques */
-.add-square.add-row { grid-column: 1 / -1; min-height: 0; cursor: default; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px 16px; animation: rise .35s var(--ease) both; }
-.add-square.add-row:hover { background: #FFFFFF; }
-.add-row-plus { width: 40px; height: 40px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; flex: none; color: var(--muted); }
-.add-row-list { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px; scrollbar-width: thin; }
-.add-row .add-tile { flex: none; flex-direction: row; padding: 10px 16px; font-size: 14px; gap: 8px; touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: grab; }
-.add-row .add-tile .dot { width: 10px; height: 10px; border-radius: 50%; }
-.add-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: translate(-50%, -50%) rotate(-2deg); background: #FFFFFF; border: 2px solid var(--blue); border-radius: 16px; padding: 10px 16px; font: 600 14px Poppins, sans-serif; box-shadow: 0 10px 30px rgba(0, 0, 0, .18); }
-.plan-grid.is-editing .plan-block { cursor: grab; user-select: none; -webkit-user-select: none; transition: opacity .2s, transform .2s var(--ease); }
-.plan-grid.is-editing .plan-block.is-dragging { opacity: .45; transform: scale(.97); cursor: grabbing; }
-.grid-editing .add-row { align-self: start; }
-@media (prefers-reduced-motion: reduce) { .add-square.add-row, .plan-grid.is-editing .plan-block { animation: none; transition: none; } }
-
-/* Estudios · modo zen: solo el PDF y los apuntes, ocupando toda la pantalla */
-.ws-zen-btn { margin-bottom: 4px; }
-.ws.ws-zen { position: fixed; inset: 0; z-index: 900; background: #F8F9FA; padding: 14px 18px 18px; height: auto; min-height: 0; animation: fade .25s ease both; }
-.ws-zen .ws-body { gap: 0; }
-.ws-zen-bar { display: flex; align-items: center; gap: 10px; padding: 0 4px 4px; }
-.ws-zen-bar > b { flex: 1; min-width: 0; font-size: 15px; color: var(--muted); }
-.ws-zen-bar .layouts { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .ws.ws-zen { animation: none; } }
+.sa-consist { flex: 1; min-height: 0; container-type: size; align-items: center; justify-content: center; gap: 8px; }
+.cs-filters { justify-content: center; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 130px - (var(--rows) - 1) * 5px) / var(--rows)), 56px)); grid-template-columns: repeat(7, var(--cell)); width: auto; justify-content: center; }
+.cs-day { width: var(--cell); height: var(--cell); aspect-ratio: auto; border-radius: calc(var(--cell) * .24); }
+.sa-consist .sa-legend { justify-content: center; text-align: center; }
+.sa-consist .sa-legend b { margin-left: 0; }
+.sa-consist { min-height: 330px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 56px)); }
+/* Salud con los colores de las asignaturas de Estudios */
+.sa-tile.is-green { background: color-mix(in srgb, #1FA463 16%, #FFFFFF); } .sa-tile.is-blue { background: color-mix(in srgb, #2F6FED 16%, #FFFFFF); }
+.sa-tile.is-yellow { background: color-mix(in srgb, #EAB308 20%, #FFFFFF); } .sa-tile.is-pink { background: color-mix(in srgb, #EC4899 16%, #FFFFFF); }
+.sa-bar.is-met { background: #1FA463; } .sa-legend i.is-met { background: #1FA463; }
+/* Colores apagados en Salud: lo hecho se rellena con el tono suave, no con el color pleno */
+.sa-sess.is-done, .sa-plan-col.is-past .sa-sess.is-done { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.sa-sess.is-done > b { color: var(--text); }
+.pl-slot.is-done, .pl-chip.is-done { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); color: var(--text); border-color: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.pl-row.is-done .pl-line i { background: color-mix(in srgb, var(--c) 66%, #FFFFFF); }
+.pl-ring, .pl-bar i { opacity: 1; } .pl-bar i { background: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-count b, .pl-big, .pl-tcount b { color: color-mix(in srgb, var(--c) 80%, #000); }
+.sa-legend i.is-met { background: color-mix(in srgb, #1FA463 72%, #FFFFFF); }
+/* Pastillero: cada tratamiento o medicamento lleva UN color (el de los deportes y las asignaturas) en toda su tarjeta */
+.pl-tcard { background: color-mix(in srgb, var(--c) 14%, #FFFFFF); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 35%, #FFFFFF); }
+.pl-tcard .pl-what { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); }
+.pl-tcard .pl-time { color: color-mix(in srgb, var(--c) 78%, #000); }
+.pl-tcard .pl-line i { border-color: var(--c); } .pl-tcard .pl-line u { background: var(--c); }
+.pl-tcount { background: color-mix(in srgb, var(--c) 30%, #FFFFFF); }
+.pl-drow { background: color-mix(in srgb, var(--c) 40%, #FFFFFF); }
+.pl-chip { border-color: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-item { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 55%, #FFFFFF); }
+/* Pastillero · propuesta B: tarjeta neutra; el color solo en puntos, horas, rayita de cada pastilla y cuenta atrás */
+.pl-tcard { background: #F8F9FA; box-shadow: none; }
+.pl-tcard .pl-what { background: #FFFFFF; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 13px 13px 6px; }
+.pl-what { background: #F8F9FA; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 13px 13px 6px; }
+.pl-tcard .pl-time, .pl-time { color: var(--c); }
+.pl-tcard .pl-line i { border-color: var(--c); } .pl-tcard .pl-line u, .pl-line u { background: #DADCE0; }
+.pl-drow { background: #F8F9FA; box-shadow: inset 3px 0 0 var(--c); border-radius: 6px 14px 14px 6px; }
+.pl-chip { background: #FFFFFF; border-color: color-mix(in srgb, var(--c) 70%, #FFFFFF); }
+.pl-tcount { background: color-mix(in srgb, var(--tc, var(--c)) 30%, #FFFFFF); } 
+.pl-tcount b { color: color-mix(in srgb, var(--tc, var(--c)) 80%, #000); }
+.pl-tcard > .pl-bar { background: color-mix(in srgb, var(--tc, var(--c)) 22%, #FFFFFF); } .pl-tcard > .pl-bar i { background: color-mix(in srgb, var(--tc, var(--c)) 70%, #FFFFFF); }
+/* Medicamentos de cada día: estantería de cápsulas (como las botellas de los mensajes) */
+.pl-shelf { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 6px 4px; background: #F8F9FA; border-radius: 18px; padding: 16px 8px 12px; border-bottom: 5px solid #E3E5E8; }
+.pl-med { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: clamp(96px, 30%, 130px); }
+.pl-capwrap { height: 44px; display: grid; place-items: center; } .pl-capsule { transform: rotate(-26deg); overflow: visible; transition: transform .25s var(--ease); } .pl-med:hover .pl-capsule { transform: rotate(-14deg) scale(1.06); }
+.pl-medname { font-size: 12.5px; text-align: center; line-height: 1.2; overflow-wrap: anywhere; } .pl-medname.is-done { opacity: .55; }
+.pl-med .pl-chips2 { flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.pl-med .pl-del { position: absolute; top: -6px; right: 4px; opacity: 0; } .pl-med:hover .pl-del, .pl-med .pl-del:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .pl-capsule { transition: none; } }
+/* Constancia más grande: los cuadraditos ocupan todo el espacio posible */
+.sa-consist { min-height: 440px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 92px)); gap: 6px; }
+.cs-filters button { font-size: 13px; padding: 6px 15px; }
+/* Pastillero: cada medicamento de cada día es un cuadrado con una cápsula grande; si hay más, se reparten en filas y el widget crece */
+.pl-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; background: none; padding: 0; border-bottom: 0; border-radius: 0; justify-content: stretch; }
+.pl-med { width: auto; aspect-ratio: 1; container-type: inline-size; justify-content: center; gap: 4cqw; padding: 6cqw; background: #F8F9FA; border-radius: 20px; box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--c) 45%, #FFFFFF); }
+.pl-capwrap { height: auto; width: 100%; padding: 8cqw 0 4cqw; }
+.pl-capsule { width: 68cqw; height: auto; }
+.pl-medname { font-size: clamp(11px, 9cqw, 16px); } .pl-med .pl-chip { font-size: clamp(10.5px, 8cqw, 14px); padding: 2px 12px; }
+.pl-med .pl-del { top: 6px; right: 8px; }
+/* Entrenamientos más grande */
+.wk-wheel { min-height: 420px; }
+.wk-donut { width: min(70cqh, 40cqw, 340px); height: min(70cqh, 40cqw, 340px); }
+.wk-hole b { font-size: clamp(14px, 4.2cqw, 28px); } .wk-hole span { font-size: clamp(9px, 2.1cqw, 14px); }
+.wk-legend { width: min(46cqw, 340px); gap: 9px; } .wk-legend li { font-size: clamp(12px, 2.9cqw, 17px); } .wk-legend i { width: 13px; height: 13px; }
+.wk-range button { font-size: 13.5px; padding: 6px 16px; }
+@container (max-width: 330px) { .wk-donut { width: min(50cqh, 66cqw, 300px); height: min(50cqh, 66cqw, 300px); } }
+/* Bloques que encajan, sin cosas gigantes: cuadrados de tamaño fijo que se reparten en filas */
+.pl-shelf { grid-template-columns: repeat(auto-fill, 118px); justify-content: start; gap: 10px; }
+.pl-med { width: 118px; }
+.wk-wheel { min-height: 260px; }
+.wk-donut { width: min(62cqh, 36cqw, 200px); height: min(62cqh, 36cqw, 200px); }
+.wk-hole b { font-size: clamp(13px, 3.6cqw, 20px); } .wk-hole span { font-size: clamp(9px, 1.9cqw, 12px); }
+.wk-legend { width: min(46cqw, 280px); } .wk-legend li { font-size: clamp(12px, 2.6cqw, 14px); }
+@container (max-width: 330px) { .wk-donut { width: min(44cqh, 60cqw, 180px); height: min(44cqh, 60cqw, 180px); } }
+.sa-consist { min-height: 380px; }
+.cs-month { --cell: max(14px, min(calc((100cqw - 30px) / 7), calc((100cqh - 112px - (var(--rows) - 1) * 5px) / var(--rows)), 62px)); }
+/* Cuadrados del pastillero con medidas fijas (los cqw del propio contenedor no sirven para su padding) */
+.pl-med { container-type: normal; padding: 10px 6px 12px; gap: 6px; justify-content: center; }
+.pl-capwrap { width: 100%; padding: 6px 0 2px; height: auto; }
+.pl-capsule { width: 78px; height: auto; }
+.pl-medname { font-size: 12.5px; } .pl-med .pl-chip { font-size: 11.5px; padding: 2px 11px; }
+/* El texto del centro de la rueda se ajusta al tamaño de la rueda */
+.wk-donut { container-type: size; }
+.wk-hole b { font-size: clamp(10px, 10cqw, 22px); white-space: nowrap; overflow-wrap: normal; }
+.wk-hole span { font-size: clamp(8px, 5.4cqw, 12px); }
+/* Pastillero: los medicamentos de cada día a la izquierda y el tratamiento a su derecha (si no cabe, uno bajo otro) */
+.pl-cards { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.pl-dailybox { flex: 0 1 auto; max-width: 252px; display: flex; flex-direction: column; gap: 6px; }
+.pl-dailybox .pl-lab { margin-top: 0; }
+.pl-treats { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* Entrenamientos: la rueda un poco más grande */
+.wk-donut { width: min(68cqh, 38cqw, 250px); height: min(68cqh, 38cqw, 250px); }
+.wk-wheel { min-height: 320px; }
+.wk-donut { width: min(66cqh, 38cqw, 240px); height: min(66cqh, 38cqw, 240px); }
+/* Pastillero: medicamentos de cada día más grandes y uno debajo de otro; tratamiento más estrecho */
+.pl-dailybox { max-width: 172px; }
+.pl-shelf { grid-template-columns: 160px; justify-content: start; }
+.pl-med { width: 160px; padding: 12px 8px 14px; gap: 8px; }
+.pl-capsule { width: 104px; }
+.pl-medname { font-size: 14px; } .pl-med .pl-chip { font-size: 12.5px; padding: 3px 14px; }
+.pl-treats { flex: 1 1 260px; max-width: 420px; }
+/* Entrenamientos: Semana / Mes a la izquierda de la rueda, y la rueda más grande */
+.wk-wheel { flex-direction: row; justify-content: flex-start; align-items: center; gap: 20px; min-height: 340px; }
+.wk-range { align-self: center; flex-direction: column; border-radius: 18px; padding: 4px; }
+.wk-range button { width: 100%; text-align: center; }
+.wk-wheel-body { flex: 1; min-width: 0; justify-content: center; }
+.wk-donut { width: min(80cqh, 36cqw, 300px); height: min(80cqh, 36cqw, 300px); }
+@container (max-width: 420px) { .wk-wheel { flex-direction: column; } .wk-range { flex-direction: row; } .wk-donut { width: min(54cqh, 60cqw, 240px); height: min(54cqh, 60cqw, 240px); } }
+/* Aprovechar todo el espacio del widget: lo que hay se reparte y se estira, sin huecos en blanco */
+.pl { flex: 1; min-height: 0; }
+.pl-cards { display: grid; grid-template-columns: minmax(150px, 34%) minmax(0, 1fr); gap: 14px; flex: 1; align-items: stretch; flex-direction: initial; }
+.pl-cards:not(:has(.pl-treats)) { grid-template-columns: minmax(0, 1fr); }
+.pl-cards:not(:has(.pl-dailybox)) { grid-template-columns: minmax(0, 1fr); }
+.pl-dailybox { max-width: none; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.pl-shelf { flex: 1; display: grid; grid-template-columns: 1fr; grid-auto-rows: minmax(120px, 1fr); justify-content: stretch; gap: 10px; }
+.pl-cards:not(:has(.pl-treats)) .pl-shelf { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.pl-med { width: auto; height: auto; aspect-ratio: auto; container-type: inline-size; padding: 10px 8px 12px; }
+.pl-capsule { width: 62cqw; height: auto; }
+.pl-medname { font-size: clamp(12px, 8.5cqw, 20px); } .pl-med .pl-chip { font-size: clamp(11px, 6.5cqw, 16px); padding: 3px 14px; }
+.pl-treats { max-width: none; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.pl-treats .pl-tcard { flex: 1; min-height: 0; }
+.pl-treats .pl-tcard .pl-day { flex: 1; justify-content: space-between; }
+.pl-treats .pl-tcard .pl-row { flex: 1; min-height: 30px; }
+.pl-treats .pl-tcard .pl-what { margin-bottom: 6px; display: flex; align-items: center; font-size: clamp(12.5px, 1.6cqw, 16px); }
+/* Entrenamientos: la rueda y la leyenda llenan el widget */
+.wk-wheel { gap: 2cqw; padding: 0; }
+.wk-wheel-body { flex: 1; min-width: 0; justify-content: space-evenly; flex-wrap: nowrap; gap: 3cqw; }
+.wk-donut { width: min(90cqh, 44cqw, 440px); height: min(90cqh, 44cqw, 440px); }
+.wk-legend { flex: 1 1 0; width: auto; min-width: 0; max-width: none; gap: clamp(8px, 2.6cqh, 18px); }
+.wk-legend li { font-size: clamp(13px, 2.9cqw, 22px); } .wk-legend i { width: 1em; height: 1em; }
+.pl-capwrap { padding: 8cqw 0 12cqw; }
+.pl-med { justify-content: center; gap: 2cqw; }
+.pl-treats .pl-lab, .pl-dailybox .pl-lab { margin: 0 0 6px 2px; }
+/* Entrenamientos: la rueda a un lado y, al otro, Semana / Mes encima de la lista con los porcentajes */
+.wk-wheel { flex-direction: row; align-items: center; justify-content: space-evenly; gap: 3cqw; }
+.wk-side { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: clamp(10px, 3cqh, 20px); }
+.wk-side .wk-range { align-self: flex-start; flex-direction: row; border-radius: 16px; padding: 3px; }
+.wk-side .wk-range button { width: auto; }
+.wk-side .wk-legend { width: 100%; flex: none; }
+@container (max-width: 420px) { .wk-wheel { flex-direction: column; } .wk-side { width: 100%; flex: none; } }
+/* Más margen: el contenido no se pega a las paredes del widget y las pastillas son menos grandes */
+.pl { padding: 8px 12px 14px; gap: 14px; }
+.pl-cards { gap: 22px; }
+.pl-dailybox, .pl-treats { padding: 0; }
+.pl-shelf { grid-auto-rows: minmax(110px, 150px); align-content: start; gap: 12px; }
+.pl-capsule { width: 50cqw; }
+.pl-capwrap { padding: 6cqw 0 9cqw; }
+.pl-medname { font-size: clamp(12px, 7.5cqw, 17px); } .pl-med .pl-chip { font-size: clamp(11px, 6cqw, 14px); }
+.pl-treats .pl-tcard { padding: 14px 14px 8px; }
+.wk-wheel { padding: 12px 18px 18px; gap: 28px; }
+.wk-donut { width: min(86cqh, 42cqw, 400px); height: min(86cqh, 42cqw, 400px); }
+.wk-side { padding-right: 6px; }
+.pl-shelf { grid-auto-rows: minmax(144px, auto); }
+.pl-med { height: auto; min-height: 144px; justify-content: center; padding: 12px 8px 14px; }
+.pl-capsule { width: 46cqw; }
+.pl-capwrap { padding: 4cqw 0 6cqw; }
+.wk-wheel { padding: 16px 24px 22px; gap: 32px; }
