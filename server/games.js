@@ -3,6 +3,7 @@
 //   "game:<juego>:<idioma>:<fecha>"  → el mismo reto para todo el mundo ese día.
 import { groqChat } from './groq.js'
 // Panales ya comprobados (pangrama común + todas las palabras del diccionario con esas letras), uno distinto cada día
+import { pickEntries } from './crossword-bank.js'
 import BEE_PUZZLES from './bee-puzzles.json' with { type: 'json' }
 
 // Mayúsculas sin tildes, pero la Ñ se queda (es una letra más en español)
@@ -114,35 +115,23 @@ export function bestCrossword(entries) {
   return best
 }
 
-// Palabras de reserva (por si la IA falla o no hay cuota): con ellas el servidor monta el crucigrama igualmente
-const FALLBACK_CROSSWORD = {
-  es: [['SOL', 'Estrella de nuestro sistema'], ['MAR', 'Gran masa de agua salada'], ['LUZ', 'Lo que enciende una bombilla'], ['PAN', 'Alimento hecho con harina'], ['AGUA', 'Líquido vital e incoloro'], ['CASA', 'Lugar donde se vive'], ['ROSA', 'Flor con espinas'], ['LUNA', 'Satélite natural de la Tierra'], ['OSO', 'Animal que hiberna en invierno'], ['ALA', 'Parte del ave con la que vuela'], ['AVE', 'Animal con plumas'], ['OJO', 'Órgano de la vista'], ['OIR', 'Percibir sonidos'], ['ASA', 'Parte de la taza para cogerla'], ['ERA', 'Periodo largo de la historia'], ['UVA', 'Fruta con la que se hace el vino'], ['ISLA', 'Tierra rodeada de agua'], ['ARBOL', 'Planta con tronco y copa'], ['AMOR', 'Sentimiento de cariño'], ['ALMA', 'Parte espiritual de una persona'], ['ORO', 'Metal precioso y amarillo'], ['ONDA', 'Ola o vibración'], ['OSA', 'Hembra del oso'], ['IDEA', 'Pensamiento de la mente'], ['EDAD', 'Años que tiene alguien'], ['MESA', 'Mueble donde se come']],
-  en: [['SUN', 'Star at the center of our solar system'], ['SEA', 'Large body of salt water'], ['AIR', 'What we breathe'], ['ICE', 'Frozen water'], ['EAR', 'Organ for hearing'], ['EYE', 'Organ for seeing'], ['OAK', 'Tree that grows acorns'], ['OWL', 'Bird that hoots at night'], ['ANT', 'Tiny insect that lives in colonies'], ['ARM', 'Limb between shoulder and hand'], ['ORE', 'Rock that contains metal'], ['OIL', 'Slippery liquid used as fuel'], ['AREA', 'Size of a surface'], ['IDEA', 'A thought or plan'], ['ONE', 'The number after zero'], ['USE', 'To put to work'], ['EAST', 'Where the sun rises'], ['TEA', 'Hot drink made from leaves'], ['AGE', 'Years a person has lived'], ['ASIA', 'Largest continent'], ['OPEN', 'Not closed'], ['ONION', 'Vegetable that makes you cry'], ['RAIN', 'Water falling from clouds'], ['STAR', 'Twinkling point in the night sky'], ['MOON', "Earth's natural satellite"], ['TREE', 'Tall plant with a trunk']],
-}
-
+/**
+ * Crucigrama del día a partir del banco de cultura general: cada día un trozo distinto del banco
+ * (antes la IA daba palabras demasiado fáciles y, al fallar, se repetían siempre las mismas de reserva).
+ */
 async function makeCrossword(env, lang, date) {
-  const sys = `Write 26 entries for a small crossword in ${LANG[lang]}: common words of 3 to 5 letters (mostly 3 and 4, many vowels) (no spaces, no proper nouns) with a short, clever, general-knowledge clue each (culture, science, language, everyday life). Answer only JSON: {"entries":[{"answer":"...","clue":"..."}]}`
-  for (let i = 0; i < 3; i++) {
-    try {
-      const raw = parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.9 }))
-      const cw = bestCrossword(raw?.entries ?? [])
-      if (cw) return cw
-    } catch (e) {
-      console.error(e) // p. ej. clave de Groq no válida o sin cuota: sale en los logs del Worker
-      break // si Groq falla no se insiste: se tira de las palabras de reserva
-    }
+  for (const n of [40, 52, 70]) {
+    // Si con el trozo de hoy no sale una rejilla buena, se coge un trozo algo más grande
+    const cw = bestCrossword(pickEntries(lang, date, n))
+    if (cw) return cw
   }
-  const list = FALLBACK_CROSSWORD[lang]
-  const turn = Math.floor(Date.parse(`${date}T12:00:00Z`) / 864e5) % list.length // cada día empieza por una palabra distinta
-  const cw = bestCrossword([...list.slice(turn), ...list.slice(0, turn)].map(([answer, clue]) => ({ answer, clue }))) ?? bestCrossword(list.map(([answer, clue]) => ({ answer, clue })))
-  if (!cw) throw new Error('No he podido crear el crucigrama de hoy')
-  return { ...cw, fallback: true }
+  throw new Error('No he podido crear el crucigrama de hoy')
 }
 
 const MAKERS = { bee: makeBee, crossword: makeCrossword }
 /** El juego del día (creado la primera vez que alguien lo pide ese día, y guardado). */
 export async function dailyGame(env, game, lang, date) {
-  const key = `game:${game === 'bee' ? 'bee2' : game}:${lang}:${date}`
+  const key = `game:${game === 'bee' ? 'bee2' : game === 'crossword' ? 'cw2' : game}:${lang}:${date}`
   const cached = await env.DATA.get(key, 'json')
   if (cached) return cached
   const made = { ...(await MAKERS[game](env, lang, date)), date, lang }
