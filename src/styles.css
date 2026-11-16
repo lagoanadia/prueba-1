@@ -3889,3 +3889,9 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .widget:not(.w-L) .cap-shelf { --bw: calc(clamp(34px, 30cqh, 64px) * .625); }
 .widget:not(.w-L) .cap-shelf .cap-row .bottle { width: var(--bw); }
 .widget:not(.w-L) .cap-shelf .cap-row, .widget:not(.w-L) .cap-shelf .cap-tags { gap: max(10px, calc(68px - var(--bw))); padding-left: 14px; }
+/* Portada pequeña de los minijuegos: el dibujo entero y centrado, sin cortarse */
+.game-S .game-art { width: min(70cqw, 62cqh); height: min(70cqw, 62cqh); }
+/* Mood tracker mediano: los tres estados más compactos para que quepan en el alto */
+.mood-M .chips { gap: 4px; justify-content: center; align-self: stretch; }
+.mood-M .chips .chip { padding: 2px 10px; font-size: 12px; min-height: 0; line-height: 1.5; }
+.mood-bar { flex-wrap: wrap; min-width: 0; row-gap: 6px; }
