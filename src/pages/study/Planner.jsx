@@ -18,7 +18,7 @@ const DEFAULT_BLOCKS = [
   { id: 'schedule', type: 'schedule', span: 3 },
 ]
 /** Ancho (1-3 columnas) del primer hueco libre del tablero; si no hay hueco, una fila entera. */
-function freeSpan(blocks) {
+export function freeSpan(blocks) {
   let col = 0
   for (const b of blocks) {
     const w = Math.min(b.span, 3)
@@ -130,7 +130,7 @@ export default function Planner({ data, update, openSubject }) {
  * Cuadrado vacío con un + que ocupa el hueco libre. Al pulsarlo se abre dentro un selector
  * con lo que puedes añadir (notas siempre; el resto solo si no lo tienes ya).
  */
-function AddSquare({ span, open, onOpen, options, onPick }) {
+export function AddSquare({ span, open, onOpen, options, onPick }) {
   if (!open) {
     return (
       <button className={`add-square span-${span}`} onClick={() => onOpen(true)} aria-label="Añadir un bloque" title="Añadir un bloque">

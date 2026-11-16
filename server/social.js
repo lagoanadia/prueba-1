@@ -8,7 +8,7 @@ import { getProfile } from './profile.js'
 import { listEntries } from './entries.js'
 
 export const EMOJIS = ['👏', '🔥', '❤️', '😂']
-export const KINDS = ['recipe', 'doc', 'good', 'note', 'achievement']
+export const KINDS = ['recipe', 'doc', 'good', 'note', 'achievement', 'menu']
 // Juegos con ranking semanal: puntos máximos por partida (para que nadie mande números imposibles)
 export const GAMES = { wordle: 6, sudoku: 1000, bee: 400, crossword: 1000 }
 export const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }

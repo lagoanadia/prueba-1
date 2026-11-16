@@ -109,6 +109,26 @@ function PostList({ posts, run, empty = null }) {
     change('comida', (d) => ({ ...d, dishes: [...(d.dishes ?? []), { id: crypto.randomUUID(), name: r.name, for: r.for?.length ? r.for : ['comida'], time: r.time ?? null, ingredients: r.ingredients ?? [], steps: r.steps ?? [] }] }))
     setSaved({ ...saved, [p.id]: true })
   }
+  // Menú compartido: se copia a tu semana actual, solo en las casillas vacías; los platos que no tengas se crean por su nombre
+  const copyMenu = (p) => {
+    const { days = [] } = p.data ?? {}
+    change('comida', (d) => {
+      const dishes = [...(d.dishes ?? [])]
+      const menu = { ...(d.menu ?? {}) }
+      const now = new Date(); const monday = new Date(now); monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+      days.slice(0, 7).forEach((day, i) => {
+        const iso = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i).toLocaleDateString('en-CA')
+        Object.entries(day.meals ?? {}).forEach(([meal, name]) => {
+          if (!name || menu[iso]?.[meal]) return
+          let value = name === 'Comer fuera' ? 'fuera' : dishes.find((x) => x.name.toLowerCase() === name.toLowerCase())?.id
+          if (!value) { value = crypto.randomUUID(); dishes.push({ id: value, name, for: [meal], time: null, ingredients: [], steps: [] }) }
+          menu[iso] = { ...(menu[iso] ?? {}), [meal]: value }
+        })
+      })
+      return { ...d, dishes, menu }
+    })
+    setSaved({ ...saved, [p.id]: true })
+  }
   return (
     <>
       {posts.map((p) => (
@@ -120,7 +140,7 @@ function PostList({ posts, run, empty = null }) {
             <span className="muted feed-at">{ago(p.at)}</span>
           </header>
           {p.text && <p className="feed-text">{p.text}</p>}
-          <PostBody p={p} onRead={() => setReading(p)} onSave={() => saveRecipe(p)} saved={saved[p.id]} />
+          <PostBody p={p} onRead={() => setReading(p)} onSave={() => (p.kind === 'menu' ? copyMenu(p) : saveRecipe(p))} saved={saved[p.id]} />
           <footer className="feed-react">
             {EMOJIS.map((e) => (
               <button key={e} className={`emoji ${p.reactions[e].mine ? 'on' : ''}`} onClick={() => run('react', { owner: p.from.username, id: p.id, emoji: e })} aria-pressed={p.reactions[e].mine} aria-label={`Reaccionar ${e}`}>
@@ -158,6 +178,16 @@ function PostBody({ p, onRead, onSave, saved }) {
     </div>
   )
   if (p.kind === 'good') return <blockquote className="post-quote">{d.text}</blockquote>
+  if (p.kind === 'menu') return (
+    <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
+      <b>Menú · {d.range}</b>
+      <div className="post-menu-grid" style={{ '--m': (d.meals ?? []).length }}>
+        <span />{(d.meals ?? []).map(([m, label]) => <span key={m} className="post-menu-h">{label}</span>)}
+        {(d.days ?? []).map((day) => [<span key={day.label} className="post-menu-day">{day.label}</span>, ...(d.meals ?? []).map(([m]) => <span key={day.label + m} className="post-menu-cell">{day.meals?.[m] || '—'}</span>)])}
+      </div>
+      {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
+    </div>
+  )
   return <div className="post-box"><b>{d.title}</b>{d.text && <span>{d.text}</span>}</div>
 }
 

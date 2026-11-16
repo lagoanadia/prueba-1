@@ -3,6 +3,7 @@ import Icon from '../../components/Icon.jsx'
 import { addDays, dayShort, todayISO, weekDays, weekStart } from '../../lib/dates.js'
 import { MEALS, OUT, dishName, dishesOf, isWith, mealsOf } from '../../widgets/comida/food.js'
 import Modal from './Modal.jsx'
+import ShareButton from '../../components/ShareButton.jsx'
 import SlotDialog from './SlotDialog.jsx'
 
 const kindOf = (v) => (v === OUT ? 'out' : isWith(v) ? 'with' : 'dish')
@@ -51,6 +52,12 @@ export default function MenuCard({ data, update }) {
     })
     setRecover(false)
   }
+  // Lo que ve tu amigo al compartir el menú: cada día con el nombre de lo que se come (no los ids de tus recetas)
+  const shareData = {
+    range: range(days),
+    meals: meals.map((m) => [m, MEALS[m]]),
+    days: days.map((d) => ({ label: dayShort(d), meals: Object.fromEntries(meals.map((m) => [m, menu[d]?.[m] ? dishName(dishes, menu[d][m]) : ''])) })),
+  }
   const drop = (e, day, meal) => {
     e.preventDefault(); setOver(null)
     const id = e.dataTransfer.getData('text/dish')
@@ -60,6 +67,7 @@ export default function MenuCard({ data, update }) {
   return (
     <section className="card fd-card fd-menu" aria-label="Menú de la semana">
       <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Planificador de comidas</b><span className="fd-grow" />
+        {!empty && <ShareButton kind="menu" title="el menú de la semana" className="fd-pill" data={shareData} />}
         <button className={`fd-ib ${recover ? 'on' : ''}`} onClick={() => setRecover(!recover)} aria-expanded={recover} aria-label="Basarme en una semana anterior" title="Recuperar una semana anterior"><Icon name="restore" size={18} /></button>
       </div>
       {recover && (

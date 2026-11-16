@@ -3895,3 +3895,16 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .mood-M .chips { gap: 4px; justify-content: center; align-self: stretch; }
 .mood-M .chips .chip { padding: 2px 10px; font-size: 12px; min-height: 0; line-height: 1.5; }
 .mood-bar { flex-wrap: wrap; min-width: 0; row-gap: 6px; }
+
+/* Comida: bloques personalizables. Cada bloque es su propia tarjeta (no se duplica el fondo) */
+.fd-grid { grid-auto-flow: row dense; align-items: start; gap: 18px; }
+.fd-block { padding: 0; min-height: 0; background: none; box-shadow: none; }
+.fd-block > .fd-card { height: 100%; }
+.plan-grid.is-editing .fd-block { padding: 46px 0 52px; }
+@media (max-width: 899px) { .fd-block { grid-row: auto !important; } }
+
+/* Menú semanal compartido en el feed: tabla compacta día × comida */
+.post-menu-grid { display: grid; grid-template-columns: auto repeat(var(--m), minmax(0, 1fr)); gap: 3px 10px; font-size: 12.5px; width: 100%; }
+.post-menu-h { font-size: 11px; font-weight: 700; color: var(--muted); }
+.post-menu-day { font-weight: 700; text-transform: capitalize; }
+.post-menu-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
