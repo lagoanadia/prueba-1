@@ -3741,3 +3741,22 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .pieces-news { display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-radius: 16px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 13px; animation: rise .3s var(--ease) both; }
 .pieces-news > span { flex: 1; }
 @media (prefers-reduced-motion: reduce) { .podium, .pieces-news { animation: none; } }
+
+/* Planificador de Estudios: cada bloque mide lo suyo (no se estira para igualar al vecino más alto),
+   así un mismo tamaño se ve igual en cualquier sitio. En edición, las flechas de mover no tapan el título. */
+.plan-grid { align-items: start; }
+.plan-block:not(:has(.schedule)) { height: 300px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.plan-grid.is-editing .plan-block { padding-top: 52px; }
+.plan-grid.is-editing .plan-block:not(:has(.schedule)) { height: 352px; }
+/* Horario en un bloque estrecho (1 columna): un solo día con pestañas, como en el móvil, en vez de 5 columnas apretadas */
+.plan-block:has(> .schedule.sv), .plan-block:has(.sv) { container-type: inline-size; }
+@container (max-width: 560px) {
+  .sv-days { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: var(--soft); }
+  .sv-daytab { flex: 1; border: none; background: none; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 0; border-radius: 12px; color: var(--muted); cursor: pointer; }
+  .sv-daytab.on { background: #FFFFFF; color: var(--text); box-shadow: 0 1px 3px rgba(60, 64, 67, .2); }
+  .sv-daytab.is-today:not(.on) { color: var(--blue); }
+  .sv-grid { --pt: 4px; grid-template-columns: minmax(0, 1fr); padding-top: var(--pt); }
+  .sv-col:not(.is-shown) { display: none; }
+  .sv-dayname { display: none; }
+  .sv-now { display: none; }
+}
