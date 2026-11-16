@@ -3870,3 +3870,22 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .gd-days li { display: flex; gap: 10px; align-items: baseline; }
 .gd-days em { font-style: normal; font-weight: 700; color: #9AA0A6; width: 34px; font-size: 11px; flex: none; }
 .gd-days span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Edición del área: el dock de tamaños flota encima del contenido (no le quita alto), así el widget
+   se ve igual que fuera de la edición en vez de encogerse y cortarse */
+.grid-editing .widget, .grid-editing .w-S, .grid-editing .w-T { padding-bottom: 14px; }
+.grid-editing .widget > .size-dock { bottom: 8px; z-index: 5; }
+.grid-editing .w-S > .size-dock, .grid-editing .w-T > .size-dock { bottom: 6px; }
+/* Editando el planificador, la × de quitar (que sobresale de la esquina) no se recorta */
+.plan-grid.is-editing .plan-block:not(:has(.schedule)) { overflow: visible; }
+/* Cápsulas: la etiqueta de cada botella, centrada justo debajo de ella: botellas y etiquetas comparten ancho y separación */
+.cap-shelf { --bw: clamp(40px, 12cqw, 66px); }
+.w-M .cap-shelf { --bw: 54px; }
+.cap-shelves .cap-shelf { --bw: 60px; }
+.cap-shelf .cap-row, .cap-shelf .cap-tags { justify-content: flex-start; gap: 6px; padding-left: 6px; padding-right: 6px; }
+.cap-shelf .cap-row .bottle { width: var(--bw); }
+.cap-shelf .cap-tags .cap-tag-slot { width: var(--bw); flex-shrink: 0; display: flex; justify-content: center; }
+.cap-shelf .cap-tags .bottle-tag { width: auto; }
+.widget:not(.w-L) .cap-shelf { --bw: calc(clamp(34px, 30cqh, 64px) * .625); }
+.widget:not(.w-L) .cap-shelf .cap-row .bottle { width: var(--bw); }
+.widget:not(.w-L) .cap-shelf .cap-row, .widget:not(.w-L) .cap-shelf .cap-tags { gap: max(10px, calc(68px - var(--bw))); padding-left: 14px; }

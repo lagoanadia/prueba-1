@@ -136,7 +136,8 @@ export default function Bottle({ size, data, update }) {
   const bar = <div className="cap-bar" aria-hidden="true" />
   const row = <div className="cap-row">{shelf.map((b) => one(b))}{shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula{size === 'L' ? '' : ' con el +'}</span>}</div>
   // La etiqueta «Abrir» también abre la cápsula (es lo primero que se toca)
-  const tagEl = (b) => (stateOf(b) === 'ready' ? <button key={b.id} className="bottle-tag tag-ready" onClick={() => open(b)}>{tagOf(b)}</button> : <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)
+  // Cada etiqueta va en un hueco del mismo ancho que su botella, así queda centrada debajo de ella
+  const tagEl = (b) => <span key={b.id} className="cap-tag-slot">{stateOf(b) === 'ready' ? <button className="bottle-tag tag-ready" onClick={() => open(b)}>{tagOf(b)}</button> : <span className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>}</span>
   const tags = <div className="cap-tags">{shelf.map(tagEl)}</div>
 
   if (size !== 'L') {
