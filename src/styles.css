@@ -3744,10 +3744,10 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 
 /* Planificador de Estudios: cada bloque mide lo suyo (no se estira para igualar al vecino más alto),
    así un mismo tamaño se ve igual en cualquier sitio. En edición, las flechas de mover no tapan el título. */
-.plan-grid { align-items: start; }
-.plan-block:not(:has(.schedule)) { height: 300px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.study .plan-grid { align-items: start; }
+.study .plan-block:not(:has(.schedule)) { height: 300px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
 .plan-grid.is-editing .plan-block { padding-top: 52px; }
-.plan-grid.is-editing .plan-block:not(:has(.schedule)) { height: 352px; }
+.study .plan-grid.is-editing .plan-block:not(:has(.schedule)) { height: 352px; }
 /* Horario en un bloque estrecho (1 columna): un solo día con pestañas, como en el móvil, en vez de 5 columnas apretadas */
 .plan-block:has(> .schedule.sv), .plan-block:has(.sv) { container-type: inline-size; }
 @container (max-width: 560px) {
@@ -3877,7 +3877,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .grid-editing .widget > .size-dock { bottom: 8px; z-index: 5; }
 .grid-editing .w-S > .size-dock, .grid-editing .w-T > .size-dock { bottom: 6px; }
 /* Editando el planificador, la × de quitar (que sobresale de la esquina) no se recorta */
-.plan-grid.is-editing .plan-block:not(:has(.schedule)) { overflow: visible; }
+.study .plan-grid.is-editing .plan-block:not(:has(.schedule)) { overflow: visible; }
 /* Cápsulas: la etiqueta de cada botella, centrada justo debajo de ella: botellas y etiquetas comparten ancho y separación */
 .cap-shelf { --bw: clamp(40px, 12cqw, 66px); }
 .w-M .cap-shelf { --bw: 54px; }
