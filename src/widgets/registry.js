@@ -42,15 +42,15 @@ import Resources from './estudios/Resources.jsx'
 export const SIZES = ['S', 'T', 'M', 'L']
 
 export const WIDGETS = {
-  mood: { icon: 'star', area: 'journal', name: 'Mood tracker', color: '#F9DC5C', component: Mood },
+  mood: { icon: 'star', area: 'journal', name: 'Mood tracker', shortName: 'Ánimo', color: '#F9DC5C', component: Mood },
   goals: { icon: 'check', area: 'journal', name: 'Metas', color: '#3185FC', component: Goals, isEmpty: (d) => (d.goals ?? []).length < 2 },
-  pixels: { icon: 'table', area: 'journal', name: 'Hábitos in pixels', color: '#3DDC97', component: Pixels, isEmpty: (d) => !(d.habits ?? []).length },
+  pixels: { icon: 'table', area: 'journal', name: 'Hábitos in pixels', shortName: 'Hábitos', color: '#3DDC97', component: Pixels, isEmpty: (d) => !(d.habits ?? []).length },
   word: { icon: 'title', sizes: ['T', 'L'], area: 'journal', name: 'Palabra oculta', color: '#F9DC5C', component: Word },
-  bottle: { icon: 'lock', area: 'journal', name: 'Cápsulas del tiempo', color: '#EFABFF', component: Bottle },
+  bottle: { icon: 'lock', area: 'journal', name: 'Cápsulas del tiempo', shortName: 'Cápsulas', color: '#EFABFF', component: Bottle },
   sudoku: { icon: 'grip', area: 'journal', name: 'Sudoku', color: '#3185FC', component: SudokuWidget },
   bee: { icon: 'book', area: 'journal', name: 'Spelling Bee', color: '#F9DC5C', component: BeeWidget },
   crossword: { icon: 'table', area: 'journal', name: 'Mini crucigrama', color: '#E84855', component: CrosswordWidget },
-  good: { icon: 'note', area: 'journal', name: 'Una cosa buena del día', color: '#3DDC97', component: Good },
+  good: { icon: 'note', area: 'journal', name: 'Una cosa buena del día', shortName: 'Lo bueno', color: '#3DDC97', component: Good },
   plan: { icon: 'calendario', sizes: ['L'], area: 'salud', name: 'Ejercicio de la semana', color: '#3DDC97', component: Plan },
   workouts: { icon: 'steps', sizes: ['T', 'M', 'L'], area: 'salud', name: 'Entrenamientos', color: '#E84855', component: Workouts },
   cycle: { icon: 'history', sizes: ['M', 'L'], area: 'salud', name: 'Ciclo menstrual', color: '#EFABFF', component: Cycle },

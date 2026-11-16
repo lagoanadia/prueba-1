@@ -258,7 +258,7 @@ function WidgetView({ w: raw, data, update = () => {} }) {
   const Widget = def.component
   return (
     <article className={`widget w-${w.size}`}>
-      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{def.name}</h3>
+      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{(w.size === 'S' || w.size === 'T') && def.shortName ? def.shortName : def.name}</h3>
       <div className="w-body"><Widget size={w.size} data={data} update={update} config={w} /></div>
     </article>
   )
@@ -333,7 +333,7 @@ const WidgetCard = memo(function WidgetCard({ w: raw, i, data, editing, isDragge
   return (
     <article ref={(el) => { cardRef.current = el; api.setRef(w.id, el) }} data-wid={w.id} onPointerDown={(e) => api.onPointerDown(e, w.id)}
       className={`widget w-${w.size} ${isDragged ? 'w-placeholder' : ''}`} style={{ '--i': i }}>
-      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{def.name}</h3>
+      <h3 className="w-title"><span className="dot" style={{ background: AREA_DOT[def.area] ?? def.color }} />{(w.size === 'S' || w.size === 'T') && def.shortName ? def.shortName : def.name}</h3>
       {/* key = tamaño: al cambiar, el contenido entra con un fundido (la vista de cada tamaño es distinta) */}
       <div className="w-body" key={w.size}><Widget size={w.size} data={data} update={api.updateData} config={w} setConfig={(patch) => api.setConfig(w.id, patch)} /></div>
       {editing && (

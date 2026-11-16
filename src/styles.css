@@ -3844,3 +3844,29 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .hv-dots { display: flex; flex-wrap: wrap; gap: 2px; }
 .hv-dots i { width: 6px; height: 6px; border-radius: 50%; }
 @media (prefers-reduced-motion: reduce) { .hv-cell { transition: none; } }
+
+/* ---------- Una cosa buena del día: cada tamaño reparte su espacio ---------- */
+.gd { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.gd .good-read { flex: 1; min-height: 0; align-items: flex-start; }
+.gd .good-quote { font-size: 1.05em; line-height: 1.4; padding: 2px 4px; }
+.gd-card { background: #FFFFFF; border-radius: 16px; padding: 10px 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.gd-card:hover { background: #FFFFFF; }
+.gd-S .good-quote { -webkit-line-clamp: 3; }
+.gd-S .good-week { margin-top: auto; gap: 4px; justify-content: space-between; }
+.gd-T .good-quote { -webkit-line-clamp: 9; font-size: 1.1em; }
+.gd-T .good-week { gap: 4px; justify-content: space-between; margin: 0; }
+.gd-lab { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #9AA0A6; }
+.gd-share { align-self: flex-end; }
+.gd-M { flex-direction: row; gap: 14px; }
+.gd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gd-M .good-quote { -webkit-line-clamp: 3; }
+.gd-M .gd-share { align-self: flex-start; }
+.gd-side { width: 96px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-left: 1px solid var(--line); padding-left: 12px; }
+.gd-count { font-size: 26px; line-height: 1; } .gd-count small { font-size: 13px; color: #9AA0A6; }
+.good-week.mini { gap: 3px; margin: 0; } .good-week.mini span { width: auto; } .good-week.mini i { width: 9px; height: 9px; }
+.gd-L .gd-card { flex: none; max-height: 45%; }
+.gd-L .good-quote { -webkit-line-clamp: 4; font-size: 1.2em; }
+.gd-days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; flex: 1; min-height: 0; overflow: hidden; }
+.gd-days li { display: flex; gap: 10px; align-items: baseline; }
+.gd-days em { font-style: normal; font-weight: 700; color: #9AA0A6; width: 34px; font-size: 11px; flex: none; }
+.gd-days span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
