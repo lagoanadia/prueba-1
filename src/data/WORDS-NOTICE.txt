@@ -7,3 +7,6 @@ Se concede permiso, libre de cargos, a cualquier persona que obtenga una copia d
 documentación asociados, para utilizarlo sin restricción, incluyendo copiar, modificar, fusionar, publicar, distribuir,
 sublicenciar y/o vender copias, siempre que se incluya este aviso de copyright y de permiso. EL SOFTWARE SE ENTREGA «TAL CUAL»,
 SIN GARANTÍA DE NINGÚN TIPO.
+
+server/bee-puzzles.json (panales del Spelling Bee): palabras en español de words-bee-es.txt (arriba) y en inglés de
+«an-array-of-english-words» (MIT) — Copyright (c) 2014 Zeke Sikelianos. Mismos términos de la licencia MIT.

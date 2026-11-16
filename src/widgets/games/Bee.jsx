@@ -46,7 +46,8 @@ export default function Bee({ data, update }) {
   if (!puzzle) return <div className="spinner" aria-label="Cargando" />
 
   const isPan = (w) => [...letters].every((l) => w.includes(l))
-  const total = puzzle.words.reduce((a, w) => a + pointsOf(w, isPan), 0) // el rango se mide contra la lista del servidor; las del diccionario suman igual
+  // El rango se mide contra la lista del servidor, con tope: el diccionario trae cientos de palabras raras y si no nunca se subiría de rango
+  const total = Math.min(150, puzzle.words.reduce((a, w) => a + pointsOf(w, isPan), 0))
   const scoreOf = (list) => list.reduce((a, w) => a + pointsOf(w, isPan), 0)
   const score = scoreOf(found)
   const rank = [...RANKS].reverse().find(([p]) => score >= p * total)[1]
@@ -76,7 +77,7 @@ export default function Bee({ data, update }) {
   keyRef.current = onKey
 
   return (
-    <div className="bee" onKeyDown={onKey} aria-label="Spelling Bee: escribe palabras con estas letras">
+    <div className="bee" aria-label="Spelling Bee: escribe palabras con estas letras">
       <div className="w-row"><b className="bee-rank">{rank}</b><span className="w-hint">{score} puntos · {found.length} palabras</span></div>
       <div className="bar"><span style={{ width: `${Math.min(100, (score / total) * 100)}%`, background: '#F9DC5C' }} /></div>
       <div className="bee-found-bar">

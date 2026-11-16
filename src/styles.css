@@ -3591,13 +3591,14 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cwd-cell.bad { background: #FFD6DA; color: #B3261E; }
 
 /* Spelling Bee: el panal se adapta al espacio disponible (pantalla pequeña o grande) */
-.bee { --hw: clamp(66px, min(19vw, 19vh), 120px); gap: 10px; }
+.bee { --hw: clamp(56px, min(14vw, 13vh), 88px); gap: 10px; }
 .bee .hive { width: calc(var(--hw) * 2.85); height: calc(var(--hw) * 2.77); margin: 4px auto; }
-.bee .hex { width: var(--hw); height: calc(var(--hw) * .903); font-size: calc(var(--hw) * .34); }
+.bee .hex { width: var(--hw); height: calc(var(--hw) * .903); font-size: calc(var(--hw) * .3); outline: none; -webkit-tap-highlight-color: transparent; }
+
 .bee .hex.center { left: var(--hw); top: calc(var(--hw) * .935); }
 .bee .hex.h0 { left: var(--hw); top: 0; } .bee .hex.h1 { left: calc(var(--hw) * 1.855); top: calc(var(--hw) * .468); } .bee .hex.h2 { left: calc(var(--hw) * 1.855); top: calc(var(--hw) * 1.403); }
 .bee .hex.h3 { left: var(--hw); top: calc(var(--hw) * 1.871); } .bee .hex.h4 { left: calc(var(--hw) * .145); top: calc(var(--hw) * 1.403); } .bee .hex.h5 { left: calc(var(--hw) * .145); top: calc(var(--hw) * .468); }
-.bee .bee-word { font-size: clamp(24px, 5vh, 34px); min-height: 40px; }
+.bee .bee-word { font-size: clamp(20px, 3.6vh, 26px); min-height: 34px; }
 .bee .bee-actions .pill { padding: 8px 20px; font-size: 15px; }
 .bee .bee-found { flex: 1; min-height: 48px; align-content: flex-start; font-size: 14px; padding-top: 4px; }
 
