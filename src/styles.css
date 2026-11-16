@@ -3813,3 +3813,34 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .bee .bee-actions .pill { outline: none; }
 
 
+
+/* ---------- Hábitos: semana con fechas (todos juntos o uno) y mes en calendario ---------- */
+.hv-fill { display: flex; flex-direction: column; min-height: 0; align-self: stretch; width: 100%; align-items: stretch; }
+.hv { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.hv-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.hv-nav b { display: inline-block; } .hv-nav b::first-letter { text-transform: uppercase; }
+.hv-nav button { width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--soft); color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+.hv-nav button:disabled { opacity: .3; cursor: default; }
+/* La semana ocupa todo el alto: las filas se reparten el espacio */
+.hv-week { flex: 1; min-height: 0; display: grid; grid-template-columns: auto repeat(7, minmax(0, 1fr)) auto; grid-template-rows: auto repeat(var(--rows), minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+.hv-day { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 600; color: var(--muted); }
+.hv-day b { font-size: 13px; color: var(--text); line-height: 1.5; padding: 0 5px; border-radius: 8px; }
+.hv-day.today b { background: var(--text); color: #FFFFFF; }
+.hv-name { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; padding-right: 4px; }
+.hv-name i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.hv-cell { border: none; border-radius: 10px; background: #EFE6D6; cursor: pointer; min-height: 18px; max-height: 64px; transition: transform .15s var(--ease), background .15s; }
+.hv-cell:active { transform: scale(.88); }
+.hv-cell.today { outline: 2px dashed #C9BBA4; outline-offset: -2px; }
+.hv-cell:disabled { opacity: .35; cursor: default; }
+.hv-streak { display: flex; align-items: center; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; min-width: 28px; }
+/* El mes: calendario con el número de cada día */
+.hv-month { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: auto repeat(var(--weeks), minmax(0, 1fr)); gap: 4px; }
+.hv-mhead { text-align: center; font-size: 10px; font-weight: 600; color: var(--muted); }
+.hv-mday { border: none; border-radius: 8px; background: #F6F1E7; font: inherit; font-size: 11px; font-weight: 600; color: var(--text); padding: 2px 5px; display: flex; align-items: center; gap: 4px; cursor: pointer; min-height: 0; overflow: hidden; }
+.hv-mday.full { color: #FFFFFF; }
+.hv-mday.off { background: transparent; color: #C9CDD2; cursor: default; }
+.hv-mday.today { box-shadow: inset 0 0 0 2px var(--text); }
+.hv-mday:disabled:not(.off) { cursor: default; }
+.hv-dots { display: flex; flex-wrap: wrap; gap: 2px; }
+.hv-dots i { width: 6px; height: 6px; border-radius: 50%; }
+@media (prefers-reduced-motion: reduce) { .hv-cell { transition: none; } }
