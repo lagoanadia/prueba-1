@@ -2400,6 +2400,7 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .cap-row .bottle.bottle-ready { filter: drop-shadow(0 0 7px #EFABFF); }
 .cap-row .bottle.bottle-ready .bottle-art { animation: none; }
 .bottle-tag.tag-open { color: #0F6B45; background: #DDF8EC; border-radius: 8px; padding: 1px 8px; }
+button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .bottle-tag.tag-ready { color: #A12CB3; background: #FBE4FF; border-radius: 8px; padding: 1px 8px; }
 .cap-l { display: flex; gap: 14px; flex: 1; min-height: 0; }
 .cap-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }

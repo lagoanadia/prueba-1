@@ -114,7 +114,7 @@ export default function Bottle({ size, data, update }) {
     const st = stateOf(b)
     return (
       <button key={b.id} className={`bottle bottle-${st} ${big ? 'bottle-big' : ''} ${sel?.id === b.id && !big ? 'is-sel' : ''}`}
-        onClick={() => (big ? st === 'ready' && open(b) : setSelId(b.id))}
+        onClick={() => { setSelId(b.id); if (st === 'ready') open(b); else if (st === 'open') setReading(b) }}
         title={st === 'sealed' ? `Se abre el ${formatLong(b.openDate)}` : st === 'ready' ? 'Lista para abrir' : `Abierta el ${formatLong(b.openedAt)}`}
         aria-label={st === 'ready' ? 'Cápsula lista para abrir' : st === 'open' ? 'Cápsula abierta' : `Cápsula cerrada, faltan ${daysUntil(b.openDate)} días`}>
         <BottleArt tint={tintOf(b)} opened={st === 'open'} />
@@ -135,7 +135,9 @@ export default function Bottle({ size, data, update }) {
 
   const bar = <div className="cap-bar" aria-hidden="true" />
   const row = <div className="cap-row">{shelf.map((b) => one(b))}{shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula{size === 'L' ? '' : ' con el +'}</span>}</div>
-  const tags = <div className="cap-tags">{shelf.map((b) => <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)}</div>
+  // La etiqueta «Abrir» también abre la cápsula (es lo primero que se toca)
+  const tagEl = (b) => (stateOf(b) === 'ready' ? <button key={b.id} className="bottle-tag tag-ready" onClick={() => open(b)}>{tagOf(b)}</button> : <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)
+  const tags = <div className="cap-tags">{shelf.map(tagEl)}</div>
 
   if (size !== 'L') {
     return <>{popup}{addBtn}{sentNote}<div className="cap-shelf">{row}{bar}{tags}</div></>
@@ -156,7 +158,7 @@ export default function Bottle({ size, data, update }) {
               <div key={gi} className="cap-shelf">
                 <div className="cap-row">{group.map((b) => one(b))}</div>
                 {bar}
-                <div className="cap-tags">{group.map((b) => <span key={b.id} className={`bottle-tag tag-${stateOf(b)}`}>{tagOf(b)}</span>)}</div>
+                <div className="cap-tags">{group.map(tagEl)}</div>
               </div>
             ))}
             {shelf.length === 0 && <span className="w-hint shelf-empty">Escribe tu primera cápsula</span>}
