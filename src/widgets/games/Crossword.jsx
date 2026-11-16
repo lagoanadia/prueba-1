@@ -9,6 +9,8 @@ export default function Crossword({ data, update }) {
   const [sel, setSel] = useState(null) // { r, c, dir }
   const [now, setNow] = useState(Date.now())
   const [checked, setChecked] = useState(false) // tras «Comprobar»: las letras bien salen en verde y las mal en rojo
+  // Autocomprobar: cada letra se marca bien o mal al escribirla (cuenta como ayuda una vez). Se recuerda en este navegador.
+  const [auto, setAuto] = useState(() => { try { return localStorage.getItem('inblocks:cw-auto') === '1' } catch { return false } })
   const input = useRef(null)
   useEffect(() => { fetchDaily('crossword').then(setCw).catch((e) => setError(e.message)) }, [date])
   const saved = data.games?.crossword?.date === date ? data.games.crossword : null
@@ -29,7 +31,7 @@ export default function Crossword({ data, update }) {
     const startedAt = saved?.startedAt ?? Date.now()
     const secs = Math.round((Date.now() - startedAt) / 1000)
     const helps = (saved?.helps ?? 0) + (extra.helps ?? 0)
-    update((d) => ({ ...d, games: { ...(d.games ?? {}), crossword: { date, fill: next, startedAt, helps, ...(solved ? { done: true, seconds: secs } : {}) } } }))
+    update((d) => ({ ...d, games: { ...(d.games ?? {}), crossword: { date, fill: next, startedAt, helps, ...(saved?.auto || auto || extra.auto ? { auto: true } : {}), ...(solved ? { done: true, seconds: secs } : {}) } } }))
     // Cada ayuda (comprobar o revelar) resta puntos
     if (solved) sendScore('crossword', Math.max(100, 1000 - secs - helps * 40))
   }
@@ -50,6 +52,12 @@ export default function Crossword({ data, update }) {
     const order = [...cw.clues.filter((k) => k.dir === 'across'), ...cw.clues.filter((k) => k.dir === 'down')]
     const k = order[(order.indexOf(active) + d + order.length) % order.length]
     if (k) { setSel({ r: k.r, c: k.c, dir: k.dir }); input.current?.focus() }
+  }
+  const toggleAuto = () => {
+    const on = !auto
+    setAuto(on)
+    try { localStorage.setItem('inblocks:cw-auto', on ? '1' : '0') } catch { /* sin almacenamiento: solo esta vez */ }
+    if (on && !saved?.auto) save(fill, { helps: 1, auto: true })
   }
   const check = () => { setChecked(true); save(fill, { helps: 1 }) }
   const reveal = () => {
@@ -83,7 +91,7 @@ export default function Crossword({ data, update }) {
       </div>
       <div className="cwd-grid" style={{ '--w': cw.w }} onKeyDown={onKey}>
         {cw.cells.map((row, r) => row.map((on, c) => on ? (
-          <button key={r + '-' + c} className={`cwd-cell ${sel && sel.r === r && sel.c === c ? 'is-sel' : inActive(r, c) ? 'word' : ''} ${done ? 'ok' : ''} ${checked && fill[r][c] ? (fill[r][c] === cw.solution[r][c] ? 'good' : 'bad') : ''}`} onClick={() => tap(r, c)} aria-label={`Casilla ${r + 1}, ${c + 1}`}>
+          <button key={r + '-' + c} className={`cwd-cell ${sel && sel.r === r && sel.c === c ? 'is-sel' : inActive(r, c) ? 'word' : ''} ${done ? 'ok' : ''} ${(checked || auto) && fill[r][c] ? (fill[r][c] === cw.solution[r][c] ? 'good' : 'bad') : ''}`} onClick={() => tap(r, c)} aria-label={`Casilla ${r + 1}, ${c + 1}`}>
             {numAt[`${r},${c}`] && <i>{numAt[`${r},${c}`]}</i>}{fill[r][c]}
           </button>
         ) : <span key={r + '-' + c} className="cwd-block" />))}
@@ -91,7 +99,8 @@ export default function Crossword({ data, update }) {
       {!done && (
         <div className="cwd-tools">
           <button className="pill" onClick={() => type('')} disabled={!sel}>Borrar</button>
-          <button className="pill" onClick={check}>Comprobar</button>
+          <button className={`pill ${auto ? 'pill-on' : ''}`} aria-pressed={auto} onClick={toggleAuto}>Autocomprobar</button>
+          {!auto && <button className="pill" onClick={check}>Comprobar</button>}
           <button className="pill" onClick={reveal} disabled={!active}>Revelar palabra</button>
         </div>
       )}
