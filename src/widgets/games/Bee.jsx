@@ -33,7 +33,10 @@ export default function Bee({ data, update }) {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [])
-  const found = data.games?.bee?.date === date ? data.games.bee.found : []
+  // Las palabras van con su panal: si el panal del día cambia, no se arrastran las de otro (p. ej. «mosca» con otras letras)
+  const puzzleKey = puzzle ? puzzle.center + [...puzzle.letters].sort().join('') : ''
+  const saved = data.games?.bee
+  const found = saved?.date === date && saved?.key === puzzleKey ? saved.found : []
   const outer = useMemo(() => (puzzle ? shuffle(puzzle.letters, () => ((order * 9301 + 49297) % 233280) / 233280 || Math.random()) : []), [puzzle, order])
   const letters = useMemo(() => (puzzle ? new Set([puzzle.center, ...puzzle.letters]) : new Set()), [puzzle])
   // Palabras válidas: las de la lista del servidor y todas las del diccionario que se forman con estas letras
@@ -64,7 +67,7 @@ export default function Bee({ data, update }) {
     if (found.includes(w)) return flash('Ya la tienes')
     if (!valid.has(w)) return flash(dict || getLang() === 'en' ? 'No está en el diccionario' : 'No está en la lista')
     const next = [...found, w]
-    update((d) => ({ ...d, games: { ...(d.games ?? {}), bee: { date, found: next } } }))
+    update((d) => ({ ...d, games: { ...(d.games ?? {}), bee: { date, key: puzzleKey, found: next } } }))
     flash(isPan(w) ? '¡Pangrama!' : `+${pointsOf(w, isPan)}`)
     sendScore('bee', scoreOf(next))
   }
@@ -78,11 +81,20 @@ export default function Bee({ data, update }) {
 
   return (
     <div className="bee" aria-label="Spelling Bee: escribe palabras con estas letras">
-      <div className="w-row"><b className="bee-rank">{rank}</b><span className="w-hint">{score} puntos · {found.length} palabras</span></div>
-      <div className="bar"><span style={{ width: `${Math.min(100, (score / total) * 100)}%`, background: '#F9DC5C' }} /></div>
+      {/* Niveles, de menos a más: cada punto es un nivel; el tuyo lleva tus puntos dentro */}
+      <div className="bee-levels">
+        <b className="bee-rank">{rank}</b>
+        <div className="bee-track" aria-label={`${score} puntos`}>
+          {RANKS.map(([p, name]) => {
+            const reached = score >= p * total
+            const mine = name === rank
+            return <span key={name} className={`bee-lv ${reached ? 'on' : ''} ${mine ? 'mine' : ''}`} title={name}>{mine ? score : ''}</span>
+          })}
+        </div>
+      </div>
       <div className="bee-found-bar">
         <button type="button" className="bee-found-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <span className="bee-found-title">{found.length ? `Has encontrado ${found.length} ${found.length === 1 ? 'palabra' : 'palabras'}` : 'Aún no has encontrado palabras'}</span>
+          <span className="bee-found-title">{found.length ? found.length : 'Tus palabras'}</span>
           {!open && found.length > 0 && <span className="bee-found-peek">{[...found].slice(-4).reverse().map((w) => w.toLowerCase()).join(' · ')}</span>}
           <svg className="bee-found-chev" width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>

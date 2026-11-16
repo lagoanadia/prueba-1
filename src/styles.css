@@ -3760,3 +3760,27 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
   .sv-dayname { display: none; }
   .sv-now { display: none; }
 }
+
+/* Spelling Bee: niveles de menos a más (como el original) y panal con la misma separación entre todos los hexágonos */
+.bee-levels { display: flex; align-items: center; gap: 14px; }
+.bee-levels .bee-rank { min-width: 84px; font-size: 15px; }
+.bee-track { flex: 1; display: flex; align-items: center; justify-content: space-between; position: relative; height: 26px; }
+.bee-track::before { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 2px; background: var(--line); }
+.bee-lv { position: relative; width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.bee-lv.on { background: #F9DC5C; }
+.bee-lv.mine { width: 26px; height: 26px; background: #F9DC5C; }
+.bee-found-title { min-width: 0; }
+.bee { --hw: clamp(60px, min(16vw, 12.5vh), 96px); --hh: calc(var(--hw) * .866); }
+.bee .hive { width: calc(var(--hw) * 2.62); height: calc(var(--hw) * 2.67); margin: 6px auto; flex: none; }
+.bee .hex { width: var(--hw); height: var(--hh); font-size: calc(var(--hw) * .3); }
+.bee .hex.center { left: calc(var(--hw) * .81); top: calc(var(--hw) * .936); }
+.bee .hex.h0 { left: calc(var(--hw) * .81); top: 0; }
+.bee .hex.h1 { left: calc(var(--hw) * 1.62); top: calc(var(--hw) * .468); }
+.bee .hex.h2 { left: calc(var(--hw) * 1.62); top: calc(var(--hw) * 1.404); }
+.bee .hex.h3 { left: calc(var(--hw) * .81); top: calc(var(--hw) * 1.872); }
+.bee .hex.h4 { left: 0; top: calc(var(--hw) * 1.404); }
+.bee .hex.h5 { left: 0; top: calc(var(--hw) * .468); }
+.game-panel .bee { justify-content: flex-start; }
+.game-panel .bee .bee-word { margin-top: auto; }
+.game-panel .bee .bee-actions { margin-bottom: auto; }
+.game-panel .bee .hive { transform: none; margin: 10px auto 16px; }

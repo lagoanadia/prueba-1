@@ -11,9 +11,46 @@ export function shortText(html) {
   return (first.length > 150 ? `${first.slice(0, 147).trimEnd()}…` : first).replace(/[.;]$/, '')
 }
 
+const UA = { 'User-Agent': 'inblocks-word-game/1.0 (https://prueba-1.lagoanadia.workers.dev)', Accept: 'application/json' }
+const fold = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+/** Wikitexto → texto plano: [[a|b]] → b, {{plantillas}} fuera, sin negritas. */
+export function cleanWikitext(t) {
+  return t
+    .replace(/\{\{(?:l|l\+|plm|f\.?\w*)\|[a-z-]+\|([^|}]+)[^}]*\}\}/g, '$1')
+    .replace(/\{\{[^{}]*\}\}/g, '')
+    .replace(/\[\[(?:[^|\]]*\|)?([^\]]+)\]\]/g, '$1')
+    .replace(/'{2,}/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+}
+/** Primera acepción de la sección en español: líneas «;1 …: definición». */
+export function firstSpanishSense(wikitext) {
+  const es = wikitext.split(/\{\{lengua\|/).find((part) => part.startsWith('es}}')) ?? wikitext
+  for (const line of es.split('\n')) {
+    const m = line.match(/^;\s*\d+[^:]*:\s*(.+)$/)
+    if (!m) continue
+    const d = cleanWikitext(m[1]).replace(/^[:.\s]+/, '')
+    if (d.length > 3) return shortText(d)
+  }
+  return null
+}
+// El Wikcionario en español no tiene la API de definiciones: se lee el wikitexto de la página.
+// Las palabras del juego vienen sin tildes (CAMION), así que si no existe se busca el título con tildes.
+async function fromEsWiktionary(word) {
+  const api = (q) => fetch(`https://es.wiktionary.org/w/api.php?format=json&formatversion=2&${q}`, { headers: UA }).then((r) => (r.ok ? r.json() : null))
+  const page = async (title) => (await api(`action=parse&prop=wikitext&page=${encodeURIComponent(title)}`))?.parse?.wikitext ?? null
+  let text = await page(word)
+  if (!text) {
+    const found = await api(`action=opensearch&limit=10&search=${encodeURIComponent(word)}`)
+    const title = (found?.[1] ?? []).find((t) => fold(t) === fold(word))
+    if (title) text = await page(title)
+  }
+  return text ? firstSpanishSense(text) : null
+}
+
 async function fromWiktionary(word, lang) {
+  if (lang !== 'en') return fromEsWiktionary(word)
   const host = lang === 'en' ? 'en.wiktionary.org' : 'es.wiktionary.org'
-  const res = await fetch(`https://${host}/api/rest_v1/page/definition/${encodeURIComponent(word)}`, { headers: { 'User-Agent': 'inblocks-word-game/1.0', Accept: 'application/json' } })
+  const res = await fetch(`https://${host}/api/rest_v1/page/definition/${encodeURIComponent(word)}`, { headers: UA })
   if (!res.ok) return null
   const data = await res.json()
   const entries = data[lang === 'en' ? 'en' : 'es'] ?? []
