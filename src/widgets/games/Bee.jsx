@@ -18,8 +18,12 @@ export default function Bee({ data, update }) {
   const [puzzle, setPuzzle] = useState(null)
   const [error, setError] = useState('')
   const [word, setWord] = useState('')
-  const [order, setOrder] = useState(0)
   const [msg, setMsg] = useState('')
+  const [verdict, setVerdict] = useState('') // '' | 'bad' | 'ok'
+  const [judged, setJudged] = useState('') // la palabra enviada, mientras se anima (lo que escribes después no se borra)
+  const timers = useRef([])
+  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms))
+  useEffect(() => () => timers.current.forEach(clearTimeout), [])
   const [dict, setDict] = useState(null)
   const [open, setOpen] = useState(false) // lista de palabras encontradas desplegada (como en el Spelling Bee del NYT)
   const [defFor, setDefFor] = useState(null) // palabra de la que se ve la definición
@@ -37,7 +41,18 @@ export default function Bee({ data, update }) {
   const puzzleKey = puzzle ? puzzle.center + [...puzzle.letters].sort().join('') : ''
   const saved = data.games?.bee
   const found = saved?.date === date && saved?.key === puzzleKey ? saved.found : []
-  const outer = useMemo(() => (puzzle ? shuffle(puzzle.letters, () => ((order * 9301 + 49297) % 233280) / 233280 || Math.random()) : []), [puzzle, order])
+  // Orden de las letras de fuera. «Mezclar» siempre da un orden distinto al que hay (antes a veces salía el mismo)
+  const [outer, setOuter] = useState([])
+  const [mixing, setMixing] = useState(false)
+  useEffect(() => { if (puzzle) setOuter(puzzle.letters) }, [puzzle])
+  const mix = () => {
+    if (mixing || outer.length < 2) return
+    let next = outer
+    while (next.join('') === outer.join('')) next = shuffle(outer, Math.random)
+    setMixing(true) // las letras giran y se encogen, cambian y vuelven a salir
+    setTimeout(() => setOuter(next), 200)
+    setTimeout(() => setMixing(false), 420)
+  }
   const letters = useMemo(() => (puzzle ? new Set([puzzle.center, ...puzzle.letters]) : new Set()), [puzzle])
   // Palabras válidas: las de la lista del servidor y todas las del diccionario que se forman con estas letras
   const valid = useMemo(() => {
@@ -58,17 +73,22 @@ export default function Bee({ data, update }) {
     setDefFor(w); setDefText(undefined)
     defineWord(w).then((t) => setDefText((cur) => (t === undefined ? null : t)))
   }
-  const flash = (t) => { setMsg(t); setTimeout(() => setMsg(''), 1400) }
+  // Aviso corto encima de la palabra (no la tapa) y la palabra tiembla si no vale o se pone verde si vale
+  const flash = (t, kind = 'bad') => {
+    timers.current.forEach(clearTimeout); timers.current = []
+    setMsg({ t, kind, id: Date.now() }); setVerdict(kind); setJudged(word.toUpperCase()); setWord('')
+    later(() => { setJudged(''); setVerdict('') }, kind === 'ok' ? 500 : 420)
+    later(() => setMsg(''), 1000)
+  }
   const submit = () => {
     const w = word.toUpperCase()
-    setWord('')
     if (w.length < 4) return flash('Muy corta')
     if (!w.includes(puzzle.center)) return flash('Falta la letra del centro')
     if (found.includes(w)) return flash('Ya la tienes')
     if (!valid.has(w)) return flash(dict || getLang() === 'en' ? 'No está en el diccionario' : 'No está en la lista')
     const next = [...found, w]
     update((d) => ({ ...d, games: { ...(d.games ?? {}), bee: { date, key: puzzleKey, found: next } } }))
-    flash(isPan(w) ? '¡Pangrama!' : `+${pointsOf(w, isPan)}`)
+    flash(isPan(w) ? '¡Pangrama!' : `+${pointsOf(w, isPan)}`, 'ok')
     sendScore('bee', scoreOf(next))
   }
   const onKey = (e) => {
@@ -113,14 +133,17 @@ export default function Bee({ data, update }) {
           </div>
         )}
       </div>
-      <div className="bee-word" aria-live="polite">{msg ? <span className="bee-msg">{msg}</span> : word ? [...word].map((ch, i) => <span key={i} className={ch === puzzle.center ? 'c' : ''}>{ch}</span>) : <span className="muted">Escribe…</span>}</div>
-      <div className="hive">
+      <div className="bee-word-wrap">
+        {msg && <span key={msg.id} className={`bee-toast ${msg.kind}`} role="status">{msg.t}</span>}
+        <div className={`bee-word ${word ? '' : verdict}`} aria-live="polite">{[...(word || judged)].map((ch, i) => <span key={i} className={ch === puzzle.center ? 'c' : ''}>{ch}</span>)}</div>
+      </div>
+      <div className={`hive ${mixing ? 'mixing' : ''}`}>
         <button className="hex center" onClick={() => setWord(word + puzzle.center)}>{puzzle.center}</button>
         {outer.map((l, i) => <button key={l} className={`hex h${i}`} onClick={() => setWord(word + l)}>{l}</button>)}
       </div>
       <div className="bee-actions">
         <button className="pill" onClick={() => setWord(word.slice(0, -1))}>Borrar</button>
-        <button className="pill" onClick={() => setOrder(order + 1)} aria-label="Mezclar letras">Mezclar</button>
+        <button className="pill" onClick={mix} aria-label="Mezclar letras">Mezclar</button>
         <button className="pill pill-on" onClick={submit}>Enviar</button>
       </div>
     </div>

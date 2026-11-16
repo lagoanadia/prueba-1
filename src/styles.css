@@ -3784,3 +3784,51 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .game-panel .bee .bee-word { margin-top: auto; }
 .game-panel .bee .bee-actions { margin-bottom: auto; }
 .game-panel .bee .hive { transform: none; margin: 10px auto 16px; }
+
+/* Spelling Bee: palabra arriba, panal grande en el centro y los botones abajo; al mezclar las letras giran */
+.bee { --hw: clamp(66px, min(18vw, 14vh), 108px); }
+.game-panel .bee .bee-word { margin-top: auto; min-height: 40px; }
+.game-panel .bee .hive { margin: 8px auto; }
+.game-panel .bee .bee-actions { margin-top: auto; margin-bottom: 4px; gap: 12px; }
+.game-panel .bee .bee-actions .pill { padding: 11px 26px; font-size: 16px; }
+.bee .hex:not(.center) { transition: transform .2s var(--ease), opacity .2s var(--ease); }
+.hive.mixing .hex:not(.center) { transform: scale(.35) rotate(120deg); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .bee .hex:not(.center) { transition: opacity .15s; } .hive.mixing .hex:not(.center) { transform: none; } }
+
+/* Spelling Bee: avisos arriba que duran poco y animaciones al escribir, acertar y fallar */
+.bee-word-wrap { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-top: 34px; }
+.bee-toast { position: absolute; top: 0; font-size: 14px; font-weight: 700; padding: 4px 14px; border-radius: 12px; background: var(--text); color: #FFFFFF; animation: bee-toast 1s var(--ease) both; pointer-events: none; }
+.bee-toast.ok { background: #3DDC97; color: var(--text); }
+@keyframes bee-toast { 0% { opacity: 0; transform: translateY(8px) scale(.8); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+.game-panel .bee .bee-word { margin-top: 0; }
+.bee-word span { display: inline-block; animation: bee-letter .18s var(--ease) both; }
+@keyframes bee-letter { from { transform: translateY(6px) scale(.6); opacity: 0; } }
+.bee-word.bad { animation: bee-shake .4s ease; color: #E84855; }
+.bee-word.ok { color: #1E9E63; animation: bee-ok .5s var(--ease); }
+@keyframes bee-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+@keyframes bee-ok { 40% { transform: scale(1.15); } 100% { transform: translateY(-12px); opacity: 0; } }
+.bee .hex:active { transform: scale(.88); }
+.bee .hex.center:active { transform: scale(.9); }
+@media (prefers-reduced-motion: reduce) { .bee-toast, .bee-word span, .bee-word.bad, .bee-word.ok { animation: none; } }
+.bee .bee-actions .pill { outline: none; }
+
+/* Spelling Bee: fondo envolvente, degradado de miel */
+.game-panel:has(.bee) { background: radial-gradient(120% 80% at 50% 62%, #FFF6D6 0%, #FFE9A6 55%, #FBD970 100%); }
+.game-panel:has(.bee) .area-head h2 { color: #5A4300; }
+.game-panel:has(.bee) .bee .hex { background: #FFFDF5; box-shadow: none; }
+.game-panel:has(.bee) .bee .hex.center { background: #F5C518; }
+.game-panel:has(.bee) .bee-found-toggle { background: rgba(255, 255, 255, .75); border-color: rgba(90, 67, 0, .15); backdrop-filter: blur(4px); }
+.game-panel:has(.bee) .bee-track::before, .game-panel:has(.bee) .bee-lv:not(.on) { background: rgba(90, 67, 0, .18); }
+.game-panel:has(.bee) .bee-lv.on, .game-panel:has(.bee) .bee-lv.mine { background: #F5C518; }
+.game-panel:has(.bee) .bee-actions .pill { background: rgba(255, 255, 255, .85); border-color: rgba(90, 67, 0, .18); }
+.game-panel:has(.bee) .bee-actions .pill-on { background: #202124; color: #FFFFFF; border-color: #202124; }
+.game-panel:has(.bee) .bee-word .c { color: #B88A00; }
+
+/* Sudoku y crucigrama: el mismo fondo envolvente, cada uno en su color */
+.game-panel:has(.sdk) { background: radial-gradient(120% 80% at 50% 60%, #F2F7FF 0%, #D6E6FF 55%, #AFCBFF 100%); }
+.game-panel:has(.sdk) .area-head h2 { color: #123A7A; }
+.game-panel:has(.sdk) .sdk-pad button { background: rgba(255, 255, 255, .85); }
+.game-panel:has(.cwd) { background: radial-gradient(120% 80% at 50% 60%, #FFF4F4 0%, #FFDCDC 55%, #F7B5B8 100%); }
+.game-panel:has(.cwd) .area-head h2 { color: #7A1620; }
+.game-panel:has(.cwd) .cwd-tools .pill:not(.pill-on) { background: rgba(255, 255, 255, .85); }
+.game-panel:has(.cwd) .cwd-clue, .game-panel:has(.cwd) .cwd-lists { background: rgba(255, 255, 255, .6); border-radius: 14px; }
