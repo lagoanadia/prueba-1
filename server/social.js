@@ -194,7 +194,8 @@ export async function socialState(env, me, today) {
       ;(ranking[g] ??= []).push({ ...u, me: uid === me, points: days.reduce((a, [, v]) => a + v, 0), today: sc[g]?.[today] ?? null })
     }
   }
-  Object.values(ranking).forEach((l) => l.sort((a, b) => b.points - a.points))
+  // Más puntos primero; en un empate, tus amigos van delante de ti
+  Object.values(ranking).forEach((l) => l.sort((a, b) => b.points - a.points || (a.me ? 1 : 0) - (b.me ? 1 : 0)))
   const pieces = await awardPieces(env, me, mine, friends, allScores, today)
 
   const gifts = await Promise.all(mine.gifts.filter((g) => !g.seen).map(async (g) => ({ ...g, from: await publicUser(env, g.from, cache) })))

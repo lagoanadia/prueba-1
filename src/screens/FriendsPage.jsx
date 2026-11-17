@@ -204,16 +204,30 @@ function PostBody({ p, onRead, onSave, saved }) {
   )
   if (p.kind === 'good') return <blockquote className="post-quote">{d.text}</blockquote>
   if (p.kind === 'note' && !d.title) return <p className="post-text">{d.text}</p>
-  if (p.kind === 'menu') return (
-    <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
-      <b>Menú · {d.range}</b>
-      <div className="post-menu-grid" style={{ '--m': (d.meals ?? []).length }}>
-        <span />{(d.meals ?? []).map(([m, label]) => <span key={m} className="post-menu-h">{label}</span>)}
-        {(d.days ?? []).map((day) => [<span key={day.label} className="post-menu-day">{day.label}</span>, ...(d.meals ?? []).map(([m]) => <span key={day.label + m} className="post-menu-cell">{day.meals?.[m] || '—'}</span>)])}
+  if (p.kind === 'menu') {
+    // Menú compartido: una tarjeta por día con sus comidas (como el planificador); los días sin nada, en una línea abajo
+    const meals = d.meals ?? []
+    const days = d.days ?? []
+    const filled = days.filter((day) => meals.some(([m]) => day.meals?.[m]))
+    const empty = days.filter((day) => !meals.some(([m]) => day.meals?.[m]))
+    return (
+      <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
+        <b>Menú · {d.range}</b>
+        <div className="pm-days">
+          {filled.map((day) => (
+            <div key={day.label} className="pm-day">
+              <b className="pm-day-name">{day.label}</b>
+              {meals.filter(([m]) => day.meals?.[m]).map(([m, label]) => (
+                <div key={m} className="pm-meal"><span>{label}</span>{day.meals[m]}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+        {empty.length > 0 && <span className="muted pm-empty">Sin planear: {empty.map((day) => day.label).join(', ')}</span>}
+        {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
       </div>
-      {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
-    </div>
-  )
+    )
+  }
   return <div className="post-box"><b>{d.title}</b>{d.text && <span>{d.text}</span>}</div>
 }
 
@@ -291,12 +305,13 @@ const chevron = (d) => <svg width="14" height="14" viewBox="0 0 24 24" fill="non
 
 /** Ranking semanal en forma de podio, un juego cada vez; las flechas pasan de un juego a otro. */
 function Podium({ ranking }) {
-  const games = GAME_KEYS.filter((g) => ranking[g]?.length)
-  const [i, setI] = useState(0)
-  if (!games.length) return <div className="card feed-card"><b>Ranking de la semana</b><span className="muted">Juega a los juegos del Journal y compite con tus amigos.</span></div>
+  // Siempre los cuatro juegos (aunque nadie haya jugado aún a alguno); empieza por el primero con puntos
+  const games = GAME_KEYS
+  const firstPlayed = Math.max(0, games.findIndex((x) => ranking[x]?.length))
+  const [i, setI] = useState(firstPlayed)
   const k = ((i % games.length) + games.length) % games.length
   const g = games[k]
-  const list = ranking[g]
+  const list = ranking[g] ?? []
   // Orden del podio: 2.º · 1.º · 3.º
   const spots = [[list[1], 2], [list[0], 1], [list[2], 3]]
   return (
@@ -327,6 +342,7 @@ function Podium({ ranking }) {
           </div>
         ))}
       </div>
+      {list.length === 0 && <span className="muted podium-empty">Nadie ha jugado esta semana. ¡Sé la primera!</span>}
       {list.length > 3 && <div className="podium-rest">{list.slice(3, 6).map((p, j) => <span key={p.username ?? j}><b>{j + 4}</b> {p.me ? 'Tú' : '@' + p.username} · {p.points}</span>)}</div>}
     </div>
   )

@@ -4086,3 +4086,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .fd-step-text { resize: none; overflow: hidden; font: inherit; line-height: 1.35; width: 100%; min-width: 0; display: block; }
 .fd-steps li { align-items: flex-start; } .fd-steps li b { padding-top: 3px; } .fd-step-x { margin-top: 0; }
 .fd-panel:has(.ing-pop), .fd-editor:has(.ing-pop) { position: relative; z-index: 50; }
+.podium-empty { text-align: center; font-size: 13px; margin-top: 4px; }
+
+/* Menú compartido en el feed: tarjetas por día, como el planificador de comidas */
+.pm-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; width: 100%; }
+.pm-day { background: #FFFFFF; border-radius: 14px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.pm-day-name { font-size: 13px; text-transform: capitalize; }
+.pm-meal { background: #FDF0FF; border-radius: 10px; padding: 5px 8px; font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pm-meal span { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #A12CB3; }
+.pm-empty { font-size: 12px; text-transform: none; }
