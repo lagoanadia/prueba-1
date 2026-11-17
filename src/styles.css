@@ -4085,3 +4085,4 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 
 .fd-step-text { resize: none; overflow: hidden; font: inherit; line-height: 1.35; width: 100%; min-width: 0; display: block; }
 .fd-steps li { align-items: flex-start; } .fd-steps li b { padding-top: 3px; } .fd-step-x { margin-top: 0; }
+.fd-panel:has(.ing-pop), .fd-editor:has(.ing-pop) { position: relative; z-index: 50; }
