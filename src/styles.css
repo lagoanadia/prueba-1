@@ -3406,3 +3406,10 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .pv-colorpick .sc-pop { top: 38px; }
 .pv-head { position: relative; } .pv-head .pv-ring { background: conic-gradient(var(--c) calc(var(--p) * 1%), color-mix(in srgb, var(--c) 30%, #fff) 0); }
 .pv-head .pv-ring::before { background: color-mix(in srgb, var(--c) 28%, #FFFFFF); }
+
+/* Pestañas vacías de Estudios: tarjeta centrada con dos caminos */
+.ea { flex: 1; min-height: 300px; margin: 14px 4px 4px; border: 2px dashed #CFE0FF; border-radius: 22px; background: #F6F9FF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px; }
+.ea-ic { width: 64px; height: 64px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(49, 133, 252, .2); display: grid; place-items: center; }
+.ea-t { font-size: 18px; } .ea-s { font-size: 13px; color: #80868B; max-width: 320px; }
+.ea-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.ea-main { background: #3185FC; color: #fff; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 12px rgba(49, 133, 252, .35); } .ea-second { display: inline-flex; align-items: center; gap: 7px; background: #fff; }

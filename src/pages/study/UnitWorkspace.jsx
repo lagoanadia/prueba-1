@@ -3,6 +3,7 @@ import { saveFile } from '../../lib/fileStore.js'
 import BlockEditor from '../../components/BlockEditor.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
+import EmptyAdd from './EmptyAdd.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import ShareButton from '../../components/ShareButton.jsx'
 import { usePanel } from '../../screens/focus.js'
@@ -31,6 +32,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const [panel, setPanel] = usePanel()
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
+  const [pdfNew, setPdfNew] = useState(null) // { type: 'topic' | 'practice', file }: se creó subiendo un PDF y falta el nombre
   const [layout, setLayout] = useState('split')
   const [full, setFull] = useState(false) // modo estudio: la ventana ocupa toda la pantalla
   const [panelW, setPanelW] = useState(() => { try { return Math.min(480, Math.max(150, Number(localStorage.getItem('ws-panel-w')) || 250)) } catch { return 250 } })
@@ -77,6 +79,17 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const togglePractice = (uid, pid) => changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).map((p) => (p.id === pid ? { ...p, done: !p.done } : p)) }))
   const addTopic = (name) => { const id = crypto.randomUUID(); changeU((u) => ({ ...u, topics: [...u.topics, { id, name, state: 'todo' }] })); setDialog(null); go({ ...route, tab: 'estudio', itemId: id }) }
   const addPractice = (name) => { const id = crypto.randomUUID(); setPractices((l) => [...l, { id, name, done: false }]); setDialog(null); go({ ...route, tab: 'practicas', itemId: id }) }
+  // Crear un tema o una práctica ya con su PDF puesto
+  const addWithPdf = async (name) => {
+    const { type, file } = pdfNew
+    setPdfNew(null)
+    const desc = await saveFile(file)
+    const id = crypto.randomUUID()
+    if (type === 'topic') changeU((u) => ({ ...u, topics: [...u.topics, { id, name, state: 'todo', pdfs: [desc] }] }))
+    else setPractices((l) => [...l, { id, name, done: false, pdfs: [desc] }])
+    go({ ...route, tab: type === 'topic' ? 'estudio' : 'practicas', itemId: id })
+  }
+  const baseName = (f) => f.name.replace(/\.pdf$/i, '').replace(/[_]+/g, ' ').trim().slice(0, 50)
   const addUnit = (name) => { const id = crypto.randomUUID(); changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id, name, topics: [] }] })); setDialog(null); go({ ...route, unitId: id, tab: 'estudio', itemId: null }) }
   // Eliminar una unidad; si es la que tengo abierta, vuelvo a la asignatura
   const removeUnit = (id) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.filter((u) => u.id !== id) })); setDialog(null); if (id === unit.id) back() }
@@ -240,7 +253,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                   <BlockEditor key={topic.id} appendRef={notesIn} exportAs={{ title: topic.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
                     bar={data.notes?.[topic.id] ? <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
-              : <p className="muted ws-empty">Añade un tema con + en el panel para empezar a tomar apuntes.</p>
+              : <EmptyAdd icon="book" title="Temario y apuntes" text="Aquí irán los temas de la unidad y tus apuntes." createLabel="Crear tema" onCreate={() => setDialog('topic')} onPdf={(file) => setPdfNew({ type: 'topic', file })} />
           )}
 
           {tab === 'practicas' && (
@@ -249,9 +262,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                   <BlockEditor key={practice.id} appendRef={notesIn} exportAs={{ title: practice.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
                     bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
                     onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
-              : <div className="ws-empty ws-empty-add">
-                  <button className="pill" onClick={() => setDialog('practice')}><Icon name="plus" size={16} strokeWidth={2.8} /> Crear práctica</button>
-                </div>
+              : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
@@ -260,6 +271,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
       {dialog === 'topic' && <NameDialog title="Nombre del tema" placeholder="Estados de un proceso" onSubmit={addTopic} onClose={() => setDialog(null)} />}
       {dialog === 'practice' && <NameDialog title="Nombre de la práctica" placeholder="Práctica 1" onSubmit={addPractice} onClose={() => setDialog(null)} />}
+      {pdfNew && <NameDialog title={`Nombre ${pdfNew.type === 'topic' ? 'del tema' : 'de la práctica'}`} initial={baseName(pdfNew.file)} onSubmit={addWithPdf} onClose={() => setPdfNew(null)} />}
       {dialog === 'unit' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
     </div>
