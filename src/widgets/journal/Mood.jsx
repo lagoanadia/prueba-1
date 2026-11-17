@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import MonthGrid, { EMPTY, OneWeek, TwoWeeks } from '../MonthGrid.jsx'
+import { useEffect, useState } from 'react'
+import MonthGrid, { EMPTY, OneWeek } from '../MonthGrid.jsx'
 import YearGrid, { YearMass } from '../YearGrid.jsx'
 import Icon from '../../components/Icon.jsx'
 import MoodAnalysis from './MoodAnalysis.jsx'
 import Chips from '../Chips.jsx'
-import { todayISO } from '../../lib/dates.js'
+import { addDays, todayISO, weekStart } from '../../lib/dates.js'
+import { sinceFromData } from '../since.js'
 
 export const MOODS = [
   { id: 'bueno', label: 'Bueno', color: '#3DDC97' },
@@ -12,6 +13,9 @@ export const MOODS = [
   { id: 'malo', label: 'Malo', color: '#E84855' },
 ]
 const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? EMPTY
+// Caras del tamaño mediano: nombre corto y boca (sonrisa, recta, triste)
+const FACE = { bueno: 'Bien', regular: 'Regular', malo: 'Mal' }
+const MOUTH = { bueno: 'M10 19q6 6 12 0', regular: 'M10.5 21h11', malo: 'M10 23q6-6 12 0' }
 const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
 /** Mood tracker. S: elegir hoy · T: + mes · M: + 2 semanas · L: + Mes / Año (tocar un día cambia su ánimo). */
@@ -21,6 +25,8 @@ export default function Mood({ size, data, update }) {
   const [range, setRange] = useState('año')
   const [yearView, setYearView] = useState('masa') // 'masa' | 'meses'
   const [analysis, setAnalysis] = useState(false)
+  const since = sinceFromData(data, today)
+  useEffect(() => { if (!data.since) update((d) => (d.since ? d : { ...d, since })) }, []) // eslint-disable-line react-hooks/exhaustive-deps -- se guarda el día en que empezaste
   const set = (date, mood) => update((d) => ({ ...d, moods: { ...d.moods, [date]: mood } }))
   const cycle = (date) => {
     const i = MOODS.findIndex((m) => m.id === moods[date])
@@ -40,11 +46,38 @@ export default function Mood({ size, data, update }) {
 
   if (size === 'S') return <div className="w-center"><span className="w-hint">Hoy</span>{chips}</div>
   if (size === 'T') return <>{chips}<div className="fill"><MonthGrid colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
-  if (size === 'M') return <>{chips}<div className="fill"><TwoWeeks colorFor={(d) => colorOf(moods[d])} onDay={cycle} /></div></>
+  // M: a la izquierda cómo estás hoy (en columna) y a la derecha las dos últimas semanas con sus letras
+  // M: a la izquierda tres caras para decir cómo estás hoy; a la derecha dos semanas con la fecha de cada día
+  if (size === 'M') {
+    const start = addDays(weekStart(today), -7)
+    const days = Array.from({ length: 14 }, (_, i) => addDays(start, i))
+    return (
+      <div className="mood-m2">
+        <div className="mood-today">
+          <span className="mood-lab">Hoy</span>
+          <div className="mood-faces">
+            {MOODS.map((m) => (
+              <button key={m.id} className={`mood-face-btn ${moods[today] === m.id ? 'on' : ''}`} onClick={() => set(today, moods[today] === m.id ? null : m.id)} aria-pressed={moods[today] === m.id} aria-label={FACE[m.id]}>
+                <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill={m.color} /><circle cx="11.5" cy="13" r="1.8" fill="#202124" /><circle cx="20.5" cy="13" r="1.8" fill="#202124" /><path d={MOUTH[m.id]} fill="none" stroke="#202124" strokeWidth="2" strokeLinecap="round" /></svg>
+                <span>{FACE[m.id]}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mood-2w">
+          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((l) => <span key={l} className="mood-2w-h">{l}</span>)}
+          {days.map((d) => (
+            <button key={d} className={`mood-2w-d ${d === today ? 'today' : ''} ${d > today ? 'fut' : ''}`} disabled={d > today}
+              style={moods[d] ? { background: colorOf(moods[d]) } : undefined} onClick={() => cycle(d)} aria-label={d}>{Number(d.slice(8))}</button>
+          ))}
+        </div>
+      </div>
+    )
+  }
   const colorFor = (d) => colorOf(moods[d])
   const yearGrid = yearView === 'masa'
-    ? <YearMass colorFor={colorFor} onDay={cycle} />
-    : <YearGrid colorFor={colorFor} onDay={cycle} />
+    ? <YearMass colorFor={colorFor} onDay={cycle} since={since} />
+    : <YearGrid colorFor={colorFor} onDay={cycle} since={since} />
   return (
     <>
       {chips}

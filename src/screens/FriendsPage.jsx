@@ -6,12 +6,12 @@ import { FriendsBox, FriendsProvider } from '../components/Friends.jsx'
 import useFriendRequests from '../hooks/useFriendRequests.js'
 import useAllBoards from '../hooks/useAllBoards.js'
 import useSocial from '../hooks/useSocial.js'
-import { EMOJIS } from '../services/socialService.js'
+import { EMOJIS, SOCIAL_EVENT, getFriendPosts } from '../services/socialService.js'
 import { sanitize } from '../lib/richText.js'
 
 const MOOD = { bueno: ['#3DDC97', 'Bien'], regular: ['#F9DC5C', 'Regular'], malo: ['#E84855', 'Mal'] }
 const METRICS = { workouts: 'Entrenos', water: 'Días con el agua cumplida', habits: 'Hábitos cumplidos', focus: 'Sesiones de foco' }
-const SECRETS = { sprout: ['Brote', 'Comparte algo por primera vez'], halo: ['Aureola', 'Cierra 3 días'], starclip: ['Estrella', 'Cierra 10 días'], partyhat: ['Gorro de fiesta', 'Llega con tu cumpleaños'] }
+const SECRETS = { sprout: ['Brote', 'Comparte algo por primera vez'], halo: ['Aureola', 'Cierra 3 días'], starclip: ['Estrella', 'Cierra 10 días'], partyhat: ['Gorro de fiesta', 'Llega con tu cumpleaños'], laurel: ['Laurel', '5 piezas'], medal: ['Medalla', '10 piezas'], wizard: ['Gorro de mago', '15 piezas'], tiara: ['Tiara', '20 piezas'] }
 const TABS = [['feed', 'Feed'], ['retos', 'Retos'], ['edificio', 'Edificio'], ['ajustes', 'Ajustes']]
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'ahora' : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} días` }
 const ring = (mood) => (mood ? MOOD[mood][0] : '#E8EAED')
@@ -44,7 +44,7 @@ export default function FriendsPage() {
   return (
     <div className="friends-page">
       {open ? (
-        <FriendProfile f={open} back={() => setFriend(null)} onSheet={(kind) => setSheet({ kind, friend: open })} />
+        <FriendProfile f={open} back={() => setFriend(null)} onSheet={(kind) => setSheet({ kind, friend: open })} run={run} />
       ) : (
         <>
           <div className="fp-strip">
@@ -69,15 +69,6 @@ export default function FriendsPage() {
 
 // ---------- Feed ----------
 function Feed({ state, run }) {
-  const { change } = useAllBoards(true, ['comida'])
-  const [comments, setComments] = useState(null)
-  const [reading, setReading] = useState(null)
-  const [saved, setSaved] = useState({})
-  const saveRecipe = (p) => {
-    const r = p.data
-    change('comida', (d) => ({ ...d, dishes: [...(d.dishes ?? []), { id: crypto.randomUUID(), name: r.name, for: r.for?.length ? r.for : ['comida'], time: r.time ?? null, ingredients: r.ingredients ?? [], steps: r.steps ?? [] }] }))
-    setSaved({ ...saved, [p.id]: true })
-  }
   const birthdays = state.friends.filter((f) => f.birthday)
   const studying = state.friends.filter((f) => f.session)
 
@@ -102,7 +93,45 @@ function Feed({ state, run }) {
           <span><b>@{f.username}</b> está estudiando{f.session.label ? ` ${f.session.label}` : ''} · quedan {Math.max(1, Math.round((f.session.endsAt - Date.now()) / 60000))} min</span>
         </div>
       ))}
-      {state.feed.map((p) => (
+      <PostList posts={state.feed} run={run} empty={<div className="card feed-card feed-empty"><b>El feed está tranquilo</b><span className="muted">Cuando tú o tus amigos compartáis una receta, unos apuntes o algo bueno del día, aparecerá aquí durante un mes. Busca el botón «Compartir».</span></div>} />
+    </div>
+  )
+}
+
+/** Publicaciones (las del feed o todas las de un amigo): reaccionar, comentar, abrir apuntes, guardar recetas y dejar de compartir lo tuyo. */
+function PostList({ posts, run, empty = null }) {
+  const { change } = useAllBoards(true, ['comida'])
+  const [comments, setComments] = useState(null)
+  const [reading, setReading] = useState(null)
+  const [saved, setSaved] = useState({})
+  const saveRecipe = (p) => {
+    const r = p.data
+    change('comida', (d) => ({ ...d, dishes: [...(d.dishes ?? []), { id: crypto.randomUUID(), name: r.name, for: r.for?.length ? r.for : ['comida'], time: r.time ?? null, ingredients: r.ingredients ?? [], steps: r.steps ?? [] }] }))
+    setSaved({ ...saved, [p.id]: true })
+  }
+  // Menú compartido: se copia a tu semana actual, solo en las casillas vacías; los platos que no tengas se crean por su nombre
+  const copyMenu = (p) => {
+    const { days = [] } = p.data ?? {}
+    change('comida', (d) => {
+      const dishes = [...(d.dishes ?? [])]
+      const menu = { ...(d.menu ?? {}) }
+      const now = new Date(); const monday = new Date(now); monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+      days.slice(0, 7).forEach((day, i) => {
+        const iso = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i).toLocaleDateString('en-CA')
+        Object.entries(day.meals ?? {}).forEach(([meal, name]) => {
+          if (!name || menu[iso]?.[meal]) return
+          let value = name === 'Comer fuera' ? 'fuera' : dishes.find((x) => x.name.toLowerCase() === name.toLowerCase())?.id
+          if (!value) { value = crypto.randomUUID(); dishes.push({ id: value, name, for: [meal], time: null, ingredients: [], steps: [] }) }
+          menu[iso] = { ...(menu[iso] ?? {}), [meal]: value }
+        })
+      })
+      return { ...d, dishes, menu }
+    })
+    setSaved({ ...saved, [p.id]: true })
+  }
+  return (
+    <>
+      {posts.map((p) => (
         <article key={p.id} className="card feed-card">
           <header className="feed-who">
             <Avatar avatar={p.from.avatar} size={38} />
@@ -111,22 +140,25 @@ function Feed({ state, run }) {
             <span className="muted feed-at">{ago(p.at)}</span>
           </header>
           {p.text && <p className="feed-text">{p.text}</p>}
-          <PostBody p={p} onRead={() => setReading(p)} onSave={() => saveRecipe(p)} saved={saved[p.id]} />
+          <PostBody p={p} onRead={() => setReading(p)} onSave={() => (p.kind === 'menu' ? copyMenu(p) : saveRecipe(p))} saved={saved[p.id]} />
           <footer className="feed-react">
             {EMOJIS.map((e) => (
               <button key={e} className={`emoji ${p.reactions[e].mine ? 'on' : ''}`} onClick={() => run('react', { owner: p.from.username, id: p.id, emoji: e })} aria-pressed={p.reactions[e].mine} aria-label={`Reaccionar ${e}`}>
                 {e}{p.reactions[e].n > 0 && <small>{p.reactions[e].n}</small>}
               </button>
             ))}
-            <button className="text-link feed-comments" onClick={() => setComments(p.id === comments ? null : p.id)}>{p.comments.length === 1 ? '1 comentario' : p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'}</button>
-            {p.mine && <button className="text-link" onClick={() => run('unpost', { id: p.id })}>Dejar de compartir</button>}
+            <button className={`feed-icon feed-comments ${comments === p.id ? 'on' : ''}`} onClick={() => setComments(p.id === comments ? null : p.id)} aria-expanded={comments === p.id}
+              aria-label={p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'} title={p.comments.length ? `${p.comments.length} comentarios` : 'Comentar'}>
+              <Icon name="chat" size={18} />{p.comments.length > 0 && <small>{p.comments.length}</small>}
+            </button>
+            {p.mine && <button className="feed-icon feed-del" onClick={() => window.confirm('¿Dejar de compartir esto?') && run('unpost', { id: p.id })} aria-label="Dejar de compartir" title="Dejar de compartir"><Icon name="trash" size={16} color="#B3261E" /></button>}
           </footer>
           {comments === p.id && <Comments p={p} run={run} />}
         </article>
       ))}
-      {state.feed.length === 0 && <div className="card feed-card feed-empty"><b>El feed está tranquilo</b><span className="muted">Cuando tú o tus amigos compartáis una receta, unos apuntes o algo bueno del día, aparecerá aquí. Busca el botón «Compartir».</span></div>}
+      {posts.length === 0 && empty}
       {reading && <ReadDoc p={reading} onClose={() => setReading(null)} />}
-    </div>
+    </>
   )
 }
 
@@ -146,6 +178,16 @@ function PostBody({ p, onRead, onSave, saved }) {
     </div>
   )
   if (p.kind === 'good') return <blockquote className="post-quote">{d.text}</blockquote>
+  if (p.kind === 'menu') return (
+    <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
+      <b>Menú · {d.range}</b>
+      <div className="post-menu-grid" style={{ '--m': (d.meals ?? []).length }}>
+        <span />{(d.meals ?? []).map(([m, label]) => <span key={m} className="post-menu-h">{label}</span>)}
+        {(d.days ?? []).map((day) => [<span key={day.label} className="post-menu-day">{day.label}</span>, ...(d.meals ?? []).map(([m]) => <span key={day.label + m} className="post-menu-cell">{day.meals?.[m] || '—'}</span>)])}
+      </div>
+      {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
+    </div>
+  )
   return <div className="post-box"><b>{d.title}</b>{d.text && <span>{d.text}</span>}</div>
 }
 
@@ -184,7 +226,14 @@ function ReadDoc({ p, onClose }) {
 }
 
 // ---------- Perfil de un amigo ----------
-function FriendProfile({ f, back, onSheet }) {
+function FriendProfile({ f, back, onSheet, run }) {
+  const [posts, setPosts] = useState(null)
+  useEffect(() => {
+    const load = () => getFriendPosts(f.username).then((r) => setPosts(r.posts ?? [])).catch(() => setPosts((p) => p ?? []))
+    load()
+    window.addEventListener(SOCIAL_EVENT, load) // al reaccionar o comentar se pone al día
+    return () => window.removeEventListener(SOCIAL_EVENT, load)
+  }, [f.username])
   return (
     <div className="fp-profile">
       <button className="back-link" onClick={back}><Icon name="back" size={18} /> Amigos</button>
@@ -200,6 +249,10 @@ function FriendProfile({ f, back, onSheet }) {
         <button className="pill pill-pink" onClick={() => onSheet('gift')}>Regalar</button>
       </div>
       <div className="card fp-tower"><b>Su edificio</b><Tower blocks={f.tower} /><span className="muted">{f.tower.length} días cerrados</span></div>
+      <div className="fp-posts">
+        <b className="fp-posts-title">Todo lo que ha publicado</b>
+        {posts === null ? <div className="spinner" aria-label="Cargando" /> : <PostList posts={posts} run={run} empty={<div className="card feed-card feed-empty"><span className="muted">Aún no ha compartido nada contigo.</span></div>} />}
+      </div>
     </div>
   )
 }
@@ -207,23 +260,94 @@ function FriendProfile({ f, back, onSheet }) {
 // ---------- Retos ----------
 const GAME_NAMES = { wordle: 'Palabra del día', sudoku: 'Sudoku', bee: 'Spelling Bee', crossword: 'Mini crucigrama' }
 
+const GAME_KEYS = Object.keys(GAME_NAMES)
+const chevron = (d) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+
+/** Ranking semanal en forma de podio, un juego cada vez; las flechas pasan de un juego a otro. */
+function Podium({ ranking }) {
+  const games = GAME_KEYS.filter((g) => ranking[g]?.length)
+  const [i, setI] = useState(0)
+  if (!games.length) return <div className="card feed-card"><b>Ranking de la semana</b><span className="muted">Juega a los juegos del Journal y compite con tus amigos.</span></div>
+  const k = ((i % games.length) + games.length) % games.length
+  const g = games[k]
+  const list = ranking[g]
+  // Orden del podio: 2.º · 1.º · 3.º
+  const spots = [[list[1], 2], [list[0], 1], [list[2], 3]]
+  return (
+    <div className="card feed-card podium-card">
+      <div className="podium-top">
+        <b>Ranking de la semana</b>
+        {games.length > 1 ? (
+          <div className="podium-nav">
+            <button onClick={() => setI(k - 1)} aria-label="Juego anterior">{chevron('M15 5L8 12L15 19')}</button>
+            <span>{GAME_NAMES[g]}</span>
+            <button onClick={() => setI(k + 1)} aria-label="Juego siguiente">{chevron('M9 5L16 12L9 19')}</button>
+          </div>
+        ) : <span className="podium-game">{GAME_NAMES[g]}</span>}
+      </div>
+      {games.length > 1 && <div className="podium-dots">{games.map((x, j) => <i key={x} className={j === k ? 'on' : ''} />)}</div>}
+      <div className="podium" key={g}>
+        {spots.map(([p, pos]) => (
+          <div key={pos} className={`podium-col p${pos} ${p?.me ? 'me' : ''}`}>
+            {p && <>
+              <span className="podium-av">
+                {pos === 1 && <svg className="podium-crown" width="28" height="20" viewBox="0 0 30 22" aria-hidden="true"><path d="M3 18L5 5L11 11L15 3L19 11L25 5L27 18Z" fill="#F9DC5C" stroke="#202124" strokeWidth="1.8" strokeLinejoin="round" /></svg>}
+                <Avatar avatar={p.avatar} size={pos === 1 ? 56 : 46} />
+              </span>
+              <b className="podium-name">{p.me ? 'Tú' : '@' + p.username}</b>
+              <span className="podium-pts">{p.points}</span>
+            </>}
+            <span className="podium-step">{pos}</span>
+          </div>
+        ))}
+      </div>
+      {list.length > 3 && <div className="podium-rest">{list.slice(3, 6).map((p, j) => <span key={p.username ?? j}><b>{j + 4}</b> {p.me ? 'Tú' : '@' + p.username} · {p.points}</span>)}</div>}
+    </div>
+  )
+}
+
+const PIECE = 'M4 8h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4H4v-4a2 2 0 1 0 0-4z'
+const piece = (on, size = 40) => <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill={on ? '#F9DC5C' : '#F1F3F4'} stroke={on ? '#202124' : '#C9CDD2'} strokeWidth="1.4" strokeLinejoin="round" strokeDasharray={on ? undefined : '2 2'}><path d={PIECE} /></svg>
+
+/** Piezas: 1 por cada día ganado en un juego; cada 5, un accesorio sorpresa. */
+function Pieces({ pieces, run }) {
+  const news = pieces.news ?? []
+  const prize = news.find((n) => n.prize)
+  return (
+    <div className="card feed-card pieces-card">
+      <b>Piezas</b>
+      <span className="muted pieces-rule">1 win = 1 pieza · 5 piezas = 1 sorpresa</span>
+      <div className="pieces-row">
+        <div className="pieces-left">
+          <div className="pieces-set">{Array.from({ length: pieces.of }, (_, j) => <span key={j}>{piece(j < pieces.inRow)}</span>)}</div>
+          <b className="pieces-count">{pieces.inRow} / {pieces.of}</b>
+          <span className="bar"><span style={{ width: `${(pieces.inRow / pieces.of) * 100}%`, background: '#F9DC5C' }} /></span>
+        </div>
+        <div className="pieces-prize" aria-label="Próximo premio">
+          <span className="pieces-box">{pieces.next ? <svg width="48" height="38" viewBox="0 0 56 44" aria-hidden="true"><path d="M8 34L14 8L22 20L28 4L34 20L42 8L48 34Z" fill="#202124" opacity=".12" /><rect x="6" y="34" width="44" height="6" rx="3" fill="#202124" opacity=".12" /></svg> : '✓'}</span>
+          <span className="w-hint">{pieces.next ? 'Próximo: ???' : 'Todo conseguido'}</span>
+        </div>
+      </div>
+      {news.length > 0 && (
+        <div className="pieces-news">
+          {piece(true, 30)}
+          <span>
+            <b>{news.length === 1 ? `¡Ganaste el ${GAME_NAMES[news[0].game]}!` : `¡${news.length} victorias!`}</b><br />
+            <span className="muted">+{news.length} {news.length === 1 ? 'pieza' : 'piezas'}{prize ? ` · ¡Nuevo accesorio: ${SECRETS[prize.prize]?.[0]}! Está en Perfil` : ''}</span>
+          </span>
+          <button className="toast-x" onClick={() => run('seenPieces')} aria-label="Cerrar">×</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Challenges({ state, run, onNew }) {
   const ranking = state.ranking ?? {}
   return (
     <div className="feed">
-      <div className="card feed-card">
-        <b>Ranking de juegos de la semana</b>
-        {Object.keys(ranking).length ? (
-          <div className="rank-games">
-            {Object.entries(GAME_NAMES).filter(([g]) => ranking[g]?.length).map(([g, name]) => (
-              <div key={g} className="rank-game">
-                <b>{name}</b>
-                {ranking[g].slice(0, 5).map((p, i) => <div key={p.username ?? i} className={`rank-row ${p.me ? 'me' : ''}`}><span className="rank-pos">{i + 1}</span><Avatar avatar={p.avatar} size={24} /><span>{p.me ? 'Tú' : '@' + p.username}</span><b>{p.points}</b></div>)}
-              </div>
-            ))}
-          </div>
-        ) : <span className="muted">Juega a los juegos del Journal (Palabra del día, Sudoku, Spelling Bee, Mini crucigrama) y compite con tus amigos.</span>}
-      </div>
+      <Podium ranking={ranking} />
+      {state.pieces && <Pieces pieces={state.pieces} run={run} />}
       {state.challenges.map((c) => (
         <div key={c.id} className="card feed-card">
           <div className="w-row"><b>{c.title}</b><span className="muted">{c.target} esta semana</span></div>

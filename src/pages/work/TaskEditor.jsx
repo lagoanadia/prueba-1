@@ -1,4 +1,5 @@
 import Select from '../../components/Select.jsx'
+import { undoable, insertAt } from '../../lib/undo.js'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
@@ -28,7 +29,12 @@ export default function TaskEditor({ data, update, projectId, taskId, onClose })
     ...d,
     projects: d.projects.map((p) => (p.id === projectId ? { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) } : p.id === newId ? { ...p, tasks: [...p.tasks, task] } : p)),
   }))
-  const remove = () => { update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== projectId ? p : { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) })) })); onClose() }
+  const remove = () => {
+    const idx = project.tasks.findIndex((t) => t.id === taskId)
+    update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== projectId ? p : { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) })) }))
+    undoable(`Tarea «${task.title}» eliminada`, () => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== projectId ? p : { ...p, tasks: insertAt(p.tasks, task, idx) })) })))
+    onClose()
+  }
   const subtasks = task.subtasks ?? []
   const addSub = (e) => { e.preventDefault(); if (!sub.trim()) return; set({ subtasks: [...subtasks, { id: crypto.randomUUID(), text: sub.trim(), done: false }] }); setSub('') }
   const c = colorOf(data, projectId)

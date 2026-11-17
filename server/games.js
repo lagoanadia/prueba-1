@@ -2,6 +2,9 @@
 // Se crean UNA vez al día por idioma con la IA, el servidor los comprueba y se guardan en KV:
 //   "game:<juego>:<idioma>:<fecha>"  → el mismo reto para todo el mundo ese día.
 import { groqChat } from './groq.js'
+// Panales ya comprobados (pangrama común + todas las palabras del diccionario con esas letras), uno distinto cada día
+import { pickEntries } from './crossword-bank.js'
+import BEE_PUZZLES from './bee-puzzles.json' with { type: 'json' }
 
 // Mayúsculas sin tildes, pero la Ñ se queda (es una letra más en español)
 const strip = (w) => String(w ?? '').toUpperCase().replace(/Ñ/g, '\u0001').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0001/g, 'Ñ').replace(/[^A-ZÑ]/g, '')
@@ -30,15 +33,19 @@ const FALLBACK_BEE = {
   en: { pangram: 'PAINTER', center: 'A', words: ['PAINTER', 'PAIN', 'PAINT', 'TAPE', 'RATE', 'TRAIN', 'PART', 'PANT', 'PANE', 'NEAR', 'EARN', 'RAIN', 'PIRATE', 'PARENT', 'TAPER', 'PATIENT', 'PATTERN', 'APART', 'TRAP', 'PEAR', 'TEAR', 'NEAT'] },
 }
 
-async function makeBee(env, lang) {
-  const sys = `Create a Spelling Bee puzzle in ${LANG[lang]}. First pick a common ${LANG[lang]} word (the "pangram") that has EXACTLY 7 DIFFERENT letters. Its 7 letters are the puzzle letters; choose a vowel of it as the center. Then list 25 to 40 common, real ${LANG[lang]} words of 4 or more letters built ONLY from those 7 letters (letters may repeat) and ALWAYS containing the center letter. No proper nouns. Answer only JSON: {"pangram":"...","center":"A","words":["...","..."]}`
-  for (let i = 0; i < 5; i++) {
-    try {
-      const bee = cleanBee(parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.8 })))
-      if (bee) return bee
-    } catch (e) { console.error(e) }
-  }
-  return cleanBee(FALLBACK_BEE[lang])
+/**
+ * El panal del día sale del banco de panales comprobados (rota por fecha, así no se repite en semanas).
+ * Antes lo creaba la IA y, cuando fallaba, salía siempre el mismo de reserva.
+ */
+export function beeFor(lang, date) {
+  const list = BEE_PUZZLES[lang] ?? BEE_PUZZLES.es
+  const day = Math.floor(Date.parse(`${date}T12:00:00Z`) / 864e5)
+  // Paso primo con la longitud de la lista: recorre todos sin que los seguidos se parezcan
+  const p = list[(day * 7) % list.length]
+  return cleanBee(p) ?? cleanBee(FALLBACK_BEE[lang])
+}
+async function makeBee(env, lang, date) {
+  return beeFor(lang, date)
 }
 
 // ---------- Mini crucigrama ----------
@@ -108,11 +115,14 @@ export function bestCrossword(entries) {
   return best
 }
 
-async function makeCrossword(env, lang) {
-  const sys = `Write 26 entries for a small crossword in ${LANG[lang]}: common words of 3 to 5 letters (mostly 3 and 4, many vowels) (no spaces, no proper nouns) with a short, clever, general-knowledge clue each (culture, science, language, everyday life). Answer only JSON: {"entries":[{"answer":"...","clue":"..."}]}`
-  for (let i = 0; i < 3; i++) {
-    const raw = parse(await groqChat([{ role: 'system', content: sys }, { role: 'user', content: `Seed ${Math.random().toString(36).slice(2, 8)}` }], env, { json: true, temperature: 0.9 }))
-    const cw = bestCrossword(raw?.entries ?? [])
+/**
+ * Crucigrama del día a partir del banco de cultura general: cada día un trozo distinto del banco
+ * (antes la IA daba palabras demasiado fáciles y, al fallar, se repetían siempre las mismas de reserva).
+ */
+async function makeCrossword(env, lang, date) {
+  for (const n of [40, 52, 70]) {
+    // Si con el trozo de hoy no sale una rejilla buena, se coge un trozo algo más grande
+    const cw = bestCrossword(pickEntries(lang, date, n))
     if (cw) return cw
   }
   throw new Error('No he podido crear el crucigrama de hoy')
@@ -121,11 +131,12 @@ async function makeCrossword(env, lang) {
 const MAKERS = { bee: makeBee, crossword: makeCrossword }
 /** El juego del día (creado la primera vez que alguien lo pide ese día, y guardado). */
 export async function dailyGame(env, game, lang, date) {
-  const key = `game:${game}:${lang}:${date}`
+  const key = `game:${game === 'bee' ? 'bee2' : game === 'crossword' ? 'cw2' : game}:${lang}:${date}`
   const cached = await env.DATA.get(key, 'json')
   if (cached) return cached
-  const made = { ...(await MAKERS[game](env, lang)), date, lang }
-  await env.DATA.put(key, JSON.stringify(made), { expirationTtl: 60 * 60 * 24 * 21 })
+  const made = { ...(await MAKERS[game](env, lang, date)), date, lang }
+  // El de reserva solo se guarda un rato: así, cuando la IA vuelva a funcionar, se crea el del día de verdad
+  await env.DATA.put(key, JSON.stringify(made), { expirationTtl: made.fallback ? 60 * 30 : 60 * 60 * 24 * 21 })
   return made
 }
 export const isGame = (g) => g in MAKERS

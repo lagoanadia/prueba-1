@@ -1,7 +1,7 @@
 import ShareButton from '../../components/ShareButton.jsx'
 import { useEffect, useState } from 'react'
 import History from '../../components/History.jsx'
-import { formatShort, todayISO, weekDays } from '../../lib/dates.js'
+import { formatShort, lastDays, todayISO, weekDays } from '../../lib/dates.js'
 
 /**
  * Una cosa buena del día.
@@ -42,23 +42,54 @@ export default function Good({ size, data, update }) {
   const history = <History title="Cosas buenas" empty="Aún no hay días anteriores" items={past.map((d) => ({ id: d, date: formatShort(d), text: good[d] }))} />
 
   // Esta semana: bolita amarilla en los días en que has escrito algo bueno
-  const strip = (
-    <div className="good-week" aria-label="Esta semana">
-      {weekDays(today).map((d, i) => <span key={d} className={d === today ? 'is-today' : ''}>{'LMXJVSD'[i]}<i className={good[d] ? 'on' : ''} /></span>)}
+  const week = weekDays(today)
+  const doneWeek = week.filter((d) => good[d]).length
+  const dots = (mini = false) => (
+    <div className={`good-week ${mini ? 'mini' : ''}`} aria-label={`Esta semana: ${doneWeek} de 7`}>
+      {week.map((d, i) => <span key={d} className={d === today ? 'is-today' : ''}>{!mini && 'LMXJVSD'[i]}<i className={good[d] ? 'on' : ''} /></span>)}
     </div>
   )
+  const share = <ShareButton kind="good" title="una cosa buena de hoy" className="pill pill-sm" data={{ text: saved }} />
+  const quote = (cls = '') => (
+    <button className={`good-read ${cls}`} onClick={edit} aria-label="Editar la cosa buena de hoy" title="Toca para editar">
+      <span className="good-quote">{saved}</span>
+    </button>
+  )
 
-  // Vista de lectura: el texto guardado. Al tocarlo pasa a edición.
+  // Vista de lectura (al tocar el texto se edita). Cada tamaño aprovecha su espacio:
+  // S: frase + semana · T: tarjeta alta + semana · M: frase a un lado y «5/7» al otro · L: tarjeta + lo bueno de cada día de la semana
   if (!editing) {
+    if (size === 'S') return <div className="gd gd-S">{quote()}{dots()}</div>
+    if (size === 'M') {
+      return (
+        <div className="gd gd-M">
+          {history}
+          <div className="gd-main">{quote()}<span className="gd-share">{share}</span></div>
+          <div className="gd-side"><b className="gd-count">{doneWeek}<small>/7</small></b><span className="gd-lab">Esta semana</span>{dots(true)}</div>
+        </div>
+      )
+    }
+    if (size === 'T') {
+      return (
+        <div className="gd gd-T">
+          {history}
+          {quote('gd-card')}
+          <span className="gd-lab">Esta semana · {doneWeek}/7</span>
+          {dots()}
+          <span className="gd-share">{share}</span>
+        </div>
+      )
+    }
     return (
-      <>
-        {size !== 'S' && history}
-        <button className={`good-read good-${size}`} onClick={edit} aria-label="Editar la cosa buena de hoy" title="Toca para editar">
-          <span className="good-quote">{saved}</span>
-        </button>
-        {size !== 'S' && strip}
-        {size !== 'S' && <span className="good-share"><ShareButton kind="good" title="una cosa buena de hoy" className="pill pill-sm" data={{ text: saved }} /></span>}
-      </>
+      <div className="gd gd-L">
+        {history}
+        {quote('gd-card')}
+        <span className="gd-lab">Días anteriores</span>
+        <ul className="gd-days">
+          {lastDays(7, today).slice(0, 6).reverse().map((d) => <li key={d}><em>{'DLMXJVS'[new Date(`${d}T12:00:00`).getDay()]} {Number(d.slice(8))}</em><span className={good[d] ? '' : 'muted'}>{good[d] || '—'}</span></li>)}
+        </ul>
+        <span className="gd-share">{share}</span>
+      </div>
     )
   }
 

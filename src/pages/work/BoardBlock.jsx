@@ -1,4 +1,5 @@
 import Select from '../../components/Select.jsx'
+import { undoable, insertAt } from '../../lib/undo.js'
 import Avatar from '../../components/Avatar.jsx'
 import { useShared } from './SharedCtx.js'
 import { useEffect, useRef, useState } from 'react'
@@ -165,7 +166,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
                       onClick={() => assign(t.id, m.username === me ? null : me)} title={`${t.milestoneId ? `Del hito «${milestoneOf({ ...t, projectId: sharedProject.id })?.title ?? ''}» · ` : ''}${m.username === me ? 'Toca para soltarla' : 'Toca para asumirla tú'}`}>{t.milestoneId && <i className="wk-ms-dia" />}{t.title}</button>
                       <span className="wk-bubble-tools">
                         <button type="button" onClick={() => setEditing({ projectId: sharedProject.id, taskId: t.id })} aria-label={`Editar ${t.title}`} title="Editar"><Icon name="pen" size={11} strokeWidth={3} /></button>
-                        <button type="button" onClick={() => window.confirm(`¿Borrar «${t.title}»?`) && update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== sharedProject.id ? p : { ...p, tasks: p.tasks.filter((x) => x.id !== t.id) })) }))} aria-label={`Borrar ${t.title}`} title="Borrar"><Icon name="close" size={11} strokeWidth={3} /></button>
+                        <button type="button" onClick={() => { const idx = sharedProject.tasks.findIndex((x) => x.id === t.id); update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== sharedProject.id ? p : { ...p, tasks: p.tasks.filter((x) => x.id !== t.id) })) })); undoable(`Tarea «${t.title}» eliminada`, () => update((d) => ({ ...d, projects: d.projects.map((p) => (p.id !== sharedProject.id ? p : { ...p, tasks: insertAt(p.tasks, t, idx) })) }))) }} aria-label={`Borrar ${t.title}`} title="Borrar"><Icon name="close" size={11} strokeWidth={3} /></button>
                       </span>
                     </span>
                   ))}

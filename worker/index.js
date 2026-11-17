@@ -18,6 +18,7 @@ import friends from './routes/friends.js'
 import shares from './routes/shares.js'
 import social from './routes/social.js'
 import games from './routes/games.js'
+import define from './routes/define.js'
 import transcribe from './routes/transcribe.js'
 import command from './routes/command.js'
 import organize from './routes/organize.js'
@@ -38,6 +39,7 @@ const ROUTES = {
   '/api/shares': shares,
   '/api/social': social,
   '/api/games': games,
+  '/api/define': define,
   '/api/transcribe': transcribe,
   '/api/command': command,
   '/api/organize': organize,

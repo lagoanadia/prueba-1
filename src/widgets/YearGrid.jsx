@@ -1,25 +1,31 @@
 import PackedGrid from './PackedGrid.jsx'
-import { addDays, todayISO } from '../lib/dates.js'
+import { addDays, todayISO, yearStart } from '../lib/dates.js'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
-/** El año en 12 mini-meses (4 por fila), cada uno con sus semanas en filas de 7 (lunes a domingo). */
-export default function YearGrid({ colorFor, onDay }) {
+/** Los 12 meses desde el día que empezaste (4 por fila), cada uno con sus semanas en filas de 7 (lunes a domingo). Los días anteriores al comienzo quedan vacíos. */
+export default function YearGrid({ colorFor, onDay, since }) {
   const today = todayISO()
-  const year = Number(today.slice(0, 4))
+  const start = yearStart(since, today)
+  const end = addDays(start, 364)
+  const [sy, sm] = start.split('-').map(Number)
   return (
     <div className="year-months">
-      {MONTHS.map((name, m) => {
+      {Array.from({ length: 12 }, (_, k) => {
+        const first = new Date(sy, sm - 1 + k, 1)
+        const year = first.getFullYear()
+        const m = first.getMonth()
         const days = new Date(year, m + 1, 0).getDate()
-        const offset = (new Date(year, m, 1).getDay() + 6) % 7
+        const offset = (first.getDay() + 6) % 7
         return (
-          <div key={name} className="ymonth">
-            <span className="ymonth-name">{name}</span>
+          <div key={`${year}-${m}`} className="ymonth">
+            <span className="ymonth-name">{MONTHS[m]}</span>
             <div className="ymonth-grid">
               {Array.from({ length: offset }, (_, i) => <span key={`o${i}`} />)}
               {Array.from({ length: days }, (_, i) => {
                 const d = iso(year, m, i + 1)
+                if (d < start || d > end) return <span key={d} />
                 return <button key={d} className={`ypx ${d === today ? 'px-today' : ''}`} style={{ background: colorFor(d) }}
                   onClick={() => onDay?.(d)} disabled={!onDay || d > today} aria-label={d} title={d} />
               })}
@@ -31,10 +37,9 @@ export default function YearGrid({ colorFor, onDay }) {
   )
 }
 
-/** El año entero como un bloque de cuadrados que llena el widget (45 columnas si caben, igual en todos los widgets). */
-export function YearMass({ colorFor, onDay }) {
-  const year = Number(todayISO().slice(0, 4))
-  const total = (new Date(year + 1, 0, 1) - new Date(year, 0, 1)) / 86400000
-  const days = Array.from({ length: total }, (_, i) => addDays(`${year}-01-01`, i))
+/** Los 365 días desde que empezaste como un bloque de cuadrados que llena el widget (45 columnas si caben, igual en todos los widgets). */
+export function YearMass({ colorFor, onDay, since }) {
+  const start = yearStart(since, todayISO())
+  const days = Array.from({ length: 365 }, (_, i) => addDays(start, i))
   return <PackedGrid days={days} colorFor={colorFor} onDay={onDay} preferredCols={45} max={40} />
 }

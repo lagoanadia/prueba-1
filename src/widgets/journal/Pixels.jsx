@@ -1,13 +1,14 @@
 import AddPopup from '../AddPopup.jsx'
-import { useRef, useState } from 'react'
-import MonthGrid, { EMPTY, OneWeek, TwoWeeks } from '../MonthGrid.jsx'
-import YearGrid, { YearMass } from '../YearGrid.jsx'
+import { useEffect, useRef, useState } from 'react'
+import { EMPTY } from '../MonthGrid.jsx'
 import Icon from '../../components/Icon.jsx'
 import Chips from '../Chips.jsx'
 import { lastDays, streak, todayISO } from '../../lib/dates.js'
+import { sinceFromData } from '../since.js'
+import { HabitMonth, HabitWeek } from './HabitViews.jsx'
 
 const COLORS = ['#3185FC', '#EFABFF', '#F9DC5C', '#3DDC97', '#E84855']
-const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
+const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
 
 /**
  * Pixels de hábitos: UN widget con todos los hábitos. Se cambia de hábito con los chips
@@ -19,8 +20,7 @@ export default function Pixels({ size, data, update, config, setConfig }) {
   const habits = data.habits ?? []
   const pixels = data.pixels ?? {}
   const [current, setCurrent] = useState(null)
-  const [range, setRange] = useState('año')
-  const [yearView, setYearView] = useState('masa') // el año entero en bloque, o por meses
+  const [range, setRange] = useState('semana')
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(false) // lápiz de la esquina: enseña la ✕ de cada hábito
   const [name, setName] = useState('')
@@ -29,11 +29,16 @@ export default function Pixels({ size, data, update, config, setConfig }) {
   const pick = (id) => { setCurrent(id); setConfig?.({ habit: id }) }
   const [menu, setMenu] = useState(false)
   const swipeX = useRef(null)
+  const since = sinceFromData(data, today)
+  useEffect(() => { if (!data.since) update((d) => (d.since ? d : { ...d, since })) }, []) // eslint-disable-line react-hooks/exhaustive-deps -- se guarda el día en que empezaste
 
-  const toggle = (day) => update((d) => {
-    const days = d.pixels?.[habit.id] ?? []
-    return { ...d, pixels: { ...d.pixels, [habit.id]: days.includes(day) ? days.filter((x) => x !== day) : [...days, day] } }
+  const toggleFor = (id, day) => update((d) => {
+    const days = d.pixels?.[id] ?? []
+    return { ...d, pixels: { ...d.pixels, [id]: days.includes(day) ? days.filter((x) => x !== day) : [...days, day] } }
   })
+  const toggle = (day) => toggleFor(habit.id, day)
+  // «Todos»: se ven todos los hábitos juntos (por defecto en los tamaños grandes)
+  const showAll = (config?.habit ?? current ?? 'all') === 'all' && size !== 'S'
   const removeHabit = (h) => {
     if (!window.confirm(`¿Borrar «${h.name}»? Se borran también sus días marcados.`)) return
     update((d) => { const px = { ...(d.pixels ?? {}) }; delete px[h.id]; return { ...d, habits: (d.habits ?? []).filter((x) => x.id !== h.id), pixels: px } })
@@ -66,8 +71,9 @@ export default function Pixels({ size, data, update, config, setConfig }) {
   const tabs = (
     <div className="w-row">
       <div className="chips chips-sm">
+        {habits.length > 1 && <span className={`chip chip-habit ${showAll ? 'chip-on' : ''}`}><button onClick={() => pick('all')}>Todos</button></span>}
         {habits.map((h) => (
-          <span key={h.id} className={`chip chip-habit ${habit?.id === h.id ? 'chip-on' : ''}`}>
+          <span key={h.id} className={`chip chip-habit ${!showAll && habit?.id === h.id ? 'chip-on' : ''}`}>
             <button onClick={() => pick(h.id)}>{h.name}</button>
             {editing && <button className="chip-x" onClick={() => removeHabit(h)} aria-label={`Borrar ${h.name}`}><Icon name="close" size={10} strokeWidth={3.2} color="#B3261E" /></button>}
           </span>
@@ -115,28 +121,19 @@ export default function Pixels({ size, data, update, config, setConfig }) {
       {pencil}{addBtn}
       {tabs}
       {addForm}
-      {size === 'T' ? (
-        <div className="fill slide-in" key={habit.id}><MonthGrid colorFor={color} onDay={toggle} /></div>
-      ) : size === 'M' ? (
-        <div className="fill slide-in" key={habit.id}><TwoWeeks colorFor={color} onDay={toggle} /></div>
-      ) : (
-        <>
-          <div className="mood-bar">
-            <Chips options={RANGES} value={range} onChange={setRange} small />
-            {range === 'año' && (
-              <>
-                <button className={`mood-view ${yearView === 'meses' ? 'on' : ''}`} onClick={() => setYearView('meses')} aria-label="Año por meses" title="Por meses"><Icon name="table" size={15} /></button>
-                <button className={`mood-view ${yearView === 'masa' ? 'on' : ''}`} onClick={() => setYearView('masa')} aria-label="Año en bloque" title="En bloque"><Icon name="tree" size={15} /></button>
-              </>
-            )}
-          </div>
-          <div className="slide-in fill" key={habit.id + range + yearView}>
-            {range === 'semana' && <OneWeek colorFor={color} onDay={toggle} />}
-            {range === 'mes' && <MonthGrid colorFor={color} onDay={toggle} />}
-            {range === 'año' && (yearView === 'masa' ? <YearMass colorFor={color} onDay={toggle} /> : <YearGrid colorFor={color} onDay={toggle} />)}
-          </div>
-        </>
-      )}
+      {(() => {
+        const list = showAll ? habits : [habit]
+        const view = size === 'T' ? 'mes' : size === 'M' ? 'semana' : range
+        return (
+          <>
+            {size === 'L' && <div className="mood-bar"><Chips options={RANGES} value={range} onChange={setRange} small /></div>}
+            <div className="slide-in fill hv-fill" key={(showAll ? 'all' : habit.id) + view}>
+              {view === 'semana' ? <HabitWeek list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />
+                : <HabitMonth list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />}
+            </div>
+          </>
+        )
+      })()}
     </>
   )
 }

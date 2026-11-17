@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import TimePicker from '../../components/TimePicker.jsx'
 import Icon from '../../components/Icon.jsx'
 import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { fromMin, toMin } from './healthUtils.js'
@@ -205,7 +206,7 @@ function PillForm({ baseIndex, onSave }) {
                   {f.items.length > 1 && <button type="button" className="pl-item-x" onClick={() => setF((x) => ({ ...x, items: x.items.filter((y) => y.id !== it.id) }))} aria-label="Quitar esta pastilla" title="Quitar"><Icon name="close" size={13} /></button>}
                 </div>
                 <Stepper label="Tomas al día" value={it.per} onChange={(v) => setItem(it.id, { per: v })} max={6} />
-                <label className="pl-step"><span>Primera toma</span><input className="pl-time" type="time" value={it.first} onChange={(e) => setItem(it.id, { first: e.target.value })} aria-label="Primera toma" /></label>
+                <label className="pl-step"><span>Primera toma</span><TimePicker className="pl-tp" value={it.first} onChange={(v) => setItem(it.id, { first: v })} label="Primera toma" /></label>
               </div>
             ))}
             {f.items.length < 5 && <button type="button" className="pl-additem" onClick={() => setF((x) => ({ ...x, items: [...x.items, blank(x.items.length)] }))}><Icon name="plus" size={13} strokeWidth={2.8} /> Añadir otra pastilla</button>}
@@ -214,7 +215,7 @@ function PillForm({ baseIndex, onSave }) {
       ) : (
         <>
           <Stepper label="Tomas al día" value={f.per} onChange={(v) => set('per', v)} max={6} />
-          <label className="pl-step"><span>Primera toma</span><input className="pl-time" type="time" value={f.first} onChange={(e) => set('first', e.target.value)} aria-label="Primera toma" /></label>
+          <label className="pl-step"><span>Primera toma</span><TimePicker className="pl-tp" value={f.first} onChange={(v) => set('first', v)} label="Primera toma" /></label>
         </>
       )}
       <div className="pl-calc"><b>{perDay} {perDay === 1 ? 'toma' : 'tomas'} al día</b>{isT ? <> · acabas el {formatShort(addDays(todayISO(), f.days - 1))}</> : <> · {times.join(' · ')}</>}</div>

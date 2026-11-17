@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import Bee from './Bee.jsx'
@@ -46,6 +46,15 @@ function Launcher({ game, size, data, update }) {
   const { name, color, Game } = GAMES[game]
   const [open, setOpen] = useState(false)
   useEffect(() => { if (!open) return; const k = (e) => e.key === 'Escape' && setOpen(false); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [open])
+  // El reloj solo corre con el juego abierto: al cerrar se apunta la pausa y al volver se descuenta ese rato
+  const mounted = useRef(false)
+  useEffect(() => {
+    const g = (d) => d.games?.[game]
+    const set = (d, patch) => ({ ...d, games: { ...(d.games ?? {}), [game]: { ...g(d), ...patch } } })
+    if (open) update((d) => (g(d)?.pausedAt && g(d).startedAt && !g(d).done ? set(d, { startedAt: g(d).startedAt + (Date.now() - g(d).pausedAt), pausedAt: null }) : d))
+    else if (mounted.current) update((d) => (g(d)?.startedAt && !g(d).done && !g(d).pausedAt ? set(d, { pausedAt: Date.now() }) : d))
+    mounted.current = true
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   const status = statusOf(game, data)
   return (
     <>
@@ -55,7 +64,7 @@ function Launcher({ game, size, data, update }) {
           <b className="game-name">{name}</b>
           <span className="game-status">{status}</span>
         </span>
-        <span className="game-go">{status === 'Sin empezar' ? 'Jugar' : status.startsWith('Resuelto') ? 'Ver' : 'Seguir'} →</span>
+        <span className="game-go">{status === 'Sin empezar' ? 'Jugar' : status.startsWith('Resuelto') ? 'Ver' : 'Seguir'}</span>
       </button>
       {open && createPortal(
         <div className="popup game-popup" role="dialog" aria-modal="true" aria-label={name}>

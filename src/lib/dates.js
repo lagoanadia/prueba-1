@@ -72,3 +72,9 @@ export function weekStart(iso = todayISO()) {
 export const weekDays = (iso = todayISO()) => Array.from({ length: 7 }, (_, i) => addDays(weekStart(iso), i))
 /** "2026-11-05" -> "jue" */
 export const dayShort = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')
+
+/**
+ * El año de los widgets del Journal empieza el día que empezaste a usarlos (no el 1 de enero) y dura 365 días;
+ * pasado el primer año es el último año (hoy es siempre el último día de lo ya vivido). `since` = "YYYY-MM-DD".
+ */
+export const yearStart = (since, today = todayISO()) => { const min = addDays(today, -364); return since && since > min ? since : min }

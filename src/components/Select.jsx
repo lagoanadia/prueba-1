@@ -28,10 +28,11 @@ export default function Select({ value, options, onChange, label, className = ''
     if (!open) return
     const close = (e) => { if (!list.current?.contains(e.target) && !btn.current?.contains(e.target)) setOpen(false) }
     const away = () => setOpen(false)
+    const awayScroll = (e) => { if (!list.current?.contains(e.target)) setOpen(false) } // el scroll de la propia lista (al centrar la opción elegida) no la cierra
     document.addEventListener('pointerdown', close)
     window.addEventListener('resize', away)
-    window.addEventListener('scroll', away, true)
-    return () => { document.removeEventListener('pointerdown', close); window.removeEventListener('resize', away); window.removeEventListener('scroll', away, true) }
+    window.addEventListener('scroll', awayScroll, true)
+    return () => { document.removeEventListener('pointerdown', close); window.removeEventListener('resize', away); window.removeEventListener('scroll', awayScroll, true) }
   }, [open])
 
   const onKey = (e) => {
