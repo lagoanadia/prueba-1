@@ -24,7 +24,20 @@ export default function Cookbook({ data, update }) {
   // Al empezar a buscar, el cursor pasa al buscador (al final del texto) para seguir escribiendo
   useEffect(() => { const el = searchRef.current; if (q != null && el && document.activeElement !== el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) } }, [q != null]) // eslint-disable-line react-hooks/exhaustive-deps
   const norm = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const results = q == null ? [] : dishes.filter((x) => { const n = norm(q).trim(); return n && (norm(x.name).includes(n) || (x.ingredients ?? []).some((i) => norm(i).includes(n))) })
+  // La búsqueda va por principio de palabra («pe» encuentra «Pepito» y «pescado», no «Ensaladilla»): primero las recetas por su nombre
+  // y después las que llevan ese ingrediente (diciendo cuál)
+  const words = (t) => norm(t).split(/[^a-z0-9]+/).filter(Boolean)
+  const starts = (text, qw) => { const w = words(text); return qw.every((k) => w.some((x) => x.startsWith(k))) }
+  const results = q == null ? [] : (() => {
+    const qw = words(q)
+    if (!qw.length) return []
+    const out = []
+    for (const x of dishes) {
+      if (starts(x.name, qw)) out.push({ ...x, via: null })
+      else { const i = [...(x.ingredients ?? []), ...(x.spices ?? [])].find((n) => starts(n, qw)); if (i) out.push({ ...x, via: i }) }
+    }
+    return out.sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)))
+  })()
 
   const has = new Set(dishes.map((d) => letterOf(d.name)))
   const shown = letter ?? (active ? letterOf(active.name) : LETTERS.find((l) => has.has(l)))
@@ -60,6 +73,7 @@ export default function Cookbook({ data, update }) {
           {results.map((x) => (
             <button key={x.id} className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null) }}>
               <span className="fd-rec-name">{x.name}</span>
+              {x.via && <span className="fd-via">lleva {x.via.toLowerCase()}</span>}
               <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
             </button>
           ))}

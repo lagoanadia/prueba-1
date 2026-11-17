@@ -4095,3 +4095,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pm-meal { background: #FDF0FF; border-radius: 10px; padding: 5px 8px; font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pm-meal span { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #A12CB3; }
 .pm-empty { font-size: 12px; text-transform: none; }
+
+.fd-via { font-size: 11.5px; color: #80868B; }
