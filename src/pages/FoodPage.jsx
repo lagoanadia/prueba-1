@@ -11,6 +11,7 @@ import useBlockDrag from '../hooks/useBlockDrag.js'
 import useExitEdit from '../hooks/useExitEdit.js'
 import { AddSquare, freeSpan } from './study/Planner.jsx'
 import { dishesOf } from '../widgets/comida/food.js'
+import QuickNote from './study/QuickNote.jsx'
 
 // Bloques de la página (se pueden mover, cambiar de ancho, quitar y volver a añadir, como en Estudios)
 const BLOCKS = {
@@ -36,8 +37,12 @@ export default function FoodPage({ data, update }) {
   useExitEdit(editing, () => { setEditing(false); setAdding(false) }, '.plan-block, .page-actions, .customize, .popup, .add-square')
   const move = (i, dir) => setBlocks((b) => { const n = [...b]; const j = i + dir; if (j < 0 || j >= n.length) return b; [n[i], n[j]] = [n[j], n[i]]; return n })
   const setSpan = (id, span) => setBlocks((b) => b.map((x) => (x.id === id ? { ...x, span } : x)))
-  const removeBlock = (blk) => setBlocks((b) => b.filter((x) => x.id !== blk.id))
-  const addBlock = (type) => { setBlocks((b) => [...b, { id: type, type, span: BLOCKS[type].span }]); setAdding(false) }
+  const removeBlock = (blk) => {
+    setBlocks((b) => b.filter((x) => x.id !== blk.id))
+    if (blk.type === 'note') update((d) => { const q = { ...(d.quickNotes ?? {}) }; delete q[blk.id]; return { ...d, quickNotes: q } })
+  }
+  // Las notas se pueden añadir cuantas quieras (como en Estudios); el resto, solo si no está ya
+  const addBlock = (type) => { setBlocks((b) => [...b, { id: type === 'note' ? crypto.randomUUID() : type, type, span: type === 'note' ? 1 : BLOCKS[type].span }]); setAdding(false) }
   const missing = Object.keys(BLOCKS).filter((t) => !blocks.some((b) => b.type === t))
 
   const saveDish = (dish) => {
@@ -45,6 +50,10 @@ export default function FoodPage({ data, update }) {
     update((d) => ({ ...d, activeDish: id, dishes: [...dishesOf(d), { id, time: null, ...dish }] }))
   }
   const render = (b) => {
+    if (b.type === 'note') {
+      const note = data.quickNotes?.[b.id] ?? { html: '' }
+      return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
+    }
     if (b.type === 'menu') return <MenuCard data={data} update={update} />
     if (b.type === 'cookbook') return <Cookbook data={data} update={update} />
     if (b.type === 'shopping') return <ShoppingCard data={data} update={update} />
@@ -59,7 +68,7 @@ export default function FoodPage({ data, update }) {
   // El recetario ancho ocupa el alto de las tarjetas pequeñas que tiene al lado (como antes)
   // (tantas filas como tarjetas estrechas haya, hasta 3), así no quedan huecos debajo
   const narrow = blocks.filter((b) => b.span === 1).length
-  const rowsOf = (b) => (b.type === 'cookbook' && b.span === 2 ? Math.max(1, Math.min(3, narrow + (editing && missing.length ? 1 : 0))) : 1)
+  const rowsOf = (b) => (b.type === 'cookbook' && b.span === 2 ? Math.max(1, Math.min(3, narrow + (editing ? 1 : 0))) : 1)
 
   return (
     <div className="page food">
@@ -75,12 +84,12 @@ export default function FoodPage({ data, update }) {
       </header>
       <div className={`plan-grid fd-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
-          <section key={b.id} className={`plan-block fd-block span-${b.span} ${rowsOf(b) > 1 ? 'fd-tall' : ''} ${dnd.cls(b)}`} style={{ gridRow: `span ${rowsOf(b)}` }} aria-label={BLOCKS[b.type]?.label} {...dnd.props(b)}>
-            {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} name={BLOCKS[b.type]?.label} />}
+          <section key={b.id} className={`plan-block fd-block ${b.type === 'note' ? 'is-note' : ''} span-${b.span} ${rowsOf(b) > 1 ? 'fd-tall' : ''} ${dnd.cls(b)}`} style={{ gridRow: `span ${rowsOf(b)}` }} aria-label={BLOCKS[b.type]?.label ?? 'Nota'} {...dnd.props(b)}>
+            {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} name={BLOCKS[b.type]?.label ?? 'nota'} />}
             {render(b)}
           </section>
         ))}
-        {editing && missing.length > 0 && <AddSquare span={blocks.some((b) => b.type === 'cookbook' && b.span === 2) ? 1 : freeSpan(blocks)} open={adding} onOpen={setAdding} options={missing.map((t) => ({ type: t, label: BLOCKS[t].label, icon: BLOCKS[t].icon }))} onPick={addBlock} />}
+        {editing && <AddSquare span={blocks.some((b) => b.type === 'cookbook' && b.span === 2) ? 1 : freeSpan(blocks)} open={adding} onOpen={setAdding} options={[{ type: 'note', label: 'Nota', icon: 'note' }, ...missing.map((t) => ({ type: t, label: BLOCKS[t].label, icon: BLOCKS[t].icon }))]} onPick={addBlock} />}
       </div>
     </div>
   )
