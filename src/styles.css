@@ -4025,3 +4025,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .mood-bar-t { justify-content: center; }
 .mood-bar-t .mood-face-btn svg { width: 26px; height: 26px; }
 .game-panel .bee .bee-stage .bee-word-wrap { padding-top: 34px; }
+
+/* Comida: consejo o anotación de una receta */
+.fd-tip-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; border: 0; outline: none; background: #FFF8D6; border-radius: 14px; padding: 12px 14px; resize: vertical; line-height: 1.45; }
+.fd-tip { display: flex; gap: 10px; align-items: flex-start; background: #FFF8D6; border-radius: 14px; padding: 10px 14px; font-size: 14px; line-height: 1.45; margin: 4px 0 10px; } .fd-tip svg { flex: none; margin-top: 2px; }
+.fd-ideas-hint { padding: 2px 4px; }
+
+.fd-steps li { align-items: center; } .fd-step-x { border: 0; background: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #80868B; flex: none; padding: 0; } .fd-step-x:hover { background: #FDECEE; color: #B3261E; }

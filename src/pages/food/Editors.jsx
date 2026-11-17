@@ -6,13 +6,15 @@ import { suggestIngredients } from '../../services/ingredientsService.js'
 export function IngredientsEditor({ dish, items, onChange }) {
   const [text, setText] = useState('')
   const [ideas, setIdeas] = useState([])
+  const [looking, setLooking] = useState(false)
   const key = items.join('|')
 
   // Sugerencias de la IA: sin etiqueta, con pausa para no pedir en cada tecla; si falla, se escribe a mano
   useEffect(() => {
-    if (!dish.trim()) { setIdeas([]); return undefined }
+    if (dish.trim().length < 3) { setIdeas([]); setLooking(false); return undefined }
     let alive = true
-    const t = setTimeout(() => { suggestIngredients(dish, items).then((r) => alive && setIdeas(r)).catch(() => alive && setIdeas([])) }, 700)
+    setLooking(true)
+    const t = setTimeout(() => { suggestIngredients(dish, items).then((r) => { if (alive) { setIdeas(r); setLooking(false) } }).catch(() => { if (alive) { setIdeas([]); setLooking(false) } }) }, 700)
     return () => { alive = false; clearTimeout(t) }
   }, [dish, key]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -30,9 +32,10 @@ export function IngredientsEditor({ dish, items, onChange }) {
         ))}
         <input className="fd-line" placeholder="Escribe un ingrediente…" value={text} maxLength={40} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} aria-label="Ingrediente" />
       </div>
+      {dish.trim().length >= 3 && (looking || ideas.length === 0) && <span className="fd-hint fd-ideas-hint">{looking ? 'Buscando ideas para «' + dish.trim() + '»…' : 'Sin ideas ahora: escribe tus ingredientes a mano'}</span>}
       {ideas.length > 0 && (
         <div className="fd-chips">
-          {ideas.map((x) => <button type="button" key={x} className="fd-chip is-dash" onClick={() => add(x)}>+ {x}</button>)}
+          {ideas.filter((x) => !items.some((i) => i.toLowerCase() === x.toLowerCase())).map((x) => <button type="button" key={x} className="fd-chip is-dash" onClick={() => add(x)}>+ {x}</button>)}
         </div>
       )}
     </div>
@@ -66,6 +69,7 @@ export function StepsEditor({ steps, onChange }) {
           <b>{i + 1}</b>
           <input ref={(el) => { refs.current[i] = el }} className="fd-line" value={x} maxLength={160} placeholder={i === rows.length - 1 ? 'Escribe el paso y pulsa Intro…' : ''}
             onChange={(e) => set(i, e.target.value)} onKeyDown={(e) => key(e, i)} aria-label={`Paso ${i + 1}`} />
+          {(rows.length > 1 || x) && <button type="button" className="fd-step-x" onClick={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [])} aria-label={`Borrar el paso ${i + 1}`} title="Borrar paso"><Icon name="close" size={12} strokeWidth={3} /></button>}
         </li>
       ))}
     </ol>

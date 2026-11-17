@@ -106,6 +106,7 @@ export default function Cookbook({ data, update }) {
             {open.time && <span className="fd-chip"><Icon name="clock" size={13} />{open.time} min</span>}
           </div>
           <hr />
+          {open.note && <div className="fd-tip"><Icon name="idea" size={18} /><span>{open.note}</span></div>}
           <div className="fd-cols">
             <div><b>Ingredientes</b>{open.ingredients.length ? <ul>{open.ingredients.map((x, i) => <li key={x + i}>{x}</li>)}</ul> : <p className="fd-hint">Sin ingredientes</p>}</div>
             <div><b>Preparación</b>{open.steps.length ? <ol>{open.steps.map((x, i) => <li key={x + i}>{x}</li>)}</ol> : <p className="fd-hint">Sin pasos</p>}</div>
