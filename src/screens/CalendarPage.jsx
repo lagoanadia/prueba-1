@@ -41,6 +41,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   const [filter, setFilter] = useState('todo')
   const [cursor, setCursor] = useState(today) // día de referencia de lo que se ve
   const [adding, setAdding] = useState(null) // fecha del evento nuevo (o null)
+  const [editing, setEditing] = useState(null) // evento que se está cambiando
 
   // Rango visible
   const monthStart = `${monthOf(cursor)}-01`
@@ -59,7 +60,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   const mirrored = new Set((boards.calendario?.data?.events ?? []).map((e) => e.gcalId).filter(Boolean))
   const googleItems = gcal.events.filter((e) => !mirrored.has(e.id)).map((e) => ({ key: 'g' + e.id, date: e.date, title: e.time ? `${e.time} ${e.title}` : e.title, type: 'evento', area: null, google: true, done: false }))
 
-  const all = [...calendarItems({ boards, change, entries, toggleEntry, from, to }), ...googleItems]
+  const all = [...calendarItems({ boards, change, entries, toggleEntry, from, to, editEvent: setEditing }), ...googleItems]
   const items = all.filter((i) => (filter === 'todo' ? true : filter === 'pendientes' ? !i.done : i.done))
   const byDay = (date) => items.filter((i) => i.date === date)
 
@@ -105,7 +106,6 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
       {gcal.error && <p className="error gcal-error">{gcal.error}</p>}
       <div className="cal-legend">
         {Object.values(TYPES).map((t) => <span key={t.label}>{t.glyph} {t.label}</span>)}
-        {AREAS.map((a) => <span key={a.id}><span className="dot" style={{ background: a.color }} /> {a.label}</span>)}
       </div>
 
       {view === 'mes' && (
@@ -116,7 +116,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
             return (
               <div key={date} className={`cal-cell ${monthOf(date) !== monthOf(cursor) ? 'is-out' : ''} ${date === today ? 'is-today' : ''}`} onClick={() => openDay(date)}>
                 <span className="cal-num">{Number(date.slice(8))}</span>
-                {list.slice(0, MAX_IN_CELL).map((it) => <Chip key={it.key} item={it} onClick={(e) => { e.stopPropagation(); openDay(date) }} />)}
+                {list.slice(0, MAX_IN_CELL).map((it) => <Chip key={it.key} item={it} onClick={(e) => { e.stopPropagation(); if (it.edit) it.edit(); else openDay(date) }} />)}
                 {list.length > MAX_IN_CELL && <span className="cal-more">+{list.length - MAX_IN_CELL} más</span>}
                 <span className="cal-dots" aria-hidden="true">{list.slice(0, 4).map((it) => <span key={it.key} style={{ background: getArea(it.area)?.color ?? '#9AA0A6' }} />)}</span>
               </div>
@@ -130,7 +130,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
           {Array.from({ length: 7 }, (_, i) => addDays(from, i)).map((date) => (
             <div key={date} className={`cal-col ${date === today ? 'is-today' : ''}`} onClick={() => openDay(date)}>
               <span className="cal-wd">{dayShort(date)} {Number(date.slice(8))}</span>
-              {byDay(date).map((it) => <Chip key={it.key} item={it} onClick={(e) => { e.stopPropagation(); openDay(date) }} />)}
+              {byDay(date).map((it) => <Chip key={it.key} item={it} onClick={(e) => { e.stopPropagation(); if (it.edit) it.edit(); else openDay(date) }} />)}
             </div>
           ))}
         </div>
@@ -143,7 +143,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
             {byDay(cursor).map((it) => (
               <li key={it.key} className={it.done ? 'is-done' : ''} style={{ '--c': getArea(it.area)?.color ?? '#DADCE0' }}>
                 <span className="cal-day-type">{TYPES[it.type].glyph} {TYPES[it.type].label}</span>
-                <span className="cal-day-title">{it.title}</span>
+                {it.edit ? <button type="button" className="cal-day-title cal-day-edit" onClick={it.edit} title="Tocar para cambiarlo">{it.title}</button> : <span className="cal-day-title">{it.title}</span>}
                 {getArea(it.area) && <span className="w-hint">{getArea(it.area).label}</span>}
                 {it.toggle && <input type="checkbox" checked={it.done} onChange={it.toggle} aria-label={`Marcar «${it.title}»`} />}
                 {it.remove && <button className="prio-x" onClick={it.remove} aria-label="Borrar">×</button>}
@@ -153,6 +153,9 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
         </div>
       )}
 
+      {editing && createPortal(<NewEvent initial={editing} date={editing.date} onClose={() => setEditing(null)}
+        onSave={(ev) => { change('calendario', (d) => ({ ...d, events: (d.events ?? []).map((x) => (x.id === editing.id ? { ...x, ...ev, done: x.done } : x)) })); setEditing(null) }}
+        onDelete={() => { change('calendario', (d) => ({ ...d, events: (d.events ?? []).filter((x) => x.id !== editing.id) })); setEditing(null) }} />, document.body)}
       {adding && createPortal(<NewEvent date={adding} onClose={() => setAdding(null)}
         onSave={(ev) => {
           const id = crypto.randomUUID()
@@ -168,20 +171,21 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
 }
 
 /** Pop-up «Nuevo evento»: título, fecha, tipo y (opcional) área. */
-function NewEvent({ date, onClose, onSave }) {
-  const [title, setTitle] = useState('')
+function NewEvent({ date, initial = null, onClose, onSave, onDelete = null }) {
+  const [title, setTitle] = useState(initial?.title ?? '')
   const [day, setDay] = useState(date)
-  const [type, setType] = useState('evento')
-  const [area, setArea] = useState(null)
+  const [type, setType] = useState(initial?.type ?? 'evento')
+  const [area, setArea] = useState(initial?.area ?? null)
   const save = (e) => { e.preventDefault(); if (title.trim() && day) onSave({ title: title.trim(), date: day, type, area, done: false }) }
   return (
-    <div className="popup" role="dialog" aria-modal="true" aria-label="Nuevo evento">
+    <div className="popup" role="dialog" aria-modal="true" aria-label={initial ? 'Editar evento' : 'Nuevo evento'}>
       <div className="popup-backdrop" onClick={onClose} />
       <form className="popup-panel new-event" onSubmit={save}>
-        <header className="area-head"><h2>Nuevo evento</h2><button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
+        <header className="area-head"><h2>{initial ? 'Editar evento' : 'Nuevo evento'}</h2><button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
         <div className="w-form"><input autoFocus placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} /><input type="date" value={day} onChange={(e) => setDay(e.target.value)} style={{ flex: 'none' }} /></div>
         <div className="chips">{['evento', 'cumpleaños', 'tarea'].map((t) => <button type="button" key={t} className={`chip ${type === t ? 'chip-on' : ''}`} onClick={() => setType(t)}>{TYPES[t].glyph} {TYPES[t].label}</button>)}</div>
         <div className="chips">{AREAS.map((a) => <button type="button" key={a.id} className={`chip ${area === a.id ? 'chip-on' : ''}`} style={{ '--c': a.color }} onClick={() => setArea(area === a.id ? null : a.id)}><span className="dot" style={{ background: a.color }} /> {a.label}</button>)}</div>
+        {onDelete && <button type="button" className="text-link cal-del" onClick={() => window.confirm(`¿Borrar «${initial.title}»?`) && onDelete()}>Borrar evento</button>}
         <button className="btn-primary" disabled={!title.trim()}>Guardar<span className="btn-arrow"><Icon name="arrow" size={16} strokeWidth={2.6} /></span></button>
       </form>
     </div>

@@ -4187,3 +4187,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .fd-place-pill button { width: 20px; height: 20px; border-radius: 50%; border: 0; background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
 .fd-menu.is-placing .fd-slot { outline-color: #CDA3DD; }
 @media (prefers-reduced-motion: reduce) { .fd-place-pill { animation: none; } }
+
+.cal-day-edit { border: 0; background: none; font: inherit; text-align: left; cursor: pointer; padding: 0; color: inherit; } .cal-day-edit:hover { text-decoration: underline; }
+.cal-del { color: #B3261E; align-self: flex-start; }

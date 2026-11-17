@@ -12,7 +12,7 @@ export const TYPES = {
   entrega: { label: 'Entrega', glyph: '➤' },
 }
 
-export function calendarItems({ boards, change, entries, toggleEntry, from, to }) {
+export function calendarItems({ boards, change, entries, toggleEntry, from, to, editEvent = null }) {
   const items = []
   const d = (a) => boards[a]?.data ?? {}
   const inRange = (date) => date && date >= from && date <= to
@@ -26,6 +26,7 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to }
       key: ev.id + date, date, title: ev.title, type: ev.type, area: ev.area ?? null, done: Boolean(ev.done),
       toggle: ev.type === 'cumpleaños' ? null : () => change('calendario', (x) => ({ ...x, events: x.events.map((e) => (e.id === ev.id ? { ...e, done: !e.done } : e)) })),
       remove: () => change('calendario', (x) => ({ ...x, events: x.events.filter((e) => e.id !== ev.id) })),
+      edit: editEvent ? () => editEvent(ev) : null, // tocar el evento lo abre para cambiarlo
     }))
   })
   // Tareas apuntadas por voz
