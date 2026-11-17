@@ -4116,3 +4116,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .fd-rec-wrap { position: relative; min-width: 0; display: flex; } .fd-rec-wrap > .fd-rec { width: 100%; padding-right: 40px; }
 .fd-rec-place { position: absolute; top: 7px; right: 7px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #F9E3FF; display: grid; place-items: center; cursor: pointer; padding: 0; transition: transform .15s var(--ease); } .fd-rec-place:hover { transform: scale(1.1); background: #EFABFF; }
 @media (prefers-reduced-motion: reduce) { .fd-rec-place { transition: none; } }
+/* Spelling Bee: el panal centrado de verdad (la palabra va encima sin empujarlo hacia abajo) */
+.game-panel .bee .bee-stage { position: relative; justify-content: center; padding: 14px 0 0; }
+.game-panel .bee .bee-stage .bee-word-wrap { position: absolute; top: 0; left: 0; right: 0; padding-top: 0; height: 40px; justify-content: center; z-index: 1; }
+.game-panel .bee .bee-stage .bee-toast { top: -4px; }
+.game-panel .bee .bee-stage .hive { --hw: min(calc((100cqh - 60px) / 2.75), calc(100cqw / 2.7), 130px); margin: auto; }
+.game-panel .bee .bee-actions { margin: 14px 0 4px; }
