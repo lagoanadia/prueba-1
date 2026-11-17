@@ -3908,3 +3908,31 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .post-menu-h { font-size: 11px; font-weight: 700; color: var(--muted); }
 .post-menu-day { font-weight: 700; text-transform: capitalize; }
 .post-menu-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Minijuegos: todo cabe en la ventana, sin scroll (se mide con el alto de la propia ventana) ---------- */
+.game-panel { overflow: hidden; }
+/* Spelling Bee: palabra, panal y botones juntos y centrados en el hueco que queda */
+.game-panel .bee { --hw: clamp(44px, min(11.5cqh, 15cqw), 104px); gap: 8px; }
+.game-panel .bee .hive { transform: none; margin: 4px auto; }
+.game-panel .bee .bee-word-wrap { margin-top: auto; padding-top: 28px; }
+.game-panel .bee .bee-word { font-size: clamp(20px, 4cqh, 30px); min-height: 1.4em; }
+.game-panel .bee .bee-actions { margin-top: 10px; margin-bottom: auto; }
+/* Mini crucigrama: rejilla a la izquierda (tan grande como deja el alto) y pistas a la derecha */
+.game-panel:has(.cwd) { max-width: 940px; }
+.game-panel .cwd { --gw: min(calc((100cqh - 190px) * var(--w) / var(--h)), 58cqw); display: grid; grid-template-columns: var(--gw) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "clue tools" "grid lists" ". lists"; column-gap: 22px; row-gap: 10px; align-items: start; }
+.game-panel .cwd-time { position: absolute; top: 26px; right: 74px; margin: 0; }
+.game-panel .cwd-clue { grid-area: clue; }
+.game-panel .cwd-grid { grid-area: grid; width: var(--gw); height: auto; aspect-ratio: var(--w) / var(--h); align-self: start; justify-self: center; }
+.game-panel .cwd-cell { font-size: clamp(15px, calc(var(--gw) / var(--w) * .45), 30px); }
+.game-panel .cwd-tools { grid-area: tools; justify-content: flex-start; align-self: center; flex-wrap: wrap; gap: 6px; }
+.game-panel .cwd-tools .pill { padding: 5px 12px; font-size: 13px; }
+.game-panel .cwd-lists { grid-area: lists; align-self: stretch; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 2px; }
+.game-panel .cwd-lists > div { display: flex; flex-direction: column; gap: 4px; }
+.game-panel .cwd-list { overflow: visible; font-size: 14px; }
+.game-panel .cwd-list li { padding: 6px 10px; border-radius: 10px; }
+/* En el móvil (ventana estrecha): una columna, la rejilla del ancho que quepa y las pistas debajo con su propio scroll */
+@container (max-width: 640px) {
+  .game-panel .cwd { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); grid-template-areas: "tools" "clue" "grid" "lists"; }
+  .game-panel .cwd { --gw: min(100cqw - 48px, calc((100cqh - 360px) * var(--w) / var(--h))); }
+  .game-panel .cwd-cell { font-size: clamp(14px, 6cqw, 26px); }
+}

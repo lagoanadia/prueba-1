@@ -82,7 +82,7 @@ export default function Crossword({ data, update }) {
   }
 
   return (
-    <div className="cwd">
+    <div className="cwd" style={{ '--w': cw.w, '--h': cw.h }}>
       <span className={`cwd-time ${done ? 'ok' : ''}`}>{done ? `¡Resuelto en ${clock(seconds)}!` : clock(seconds)}</span>
       <div className="cwd-clue">
         <button className="cwd-nav" onClick={() => goClue(-1)} aria-label="Pista anterior"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
