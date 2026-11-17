@@ -4042,3 +4042,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .hv-kinds { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
 .hv-kind-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .hv-kind-row .sel { min-width: 150px; }
+
+/* Constancia (Salud) con el estilo del Mood tracker: ocupa todo el widget */
+.sa-consist-v2 { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.sa-consist-v2 .cs-filters { margin: 0; }
+.sa-consist-v2 .hv-mday.full { color: #3C4043; }
+.sa-consist-v2 .sa-legend { justify-content: center; }

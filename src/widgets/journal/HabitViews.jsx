@@ -110,8 +110,8 @@ export function DayCalendar({ mode, since, today, paint, onTap }) {
           const off = d < since || d > today
           const fill = !off ? paint(d) : undefined
           return (
-            <button key={d} className={`hv-mday ${off ? 'off' : ''} ${d > today ? 'fut' : ''} ${d === today ? 'today' : ''} ${fill ? 'full' : ''}`} disabled={off}
-              style={fill ? { background: fill } : undefined} onClick={() => onTap(d)} aria-label={d}>
+            <button key={d} className={`hv-mday ${off ? 'off' : ''} ${d > today ? 'fut' : ''} ${d === today ? 'today' : ''} ${fill ? 'full' : ''}`} disabled={off || !onTap}
+              style={fill ? { background: fill } : undefined} onClick={() => onTap?.(d)} aria-label={d}>
               <span>{Number(d.slice(8))}</span>
             </button>
           )

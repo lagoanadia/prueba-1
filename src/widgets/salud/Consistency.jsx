@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import Icon from '../../components/Icon.jsx'
+import Chips from '../Chips.jsx'
+import { DayCalendar } from '../journal/HabitViews.jsx'
 import { todayISO, weekDays } from '../../lib/dates.js'
 import { doneEntries } from './healthUtils.js'
 import { colorOf, sportsOf } from './sports.js'
 
-const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-const WEEK = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 // Los colores de las asignaturas de Estudios: verde y amarillo de su paleta
 const BOTH = 'color-mix(in srgb, #1FA463 72%, #FFFFFF)'
 const SPORT = 'color-mix(in srgb, #1FA463 38%, #FFFFFF)'
@@ -16,57 +15,52 @@ const STEPS = 'color-mix(in srgb, #EAB308 62%, #FFFFFF)'
  * verde fuerte si las dos cosas, verde claro solo deporte, amarillo solo pasos. Los filtros enseñan solo pasos o un deporte concreto.
  */
 export default function Consistency({ data }) {
-  const [shift, setShift] = useState(0)
+  const [range, setRange] = useState('mes')
   const [filter, setFilter] = useState('all') // 'all' | 'steps' | nombre de un deporte
   const today = todayISO()
-  const [y0, m0] = today.split('-').map(Number)
-  const m = ((m0 - 1 + shift) % 12 + 12) % 12
-  const y = y0 + Math.floor((m0 - 1 + shift) / 12)
+  const [y, m0] = today.split('-').map(Number)
+  const m = m0 - 1
   const n = new Date(y, m + 1, 0).getDate()
-  const lead = (new Date(y, m, 1).getDay() + 6) % 7 // huecos antes del día 1 (la semana empieza en lunes)
   const iso = (d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
   const sports = sportsOf(data)
   const goal = data.stepsGoal ?? 8000
   const workouts = doneEntries(data, today, weekDays, true) // lo del plan se da por hecho solo
   const did = (date) => workouts.some((w) => w.date === date && (filter === 'all' || filter === 'steps' || w.sport === filter))
   const walked = (date) => (data.steps?.[date] ?? 0) >= goal
-  const state = (d) => {
-    const date = iso(d)
+  const stateOf = (date) => {
     const sp = filter === 'steps' ? false : did(date)
     const st = filter === 'all' || filter === 'steps' ? walked(date) : false
     return sp && st ? 'both' : sp ? 'sport' : st ? 'steps' : 'none'
   }
+  const state = (d) => stateOf(iso(d))
   const days = Array.from({ length: n }, (_, i) => i + 1)
   const elapsed = days.filter((d) => iso(d) <= today)
   const met = elapsed.filter((d) => state(d) !== 'none').length
-  const colors = { both: BOTH, sport: filter !== 'all' && filter !== 'steps' ? `color-mix(in srgb, ${colorOf(sports, filter)} 66%, #FFFFFF)` : SPORT, steps: STEPS, none: 'var(--soft)' }
+  const colors = { both: BOTH, sport: filter !== 'all' && filter !== 'steps' ? `color-mix(in srgb, ${colorOf(sports, filter)} 66%, #FFFFFF)` : SPORT, steps: STEPS, none: undefined }
+  // Desde el primer día con algo apuntado (deporte o pasos): antes, en gris, como en el Mood tracker
+  const firsts = [...workouts.map((w) => w.date), ...Object.keys(data.steps ?? {})].filter(Boolean).sort()
+  const since = data.since ?? (firsts[0] && firsts[0] < today ? firsts[0] : today)
 
+  // Como el Mood tracker: filtros y Semana / Mes arriba, calendario con fechas pintadas y la leyenda abajo
   return (
-    <div className="sa-consist">
-      <div className="cs-filters" role="group" aria-label="Qué contar">
-        <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>Todo</button>
-        <button className={filter === 'steps' ? 'on' : ''} onClick={() => setFilter('steps')} aria-pressed={filter === 'steps'}>Pasos</button>
-        {sports.map((sp) => <button key={sp} className={filter === sp ? 'on' : ''} onClick={() => setFilter(sp)} aria-pressed={filter === sp}><i style={{ background: colorOf(sports, sp) }} />{sp}</button>)}
+    <div className="sa-consist sa-consist-v2">
+      <div className="mood-bar">
+        <div className="cs-filters" role="group" aria-label="Qué contar">
+          <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')} aria-pressed={filter === 'all'}>Todo</button>
+          <button className={filter === 'steps' ? 'on' : ''} onClick={() => setFilter('steps')} aria-pressed={filter === 'steps'}>Pasos</button>
+          {sports.map((sp) => <button key={sp} className={filter === sp ? 'on' : ''} onClick={() => setFilter(sp)} aria-pressed={filter === sp}><i style={{ background: colorOf(sports, sp) }} />{sp}</button>)}
+        </div>
+        <span className="fd-grow" />
+        <Chips options={[{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]} value={range} onChange={setRange} small />
       </div>
-      <div className="cs-month" style={{ '--rows': Math.ceil((lead + n) / 7) + 1 }}>
-        {WEEK.map((d) => <span key={d} className="cs-wd">{d}</span>)}
-        {Array.from({ length: lead }, (_, i) => <i key={`l${i}`} />)}
-        {days.map((d) => {
-          const s = state(d)
-          const future = iso(d) > today
-          return <span key={d} className={`cs-day ${future ? 'is-future' : ''} ${iso(d) === today ? 'is-today' : ''}`} style={s !== 'none' ? { background: colors[s], color: '#3C4043' } : undefined} title={`${d} de ${MONTHS[m]}`} aria-label={`${d} de ${MONTHS[m]}`} />
-        })}
+      <div className="slide-in fill hv-fill" key={range + filter}>
+        <DayCalendar mode={range} since={since} today={today} paint={(d) => colors[stateOf(d)]} />
       </div>
       <div className="sa-legend">
         {filter === 'all' && <><span><i style={{ background: BOTH }} />Deporte y pasos</span><span><i style={{ background: SPORT }} />Solo deporte</span><span><i style={{ background: STEPS }} />Solo pasos</span></>}
         {filter === 'steps' && <span><i style={{ background: BOTH }} />Objetivo de pasos cumplido</span>}
         {filter !== 'all' && filter !== 'steps' && <span><i style={{ background: colorOf(sports, filter) }} />Día con {filter}</span>}
-        <b>{met} de {elapsed.length} días</b>
-      </div>
-      <div className="sa-row sa-center">
-        <button className="fd-ib" onClick={() => setShift(shift - 1)} aria-label="Mes anterior"><Icon name="left" size={16} /></button>
-        <b>{MONTHS[m]} {y}</b>
-        <button className="fd-ib" onClick={() => setShift(shift + 1)} disabled={shift >= 0} aria-label="Mes siguiente"><Icon name="right" size={16} /></button>
+        <b>{met} de {elapsed.length} días este mes</b>
       </div>
     </div>
   )
