@@ -4111,3 +4111,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .fd-slot[draggable="true"] { cursor: grab; } .fd-slot[draggable="true"]:active { cursor: grabbing; }
 .fd-ib.fd-place { background: #F9E3FF; }
 @media (prefers-reduced-motion: reduce) { .fd-place-banner { animation: none; } }
+
+/* Recetario: el libro para poner una receta en el planificador, en cada tarjeta */
+.fd-rec-wrap { position: relative; min-width: 0; display: flex; } .fd-rec-wrap > .fd-rec { width: 100%; padding-right: 40px; }
+.fd-rec-place { position: absolute; top: 7px; right: 7px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #F9E3FF; display: grid; place-items: center; cursor: pointer; padding: 0; transition: transform .15s var(--ease); } .fd-rec-place:hover { transform: scale(1.1); background: #EFABFF; }
+@media (prefers-reduced-motion: reduce) { .fd-rec-place { transition: none; } }

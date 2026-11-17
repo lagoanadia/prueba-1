@@ -71,11 +71,14 @@ export default function Cookbook({ data, update, onPlace }) {
       {q != null && q.trim() ? (
         <div className="fd-cards">
           {results.map((x) => (
-            <button key={x.id} className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null) }}>
-              <span className="fd-rec-name">{x.name}</span>
-              {x.via && <span className="fd-via">lleva {x.via.toLowerCase()}</span>}
-              <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
-            </button>
+            <div key={x.id} className="fd-rec-wrap">
+              <button className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null) }}>
+                <span className="fd-rec-name">{x.name}</span>
+                {x.via && <span className="fd-via">lleva {x.via.toLowerCase()}</span>}
+                <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
+              </button>
+              {onPlace && <button type="button" className="fd-rec-place" onClick={() => onPlace(x.id)} aria-label={`Poner «${x.name}» en el planificador`} title="Poner en el planificador: tocas las casillas donde la quieras"><Icon name="book" size={15} /></button>}
+            </div>
           ))}
           {results.length === 0 && <p className="fd-empty">Sin resultados para «{q}»</p>}
         </div>
@@ -95,11 +98,14 @@ export default function Cookbook({ data, update, onPlace }) {
       {dishes.length > 0 && list.length === 0 && <p className="fd-empty">Sin recetas con la {shown}</p>}
       <div className="fd-cards">
         {list.map((x) => (
-          <button key={x.id} draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
-            onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copyMove'; setDragging(true) }} onDragEnd={() => { setDragging(false); setOver(false) }}>
-            <span className="fd-rec-name"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} />{x.name}</span>
-            <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
-          </button>
+          <div key={x.id} className="fd-rec-wrap">
+            <button draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
+              onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copyMove'; setDragging(true) }} onDragEnd={() => { setDragging(false); setOver(false) }}>
+              <span className="fd-rec-name"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} />{x.name}</span>
+              <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
+            </button>
+            {onPlace && <button type="button" className="fd-rec-place" onClick={() => onPlace(x.id)} aria-label={`Poner «${x.name}» en el planificador`} title="Poner en el planificador: tocas las casillas donde la quieras"><Icon name="book" size={15} /></button>}
+          </div>
         ))}
       </div>
 
