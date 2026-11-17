@@ -4030,3 +4030,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .mood-an-wide .mood-an-pane { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
 .mood-an-wide .mood-an-big { justify-content: center; }
 .mood-an-wide .mood-an-rank { flex: none; justify-content: center; padding-left: 28px; border-left: 1px solid var(--line); }
+
+/* Hábitos: editar el tipo de cada uno (cada día / X por semana / solo apuntar) */
+.hv-kinds { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.hv-kind-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hv-kind-row .sel { min-width: 150px; }
