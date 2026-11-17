@@ -28,7 +28,9 @@ export default function MenuCard({ data, update, placing = null, scrollTo = true
   const meals = mealsOf(data)
   const menu = data.menu ?? {}
 
-  const set = (day, meal, value) => update((d) => ({ ...d, menu: { ...d.menu, [day]: { ...d.menu?.[day], [meal]: value || null } } }))
+  // Si pones una receta en una comida que no tenía (una «Cena» en la hora de comer), el recetario la apunta también como de esa comida
+  const tagged = (d, value, meal) => (!value || value === OUT || isWith(value) ? d.dishes : (d.dishes ?? []).map((x) => (x.id === value && !x.for.includes(meal) ? { ...x, for: Object.keys(MEALS).filter((k) => k === meal || x.for.includes(k)) } : x)))
+  const set = (day, meal, value) => update((d) => ({ ...d, dishes: tagged(d, value, meal), menu: { ...d.menu, [day]: { ...d.menu?.[day], [meal]: value || null } } }))
   const toggleMeal = (m) => update((d) => {
     const cur = mealsOf(d)
     const next = cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]
@@ -78,7 +80,7 @@ export default function MenuCard({ data, update, placing = null, scrollTo = true
     const a = get(from); const b = get(to)
     put(to, a)
     if (!copy) put(from, b)
-    return { ...d, menu: m }
+    return { ...d, dishes: tagged(d, a, to[1]), menu: m }
   })
   const drop = (e, day, meal) => {
     e.preventDefault(); setOver(null)
