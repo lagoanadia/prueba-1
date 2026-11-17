@@ -4122,3 +4122,56 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .game-panel .bee .bee-stage .bee-toast { top: -4px; }
 .game-panel .bee .bee-stage .hive { --hw: min(calc((100cqh - 60px) / 2.75), calc(100cqw / 2.7), 130px); margin: auto; }
 .game-panel .bee .bee-actions { margin: 14px 0 4px; }
+
+/* ---------- Móvil: los widgets se adaptan a su tamaño ---------- */
+/* El título no se mete debajo de los botones de la esquina (historial, +, lápiz) y se corta con «…» si no cabe */
+.widget:has(.w-history, .w-add-btn, .w-corner) > .w-title { padding-right: 44px; }
+.widget > .w-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 899px) {
+  /* El grande ocupa todo el ancho y 3 filas: así su contenido no se aplasta */
+  .grid > .w-L { grid-row: span 3; }
+  /* Barras de botones más compactas */
+  .mood-bar { gap: 6px; }
+  .mood-bar .chip, .cs-filters button { padding: 3px 10px; font-size: 12px; }
+  .mood-bar-l .mood-face-btn svg { width: 24px; height: 24px; }
+  .mood-bar-l .mood-face-btn span { font-size: 9px; }
+  .sa-legend { font-size: 11px; gap: 4px 10px; flex-wrap: wrap; }
+}
+/* Móvil: Comida y Trabajo caben en el ancho de la pantalla */
+@media (max-width: 899px) {
+  .plan-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .plan-grid > * { min-width: 0; max-width: 100%; grid-column: 1 / -1 !important; grid-row: auto !important; height: auto !important; }
+  /* Menú: cada día con sus comidas en 2 columnas que caben */
+  .fd-week { grid-template-columns: minmax(0, 1fr); }
+  .fd-day { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .fd-day > .fd-dn { grid-column: 1 / -1; }
+  .fd-slot { min-height: 48px; }
+  .fd-title b { font-size: 18px; }
+  /* Proyectos: el título arriba y las tarjetas debajo, a todo el ancho */
+  .wk-block.wk-projects { flex-direction: column !important; flex-wrap: nowrap !important; align-items: stretch !important; min-height: 0; }
+  .wk-block.wk-projects > .wk-title { width: 100%; flex: none !important; }
+  .wk-projects .wk-chips { flex-direction: column; align-items: stretch; }
+  .wk-projects .wk-project { width: 100%; max-width: none; }
+  /* Cronograma: menos fechas arriba para que no se monten */
+  .tl-weeks span:not(.tl-hoy):nth-of-type(even) { visibility: hidden; }
+  .tl-weeks span { font-size: 10px; }
+}
+@media (max-width: 899px) {
+  /* Títulos de los widgets estrechos más pequeños para que quepan junto a sus botones */
+  .grid > .w-S > .w-title, .grid > .w-T > .w-title { font-size: 17px; }
+  /* Ciclo menstrual: el anillo y los síntomas uno debajo del otro, sin salirse */
+  .cy-main { flex-direction: column; align-items: stretch; gap: 12px; }
+  .cy-ring { width: 130px; height: 130px; align-self: center; }
+  .cy-tile { min-width: 0; align-self: stretch; }
+  .cy-side .chips, .cy-syms { flex-wrap: wrap; }
+}
+@media (max-width: 899px) {
+  /* Entrenamientos: la rueda arriba y Semana / Mes con la lista debajo */
+  .wk-wheel { flex-direction: column !important; padding: 8px !important; gap: 12px !important; }
+  .wk-wheel .wk-donut { width: min(60vw, 200px) !important; height: min(60vw, 200px) !important; }
+  .wk-side { width: 100%; padding-right: 0; }
+}
+@media (max-width: 899px) {
+  .widget *:has(> .wk-range) { flex-wrap: wrap; justify-content: center; }
+  .widget .wk-range { flex-wrap: wrap; }
+}
