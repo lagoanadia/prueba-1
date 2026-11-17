@@ -4025,8 +4025,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .mood-bar-t { justify-content: center; }
 .mood-bar-t .mood-face-btn svg { width: 26px; height: 26px; }
 .game-panel .bee .bee-stage .bee-word-wrap { padding-top: 34px; }
-/* Análisis del Mood tracker grande: ocupa el sitio del calendario, centrado y más ancho */
-.hv-fill > .mood-an { align-self: center; width: min(100%, 360px); border-left: none; padding-left: 0; flex: 1; justify-content: center; }
-.hv-fill > .mood-an .mood-an-body { flex: none; align-items: center; text-align: center; }
-.hv-fill > .mood-an .mood-an-big { justify-content: center; }
-.hv-fill > .mood-an .mood-an-rank, .hv-fill > .mood-an .mood-an-weeks { width: 100%; }
+/* Análisis del Mood tracker grande: las dos partes una al lado de la otra, centradas en todo el ancho */
+.hv-fill > .mood-an-wide { width: 100%; flex: 1; border-left: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center; }
+.mood-an-wide .mood-an-pane { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.mood-an-wide .mood-an-big { justify-content: center; }
+.mood-an-wide .mood-an-rank { flex: none; justify-content: center; padding-left: 28px; border-left: 1px solid var(--line); }
