@@ -4025,3 +4025,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .mood-bar-t { justify-content: center; }
 .mood-bar-t .mood-face-btn svg { width: 26px; height: 26px; }
 .game-panel .bee .bee-stage .bee-word-wrap { padding-top: 34px; }
+/* Análisis del Mood tracker grande: ocupa el sitio del calendario, centrado y más ancho */
+.hv-fill > .mood-an { align-self: center; width: min(100%, 360px); border-left: none; padding-left: 0; flex: 1; justify-content: center; }
+.hv-fill > .mood-an .mood-an-body { flex: none; align-items: center; text-align: center; }
+.hv-fill > .mood-an .mood-an-big { justify-content: center; }
+.hv-fill > .mood-an .mood-an-rank, .hv-fill > .mood-an .mood-an-weeks { width: 100%; }
