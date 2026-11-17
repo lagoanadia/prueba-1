@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Chips from '../Chips.jsx'
-import { DayCalendar } from '../journal/HabitViews.jsx'
+import { DayCalendar, YearCalendar } from '../journal/HabitViews.jsx'
 import { todayISO, weekDays } from '../../lib/dates.js'
 import { doneEntries } from './healthUtils.js'
 import { colorOf, sportsOf } from './sports.js'
@@ -51,16 +51,16 @@ export default function Consistency({ data }) {
           {sports.map((sp) => <button key={sp} className={filter === sp ? 'on' : ''} onClick={() => setFilter(sp)} aria-pressed={filter === sp}><i style={{ background: colorOf(sports, sp) }} />{sp}</button>)}
         </div>
         <span className="fd-grow" />
-        <Chips options={[{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]} value={range} onChange={setRange} small />
+        <Chips options={[{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]} value={range} onChange={setRange} small />
       </div>
       <div className="slide-in fill hv-fill" key={range + filter}>
-        <DayCalendar mode={range} since={since} today={today} paint={(d) => colors[stateOf(d)]} />
+        {range === 'año' ? <YearCalendar since={since} today={today} paint={(d) => colors[stateOf(d)]} /> : <DayCalendar mode={range} since={since} today={today} paint={(d) => colors[stateOf(d)]} />}
       </div>
       <div className="sa-legend">
         {filter === 'all' && <><span><i style={{ background: BOTH }} />Deporte y pasos</span><span><i style={{ background: SPORT }} />Solo deporte</span><span><i style={{ background: STEPS }} />Solo pasos</span></>}
         {filter === 'steps' && <span><i style={{ background: BOTH }} />Objetivo de pasos cumplido</span>}
         {filter !== 'all' && filter !== 'steps' && <span><i style={{ background: colorOf(sports, filter) }} />Día con {filter}</span>}
-        <b>{met} de {elapsed.length} días este mes</b>
+        {range !== 'año' && <b>{met} de {elapsed.length} días este mes</b>}
       </div>
     </div>
   )

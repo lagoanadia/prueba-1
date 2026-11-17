@@ -70,12 +70,35 @@ export default function FriendsPage() {
 }
 
 // ---------- Feed ----------
+/** Escribir algo en el feed: lo ven tus amigos (un mes en el feed; en tu perfil, siempre). */
+function Composer({ run }) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const send = async (e) => {
+    e.preventDefault()
+    if (!text.trim() || busy) return
+    setBusy(true)
+    try { await run('post', { kind: 'note', data: { text: text.trim() }, to: 'feed' }); setText('') } finally { setBusy(false) }
+  }
+  return (
+    <form className="card feed-card fp-compose" onSubmit={send}>
+      <textarea placeholder="¿Qué quieres contar?" value={text} onChange={(e) => setText(e.target.value)} maxLength={300} rows={2}
+        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send(e) }} />
+      <div className="fp-compose-bar">
+        <span className="w-hint">{text.length ? `${text.length}/300` : 'Lo verán tus amigos'}</span>
+        <button className="pill pill-on" disabled={!text.trim() || busy}>Publicar</button>
+      </div>
+    </form>
+  )
+}
+
 function Feed({ state, run }) {
   const birthdays = state.friends.filter((f) => f.birthday)
   const studying = state.friends.filter((f) => f.session)
 
   return (
     <div className="feed">
+      <Composer run={run} />
       {state.gifts.map((g) => (
         <div key={g.id} className="card feed-card feed-special">
           <Avatar avatar={{ ...g.from.avatar, accessory: g.item }} size={56} />
@@ -180,6 +203,7 @@ function PostBody({ p, onRead, onSave, saved }) {
     </div>
   )
   if (p.kind === 'good') return <blockquote className="post-quote">{d.text}</blockquote>
+  if (p.kind === 'note' && !d.title) return <p className="post-text">{d.text}</p>
   if (p.kind === 'menu') return (
     <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
       <b>Menú · {d.range}</b>
