@@ -56,6 +56,8 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to }
       if (s && s !== 'Descanso') items.push({
         key: 's' + date, date, title: s, type: 'evento', area: 'salud', done: Boolean(d('salud').planDone?.[date]),
         toggle: () => change('salud', (x) => ({ ...x, planDone: { ...x.planDone, [date]: !x.planDone?.[date] } })),
+        // Este plan se repetía todas las semanas y no había forma de quitarlo: se pone ese día de la semana en «Descanso»
+        remove: () => { if (window.confirm(`«${s}» se repite todos los ${new Date(`${date}T12:00:00`).toLocaleDateString('es', { weekday: 'long' })}. ¿Quitarla de todas las semanas?`)) change('salud', (x) => ({ ...x, plan: (x.plan ?? []).map((v, i) => (i === (new Date(`${date}T12:00:00`).getDay() + 6) % 7 ? 'Descanso' : v)) })) },
       })
     }
   }
