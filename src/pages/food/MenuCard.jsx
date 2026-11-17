@@ -64,8 +64,11 @@ export default function MenuCard({ data, update, placing = null, scrollTo = true
     if (!placing) return undefined
     if (scrollTo) sectionRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
     const k = (e) => e.key === 'Escape' && onPlaced()
+    // Tocar fuera de las recetas y de las casillas la suelta
+    const away = (e) => { if (!e.target.closest?.('.fd-slot, .fd-rec-wrap, .fd-place-pill, .fd-place')) onPlaced() }
     window.addEventListener('keydown', k)
-    return () => window.removeEventListener('keydown', k)
+    document.addEventListener('pointerdown', away)
+    return () => { window.removeEventListener('keydown', k); document.removeEventListener('pointerdown', away) }
   }, [placing]) // eslint-disable-line react-hooks/exhaustive-deps
   // Mover una comida a otra casilla (si el destino tiene algo, se intercambian); con Ctrl o Alt se copia
   const moveSlot = (from, to, copy) => update((d) => {
@@ -87,7 +90,9 @@ export default function MenuCard({ data, update, placing = null, scrollTo = true
 
   return (
     <section ref={sectionRef} className={`card fd-card fd-menu ${placing ? 'is-placing' : ''}`} aria-label="Menú de la semana">
-      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Planificador de comidas</b><span className="fd-grow" />
+      <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Planificador de comidas</b>
+        {placing && <span className="fd-place-pill" role="status"><Icon name="book" size={14} color="#8C3FA8" /><b>{dishName(dishes, placing)}</b> en la mano<button type="button" onClick={onPlaced} aria-label="Soltar la receta" title="Soltar"><Icon name="close" size={11} strokeWidth={3} /></button></span>}
+        <span className="fd-grow" />
         {!empty && <ShareButton kind="menu" title="el menú de la semana" className="fd-pill" data={shareData} />}
         <button className={`fd-ib ${recover ? 'on' : ''}`} onClick={() => setRecover(!recover)} aria-expanded={recover} aria-label="Basarme en una semana anterior" title="Recuperar una semana anterior"><Icon name="restore" size={18} /></button>
       </div>
@@ -102,12 +107,6 @@ export default function MenuCard({ data, update, placing = null, scrollTo = true
             ))}
           </div>
         </>
-      )}
-      {placing && (
-        <div className="fd-place-banner" role="status">
-          <Icon name="book" size={16} color="#fff" /><span>Tienes <b>«{dishName(dishes, placing)}»</b> en la mano: toca las casillas donde la quieras</span>
-          <button type="button" className="fd-place-ok" onClick={onPlaced}>Listo</button>
-        </div>
       )}
       <div className="fd-menu-head">
         <button className="fd-ib" onClick={() => setOffset(offset - 1)} aria-label="Semana anterior"><Icon name="left" size={16} /></button>

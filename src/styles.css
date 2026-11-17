@@ -4181,3 +4181,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   .widget *:has(> .wk-range) { flex-wrap: wrap; justify-content: center; }
   .widget .wk-range { flex-wrap: wrap; }
 }
+
+/* Receta «en la mano»: pastilla discreta junto al título (tocar fuera la suelta) */
+.fd-place-pill { display: inline-flex; align-items: center; gap: 7px; background: #F9E3FF; border: 1.5px solid #EFABFF; border-radius: 99px; padding: 2px 4px 2px 11px; font-size: 12.5px; font-weight: 500; color: #8C3FA8; animation: rise .2s var(--ease) both; white-space: nowrap; } .fd-place-pill b { font-weight: 600; }
+.fd-place-pill button { width: 20px; height: 20px; border-radius: 50%; border: 0; background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.fd-menu.is-placing .fd-slot { outline-color: #CDA3DD; }
+@media (prefers-reduced-motion: reduce) { .fd-place-pill { animation: none; } }
