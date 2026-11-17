@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { classifySpices, suggestIngredients } from '../../services/ingredientsService.js'
-import { UNITS, fmtNum, fmtQty, isSpice, stepDown, stepUp } from './spices.js'
+import { UNITS, capFirst, fmtNum, fmtQty, isSpice, stepDown, stepUp } from './spices.js'
 
 /**
  * Ingredientes y especias: los escribe la persona (Intro añade) y la IA sugiere más (se tocan para añadirlos).
@@ -42,7 +42,7 @@ export function IngredientsEditor({ dish, value, onChange }) {
   const put = (x, asSpice) => { const v = ref.current; onChange(asSpice ? { ...v, spices: [...v.spices, x] } : { ...v, items: [...v.items, x] }) }
   // Añadir: la lista incorporada decide al momento; si no lo conoce, la IA mira si es una especia y lo pasa a su zona
   const add = (raw, hint = null) => {
-    const x = raw.trim()
+    const x = capFirst(raw)
     if (!x || has(x)) return
     const spice = hint ?? isSpice(x)
     put(x, spice)

@@ -46,3 +46,6 @@ export const fmtQty = (q) => {
   const txt = fmtNum(q.n)
   return q.unit && q.unit !== 'ud' ? `${txt} ${q.unit}` : txt
 }
+
+/** Primera letra en mayúscula y el resto en minúscula, esté como esté el teclado: «cARNE pICADA» → «Carne picada». */
+export const capFirst = (s) => { const t = String(s ?? '').trim().replace(/\s+/g, ' '); return t ? t[0].toLocaleUpperCase('es') + t.slice(1).toLocaleLowerCase('es') : '' }
