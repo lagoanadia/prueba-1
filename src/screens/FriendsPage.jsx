@@ -204,16 +204,30 @@ function PostBody({ p, onRead, onSave, saved }) {
   )
   if (p.kind === 'good') return <blockquote className="post-quote">{d.text}</blockquote>
   if (p.kind === 'note' && !d.title) return <p className="post-text">{d.text}</p>
-  if (p.kind === 'menu') return (
-    <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
-      <b>Menú · {d.range}</b>
-      <div className="post-menu-grid" style={{ '--m': (d.meals ?? []).length }}>
-        <span />{(d.meals ?? []).map(([m, label]) => <span key={m} className="post-menu-h">{label}</span>)}
-        {(d.days ?? []).map((day) => [<span key={day.label} className="post-menu-day">{day.label}</span>, ...(d.meals ?? []).map(([m]) => <span key={day.label + m} className="post-menu-cell">{day.meals?.[m] || '—'}</span>)])}
+  if (p.kind === 'menu') {
+    // Menú compartido: una tarjeta por día con sus comidas (como el planificador); los días sin nada, en una línea abajo
+    const meals = d.meals ?? []
+    const days = d.days ?? []
+    const filled = days.filter((day) => meals.some(([m]) => day.meals?.[m]))
+    const empty = days.filter((day) => !meals.some(([m]) => day.meals?.[m]))
+    return (
+      <div className="post-box post-menu" style={{ background: '#FBE4FF' }}>
+        <b>Menú · {d.range}</b>
+        <div className="pm-days">
+          {filled.map((day) => (
+            <div key={day.label} className="pm-day">
+              <b className="pm-day-name">{day.label}</b>
+              {meals.filter(([m]) => day.meals?.[m]).map(([m, label]) => (
+                <div key={m} className="pm-meal"><span>{label}</span>{day.meals[m]}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+        {empty.length > 0 && <span className="muted pm-empty">Sin planear: {empty.map((day) => day.label).join(', ')}</span>}
+        {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
       </div>
-      {!p.mine && <button className="pill pill-pink" disabled={saved} onClick={onSave}>{saved ? 'Copiado a tu menú' : 'Usar en mi menú'}</button>}
-    </div>
-  )
+    )
+  }
   return <div className="post-box"><b>{d.title}</b>{d.text && <span>{d.text}</span>}</div>
 }
 
