@@ -4097,3 +4097,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pm-empty { font-size: 12px; text-transform: none; }
 
 .fd-via { font-size: 11.5px; color: #80868B; }
+/* Ingredientes y especias: la x solo sale al pasar por encima (en pantallas táctiles se ve siempre) */
+.ing-chip .ing-x { width: 0; opacity: 0; overflow: hidden; transition: width .15s var(--ease), opacity .15s; }
+.ing-chip:hover .ing-x, .ing-chip:focus-within .ing-x { width: 24px; opacity: 1; }
+.ing-chip:not(:hover):not(:focus-within) .ing-main { padding-right: 12px; }
+@media (hover: none) { .ing-chip .ing-x { width: 24px; opacity: 1; } .ing-chip:not(:hover):not(:focus-within) .ing-main { padding-right: 4px; } }
+@media (prefers-reduced-motion: reduce) { .ing-chip .ing-x { transition: none; } }
