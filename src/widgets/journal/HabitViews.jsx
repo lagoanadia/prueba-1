@@ -120,3 +120,40 @@ export function DayCalendar({ mode, since, today, paint, onTap }) {
     </div>
   )
 }
+
+const MONTH_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+/**
+ * Año: los 12 meses en mini calendario. Cada día se pinta con `paint` (como Semana / Mes);
+ * antes de tu primer día y después de hoy, en gris claro. El mes actual va remarcado.
+ */
+export function YearCalendar({ since, today, paint }) {
+  const [year, setYear] = useState(Number(today.slice(0, 4)))
+  const sinceYear = Number(since.slice(0, 4))
+  const thisYear = Number(today.slice(0, 4))
+  return (
+    <div className="hv">
+      <Nav label={String(year)} onPrev={() => setYear(year - 1)} onNext={() => setYear(year + 1)} canPrev={year > sinceYear} canNext={year < thisYear} />
+      <div className="hv-year">
+        {MONTH_SHORT.map((name, mi) => {
+          const first = `${year}-${String(mi + 1).padStart(2, '0')}-01`
+          const lead = (new Date(`${first}T12:00:00`).getDay() + 6) % 7
+          const count = new Date(year, mi + 1, 0).getDate()
+          const off = `${year}-${String(mi + 1).padStart(2, '0')}-${count}` < since || first > today
+          return (
+            <div key={name} className={`hv-ym ${off ? 'off' : ''} ${today.slice(0, 7) === first.slice(0, 7) ? 'cur' : ''}`}>
+              <span>{name}</span>
+              <div className="hv-ym-grid">
+                {Array.from({ length: lead }, (_, i) => <i key={'e' + i} className="pad" />)}
+                {Array.from({ length: count }, (_, i) => {
+                  const d = addDays(first, i)
+                  const fill = d >= since && d <= today ? paint(d) : undefined
+                  return <i key={d} className={d < since || d > today ? 'off' : ''} style={fill ? { background: fill } : undefined} title={d} />
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

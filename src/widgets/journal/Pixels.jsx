@@ -5,12 +5,12 @@ import Icon from '../../components/Icon.jsx'
 import Chips from '../Chips.jsx'
 import { lastDays, streak, todayISO, weekStart } from '../../lib/dates.js'
 import { sinceFromData } from '../since.js'
-import { HabitMonth, HabitWeek } from './HabitViews.jsx'
+import { HabitMonth, HabitWeek, YearCalendar } from './HabitViews.jsx'
 import Select from '../../components/Select.jsx'
 import { KIND_OPTIONS, daysAgo, fromKindValue, kindValue } from './habitKinds.js'
 
 const COLORS = ['#3185FC', '#EFABFF', '#F9DC5C', '#3DDC97', '#E84855']
-const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
+const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
 /**
  * Pixels de hábitos: UN widget con todos los hábitos. Se cambia de hábito con los chips
@@ -147,7 +147,15 @@ export default function Pixels({ size, data, update, config, setConfig }) {
               </div>
             ) : (
             <div className="slide-in fill hv-fill" key={(showAll ? 'all' : habit.id) + view}>
-              {view === 'semana' ? <HabitWeek list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />
+              {view === 'año' ? <YearCalendar since={since} today={today} paint={(d) => {
+                // Un hábito: su color. Todos: más verde cuantos más hábitos cumpliste ese día
+                const n = list.filter((h) => (pixels[h.id] ?? []).includes(d)).length
+                if (!n) return undefined
+                if (list.length === 1) return list[0].color
+                const r = n / list.length
+                return r <= 1 / 3 ? '#B9EFD3' : r <= 2 / 3 ? '#6FE0A9' : '#2FBF7A'
+              }} />
+                : view === 'semana' ? <HabitWeek list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />
                 : <HabitMonth list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />}
             </div>
             )}

@@ -4061,3 +4061,24 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .ing-pop-actions { display: flex; flex-direction: column; gap: 2px; } .ing-pop-actions button { border: 0; background: none; text-align: left; font: 500 12.5px Poppins, sans-serif; color: #5F6368; cursor: pointer; padding: 4px 2px; } .ing-pop-actions button:hover { color: #202124; text-decoration: underline; }
 .fd-qty { font-style: normal; font-size: 12px; color: #80868B; margin-left: 8px; } .fd-spice-t { display: block; margin-top: 10px; }
 .card:has(.ing-pop), .fd-card:has(.ing-pop), .plan-block:has(.ing-pop) { position: relative; z-index: 60; overflow: visible; }
+/* Vista Año (Hábitos, Mood tracker, Constancia): 12 mini calendarios */
+.hv-year { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px 12px; align-content: center; }
+.hv-ym { display: flex; flex-direction: column; gap: 3px; min-height: 0; padding: 3px; border-radius: 8px; }
+.hv-ym > span { font-size: 10px; font-weight: 700; color: var(--muted); }
+.hv-ym.off > span { color: #C9CDD2; }
+.hv-ym.cur { box-shadow: inset 0 0 0 2px var(--text); }
+.hv-ym-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.hv-ym-grid i { aspect-ratio: 1; border-radius: 2px; background: #EFE6D6; }
+.hv-ym-grid i.off { background: #F6F1E7; }
+.hv-ym-grid i.pad { background: none; }
+@container (max-width: 420px) { .hv-year { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); } }
+
+/* Feed: escribir una publicación */
+.fp-compose { display: flex; flex-direction: column; gap: 8px; }
+.fp-compose textarea { width: 100%; border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; font: inherit; font-size: 15px; resize: none; outline: none; background: #FFFFFF; transition: border-color .2s; }
+.fp-compose textarea:focus { border-color: var(--blue); }
+.fp-compose-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.post-text { font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Año: cada mini mes cabe en su hueco (los cuadraditos se calculan con el alto disponible) */
+.hv-ym { container-type: size; }
+.hv-ym-grid { width: min(100%, calc((100cqh - 18px) * 7 / 6.4)); }

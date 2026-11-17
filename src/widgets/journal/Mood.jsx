@@ -5,7 +5,7 @@ import MoodAnalysis from './MoodAnalysis.jsx'
 import Chips from '../Chips.jsx'
 import { addDays, todayISO, weekStart } from '../../lib/dates.js'
 import { sinceFromData } from '../since.js'
-import { DayCalendar } from './HabitViews.jsx'
+import { DayCalendar, YearCalendar } from './HabitViews.jsx'
 
 export const MOODS = [
   { id: 'bueno', label: 'Bueno', color: '#3DDC97' },
@@ -16,7 +16,7 @@ const colorOf = (id) => MOODS.find((m) => m.id === id)?.color ?? EMPTY
 // Caras del tamaño mediano: nombre corto y boca (sonrisa, recta, triste)
 const FACE = { bueno: 'Bien', regular: 'Regular', malo: 'Mal' }
 const MOUTH = { bueno: 'M10 19q6 6 12 0', regular: 'M10.5 21h11', malo: 'M10 23q6-6 12 0' }
-const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
+const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'año', label: 'Año' }]
 
 /** Mood tracker. S: elegir hoy · T: + mes · M: + 2 semanas · L: + Mes / Año (tocar un día cambia su ánimo). */
 export default function Mood({ size, data, update }) {
@@ -98,7 +98,7 @@ export default function Mood({ size, data, update }) {
       )}
       {size === 'T' && <div className="mood-bar mood-bar-t">{faces}</div>}
       <div className="slide-in fill hv-fill" key={view + analysis}>
-        {analysis && size === 'L' ? <MoodAnalysis moods={moods} wide /> : <DayCalendar mode={view} since={since} today={today} paint={paint} onTap={cycle} />}
+        {analysis && size === 'L' ? <MoodAnalysis moods={moods} wide /> : (view === 'año' ? <YearCalendar since={since} today={today} paint={paint} /> : <DayCalendar mode={view} since={since} today={today} paint={paint} onTap={cycle} />)}
       </div>
     </>
   )
