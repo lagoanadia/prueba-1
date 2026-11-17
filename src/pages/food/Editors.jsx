@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { classifySpices, suggestIngredients } from '../../services/ingredientsService.js'
 import { UNITS, fmtQty, isSpice, stepOf } from './spices.js'
@@ -64,8 +64,8 @@ export function IngredientsEditor({ dish, value, onChange }) {
     const q = amounts[name]
     return (
       <span key={name} className={`fd-chip is-on ing-chip ${spice ? 'is-spice' : ''}`}>
-        <button type="button" className="ing-main" onClick={() => setPop(pop === name ? null : name)} aria-expanded={pop === name} aria-label={`Cantidad de ${name}`}>
-          {name}{q ? <em>{fmtQty(q)}</em> : <em className="is-empty">+ cantidad</em>}
+        <button type="button" className="ing-main" onClick={() => setPop(pop === name ? null : name)} aria-expanded={pop === name} aria-label={`Cantidad de ${name}`} title="Tocar para poner la cantidad">
+          {name}{q && <em>{fmtQty(q)}</em>}
         </button>
         <button type="button" className="ing-x" onClick={() => remove(name)} aria-label={`Quitar ${name}`}><Icon name="close" size={10} strokeWidth={3.2} /></button>
         {pop === name && <QtyPop name={name} q={q} spice={spice} onQty={(n) => setQty(name, n)} onMove={() => { move(name, !spice); setPop(null) }} onClose={() => setPop(null)} />}
@@ -133,6 +133,9 @@ export function StepsEditor({ steps, onChange }) {
   const refs = useRef([])
   const focusNext = useRef(null)
   useEffect(() => { if (focusNext.current != null) { refs.current[focusNext.current]?.focus(); focusNext.current = null } })
+  // Cada paso crece en alto según lo que escribes: nada se corta
+  const fit = (el) => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px` } }
+  useLayoutEffect(() => { refs.current.forEach(fit) })
 
   const set = (i, v) => onChange(rows.map((x, j) => (j === i ? v : x)))
   const key = (e, i) => {
@@ -152,8 +155,8 @@ export function StepsEditor({ steps, onChange }) {
       {rows.map((x, i) => (
         <li key={i}>
           <b>{i + 1}</b>
-          <input ref={(el) => { refs.current[i] = el }} className="fd-line" value={x} maxLength={160} placeholder={i === rows.length - 1 ? 'Escribe el paso y pulsa Intro…' : ''}
-            onChange={(e) => set(i, e.target.value)} onKeyDown={(e) => key(e, i)} aria-label={`Paso ${i + 1}`} />
+          <textarea ref={(el) => { refs.current[i] = el }} className="fd-line fd-step-text" rows={1} value={x} maxLength={400} placeholder={i === rows.length - 1 ? 'Escribe el paso y pulsa Intro…' : ''}
+            onChange={(e) => { set(i, e.target.value.replace(/\n/g, ' ')); fit(e.target) }} onKeyDown={(e) => key(e, i)} aria-label={`Paso ${i + 1}`} />
           {(rows.length > 1 || x) && <button type="button" className="fd-step-x" onClick={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [])} aria-label={`Borrar el paso ${i + 1}`} title="Borrar paso"><Icon name="close" size={12} strokeWidth={3} /></button>}
         </li>
       ))}
