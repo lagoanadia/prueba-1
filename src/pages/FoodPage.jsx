@@ -57,7 +57,9 @@ export default function FoodPage({ data, update }) {
     )
   }
   // El recetario ancho ocupa el alto de las tarjetas pequeñas que tiene al lado (como antes)
-  const rowsOf = (b) => (b.type === 'cookbook' && b.span === 2 ? 3 : 1)
+  // (tantas filas como tarjetas estrechas haya, hasta 3), así no quedan huecos debajo
+  const narrow = blocks.filter((b) => b.span === 1).length
+  const rowsOf = (b) => (b.type === 'cookbook' && b.span === 2 ? Math.max(1, Math.min(3, narrow + (editing && missing.length ? 1 : 0))) : 1)
 
   return (
     <div className="page food">
@@ -73,12 +75,12 @@ export default function FoodPage({ data, update }) {
       </header>
       <div className={`plan-grid fd-grid ${editing ? 'is-editing' : ''}`}>
         {blocks.map((b, i) => (
-          <section key={b.id} className={`plan-block fd-block span-${b.span} ${dnd.cls(b)}`} style={{ gridRow: `span ${rowsOf(b)}` }} aria-label={BLOCKS[b.type]?.label} {...dnd.props(b)}>
+          <section key={b.id} className={`plan-block fd-block span-${b.span} ${rowsOf(b) > 1 ? 'fd-tall' : ''} ${dnd.cls(b)}`} style={{ gridRow: `span ${rowsOf(b)}` }} aria-label={BLOCKS[b.type]?.label} {...dnd.props(b)}>
             {editing && <BlockEdit span={b.span} onSpan={(n) => setSpan(b.id, n)} onRemove={() => removeBlock(b)} onMove={(dir) => move(i, dir)} first={i === 0} last={i === blocks.length - 1} name={BLOCKS[b.type]?.label} />}
             {render(b)}
           </section>
         ))}
-        {editing && missing.length > 0 && <AddSquare span={freeSpan(blocks)} open={adding} onOpen={setAdding} options={missing.map((t) => ({ type: t, label: BLOCKS[t].label, icon: BLOCKS[t].icon }))} onPick={addBlock} />}
+        {editing && missing.length > 0 && <AddSquare span={blocks.some((b) => b.type === 'cookbook' && b.span === 2) ? 1 : freeSpan(blocks)} open={adding} onOpen={setAdding} options={missing.map((t) => ({ type: t, label: BLOCKS[t].label, icon: BLOCKS[t].icon }))} onPick={addBlock} />}
       </div>
     </div>
   )

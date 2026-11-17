@@ -3968,3 +3968,8 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .wk-col-end .w-history { position: static; }
 /* Editando, el borde a rayas sigue las esquinas redondeadas también en los bloques sin fondo propio (Comida, notas) */
 .plan-grid.is-editing .plan-block, .plan-block.fd-block, .plan-block.is-note { border-radius: 22px; }
+
+/* Comida: el recetario ancho ocupa todo el alto de las tarjetas que tiene al lado; el + de añadir, compacto */
+.fd-grid > .fd-tall { align-self: stretch; display: flex; flex-direction: column; }
+.fd-grid > .fd-tall > .fd-card { flex: 1; height: auto; }
+.fd-grid > .add-square { min-height: 120px; height: 140px; align-self: start; }
