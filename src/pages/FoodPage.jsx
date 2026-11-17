@@ -55,8 +55,8 @@ export default function FoodPage({ data, update }) {
       const note = data.quickNotes?.[b.id] ?? { html: '' }
       return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
     }
-    if (b.type === 'menu') return <MenuCard data={data} update={update} placing={placing} onPlaced={() => setPlacing(null)} />
-    if (b.type === 'cookbook') return <Cookbook data={data} update={update} onPlace={(id) => setPlacing(id)} />
+    if (b.type === 'menu') return <MenuCard data={data} update={update} placing={placing?.id ?? null} scrollTo={placing?.scroll} onPlaced={() => setPlacing(null)} />
+    if (b.type === 'cookbook') return <Cookbook data={data} update={update} onPlace={(id, scroll = true) => setPlacing({ id, scroll })} />
     if (b.type === 'shopping') return <ShoppingCard data={data} update={update} />
     if (b.type === 'batch') return <BatchCard data={data} update={update} />
     return (

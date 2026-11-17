@@ -72,7 +72,7 @@ export default function Cookbook({ data, update, onPlace }) {
         <div className="fd-cards">
           {results.map((x) => (
             <div key={x.id} className="fd-rec-wrap">
-              <button className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null) }}>
+              <button className="fd-rec" onClick={() => { select(x.id); setLetter(letterOf(x.name)); setQ(null); onPlace?.(x.id, false) }}>
                 <span className="fd-rec-name">{x.name}</span>
                 {x.via && <span className="fd-via">lleva {x.via.toLowerCase()}</span>}
                 <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>
@@ -99,7 +99,7 @@ export default function Cookbook({ data, update, onPlace }) {
       <div className="fd-cards">
         {list.map((x) => (
           <div key={x.id} className="fd-rec-wrap">
-            <button draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => select(x.id)}
+            <button draggable className={`fd-rec ${open?.id === x.id ? 'is-sel' : ''}`} onClick={() => { select(x.id); onPlace?.(x.id, false) }}
               onDragStart={(e) => { e.dataTransfer.setData('text/dish', x.id); e.dataTransfer.effectAllowed = 'copyMove'; setDragging(true) }} onDragEnd={() => { setDragging(false); setOver(false) }}>
               <span className="fd-rec-name"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} />{x.name}</span>
               <span className="fd-tags">{x.for.map((m) => <span key={m} className="fd-tag">{MEALS[m]}</span>)}</span>

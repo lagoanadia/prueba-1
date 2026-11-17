@@ -15,7 +15,7 @@ const range = (days) => {
 }
 
 /** Menú de la semana: días en columnas (en pantallas estrechas, en filas). Tocar una casilla elige la comida; se pueden soltar recetas encima. */
-export default function MenuCard({ data, update, placing = null, onPlaced = () => {} }) {
+export default function MenuCard({ data, update, placing = null, scrollTo = true, onPlaced = () => {} }) {
   const sectionRef = useRef(null)
   const today = todayISO()
   const [offset, setOffset] = useState(0)
@@ -62,7 +62,7 @@ export default function MenuCard({ data, update, placing = null, onPlaced = () =
   // Con una receta «en la mano» (desde el Recetario): al empezar se lleva el planificador a la vista y Esc termina
   useEffect(() => {
     if (!placing) return undefined
-    sectionRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
+    if (scrollTo) sectionRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
     const k = (e) => e.key === 'Escape' && onPlaced()
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
