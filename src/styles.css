@@ -4190,3 +4190,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 
 .cal-day-edit { border: 0; background: none; font: inherit; text-align: left; cursor: pointer; padding: 0; color: inherit; } .cal-day-edit:hover { text-decoration: underline; }
 .cal-del { color: #B3261E; align-self: flex-start; }
+/* Chip de ingrediente: la palabra centrada (padding igual a los dos lados); al pasar por encima aparece la x a la derecha */
+.fd-chip.ing-chip > .ing-main { padding: 4px 14px; }
+.fd-chip.ing-chip:hover > .ing-main, .fd-chip.ing-chip:focus-within > .ing-main { padding-right: 4px; }
+@media (hover: none) { .fd-chip.ing-chip > .ing-main { padding-right: 4px; } }
+.fd-chip.ing-chip:not(:hover):not(:focus-within) > .ing-main { padding-right: 14px; }
+@media (hover: none) { .fd-chip.ing-chip:not(:hover):not(:focus-within) > .ing-main { padding-right: 4px; } }
