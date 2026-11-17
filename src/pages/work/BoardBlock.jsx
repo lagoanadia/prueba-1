@@ -9,6 +9,8 @@ import Icon from '../../components/Icon.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
 import { STATES, projectsOf, updateTask } from '../../widgets/trabajo/projects.js'
 import TaskEditor from './TaskEditor.jsx'
+import History from '../../components/History.jsx'
+import { addDays } from '../../lib/dates.js'
 import { colorOf, selectedOf, soft } from './shared.js'
 
 const PRIORITY = { alta: '#E84855', media: '#F9DC5C', baja: '#3DDC97' }
@@ -47,6 +49,16 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
   const visible = (t) => who === 'all' || (who === 'mine' ? mineOf(t) : !mineOf(t))
 
   const tasks = shown.flatMap((p) => p.tasks.map((t) => ({ ...t, projectId: p.id, projectName: p.name }))).filter((t) => !sharedProject || visible(t))
+  // Las hechas se ven una semana en «Hechas»; después pasan al historial (el reloj de la columna)
+  const weekAgo = addDays(today, -7)
+  const isOld = (t) => t.status === 'done' && t.doneAt && t.doneAt <= weekAgo
+  const oldDone = tasks.filter(isOld).sort((a, b) => b.doneAt.localeCompare(a.doneAt))
+  // Las hechas de antes sin fecha reciben la de hoy (así también pasan al historial al cabo de una semana)
+  const undated = tasks.filter((t) => t.status === 'done' && !t.doneAt).map((t) => [t.projectId, t.id])
+  useEffect(() => {
+    if (!undated.length) return
+    update((d) => undated.reduce((acc, [pid, tid]) => updateTask(acc, pid, tid, { doneAt: today }), d))
+  }, [undated.length]) // eslint-disable-line react-hooks/exhaustive-deps
   const add = (e) => {
     e.preventDefault()
     if (!title.trim() || !projectFor) return
@@ -191,10 +203,10 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
 
       <div className="wk-cols">
         {STATES.map((s) => {
-          const list = tasks.filter((t) => t.status === s.id).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
+          const list = tasks.filter((t) => t.status === s.id && !isOld(t)).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
           return (
             <section key={s.id} data-state={s.id} className={`wk-col wk-col-${s.id} ${drag && drag.over === s.id ? 'is-over' : ''}`} aria-label={s.label}>
-              <span className="wk-col-head">{s.id === 'done' ? 'Hechas' : s.label}<b>{list.length}</b></span>
+              <span className="wk-col-head">{s.id === 'done' ? 'Hechas' : s.label}<span className="wk-col-end">{s.id === 'done' && oldDone.length > 0 && <History title="Tareas hechas" empty="Aún no hay tareas antiguas" items={oldDone.map((t) => ({ id: t.id, date: formatShort(t.doneAt), text: `${t.projectName} · ${t.title}` }))} />}<b>{list.length}</b></span></span>
               {list.map((t) => (
                 <div key={t.id} className={`wk-task ${drag?.task.id === t.id ? 'is-dragging' : ''}`} style={{ '--c': colorOf(data, t.projectId), ...(colorOfMember(t.assignee) ? { '--bub': soft(colorOfMember(t.assignee), 38) } : {}) }} role="button" tabIndex={0}
                   onPointerDown={(e) => onPointerDown(e, t)} onKeyDown={(e) => e.key === 'Enter' && setEditing({ projectId: t.projectId, taskId: t.id })}

@@ -3959,3 +3959,12 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .mood-2w-d.today { box-shadow: inset 0 0 0 2px var(--text); }
 .mood-2w-d.fut { background: transparent; border: 2px dashed #E2D7C5; color: #C9BBA4; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .mood-face-btn svg, .mood-2w-d { transition: none; } }
+/* Tareas: las tarjetas no tocan el borde de su columna (más aire a los lados y abajo) */
+.wk-col { padding: 12px 14px 16px; }
+.wk-task { max-width: 100%; border-radius: 10px; padding: 6px 10px; }
+
+/* Tareas: tarjetas más cuadradas y el reloj del historial de «Hechas» dentro de su cabecera */
+.wk-col-end { display: inline-flex; align-items: center; gap: 6px; }
+.wk-col-end .w-history { position: static; }
+/* Editando, el borde a rayas sigue las esquinas redondeadas también en los bloques sin fondo propio (Comida, notas) */
+.plan-grid.is-editing .plan-block, .plan-block.fd-block, .plan-block.is-note { border-radius: 22px; }
