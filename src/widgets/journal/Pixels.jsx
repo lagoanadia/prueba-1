@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { EMPTY } from '../MonthGrid.jsx'
 import Icon from '../../components/Icon.jsx'
 import Chips from '../Chips.jsx'
-import { lastDays, streak, todayISO } from '../../lib/dates.js'
+import { lastDays, streak, todayISO, weekStart } from '../../lib/dates.js'
 import { sinceFromData } from '../since.js'
 import { HabitMonth, HabitWeek } from './HabitViews.jsx'
+import Select from '../../components/Select.jsx'
+import { KIND_OPTIONS, daysAgo, fromKindValue, kindValue } from './habitKinds.js'
 
 const COLORS = ['#3185FC', '#EFABFF', '#F9DC5C', '#3DDC97', '#E84855']
 const RANGES = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
@@ -109,7 +111,12 @@ export default function Pixels({ size, data, update, config, setConfig }) {
           </div>
         )}
         <button className="w-center px-s-btn" onClick={() => toggle(today)} aria-label={`Marcar hoy: ${habit.name}`} title="Toca para marcar hoy">
-          <b className="big" style={{ color: days.includes(today) ? habit.color : undefined }}>{streak(days, today)}<small> d</small></b>
+          {/* Racha (cada día), cuenta de la semana (X por semana) o hace cuánto (solo apuntar) */}
+          <b className="big" style={{ color: days.includes(today) ? habit.color : undefined }}>
+            {habit.kind === 'log' ? (daysAgo(days, today) == null ? '—' : <>{daysAgo(days, today)}<small> d</small></>)
+              : habit.kind === 'weekly' ? <>{days.filter((x) => x >= weekStart(today) && x <= today).length}<small>/{habit.times ?? 3}</small></>
+              : <>{streak(days, today)}<small> d</small></>}
+          </b>
           <div className="px-row px-row-sm">{lastDays(7).map((d) => <span key={d} className="px" style={{ background: color(d) }} />)}</div>
         </button>
         {habits.length > 1 && <div className="px-s-dots">{habits.map((h) => <button key={h.id} className={h.id === habit.id ? 'on' : ''} onClick={() => pick(h.id)} aria-label={h.name} />)}</div>}
@@ -127,10 +134,23 @@ export default function Pixels({ size, data, update, config, setConfig }) {
         return (
           <>
             {size === 'L' && <div className="mood-bar"><Chips options={RANGES} value={range} onChange={setRange} small /></div>}
+            {editing ? (
+              // Editando: cada hábito con su tipo (decide si sale en «Tareas de hoy»)
+              <div className="hv-kinds">
+                {habits.map((h) => (
+                  <div key={h.id} className="hv-kind-row">
+                    <span className="hv-name"><i style={{ background: h.color }} />{h.name}</span>
+                    <Select value={kindValue(h)} label={`Tipo de ${h.name}`} options={KIND_OPTIONS} onChange={(v) => update((d) => ({ ...d, habits: (d.habits ?? []).map((x) => (x.id === h.id ? { ...x, ...fromKindValue(v) } : x)) }))} />
+                  </div>
+                ))}
+                <span className="w-hint">«Solo apuntar» no sale en Tareas de hoy: solo registras cuándo lo hiciste.</span>
+              </div>
+            ) : (
             <div className="slide-in fill hv-fill" key={(showAll ? 'all' : habit.id) + view}>
               {view === 'semana' ? <HabitWeek list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />
                 : <HabitMonth list={list} pixels={pixels} since={since} today={today} onToggle={toggleFor} />}
             </div>
+            )}
           </>
         )
       })()}

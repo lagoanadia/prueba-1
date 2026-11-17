@@ -4032,3 +4032,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .fd-ideas-hint { padding: 2px 4px; }
 
 .fd-steps li { align-items: center; } .fd-step-x { border: 0; background: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #80868B; flex: none; padding: 0; } .fd-step-x:hover { background: #FDECEE; color: #B3261E; }
+/* Análisis del Mood tracker grande: las dos partes una al lado de la otra, centradas en todo el ancho */
+.hv-fill > .mood-an-wide { width: 100%; flex: 1; border-left: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center; }
+.mood-an-wide .mood-an-pane { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.mood-an-wide .mood-an-big { justify-content: center; }
+.mood-an-wide .mood-an-rank { flex: none; justify-content: center; padding-left: 28px; border-left: 1px solid var(--line); }
+
+/* Hábitos: editar el tipo de cada uno (cada día / X por semana / solo apuntar) */
+.hv-kinds { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.hv-kind-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hv-kind-row .sel { min-width: 150px; }

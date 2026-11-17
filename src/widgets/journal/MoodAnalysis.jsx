@@ -8,7 +8,7 @@ const fmt = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { d
  * Panel «Análisis» (a la derecha del año): página 1 = semanas plenas y cuáles fueron, página 2 = ranking de meses.
  * Se cambia de página con las flechas de abajo o deslizando.
  */
-export default function MoodAnalysis({ moods }) {
+export default function MoodAnalysis({ moods, wide = false }) {
   const [page, setPage] = useState(0)
   const start = useRef(null)
   const weeks = fullGreenWeeks(moods)
@@ -16,28 +16,33 @@ export default function MoodAnalysis({ moods }) {
   const go = (p) => setPage(Math.max(0, Math.min(1, p)))
   const swipe = (e) => { if (start.current == null) return; const dx = e.clientX - start.current; start.current = null; if (Math.abs(dx) > 40) go(page + (dx < 0 ? 1 : -1)) }
 
+  const weeksPage = (
+    <div className="mood-an-pane">
+      <div className="mood-an-big"><b>{weeks.length}</b><span>{weeks.length === 1 ? 'semana plena' : 'semanas plenas'}</span></div>
+      {weeks.length === 0 && <p className="fd-hint">Aún ninguna: una semana plena es de lunes a domingo todo en bueno.</p>}
+      <div className="mood-an-weeks">
+        {weeks.map((w) => (
+          <div key={w.start}><span>{fmt(w.start)} – {fmt(w.end)}</span><span className="mood-an-strip">{Array.from({ length: 7 }, (_, i) => <i key={i} />)}</span></div>
+        ))}
+      </div>
+    </div>
+  )
+  const rankPage = (
+    <div className="mood-an-rank">
+      <div className="mood-an-title"><Icon name="star" size={15} color="#B58900" />Ranking de meses</div>
+      {rank.length === 0 && <p className="fd-hint">Anota tu ánimo y aquí verás tus mejores meses.</p>}
+      {rank.map((x, i) => (
+        <div key={x.name} className="mood-an-row"><b>{i + 1}</b><span>{x.name}</span><span className="mood-an-bar"><i style={{ width: `${Math.round((x.good / x.logged) * 100)}%` }} /></span><span className="mood-an-n">{x.good}/{x.logged}</span></div>
+      ))}
+    </div>
+  )
+  // Ancho (widget grande): las dos páginas una al lado de la otra, sin flechas
+  if (wide) return <aside className="mood-an mood-an-wide" aria-label="Análisis">{weeksPage}{rankPage}</aside>
+
   return (
     <aside className="mood-an" aria-label="Análisis" onPointerDown={(e) => { start.current = e.clientX }} onPointerUp={swipe} onPointerCancel={() => { start.current = null }}>
       <div className="mood-an-body">
-        {page === 0 ? (
-          <>
-            <div className="mood-an-big"><b>{weeks.length}</b><span>{weeks.length === 1 ? 'semana plena' : 'semanas plenas'}</span></div>
-            {weeks.length === 0 && <p className="fd-hint">Aún ninguna: una semana plena es de lunes a domingo todo en bueno.</p>}
-            <div className="mood-an-weeks">
-              {weeks.map((w) => (
-                <div key={w.start}><span>{fmt(w.start)} – {fmt(w.end)}</span><span className="mood-an-strip">{Array.from({ length: 7 }, (_, i) => <i key={i} />)}</span></div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="mood-an-rank">
-            <div className="mood-an-title"><Icon name="star" size={15} color="#B58900" />Ranking de meses</div>
-            {rank.length === 0 && <p className="fd-hint">Anota tu ánimo y aquí verás tus mejores meses.</p>}
-            {rank.map((x, i) => (
-              <div key={x.name} className="mood-an-row"><b>{i + 1}</b><span>{x.name}</span><span className="mood-an-bar"><i style={{ width: `${Math.round((x.good / x.logged) * 100)}%` }} /></span><span className="mood-an-n">{x.good}/{x.logged}</span></div>
-            ))}
-          </div>
-        )}
+        {page === 0 ? weeksPage : rankPage}
       </div>
       <div className="mood-an-pager">
         <button className="fd-ib" onClick={() => go(page - 1)} disabled={page === 0} aria-label="Anterior"><Icon name="left" size={14} /></button>

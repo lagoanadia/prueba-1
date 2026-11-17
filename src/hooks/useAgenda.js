@@ -2,6 +2,7 @@ import useAllBoards from './useAllBoards.js'
 import { AREA_IDS } from '../data/areas.js'
 import { todayISO } from '../lib/dates.js'
 import { MEALS, dishName, dishesOf } from '../widgets/comida/food.js'
+import { isTaskToday, weekCount } from '../widgets/journal/habitKinds.js'
 
 /**
  * AGENDA DE HOY (pantalla de Inicio)
@@ -42,10 +43,13 @@ export default function useAgenda(enabled, entries, toggleEntry) {
     items.push({ key: 'a' + a.id, area: 'estudios', title: a.course ? `${a.title} · ${a.course}` : a.title, done: a.done, late: !a.done && a.due < today,
       toggle: () => change('estudios', (x) => ({ ...x, assignments: x.assignments.map((y) => (y.id !== a.id ? y : y.done ? { ...y, done: false, doneAt: null } : { ...y, done: true, doneAt: today })) })) })
   })
-  // Journal: cada hábito (marcarlo pinta el píxel de hoy)
+  // Journal: los hábitos que tocan hoy (marcarlo pinta el píxel de hoy). Los de «solo apuntar» no son tareas;
+  // los de X veces por semana salen hasta que llegas a las X, con la cuenta («Caminar · 1/3»)
   ;(d('journal').habits ?? []).forEach((h) => {
-    const done = (d('journal').pixels?.[h.id] ?? []).includes(today)
-    items.push({ key: 'h' + h.id, area: 'journal', title: h.name, done,
+    const days = d('journal').pixels?.[h.id] ?? []
+    if (!isTaskToday(h, days, today)) return
+    const done = days.includes(today)
+    items.push({ key: 'h' + h.id, area: 'journal', title: h.kind === 'weekly' ? `${h.name} · ${weekCount(days, today)}/${h.times ?? 3}` : h.name, done,
       toggle: () => change('journal', (x) => { const days = x.pixels?.[h.id] ?? []; return { ...x, pixels: { ...x.pixels, [h.id]: days.includes(today) ? days.filter((y) => y !== today) : [...days, today] } } }) })
   })
   // Comida: lo que toca hoy en el menú

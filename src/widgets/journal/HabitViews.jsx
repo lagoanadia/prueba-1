@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { addDays, streak, weekStart } from '../../lib/dates.js'
+import { addDays, weekStart } from '../../lib/dates.js'
 import { locale } from '../../i18n/index.js'
+import { habitStatus } from './habitKinds.js'
 
 const LETTERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const chevron = (d) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
@@ -38,7 +39,7 @@ export function HabitWeek({ list, pixels, since, today, onToggle }) {
                 style={marked.includes(d) ? { background: h.color } : undefined} onClick={() => onToggle(h.id, d)}
                 aria-label={`${h.name}, ${d}`} aria-pressed={marked.includes(d)} />
             )),
-            <span key={h.id + 's'} className="hv-streak">{streak(marked, today) > 1 ? `🔥 ${streak(marked, today)}` : ''}</span>,
+            <span key={h.id + 's'} className="hv-streak">{habitStatus(h, marked, today)}</span>,
           ]
         })}
       </div>

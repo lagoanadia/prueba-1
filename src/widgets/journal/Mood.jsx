@@ -98,7 +98,7 @@ export default function Mood({ size, data, update }) {
       )}
       {size === 'T' && <div className="mood-bar mood-bar-t">{faces}</div>}
       <div className="slide-in fill hv-fill" key={view + analysis}>
-        {analysis && size === 'L' ? <MoodAnalysis moods={moods} /> : <DayCalendar mode={view} since={since} today={today} paint={paint} onTap={cycle} />}
+        {analysis && size === 'L' ? <MoodAnalysis moods={moods} wide /> : <DayCalendar mode={view} since={since} today={today} paint={paint} onTap={cycle} />}
       </div>
     </>
   )
