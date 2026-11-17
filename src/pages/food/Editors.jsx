@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { classifySpices, suggestIngredients } from '../../services/ingredientsService.js'
-import { UNITS, fmtQty, isSpice, stepOf } from './spices.js'
+import { UNITS, fmtNum, fmtQty, isSpice, stepDown, stepUp } from './spices.js'
 
 /**
  * Ingredientes y especias: los escribe la persona (Intro añade) y la IA sugiere más (se tocan para añadirlos).
@@ -113,12 +113,12 @@ function QtyPop({ name, q, spice, onQty, onMove, onClose }) {
       <b>{name}</b>
       {stepper && (
         <span className="ing-step">
-          <button type="button" onClick={() => set({ n: Math.max(stepOf(unit) === 1 ? 1 : stepOf(unit), Math.round((n - stepOf(unit)) * 100) / 100) })} aria-label="Menos">−</button>
-          <b>{fmtQty({ n, unit: 'ud' })}</b>
-          <button type="button" onClick={() => set({ n: Math.round((n + stepOf(unit)) * 100) / 100 })} aria-label="Más">+</button>
+          <button type="button" onClick={() => set({ n: stepDown(n, unit) })} aria-label="Menos">−</button>
+          <b>{fmtNum(n)}</b>
+          <button type="button" onClick={() => set({ n: stepUp(n, unit) })} aria-label="Más">+</button>
         </span>
       )}
-      <span className="ing-units">{UNITS.map((u) => <button type="button" key={u} className={u === unit && q ? 'on' : ''} onClick={() => set({ unit: u, n: ['g', 'ml'].includes(u) && n < 50 ? 100 : u === 'pizca' || u === 'al gusto' ? null : (n ?? 1) })}>{u}</button>)}</span>
+      <span className="ing-units">{UNITS.map((u) => <button type="button" key={u} className={u === unit && q ? 'on' : ''} onClick={() => set({ unit: u, n: u === 'pizca' || u === 'al gusto' ? null : ['g', 'ml'].includes(u) ? (n >= 50 ? n : 100) : (n ?? 1) >= 50 ? 1 : (n ?? 1) })}>{u}</button>)}</span>
       <span className="ing-pop-actions">
         {q && <button type="button" onClick={() => onQty(null)}>Quitar cantidad</button>}
         <button type="button" onClick={onMove}>{spice ? 'Pasar a ingredientes' : 'Pasar a especias'}</button>
