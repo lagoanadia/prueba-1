@@ -65,7 +65,7 @@ export default function Bee({ data, update }) {
 
   const isPan = (w) => [...letters].every((l) => w.includes(l))
   // El rango se mide contra la lista del servidor, con tope: el diccionario trae cientos de palabras raras y si no nunca se subiría de rango
-  const total = Math.min(150, puzzle.words.reduce((a, w) => a + pointsOf(w, isPan), 0))
+  const total = Math.min(600, puzzle.words.reduce((a, w) => a + pointsOf(w, isPan), 0))
   const scoreOf = (list) => list.reduce((a, w) => a + pointsOf(w, isPan), 0)
   const score = scoreOf(found)
   const rank = [...RANKS].reverse().find(([p]) => score >= p * total)[1]
