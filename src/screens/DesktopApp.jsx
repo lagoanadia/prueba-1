@@ -65,7 +65,7 @@ export default function DesktopApp({ firstName, today, onHome, entries, toggleEn
       </nav>
 
       {/* El main NO lleva key: así el botón de hablar no se vuelve a montar (ni a animar) al cambiar de sección */}
-      <main className="d-main">
+      <main className={`d-main view-${area ? 'area' : view}`}>
         <div className="d-top">
           <div className="d-top-left">
             {view === 'perfil' && <h1 className="perfil-title">Perfil</h1>}

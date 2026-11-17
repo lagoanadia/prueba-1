@@ -2,6 +2,7 @@ import { locale } from '../i18n/index.js'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
+import TopActions from '../components/TopActions.jsx'
 import Onboarding from '../onboarding/Onboarding.jsx'
 import { FLOWS } from '../onboarding/flows.js'
 import useAllBoards from '../hooks/useAllBoards.js'
@@ -80,28 +81,28 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
 
   return (
     <div className="area cal">
-      <header className="area-head">
-        <div>
-          <div className="cal-nav">
-            <button className="mini" onClick={() => move(-1)} aria-label="Anterior">‹</button>
-            <span className="muted cal-range">{title}</span>
-            <button className="mini" onClick={() => move(1)} aria-label="Siguiente">›</button>
-            {cursor !== today && <button className="pill pill-sm" onClick={() => setCursor(today)}>Hoy</button>}
-          </div>
+      {/* Arriba, junto al título: el mes (o la semana / el día) con sus flechas */}
+      <TopActions>
+        <div className="cal-nav">
+          <button className="mini" onClick={() => move(-1)} aria-label="Anterior">‹</button>
+          <span className="muted cal-range">{title}</span>
+          <button className="mini" onClick={() => move(1)} aria-label="Siguiente">›</button>
+          {cursor !== today && <button className="pill pill-sm" onClick={() => setCursor(today)}>Hoy</button>}
         </div>
+      </TopActions>
+      {/* Una sola fila: vista y filtro a la izquierda; Google Calendar y «Nuevo evento» a la derecha */}
+      <div className="cal-toolbar cal-bar">
+        <div className="chips">{VIEWS.map((v) => <button key={v.id} className={`chip cal-toggle ${view === v.id ? 'chip-on' : ''}`} onClick={() => setView(v.id)}>{v.label}</button>)}</div>
+        <div className="chips">{FILTERS.map((f) => <button key={f.id} className={`chip cal-toggle ${filter === f.id ? 'chip-on' : ''}`} onClick={() => setFilter(f.id)}>{f.label}</button>)}</div>
+        <span className="fd-grow" />
         <div className="cal-actions">
           {gcal.on
             ? <span className="gcal-on" title="Tus eventos de Google Calendar se ven aquí y los nuevos se apuntan también allí">Google Calendar <button className="text-link" onClick={unlinkGoogle}>Desconectar</button></span>
             : <button className="pill gcal-btn" onClick={linkGoogle}>{gcal.linked ? 'Reconectar Google Calendar' : 'Conectar Google Calendar'}</button>}
           <button className="btn-primary cal-new" onClick={() => setAdding(cursor)}>+ Nuevo evento</button>
         </div>
-        {gcal.error && <p className="error gcal-error">{gcal.error}</p>}
-      </header>
-
-      <div className="cal-toolbar">
-        <div className="chips">{VIEWS.map((v) => <button key={v.id} className={`chip ob-big cal-toggle ${view === v.id ? 'chip-on' : ''}`} onClick={() => setView(v.id)}>{v.label}</button>)}</div>
-        <div className="chips">{FILTERS.map((f) => <button key={f.id} className={`chip ob-big cal-toggle ${filter === f.id ? 'chip-on' : ''}`} onClick={() => setFilter(f.id)}>{f.label}</button>)}</div>
       </div>
+      {gcal.error && <p className="error gcal-error">{gcal.error}</p>}
       <div className="cal-legend">
         {Object.values(TYPES).map((t) => <span key={t.label}>{t.glyph} {t.label}</span>)}
         {AREAS.map((a) => <span key={a.id}><span className="dot" style={{ background: a.color }} /> {a.label}</span>)}

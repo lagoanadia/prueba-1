@@ -3973,3 +3973,30 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .fd-grid > .fd-tall { align-self: stretch; display: flex; flex-direction: column; }
 .fd-grid > .fd-tall > .fd-card { flex: 1; height: auto; }
 .fd-grid > .add-square { min-height: 120px; height: 140px; align-self: start; }
+
+/* ---------- Aprovechar el espacio de arriba ---------- */
+/* Inicio: la barra de arriba no ocupa sitio (solo flota el botón de hablar) y el saludo empieza arriba */
+.d-main { position: relative; }
+.view-inicio > .d-top { position: absolute; top: 24px; right: 48px; height: auto; }
+.view-inicio > .d-view { margin-top: 0; }
+.view-inicio .d-home .donut { margin-top: 16px; }
+/* Amigos: las caras de tus amigos junto al título */
+.d-top-actions .fp-strip { padding: 0; gap: 10px; margin-left: 12px; }
+.d-top-actions .fp-strip .mood-btn span:last-child { font-size: 11px; }
+.view-amigos > .d-view { margin-top: 8px; }
+/* Calendario: el mes junto al título y todos los botones en una fila */
+.d-top-actions .cal-nav { margin-left: 16px; }
+.d-top-actions .cal-range { font-size: 18px; }
+.cal-bar { align-items: center; gap: 8px 16px; margin-bottom: 10px; }
+.cal-bar .cal-toggle { padding: 5px 14px; font-size: 14px; }
+.cal-bar .cal-actions { display: flex; align-items: center; gap: 10px; }
+.cal-bar .cal-new { padding: 8px 18px; font-size: 15px; }
+.cal .cal-legend { font-size: 13px; margin-bottom: 10px; }
+.view-calendario > .d-view { margin-top: 8px; }
+/* Cápsulas en tamaño alto: botellas grandes que llenan el widget (la balda abajo, como siempre) */
+.w-T .cap-shelf { --bh: clamp(70px, 40cqh, 150px); --bw: calc(var(--bh) * .625); }
+.w-T .cap-shelf .cap-row .bottle .bottle-art { height: var(--bh); width: auto; }
+.w-T .cap-shelf .cap-row, .w-T .cap-shelf .cap-tags { gap: max(10px, calc(68px - var(--bw))); padding-left: 10px; }
+.w-M .cap-shelf { --bh: clamp(40px, 36cqh, 76px); --bw: calc(var(--bh) * .625); }
+.w-M .cap-shelf .cap-row .bottle .bottle-art { height: var(--bh); width: auto; }
+.w-M .cap-shelf .cap-row, .w-M .cap-shelf .cap-tags { gap: max(10px, calc(68px - var(--bw))); }

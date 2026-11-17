@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import TopActions from '../components/TopActions.jsx'
 import Avatar from '../components/Avatar.jsx'
 import Icon from '../components/Icon.jsx'
 import { FriendsBox, FriendsProvider } from '../components/Friends.jsx'
@@ -47,10 +48,11 @@ export default function FriendsPage() {
         <FriendProfile f={open} back={() => setFriend(null)} onSheet={(kind) => setSheet({ kind, friend: open })} run={run} />
       ) : (
         <>
-          <div className="fp-strip">
+          {/* Las caras de tus amigos van arriba, junto al título (en móvil se quedan aquí) */}
+          <TopActions><div className="fp-strip">
             {state.friends.map((f) => <MoodFace key={f.username} person={f} onClick={() => setFriend(f.username)} />)}
             <AddFriendsButton />
-          </div>
+          </div></TopActions>
           <div className="tabs fp-tabs" role="tablist">
             {TABS.map(([id, label]) => <button key={id} role="tab" aria-selected={tab === id} className={`tab ${tab === id ? 'on' : ''}`} onClick={() => setTab(id)}>{label}</button>)}
           </div>
