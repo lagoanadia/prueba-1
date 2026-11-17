@@ -11,9 +11,11 @@ export default function DishForm({ initial, defaultFor = ['comida'], onSave, onR
   const [name, setName] = useState(initial?.name ?? '')
   const [forMeals, setForMeals] = useState(initial?.for ?? defaultFor)
   const [ings, setIngs] = useState(initial?.ingredients ?? [])
+  const [spices, setSpices] = useState(initial?.spices ?? [])
+  const [amounts, setAmounts] = useState(initial?.amounts ?? {})
   const [steps, setSteps] = useState(initial?.steps ?? [])
   const [note, setNote] = useState(initial?.note ?? '')
-  const [open, setOpen] = useState({ ing: Boolean(initial?.ingredients?.length), steps: Boolean(initial?.steps?.length), note: Boolean(initial?.note) })
+  const [open, setOpen] = useState({ ing: Boolean(initial?.ingredients?.length || initial?.spices?.length), steps: Boolean(initial?.steps?.length), note: Boolean(initial?.note) })
   const touched = useRef(false) // si ya has abierto o cerrado los ingredientes tú, no se vuelven a abrir solos
   // Al escribir el nombre, se abren los ingredientes para que salgan las sugerencias
   useEffect(() => { if (!touched.current && !initial && name.trim().length >= 3) setOpen((o) => (o.ing ? o : { ...o, ing: true })) }, [name]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -23,8 +25,8 @@ export default function DishForm({ initial, defaultFor = ['comida'], onSave, onR
   const submit = (e) => {
     e.preventDefault()
     if (!ok) return
-    onSave({ name: name.trim(), for: Object.keys(MEALS).filter((m) => forMeals.includes(m)), ingredients: ings, steps: steps.map((s) => s.trim()).filter(Boolean), note: note.trim() })
-    if (!initial) { setName(''); setIngs([]); setSteps([]); setNote(''); touched.current = false; setOpen({ ing: false, steps: false, note: false }) }
+    onSave({ name: name.trim(), for: Object.keys(MEALS).filter((m) => forMeals.includes(m)), ingredients: ings, spices, amounts, steps: steps.map((s) => s.trim()).filter(Boolean), note: note.trim() })
+    if (!initial) { setName(''); setIngs([]); setSpices([]); setAmounts({}); setSteps([]); setNote(''); touched.current = false; setOpen({ ing: false, steps: false, note: false }) }
   }
 
   return (
@@ -43,7 +45,7 @@ export default function DishForm({ initial, defaultFor = ['comida'], onSave, onR
         {children}
         {onRemove && <button type="button" className="fd-circle fd-danger" onClick={onRemove} aria-label="Eliminar receta" title="Eliminar receta"><Icon name="trash" size={20} /></button>}
       </div>
-      {open.ing && <div className="fd-panel"><IngredientsEditor dish={name} items={ings} onChange={setIngs} /></div>}
+      {open.ing && <div className="fd-panel"><IngredientsEditor dish={name} value={{ items: ings, spices, amounts }} onChange={(v) => { setIngs(v.items); setSpices(v.spices); setAmounts(v.amounts) }} /></div>}
       {open.steps && <div className="fd-panel"><StepsEditor steps={steps} onChange={setSteps} /></div>}
       {open.note && <div className="fd-panel fd-tip-edit"><textarea className="fd-tip-input" rows={3} maxLength={400} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Un consejo o una anotación: por ejemplo «mejor hacerla el día anterior»" aria-label="Consejo o anotación" /></div>}
     </form>

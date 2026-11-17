@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { MEALS, activeDishOf, dishesOf } from '../../widgets/comida/food.js'
 import DishForm from './DishForm.jsx'
+import { fmtQty } from './spices.js'
 import ImportRecipes from './ImportRecipes.jsx'
 import Modal from './Modal.jsx'
 
@@ -108,7 +109,7 @@ export default function Cookbook({ data, update }) {
           <hr />
           {open.note && <div className="fd-tip"><Icon name="idea" size={18} /><span>{open.note}</span></div>}
           <div className="fd-cols">
-            <div><b>Ingredientes</b>{open.ingredients.length ? <ul>{open.ingredients.map((x, i) => <li key={x + i}>{x}</li>)}</ul> : <p className="fd-hint">Sin ingredientes</p>}</div>
+            <div><b>Ingredientes</b>{open.ingredients.length ? <ul>{open.ingredients.map((x, i) => <li key={x + i}>{x}{open.amounts?.[x] && <em className="fd-qty">{fmtQty(open.amounts[x])}</em>}</li>)}</ul> : <p className="fd-hint">Sin ingredientes</p>}{(open.spices ?? []).length > 0 && <><b className="fd-spice-t">Especias</b><ul>{open.spices.map((x, i) => <li key={x + i}>{x}{open.amounts?.[x] && <em className="fd-qty">{fmtQty(open.amounts[x])}</em>}</li>)}</ul></>}</div>
             <div><b>Preparación</b>{open.steps.length ? <ol>{open.steps.map((x, i) => <li key={x + i}>{x}</li>)}</ol> : <p className="fd-hint">Sin pasos</p>}</div>
           </div>
         </div>

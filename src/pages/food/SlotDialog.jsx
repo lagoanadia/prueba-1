@@ -15,6 +15,8 @@ export default function SlotDialog({ day, meal, data, update, value, onSet, onCl
   const [who, setWho] = useState(isWith(value) ? value.slice(WITH.length) : null) // null = sin «Con alguien»
   const [open, setOpen] = useState({ ing: false, steps: false })
   const [ings, setIngs] = useState([])
+  const [spices, setSpices] = useState([])
+  const [amounts, setAmounts] = useState({})
   const [steps, setSteps] = useState([])
   const text = q.trim()
   const norm = (s) => s.toLowerCase()
@@ -29,7 +31,7 @@ export default function SlotDialog({ day, meal, data, update, value, onSet, onCl
     if (exact) return finish(exact.id)
     if (!isNew) return
     const id = crypto.randomUUID()
-    update((d) => ({ ...d, dishes: [...dishesOf(d), { id, name: text, for: [meal], time: null, ingredients: ings, steps: steps.map((s) => s.trim()).filter(Boolean) }], menu: { ...d.menu, [day]: { ...d.menu?.[day], [meal]: id } } }))
+    update((d) => ({ ...d, dishes: [...dishesOf(d), { id, name: text, for: [meal], time: null, ingredients: ings, spices, amounts, steps: steps.map((s) => s.trim()).filter(Boolean) }], menu: { ...d.menu, [day]: { ...d.menu?.[day], [meal]: id } } }))
     onClose()
   }
 
@@ -53,7 +55,7 @@ export default function SlotDialog({ day, meal, data, update, value, onSet, onCl
               <button type="button" className={`fd-circle ${open.steps ? 'is-on' : ''}`} onClick={() => setOpen((o) => ({ ...o, steps: !o.steps }))} aria-label="Pasos" title="Pasos"><Icon name="steps" size={22} /></button>
               <span className="fd-hint">Se guarda también en el recetario</span>
             </div>
-            {open.ing && <div className="fd-panel"><IngredientsEditor dish={text} items={ings} onChange={setIngs} /></div>}
+            {open.ing && <div className="fd-panel"><IngredientsEditor dish={text} value={{ items: ings, spices, amounts }} onChange={(v) => { setIngs(v.items); setSpices(v.spices); setAmounts(v.amounts) }} /></div>}
             {open.steps && <div className="fd-panel"><StepsEditor steps={steps} onChange={setSteps} /></div>}
           </>
         )}
