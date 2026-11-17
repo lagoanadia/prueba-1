@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from '../components/Icon.jsx'
+import DatePicker from '../components/DatePicker.jsx'
 
 const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -36,11 +37,13 @@ function Items({ step, value = [], onChange }) {
     <div className="ob-items">
       {rows.map((r, i) => (
         <div key={i} className="w-form ob-row">
-          {step.fields.map((f) => (
+          {step.fields.map((f) => (f.type === 'date' ? (
+            <DatePicker key={f.key} value={r[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} label={f.placeholder ?? f.key} placeholder="Fecha" style={{ flex: 'none' }} />
+          ) : (
             <input key={f.key} type={f.type ?? 'text'} placeholder={f.placeholder} value={r[f.key] ?? ''} min={f.type === 'number' ? 1 : undefined}
               onChange={(e) => set(i, f.key, e.target.value)} style={f.width ? { width: f.width, flex: 'none' } : f.type === 'date' ? { flex: 'none' } : undefined}
               aria-label={f.placeholder ?? f.key} />
-          ))}
+          )))}
         </div>
       ))}
     </div>

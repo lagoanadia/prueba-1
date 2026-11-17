@@ -1,4 +1,5 @@
 import Select from '../../components/Select.jsx'
+import DatePicker from '../../components/DatePicker.jsx'
 import { undoable, insertAt } from '../../lib/undo.js'
 import Avatar from '../../components/Avatar.jsx'
 import { useShared } from './SharedCtx.js'
@@ -194,10 +195,7 @@ export default function BoardBlock({ data, update, onlyProject = null }) {
           <Select value={projectFor?.id} label="Proyecto" onChange={setTarget} options={shown.map((p) => ({ value: p.id, label: p.name, color: colorOf(data, p.id) }))} />
         )}
         <input placeholder="Nueva tarea" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} aria-label="Nueva tarea" />
-        <label className={`wk-date-field ${due ? 'on' : ''}`} title="Fecha límite">
-          <Icon name="calendario" size={16} />
-          <input type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Fecha de la tarea" />
-        </label>
+        <DatePicker className="wk-date-pick" value={due} onChange={setDue} label="Fecha de la tarea" placeholder="Fecha límite" color="#E84855" />
         <button className="icon-btn on" disabled={!title.trim()} aria-label="Añadir tarea"><Icon name="plus" size={20} /></button>
       </form>
 

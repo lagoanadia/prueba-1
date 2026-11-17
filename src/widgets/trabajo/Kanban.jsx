@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import History from '../../components/History.jsx'
 import { formatShort, todayISO } from '../../lib/dates.js'
 import { PRIORITIES, STATES, activeOf, updateTask } from './projects.js'
@@ -72,7 +73,7 @@ export default function Kanban({ size, data, update }) {
           <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ flex: 'none', '--c': PRIORITIES[priority] }}>
             <option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option>
           </select>
-          <input type="date" value={due} onChange={(e) => setDue(e.target.value)} style={{ flex: 'none' }} aria-label="Fecha" />
+          <DatePicker value={due} onChange={setDue} style={{ flex: 'none' }} label="Fecha" />
           <button className="mini mini-primary" aria-label="Añadir tarea" disabled={!title.trim()}>+</button>
         </form>
       )}

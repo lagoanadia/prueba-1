@@ -1,4 +1,5 @@
 import { locale } from '../i18n/index.js'
+import DatePicker from '../components/DatePicker.jsx'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../components/Icon.jsx'
@@ -182,7 +183,7 @@ function NewEvent({ date, initial = null, onClose, onSave, onDelete = null }) {
       <div className="popup-backdrop" onClick={onClose} />
       <form className="popup-panel new-event" onSubmit={save}>
         <header className="area-head"><h2>{initial ? 'Editar evento' : 'Nuevo evento'}</h2><button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
-        <div className="w-form"><input autoFocus placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} /><input type="date" value={day} onChange={(e) => setDay(e.target.value)} style={{ flex: 'none' }} /></div>
+        <div className="w-form"><input autoFocus placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} /><DatePicker value={day} onChange={setDay} label="Fecha" style={{ flex: 'none' }} /></div>
         <div className="chips">{['evento', 'cumpleaños', 'tarea'].map((t) => <button type="button" key={t} className={`chip ${type === t ? 'chip-on' : ''}`} onClick={() => setType(t)}>{TYPES[t].glyph} {TYPES[t].label}</button>)}</div>
         <div className="chips">{AREAS.map((a) => <button type="button" key={a.id} className={`chip ${area === a.id ? 'chip-on' : ''}`} style={{ '--c': a.color }} onClick={() => setArea(area === a.id ? null : a.id)}><span className="dot" style={{ background: a.color }} /> {a.label}</button>)}</div>
         {onDelete && <button type="button" className="text-link cal-del" onClick={() => window.confirm(`¿Borrar «${initial.title}»?`) && onDelete()}>Borrar evento</button>}

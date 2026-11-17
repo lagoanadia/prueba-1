@@ -1,4 +1,5 @@
 import Select from '../../components/Select.jsx'
+import DatePicker from '../../components/DatePicker.jsx'
 import { undoable, insertAt } from '../../lib/undo.js'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -66,10 +67,7 @@ export default function TaskEditor({ data, update, projectId, taskId, onClose })
               <button key={id} role="radio" aria-checked={task.priority === id} className={`te-prio ${task.priority === id ? 'on' : ''}`} style={{ background: col }} onClick={() => set({ priority: id })} title={`Prioridad ${id}`} aria-label={`Prioridad ${id}`} />
             ))}
           </span>
-          <label className="te-date">
-            <Icon name="calendario" size={18} />
-            <input type="date" value={task.due ?? ''} onChange={(e) => set({ due: e.target.value || null })} aria-label="Fecha" />
-          </label>
+          <DatePicker value={task.due ?? ''} onChange={(v) => set({ due: v || null })} label="Fecha" placeholder="Sin fecha" />
         </div>
 
         {members.length > 0 && (

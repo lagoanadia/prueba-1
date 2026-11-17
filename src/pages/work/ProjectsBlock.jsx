@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import { undoable, insertAt } from '../../lib/undo.js'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -68,7 +69,7 @@ export default function ProjectsBlock({ data, update, openProject }) {
               </button>
               <label className={`wk-deadline ${left != null && left < 0 && pct < 100 ? 'is-late' : ''}`} title="Fecha límite" style={{ background: soft(c, 25) }}>
                 <Icon name="calendario" size={14} />{p.deadline ? formatShort(p.deadline).replace(/^\S+ /, '') : '—'}
-                <input type="date" value={p.deadline ?? ''} onChange={(e) => setDeadline(p.id, e.target.value || null)} aria-label={`Fecha límite de ${p.name}`} />
+                <DatePicker ghost value={p.deadline ?? ''} onChange={(v) => setDeadline(p.id, v || null)} label={`Fecha límite de ${p.name}`} />
               </label>
               <button className="wk-x" onClick={() => remove(p)} aria-label={p.shared ? `Salir de ${p.name}` : `Borrar ${p.name}`} title={p.shared ? 'Salir del proyecto' : 'Borrar'}><Icon name="close" size={12} /></button>
             </div>

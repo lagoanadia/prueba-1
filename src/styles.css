@@ -3418,7 +3418,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .sel.dp { gap: 6px; justify-content: flex-start; } .sel.dp.is-empty .sel-value { color: var(--muted); font-weight: 500; }
 .dp-pop { position: fixed; z-index: 70; box-sizing: border-box; padding: 10px; background: #FFFFFF; border-radius: 18px; box-shadow: var(--shadow-lg); font-size: 14px; outline: none; animation: sel-in .22s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: top center; }
 .dp-head { display: flex; align-items: center; gap: 4px; padding: 2px 2px 8px; }
-.dp-month { flex: 1; font-size: 15px; text-transform: capitalize; padding-left: 6px; }
+.dp-month { flex: 1; font-size: 15px; text-transform: none; padding-left: 6px; }
 .dp-nav { width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); transition: background .15s, transform .15s var(--ease); }
 .dp-nav:hover { background: color-mix(in srgb, var(--c) 30%, #FFFFFF); } .dp-nav:active { transform: scale(.92); }
 .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -4196,3 +4196,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (hover: none) { .fd-chip.ing-chip > .ing-main { padding-right: 4px; } }
 .fd-chip.ing-chip:not(:hover):not(:focus-within) > .ing-main { padding-right: 14px; }
 @media (hover: none) { .fd-chip.ing-chip:not(:hover):not(:focus-within) > .ing-main { padding-right: 4px; } }
+.dp-quick { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 2px 8px; }
+.dp-quick button { border: 0; border-radius: 12px; padding: 4px 10px; background: var(--soft); font: 600 12px Poppins, sans-serif; color: var(--text); cursor: pointer; transition: background .15s, transform .15s var(--ease); }
+.dp-quick button:hover, .dp-quick button.is-on { background: color-mix(in srgb, var(--c) 28%, #FFFFFF); } .dp-quick button:active { transform: scale(.95); }
+.dp-foot[hidden] { display: none; }
+.dp-ghost { position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; }
+.pv-stat { position: relative; }
+.wk-date-pick { border-radius: 99px; padding: 5px 12px; font-size: 13px; }
+.dp-month::first-letter { text-transform: uppercase; }

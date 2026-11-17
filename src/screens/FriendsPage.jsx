@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../components/DatePicker.jsx'
 import { createPortal } from 'react-dom'
 import TopActions from '../components/TopActions.jsx'
 import Avatar from '../components/Avatar.jsx'
@@ -526,7 +527,7 @@ function Settings({ state, run }) {
       </div>
       <div className="card feed-card">
         <b>Mi cumpleaños</b>
-        <input className="pill-input" type="date" value={bday} onChange={(e) => { setBday(e.target.value); run('settings', { birthday: e.target.value ? e.target.value.slice(5) : null }) }} aria-label="Mi cumpleaños" />
+        <DatePicker value={bday} onChange={(v) => { setBday(v); run('settings', { birthday: v ? v.slice(5) : null }) }} label="Mi cumpleaños" placeholder="Mi cumpleaños" style={{ alignSelf: 'flex-start' }} />
         <span className="w-hint">Tus amigos verán un aviso el día antes, y ese día consigues el gorro de fiesta para tu avatar.</span>
       </div>
       <div className="card feed-card">

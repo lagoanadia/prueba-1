@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import { undoable, insertAt } from '../../lib/undo.js'
 import Icon from '../../components/Icon.jsx'
 import { todayISO } from '../../lib/dates.js'
@@ -89,7 +90,7 @@ export default function Accounting({ project, change }) {
               </span>
               <input autoFocus placeholder="Concepto" value={form.concept} maxLength={60} onChange={(e) => setForm({ ...form, concept: e.target.value })} aria-label="Concepto" />
               <input type="number" inputMode="decimal" step="0.01" min="0" placeholder="Importe €" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} aria-label="Importe" />
-              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} aria-label="Fecha" />
+              <DatePicker value={form.date} onChange={(v) => setForm({ ...form, date: v })} label="Fecha" />
               <span className="ac-form-actions">
                 {form.id && <button type="button" className="icon-btn" onClick={() => remove(form.id)} aria-label="Borrar"><Icon name="trash" size={16} /></button>}
                 <button type="button" className="pill" onClick={() => setForm(null)}>Cancelar</button>

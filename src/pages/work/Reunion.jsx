@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import TimePicker from '../../components/TimePicker.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -48,7 +49,7 @@ export default function Reunion({ data, update, projectId }) {
     <form className="rn" style={{ '--c': c }} onSubmit={activate}>
       <input className="rn-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} placeholder="¿De qué es la reunión?" aria-label="Título de la reunión" />
       <div className="rn-when">
-        <label className="rn-field"><Icon name="calendario" size={16} /><input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha" /></label>
+        <DatePicker value={date} onChange={setDate} label="Fecha" />
         <label className="rn-field"><Icon name="clock" size={16} /><TimePicker className="tp-flat" value={start} step={15} onChange={setStart} label="Empieza" /><span>–</span><TimePicker className="tp-flat" value={end} step={15} onChange={setEnd} label="Acaba" /></label>
       </div>
       {members.length > 0 ? (

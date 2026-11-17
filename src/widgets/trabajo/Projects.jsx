@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { activeOf, progressOf, projectsOf } from './projects.js'
 
@@ -49,7 +50,7 @@ export default function Projects({ size, data, update }) {
       {size === 'L' && (
         <form className="w-form" onSubmit={add}>
           <input placeholder="Nuevo proyecto" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-          <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} style={{ flex: 'none' }} />
+          <DatePicker value={deadline} onChange={setDeadline} label="Fecha límite" placeholder="Fecha límite" style={{ flex: 'none' }} />
           <button className="pill pill-soft" disabled={!name.trim()}>Crear</button>
         </form>
       )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import { createPortal } from 'react-dom'
 import AddPopup from '../AddPopup.jsx'
 import Avatar from '../../components/Avatar.jsx'
@@ -95,7 +96,7 @@ export default function Bottle({ size, data, update }) {
       )}
       <textarea autoFocus={!inline} placeholder={to ? `Escribe a @${to}. No podrá leerla hasta la fecha que elijas.` : 'Escribe a tu yo del futuro, elige una fecha y la cápsula queda cerrada hasta ese día.'} value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={inline ? undefined : 4} />
       <div className="w-form">
-        <input type="date" value={date} min={addDays(today, 1)} onChange={(e) => setDate(e.target.value)} style={{ flex: 'none' }} aria-label="Se abre el" />
+        <DatePicker value={date} min={addDays(today, 1)} onChange={setDate} style={{ flex: 'none' }} label="Se abre el" placeholder="Se abre el" />
         <button className="pill pill-pink" disabled={!text.trim()}>{to ? 'Enviar' : 'Sellar'}</button>
       </div>
     </form>

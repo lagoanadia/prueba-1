@@ -12,7 +12,7 @@ const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}` // m: 0-11
  * Mismo manejo: ratón, dedo o teclado (flechas mueven el día, Av/Re Pág el mes, Enter elige, Esc cierra).
  * value: "2026-11-24" o ''. onChange recibe "YYYY-MM-DD" (o '' si se borra).
  */
-export default function DatePicker({ value, onChange, label = 'Fecha', min, className = '', style, placeholder = 'Fecha', color = '#3185FC' }) {
+export default function DatePicker({ value, onChange, label = 'Fecha', min, className = '', style, placeholder = 'Fecha', color = '#3185FC', ghost = false }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState(null)
   const [month, setMonth] = useState(() => (value || todayISO()).slice(0, 7)) // "2026-11": mes que se está viendo
@@ -24,7 +24,7 @@ export default function DatePicker({ value, onChange, label = 'Fecha', min, clas
   const place = () => {
     const r = btn.current.getBoundingClientRect()
     const w = 292
-    const h = 340
+    const h = 372
     const below = window.innerHeight - r.bottom
     setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)), width: w, ...(below < h + 12 && r.top > below ? { bottom: window.innerHeight - r.top + 6 } : { top: Math.max(8, Math.min(r.bottom + 6, window.innerHeight - h - 8)) }) })
   }
@@ -50,6 +50,8 @@ export default function DatePicker({ value, onChange, label = 'Fecha', min, clas
   const monthName = new Date(y, m - 1, 1).toLocaleDateString(locale(), { month: 'long', year: 'numeric' })
   const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i).toLocaleDateString(locale(), { weekday: 'narrow' })) // 1 ene 2024 fue lunes
   const blocked = (d) => Boolean(min && d < min)
+  // Atajos rápidos sobre el calendario
+  const shortcuts = [['Hoy', 0], ['Mañana', 1], ['1 semana', 7], ['1 mes', 30]].map(([t, n]) => [t, addDays(today, n)]).filter(([, d]) => !blocked(d))
 
   const moveHi = (n) => { const next = addDays(hi, n); setHi(next); setMonth(next.slice(0, 7)) }
   const onKey = (e) => {
@@ -62,9 +64,9 @@ export default function DatePicker({ value, onChange, label = 'Fecha', min, clas
 
   return (
     <>
-      <button ref={btn} type="button" className={`sel dp ${open ? 'is-open' : ''} ${value ? '' : 'is-empty'} ${className}`} style={{ '--c': color, ...style }}
+      <button ref={btn} type="button" className={`sel dp ${ghost ? 'dp-ghost' : ''} ${open ? 'is-open' : ''} ${value ? '' : 'is-empty'} ${className}`} style={{ '--c': color, ...style }}
         onClick={() => (open ? setOpen(false) : show())} onKeyDown={onKey} aria-haspopup="dialog" aria-expanded={open} aria-label={label}>
-        <Icon name="calendario" size={16} />
+        {!ghost && <Icon name="calendario" size={16} />}
         <span className="sel-value">{value ? formatShort(value) : placeholder}</span>
       </button>
       {open && pos && createPortal(
@@ -74,6 +76,9 @@ export default function DatePicker({ value, onChange, label = 'Fecha', min, clas
             <button type="button" className="dp-nav" onClick={() => shiftMonth(-1)} aria-label="Mes anterior"><Icon name="left" size={16} strokeWidth={2.4} /></button>
             <button type="button" className="dp-nav" onClick={() => shiftMonth(1)} aria-label="Mes siguiente"><Icon name="right" size={16} strokeWidth={2.4} /></button>
           </div>
+          <div className="dp-quick">
+            {shortcuts.map(([t, d]) => <button type="button" key={t} className={d === value ? 'is-on' : ''} onClick={() => pick(d)}>{t}</button>)}
+          </div>
           <div className="dp-grid" role="grid">
             {weekdays.map((w, i) => <span key={i} className="dp-wd" aria-hidden="true">{w}</span>)}
             {days.map((d) => (
@@ -82,9 +87,8 @@ export default function DatePicker({ value, onChange, label = 'Fecha', min, clas
                 onPointerEnter={() => setHi(d)} onClick={() => pick(d)}>{Number(d.slice(8))}</button>
             ))}
           </div>
-          <div className="dp-foot">
+          <div className="dp-foot" hidden={!value}>
             <button type="button" onClick={() => pick('')} disabled={!value}>Borrar</button>
-            <button type="button" onClick={() => pick(today)} disabled={blocked(today)}>Hoy</button>
           </div>
         </div>,
         document.body,

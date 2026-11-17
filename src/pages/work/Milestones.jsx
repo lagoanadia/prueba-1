@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import { createPortal } from 'react-dom'
 import Icon from '../../components/Icon.jsx'
 import { addDays, daysUntil, formatShort, todayISO } from '../../lib/dates.js'
@@ -18,7 +19,7 @@ function MilestonePopup({ initial, onSave, onDelete, onClose }) {
       <div className="popup-backdrop" onClick={onClose} />
       <form className="popup-panel ms-pop" onSubmit={(e) => { e.preventDefault(); if (ok) onSave({ ...m, title: m.title.trim() }) }}>
         <input className="te-title" autoFocus placeholder="Demo, entrega, lanzamiento…" value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} maxLength={50} aria-label="Nombre del hito" />
-        <label className="te-date"><Icon name="calendario" size={18} /><input type="date" value={m.date} onChange={(e) => setM({ ...m, date: e.target.value })} aria-label="Fecha del hito" /></label>
+        <DatePicker value={m.date} onChange={(v) => setM({ ...m, date: v })} label="Fecha del hito" />
         {onDelete && (
           <label className="ms-done"><input type="checkbox" checked={m.done} onChange={() => setM({ ...m, done: !m.done })} />Cumplido</label>
         )}

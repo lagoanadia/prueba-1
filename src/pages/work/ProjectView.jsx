@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker.jsx'
 import BlockEdit from '../../components/BlockEdit.jsx'
 import useBlockDrag from '../../hooks/useBlockDrag.js'
 import useExitEdit from '../../hooks/useExitEdit.js'
@@ -110,7 +111,7 @@ export default function ProjectView({ data, update, projectId, back, initialDoc 
         <label className={`pv-stat ${left != null && left < 0 && pct < 100 ? 'is-late' : ''}`} title="Fecha límite">
           <Icon name="calendario" size={18} /><b>{project.deadline ? (left < 0 ? `${-left} d tarde` : left === 0 ? 'Hoy' : `${left} d`) : '—'}</b>
           <span className="muted">{project.deadline ? formatShort(project.deadline) : 'Sin plazo'}</span>
-          <input type="date" value={project.deadline ?? ''} onChange={(e) => change((p) => ({ ...p, deadline: e.target.value || null }))} aria-label="Fecha límite" />
+          <DatePicker ghost value={project.deadline ?? ''} onChange={(v) => change((p) => ({ ...p, deadline: v || null }))} label="Fecha límite" />
         </label>
         <span className="pv-stat" title="Tareas"><Icon name="check" size={18} /><b>{done}/{total}</b><span className="muted">tareas</span></span>
         <span className="pv-stat" title="Tiempo dedicado"><Icon name="clock" size={18} /><b>{fmtTime(totalMin)}</b><span className="muted">dedicadas</span></span>
