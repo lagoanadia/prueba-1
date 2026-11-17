@@ -3936,3 +3936,20 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
   .game-panel .cwd { --gw: min(100cqw - 48px, calc((100cqh - 360px) * var(--w) / var(--h))); }
   .game-panel .cwd-cell { font-size: clamp(14px, 6cqw, 26px); }
 }
+
+/* Mood tracker mediano: caras para hoy a la izquierda y dos semanas con fechas a la derecha */
+.mood-m2 { flex: 1; min-height: 0; display: flex; gap: 18px; align-items: stretch; }
+.mood-today { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding-right: 18px; border-right: 1px solid var(--line); }
+.mood-lab { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #9AA0A6; }
+.mood-faces { display: flex; gap: 8px; }
+.mood-face-btn { border: none; background: none; padding: 0; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.mood-face-btn svg { width: clamp(24px, 22cqh, 34px); height: clamp(24px, 22cqh, 34px); border-radius: 50%; transition: transform .15s var(--ease); }
+.mood-face-btn:active svg { transform: scale(.88); }
+.mood-face-btn.on svg { outline: 3px solid var(--text); outline-offset: 2px; }
+.mood-2w { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: auto 1fr 1fr; gap: 4px 6px; }
+.mood-2w-h { text-align: center; font-size: 10px; font-weight: 600; color: #9AA0A6; line-height: 1; }
+.mood-2w-d { border: none; border-radius: 9px; background: #EFE6D6; font: inherit; font-size: 11px; font-weight: 700; color: rgba(0, 0, 0, .5); display: flex; align-items: center; padding: 0 7px; cursor: pointer; min-height: 0; transition: transform .15s var(--ease); }
+.mood-2w-d:active { transform: scale(.92); }
+.mood-2w-d.today { box-shadow: inset 0 0 0 2px var(--text); }
+.mood-2w-d.fut { background: transparent; border: 2px dashed #E2D7C5; color: #C9BBA4; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .mood-face-btn svg, .mood-2w-d { transition: none; } }
