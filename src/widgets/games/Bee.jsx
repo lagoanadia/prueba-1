@@ -133,13 +133,16 @@ export default function Bee({ data, update }) {
           </div>
         )}
       </div>
-      <div className="bee-word-wrap">
-        {msg && <span key={msg.id} className={`bee-toast ${msg.kind}`} role="status">{msg.t}</span>}
-        <div className={`bee-word ${word ? '' : verdict}`} aria-live="polite">{[...(word || judged)].map((ch, i) => <span key={i} className={ch === puzzle.center ? 'c' : ''}>{ch}</span>)}</div>
-      </div>
-      <div className={`hive ${mixing ? 'mixing' : ''}`}>
-        <button className="hex center" onClick={() => setWord(word + puzzle.center)}>{puzzle.center}</button>
-        {outer.map((l, i) => <button key={l} className={`hex h${i}`} onClick={() => setWord(word + l)}>{l}</button>)}
+      {/* Zona central: la palabra y el panal, tan grande como deje el hueco y siempre centrado */}
+      <div className="bee-stage">
+        <div className="bee-word-wrap">
+          {msg && <span key={msg.id} className={`bee-toast ${msg.kind}`} role="status">{msg.t}</span>}
+          <div className={`bee-word ${word ? '' : verdict}`} aria-live="polite">{[...(word || judged)].map((ch, i) => <span key={i} className={ch === puzzle.center ? 'c' : ''}>{ch}</span>)}</div>
+        </div>
+        <div className={`hive ${mixing ? 'mixing' : ''}`}>
+          <button className="hex center" onClick={() => setWord(word + puzzle.center)}>{puzzle.center}</button>
+          {outer.map((l, i) => <button key={l} className={`hex h${i}`} onClick={() => setWord(word + l)}>{l}</button>)}
+        </div>
       </div>
       <div className="bee-actions">
         <button className="pill" onClick={() => setWord(word.slice(0, -1))}>Borrar</button>

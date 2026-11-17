@@ -81,3 +81,41 @@ export function HabitMonth({ list, pixels, since, today, onToggle }) {
     </div>
   )
 }
+
+/**
+ * Calendario de un solo dato por día (p. ej. el ánimo): cada día se pinta del color que devuelve `paint`.
+ * Semana o mes con flechas; no se puede ir antes de tu primer día y los días futuros no se tocan.
+ */
+export function DayCalendar({ mode, since, today, paint, onTap }) {
+  const [anchor, setAnchor] = useState(today)
+  const week = mode === 'semana'
+  const first = week ? weekStart(anchor) : anchor.slice(0, 7) + '-01'
+  const shift = (n) => {
+    if (week) return setAnchor(addDays(first, n * 7))
+    const d = new Date(`${first}T12:00:00`); d.setMonth(d.getMonth() + n); setAnchor(d.toISOString().slice(0, 7) + '-01')
+  }
+  const next = (() => { if (week) return addDays(first, 7); const d = new Date(`${first}T12:00:00`); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0, 7) + '-01' })()
+  const count = Math.round((new Date(`${next}T12:00:00`) - new Date(`${first}T12:00:00`)) / 864e5)
+  const days = Array.from({ length: count }, (_, i) => addDays(first, i))
+  const lead = week ? 0 : (new Date(`${first}T12:00:00`).getDay() + 6) % 7
+  const label = week ? `${shortDate(days[0])} – ${shortDate(days[6])}` : monthName(first)
+  return (
+    <div className="hv">
+      <Nav label={label} onPrev={() => shift(-1)} onNext={() => shift(1)} canPrev={first > since} canNext={next <= today} />
+      <div className={`hv-month ${week ? 'hv-month-week' : ''}`} style={{ '--weeks': Math.ceil((lead + count) / 7) }}>
+        {LETTERS.map((l) => <span key={l} className="hv-mhead">{l}</span>)}
+        {Array.from({ length: lead }, (_, i) => <span key={'e' + i} />)}
+        {days.map((d) => {
+          const off = d < since || d > today
+          const fill = !off ? paint(d) : undefined
+          return (
+            <button key={d} className={`hv-mday ${off ? 'off' : ''} ${d > today ? 'fut' : ''} ${d === today ? 'today' : ''} ${fill ? 'full' : ''}`} disabled={off}
+              style={fill ? { background: fill } : undefined} onClick={() => onTap(d)} aria-label={d}>
+              <span>{Number(d.slice(8))}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

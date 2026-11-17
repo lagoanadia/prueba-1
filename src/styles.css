@@ -4003,3 +4003,25 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 /* Sin barra de scroll a la derecha de la página: se sigue bajando igual (rueda, panel táctil, dedo) */
 html, body { scrollbar-width: none; }
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+/* Cápsulas: la fila de botellas se puede desplazar, pero sin barra visible */
+.cap-row { scrollbar-width: none; } .cap-row::-webkit-scrollbar { display: none; }
+/* Mood tracker grande: caras de hoy y Semana / Mes / Análisis en una fila; la semana con casillas grandes */
+.mood-bar-l { align-items: center; gap: 10px; }
+.mood-bar-l .mood-faces { gap: 10px; }
+.mood-bar-l .mood-face-btn svg { width: 28px; height: 28px; }
+.hv-month-week { grid-template-rows: auto minmax(0, 1fr); }
+.hv-month-week .hv-mday { align-items: flex-start; padding: 6px 8px; font-size: 13px; border-radius: 12px; max-height: 120px; }
+
+/* Spelling Bee: la zona central ocupa todo el hueco libre; el panal se calcula con el tamaño de esa zona */
+.game-panel .bee .bee-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; container-type: size; }
+.game-panel .bee .bee-stage .bee-word-wrap { margin-top: 0; padding-top: 26px; flex: none; }
+.game-panel .bee .bee-stage .hive { --hw: min(calc((100cqh - 80px) / 2.75), calc(100cqw / 2.7), 130px); --hh: calc(var(--hw) * .866); width: calc(var(--hw) * 2.62); height: calc(var(--hw) * 2.74); margin: 0 auto; flex: none; }
+.game-panel .bee .bee-actions { margin: 6px 0 0; }
+.bee-word-wrap { width: 100%; } .bee-toast { left: 0; right: 0; margin: 0 auto; width: max-content; max-width: 90%; text-align: center; }
+
+.hv-month-week .hv-mday.fut { background: transparent; border: 2px dashed #E2D7C5; color: #C9BBA4; }
+.mood-bar-l .chip { font-size: 13px; padding: 4px 12px; }
+.mood-bar-t { justify-content: center; }
+.mood-bar-t .mood-face-btn svg { width: 26px; height: 26px; }
+.game-panel .bee .bee-stage .bee-word-wrap { padding-top: 34px; }

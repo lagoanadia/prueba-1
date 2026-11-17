@@ -28,7 +28,8 @@ export default function Crossword({ data, update }) {
 
   const save = (next, extra = {}) => {
     const solved = next.every((row, r) => row.every((v, c) => !cw.cells[r][c] || v === cw.solution[r][c]))
-    const startedAt = saved?.startedAt ?? Date.now()
+    // Revelar una palabra suma tiempo al reloj (se adelanta la hora de inicio)
+    const startedAt = (saved?.startedAt ?? Date.now()) - (extra.penalty ?? 0) * 1000
     const secs = Math.round((Date.now() - startedAt) / 1000)
     const helps = (saved?.helps ?? 0) + (extra.helps ?? 0)
     update((d) => ({ ...d, games: { ...(d.games ?? {}), crossword: { date, fill: next, startedAt, helps, ...(saved?.auto || auto || extra.auto ? { auto: true } : {}), ...(solved ? { done: true, seconds: secs } : {}) } } }))
@@ -64,7 +65,7 @@ export default function Crossword({ data, update }) {
     if (!active || done) return
     const next = fill.map((row) => [...row])
     for (let i = 0; i < active.len; i++) { const r = active.r + (active.dir === 'down' ? i : 0); const c = active.c + (active.dir === 'across' ? i : 0); next[r][c] = cw.solution[r][c] }
-    save(next, { helps: 2 })
+    save(next, { helps: 2, penalty: 60 }) // +1 minuto
   }
   const type = (ch) => {
     if (!sel || done) return
@@ -101,7 +102,7 @@ export default function Crossword({ data, update }) {
           <button className="pill" onClick={() => type('')} disabled={!sel}>Borrar</button>
           <button className={`pill ${auto ? 'pill-on' : ''}`} aria-pressed={auto} onClick={toggleAuto}>Autocomprobar</button>
           {!auto && <button className="pill" onClick={check}>Comprobar</button>}
-          <button className="pill" onClick={reveal} disabled={!active}>Revelar palabra</button>
+          <button className="pill" onClick={reveal} disabled={!active} title="Revela la palabra elegida y suma 1 minuto al reloj">Revelar palabra · +1 min</button>
         </div>
       )}
       {/* Campo invisible para que en el móvil salga el teclado */}
