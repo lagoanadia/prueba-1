@@ -4000,3 +4000,6 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .w-M .cap-shelf { --bh: clamp(40px, 36cqh, 76px); --bw: calc(var(--bh) * .625); }
 .w-M .cap-shelf .cap-row .bottle .bottle-art { height: var(--bh); width: auto; }
 .w-M .cap-shelf .cap-row, .w-M .cap-shelf .cap-tags { gap: max(10px, calc(68px - var(--bw))); }
+/* Sin barra de scroll a la derecha de la página: se sigue bajando igual (rueda, panel táctil, dedo) */
+html, body { scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
