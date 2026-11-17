@@ -4204,3 +4204,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pv-stat { position: relative; }
 .wk-date-pick { border-radius: 99px; padding: 5px 12px; font-size: 13px; }
 .dp-month::first-letter { text-transform: uppercase; }
+.cal-bdays { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.cal-bday { border: 0; border-radius: 99px; padding: 5px 12px; background: var(--soft); font: 500 13px Poppins, sans-serif; color: var(--text); cursor: pointer; transition: transform .15s var(--ease), background .15s; }
+.cal-bday b { font-weight: 700; margin-left: 4px; } .cal-bday:hover { background: color-mix(in srgb, #F6A6C1 35%, #FFFFFF); } .cal-bday:active { transform: scale(.96); }
+.cal-bday.is-today { background: #FCE0EA; }

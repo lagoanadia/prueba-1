@@ -9,7 +9,7 @@ import { FLOWS } from '../onboarding/flows.js'
 import useAllBoards from '../hooks/useAllBoards.js'
 import { AREAS, AREA_IDS, getArea } from '../data/areas.js'
 import { connect, createEvent, disconnect, hasToken, isLinked, listEvents } from '../lib/googleCalendar.js'
-import { TYPES, calendarItems } from '../lib/calendarItems.js'
+import { TYPES, calendarItems, upcomingBirthdays } from '../lib/calendarItems.js'
 import { addDays, dayShort, todayISO, weekStart } from '../lib/dates.js'
 
 const VIEWS = [{ id: 'dia', label: 'Día' }, { id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
@@ -61,6 +61,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
   const mirrored = new Set((boards.calendario?.data?.events ?? []).map((e) => e.gcalId).filter(Boolean))
   const googleItems = gcal.events.filter((e) => !mirrored.has(e.id)).map((e) => ({ key: 'g' + e.id, date: e.date, title: e.time ? `${e.time} ${e.title}` : e.title, type: 'evento', area: null, google: true, done: false }))
 
+  const birthdays = upcomingBirthdays(boards.calendario?.data?.events, today)
   const all = [...calendarItems({ boards, change, entries, toggleEntry, from, to, editEvent: setEditing }), ...googleItems]
   const items = all.filter((i) => (filter === 'todo' ? true : filter === 'pendientes' ? !i.done : i.done))
   const byDay = (date) => items.filter((i) => i.date === date)
@@ -105,6 +106,11 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
         </div>
       </div>
       {gcal.error && <p className="error gcal-error">{gcal.error}</p>}
+      {birthdays.length > 0 && (
+        <div className="cal-bdays" aria-label="Próximos cumpleaños">
+          {birthdays.map((b) => <button type="button" key={b.id} className={`cal-bday ${b.left === 0 ? 'is-today' : ''}`} onClick={() => openDay(b.date)}>✦ {b.title} <b>{b.left === 0 ? 'hoy' : b.left === 1 ? 'mañana' : `${b.left} d`}</b></button>)}
+        </div>
+      )}
       <div className="cal-legend">
         {Object.values(TYPES).map((t) => <span key={t.label}>{t.glyph} {t.label}</span>)}
       </div>
@@ -162,7 +168,7 @@ export default function CalendarPage({ entries = [], toggleEntry = () => {} }) {
           const id = crypto.randomUUID()
           change('calendario', (d) => ({ ...d, events: [...(d.events ?? []), { id, ...ev }] }))
           // Conectado a Google: el evento también se crea en tu Google Calendar (y recordamos su id para no verlo dos veces)
-          if (gcal.on) createEvent({ title: ev.title, date: ev.date })
+          if (gcal.on) createEvent({ title: ev.title, date: ev.date, yearly: ev.type === 'cumpleaños' })
             .then((g) => change('calendario', (d) => ({ ...d, events: (d.events ?? []).map((x) => (x.id === id ? { ...x, gcalId: g.id } : x)) })))
             .catch((e) => setGcal((g) => ({ ...g, error: e.message })))
           setAdding(null)
@@ -185,6 +191,7 @@ function NewEvent({ date, initial = null, onClose, onSave, onDelete = null }) {
         <header className="area-head"><h2>{initial ? 'Editar evento' : 'Nuevo evento'}</h2><button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="close" /></button></header>
         <div className="w-form"><input autoFocus placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} /><DatePicker value={day} onChange={setDay} label="Fecha" style={{ flex: 'none' }} /></div>
         <div className="chips">{['evento', 'cumpleaños', 'tarea'].map((t) => <button type="button" key={t} className={`chip ${type === t ? 'chip-on' : ''}`} onClick={() => setType(t)}>{TYPES[t].glyph} {TYPES[t].label}</button>)}</div>
+        {type === 'cumpleaños' && <span className="w-hint">Se repite cada año</span>}
         <div className="chips">{AREAS.map((a) => <button type="button" key={a.id} className={`chip ${area === a.id ? 'chip-on' : ''}`} style={{ '--c': a.color }} onClick={() => setArea(area === a.id ? null : a.id)}><span className="dot" style={{ background: a.color }} /> {a.label}</button>)}</div>
         {onDelete && <button type="button" className="text-link cal-del" onClick={() => window.confirm(`¿Borrar «${initial.title}»?`) && onDelete()}>Borrar evento</button>}
         <button className="btn-primary" disabled={!title.trim()}>Guardar<span className="btn-arrow"><Icon name="arrow" size={16} strokeWidth={2.6} /></span></button>

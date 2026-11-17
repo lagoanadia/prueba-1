@@ -23,7 +23,7 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to, 
       ? [Number(from.slice(0, 4)), Number(to.slice(0, 4))].map((y) => `${y}${ev.date.slice(4)}`)
       : [ev.date]
     ;[...new Set(dates)].filter(inRange).forEach((date) => items.push({
-      key: ev.id + date, date, title: ev.title, type: ev.type, area: ev.area ?? null, done: Boolean(ev.done),
+      key: ev.id + date, date, title: ev.type === 'cumpleaños' ? ev.title.replace(/^Cumpleaños de /i, '') : ev.title, type: ev.type, area: ev.area ?? null, done: Boolean(ev.done),
       toggle: ev.type === 'cumpleaños' ? null : () => change('calendario', (x) => ({ ...x, events: x.events.map((e) => (e.id === ev.id ? { ...e, done: !e.done } : e)) })),
       remove: () => change('calendario', (x) => ({ ...x, events: x.events.filter((e) => e.id !== ev.id) })),
       edit: editEvent ? () => editEvent(ev) : null, // tocar el evento lo abre para cambiarlo
@@ -67,4 +67,16 @@ export function calendarItems({ boards, change, entries, toggleEntry, from, to, 
     Object.entries(meals ?? {}).filter(([, v]) => v === OUT).forEach(([m]) => items.push({ key: `c${date}${m}`, date, title: `${MEALS[m]} fuera`, type: 'evento', area: 'comida', done: false }))
   })
   return items
+}
+
+/** Próximos cumpleaños (se repiten cada año): los que caen hoy o en los siguientes `days` días, del más cercano al más lejano. */
+export function upcomingBirthdays(events, today, days = 30) {
+  const day = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
+  const y = Number(today.slice(0, 4))
+  return (events ?? []).filter((e) => e.type === 'cumpleaños' && e.date).flatMap((e) => {
+    const md = e.date.slice(4)
+    const next = [y, y + 1].map((yy) => `${yy}${md}`).find((d) => d >= today)
+    const left = Math.round((day(next) - day(today)) / 864e5)
+    return left <= days ? [{ id: e.id, title: e.title.replace(/^Cumpleaños de /i, ''), date: next, left }] : []
+  }).sort((a, b) => a.left - b.left)
 }

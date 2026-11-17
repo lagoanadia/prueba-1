@@ -70,7 +70,7 @@ export async function listEvents(from, to) {
 }
 
 /** Crea un evento en tu Google Calendar (todo el día si no tiene hora). */
-export async function createEvent({ title, date, time }) {
+export async function createEvent({ title, date, time, yearly = false }) {
   let body
   if (time) {
     const start = new Date(`${date}T${time}:00`)
@@ -79,5 +79,6 @@ export async function createEvent({ title, date, time }) {
     const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + 1)
     body = { summary: title, start: { date }, end: { date: next.toLocaleDateString('en-CA') } }
   }
+  if (yearly) body.recurrence = ['RRULE:FREQ=YEARLY'] // cumpleaños: se repite cada año
   return call(API, { method: 'POST', body: JSON.stringify(body) })
 }
