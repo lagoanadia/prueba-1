@@ -23,7 +23,7 @@ function parseJson(text) {
 export async function proposeTasks({ project, milestone, notes, lang }, env) {
   const text = clean(notes, MAX_NOTES)
   const user = `${lang === 'en' ? 'Project' : 'Proyecto'}: ${clean(project, 80) || '—'}\n${lang === 'en' ? 'Milestone' : 'Hito'}: ${clean(milestone, 80) || '—'}\n\n${lang === 'en' ? 'Notes' : 'Notas'}:\n${text}`
-  const raw = await groqChat([{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: user }], env, { json: true, temperature: 0.2, maxTokens: 1024 })
+  const raw = await groqChat([{ role: 'system', content: systemPrompt(lang) }, { role: 'user', content: user }], env, { json: true, temperature: 0.2, maxTokens: 3072 })
   const parsed = parseJson(raw)
   const tasks = (Array.isArray(parsed?.tasks) ? parsed.tasks : []).map((t) => clean(typeof t === 'string' ? t : t?.title, 90)).filter(Boolean).slice(0, 12)
   if (!tasks.length) throw new Error('Model returned no tasks')

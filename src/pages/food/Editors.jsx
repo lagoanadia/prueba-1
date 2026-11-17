@@ -7,6 +7,7 @@ export function IngredientsEditor({ dish, items, onChange }) {
   const [text, setText] = useState('')
   const [ideas, setIdeas] = useState([])
   const [looking, setLooking] = useState(false)
+  const [why, setWhy] = useState(null) // por qué no hay ideas (clave, cuota…)
   const key = items.join('|')
 
   // Sugerencias de la IA: sin etiqueta, con pausa para no pedir en cada tecla; si falla, se escribe a mano
@@ -14,7 +15,7 @@ export function IngredientsEditor({ dish, items, onChange }) {
     if (dish.trim().length < 3) { setIdeas([]); setLooking(false); return undefined }
     let alive = true
     setLooking(true)
-    const t = setTimeout(() => { suggestIngredients(dish, items).then((r) => { if (alive) { setIdeas(r); setLooking(false) } }).catch(() => { if (alive) { setIdeas([]); setLooking(false) } }) }, 700)
+    const t = setTimeout(() => { suggestIngredients(dish, items).then((r) => { if (alive) { setIdeas(r.suggestions); setWhy(r.reason); setLooking(false) } }).catch(() => { if (alive) { setIdeas([]); setWhy('net'); setLooking(false) } }) }, 700)
     return () => { alive = false; clearTimeout(t) }
   }, [dish, key]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -32,7 +33,7 @@ export function IngredientsEditor({ dish, items, onChange }) {
         ))}
         <input className="fd-line" placeholder="Escribe un ingrediente…" value={text} maxLength={40} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} aria-label="Ingrediente" />
       </div>
-      {dish.trim().length >= 3 && (looking || ideas.length === 0) && <span className="fd-hint fd-ideas-hint">{looking ? 'Buscando ideas para «' + dish.trim() + '»…' : 'Sin ideas ahora: escribe tus ingredientes a mano'}</span>}
+      {dish.trim().length >= 3 && (looking || ideas.length === 0) && <span className="fd-hint fd-ideas-hint">{looking ? 'Buscando ideas para «' + dish.trim() + '»…' : ({ nokey: 'La IA no está configurada en el servidor (falta la clave de Groq): escribe a mano', badkey: 'La clave de Groq no es válida o ha caducado: escribe a mano', quota: 'La IA ha llegado a su límite por ahora: escribe a mano', net: 'No se ha podido contactar con la IA: escribe a mano' })[why] ?? 'Sin ideas ahora: escribe tus ingredientes a mano'}</span>}
       {ideas.length > 0 && (
         <div className="fd-chips">
           {ideas.filter((x) => !items.some((i) => i.toLowerCase() === x.toLowerCase())).map((x) => <button type="button" key={x} className="fd-chip is-dash" onClick={() => add(x)}>+ {x}</button>)}
