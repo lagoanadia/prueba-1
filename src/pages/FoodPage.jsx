@@ -31,6 +31,7 @@ const DEFAULT_BLOCKS = Object.entries(BLOCKS).map(([type, b]) => ({ id: type, ty
 export default function FoodPage({ data, update }) {
   const blocks = data.foodBlocks ?? DEFAULT_BLOCKS
   const [editing, setEditing] = useState(false)
+  const [placing, setPlacing] = useState(null) // receta «en la mano»: se toca cualquier casilla del planificador para ponerla
   const [adding, setAdding] = useState(false)
   const setBlocks = (fn) => update((d) => ({ ...d, foodBlocks: fn(d.foodBlocks ?? DEFAULT_BLOCKS) }))
   const dnd = useBlockDrag(setBlocks, editing)
@@ -54,8 +55,8 @@ export default function FoodPage({ data, update }) {
       const note = data.quickNotes?.[b.id] ?? { html: '' }
       return <QuickNote note={note} onChange={(n) => update((d) => ({ ...d, quickNotes: { ...(d.quickNotes ?? {}), [b.id]: n } }))} onDelete={() => removeBlock(b)} />
     }
-    if (b.type === 'menu') return <MenuCard data={data} update={update} />
-    if (b.type === 'cookbook') return <Cookbook data={data} update={update} />
+    if (b.type === 'menu') return <MenuCard data={data} update={update} placing={placing} onPlaced={() => setPlacing(null)} />
+    if (b.type === 'cookbook') return <Cookbook data={data} update={update} onPlace={(id) => setPlacing(id)} />
     if (b.type === 'shopping') return <ShoppingCard data={data} update={update} />
     if (b.type === 'batch') return <BatchCard data={data} update={update} />
     return (

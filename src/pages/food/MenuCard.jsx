@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import { addDays, dayShort, todayISO, weekDays, weekStart } from '../../lib/dates.js'
 import { MEALS, OUT, dishName, dishesOf, isWith, mealsOf } from '../../widgets/comida/food.js'
@@ -15,7 +15,8 @@ const range = (days) => {
 }
 
 /** Menú de la semana: días en columnas (en pantallas estrechas, en filas). Tocar una casilla elige la comida; se pueden soltar recetas encima. */
-export default function MenuCard({ data, update }) {
+export default function MenuCard({ data, update, placing = null, onPlaced = () => {} }) {
+  const sectionRef = useRef(null)
   const today = todayISO()
   const [offset, setOffset] = useState(0)
   const [slot, setSlot] = useState(null) // { day, meal }
@@ -58,14 +59,34 @@ export default function MenuCard({ data, update }) {
     meals: meals.map((m) => [m, MEALS[m]]),
     days: days.map((d) => ({ label: dayShort(d), meals: Object.fromEntries(meals.map((m) => [m, menu[d]?.[m] ? dishName(dishes, menu[d][m]) : ''])) })),
   }
+  // Con una receta «en la mano» (desde el Recetario): al empezar se lleva el planificador a la vista y Esc termina
+  useEffect(() => {
+    if (!placing) return undefined
+    sectionRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
+    const k = (e) => e.key === 'Escape' && onPlaced()
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [placing]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Mover una comida a otra casilla (si el destino tiene algo, se intercambian); con Ctrl o Alt se copia
+  const moveSlot = (from, to, copy) => update((d) => {
+    const m = { ...(d.menu ?? {}) }
+    const get = (k) => m[k[0]]?.[k[1]] ?? null
+    const put = (k, v) => { m[k[0]] = { ...m[k[0]], [k[1]]: v || null } }
+    const a = get(from); const b = get(to)
+    put(to, a)
+    if (!copy) put(from, b)
+    return { ...d, menu: m }
+  })
   const drop = (e, day, meal) => {
     e.preventDefault(); setOver(null)
+    const src = e.dataTransfer.getData('text/slot')
+    if (src) { const [sd, sm] = src.split('|'); if (sd !== day || sm !== meal) moveSlot([sd, sm], [day, meal], e.ctrlKey || e.altKey); return }
     const id = e.dataTransfer.getData('text/dish')
     if (id && dishes.some((x) => x.id === id)) set(day, meal, id)
   }
 
   return (
-    <section className="card fd-card fd-menu" aria-label="Menú de la semana">
+    <section ref={sectionRef} className={`card fd-card fd-menu ${placing ? 'is-placing' : ''}`} aria-label="Menú de la semana">
       <div className="fd-title"><span className="dot-food" aria-hidden="true" /><b>Planificador de comidas</b><span className="fd-grow" />
         {!empty && <ShareButton kind="menu" title="el menú de la semana" className="fd-pill" data={shareData} />}
         <button className={`fd-ib ${recover ? 'on' : ''}`} onClick={() => setRecover(!recover)} aria-expanded={recover} aria-label="Basarme en una semana anterior" title="Recuperar una semana anterior"><Icon name="restore" size={18} /></button>
@@ -81,6 +102,12 @@ export default function MenuCard({ data, update }) {
             ))}
           </div>
         </>
+      )}
+      {placing && (
+        <div className="fd-place-banner" role="status">
+          <Icon name="book" size={16} color="#fff" /><span>Tienes <b>«{dishName(dishes, placing)}»</b> en la mano: toca las casillas donde la quieras</span>
+          <button type="button" className="fd-place-ok" onClick={onPlaced}>Listo</button>
+        </div>
       )}
       <div className="fd-menu-head">
         <button className="fd-ib" onClick={() => setOffset(offset - 1)} aria-label="Semana anterior"><Icon name="left" size={16} /></button>
@@ -102,8 +129,10 @@ export default function MenuCard({ data, update }) {
               const label = v ? dishName(dishes, v) : ''
               const key = `${d}:${m}`
               return (
-                <button key={m} className={`fd-slot ${v && label ? `k-${kindOf(v)}` : 'is-empty'} ${over === key ? 'is-over' : ''}`}
-                  onClick={() => setSlot({ day: d, meal: m })} aria-label={`${MEALS[m]} del ${dayShort(d)} ${Number(d.slice(8))}`}
+                <button key={m} className={`fd-slot ${v && label ? `k-${kindOf(v)}` : 'is-empty'} ${over === key ? 'is-over' : ''}`} draggable={Boolean(v && label)}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = 'copyMove'; e.dataTransfer.setData('text/slot', `${d}|${m}`) }}
+                  title={v && label ? 'Arrastra para moverla (con Ctrl o Alt, para copiarla)' : undefined}
+                  onClick={() => (placing ? set(d, m, placing) : setSlot({ day: d, meal: m }))} aria-label={`${MEALS[m]} del ${dayShort(d)} ${Number(d.slice(8))}`}
                   onDragOver={(e) => { e.preventDefault(); setOver(key) }} onDragLeave={() => setOver(null)} onDrop={(e) => drop(e, d, m)}>
                   {v && label ? <><small>{MEALS[m]}</small><span>{label}</span></> : <><small className="fd-slot-m">{MEALS[m]}</small><Icon name="plus" size={16} color="#9AA0A6" /></>}
                 </button>

@@ -4103,3 +4103,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .ing-chip:not(:hover):not(:focus-within) .ing-main { padding-right: 12px; }
 @media (hover: none) { .ing-chip .ing-x { width: 24px; opacity: 1; } .ing-chip:not(:hover):not(:focus-within) .ing-main { padding-right: 4px; } }
 @media (prefers-reduced-motion: reduce) { .ing-chip .ing-x { transition: none; } }
+
+/* Planificador: receta «en la mano» y casillas que se pueden mover */
+.fd-place-banner { display: flex; align-items: center; gap: 10px; background: #8C3FA8; color: #fff; border-radius: 99px; padding: 6px 8px 6px 16px; font-size: 13px; margin-bottom: 10px; animation: rise .2s var(--ease) both; } .fd-place-banner b { font-weight: 600; }
+.fd-place-ok { margin-left: auto; border: 0; background: #fff; color: #8C3FA8; border-radius: 99px; padding: 4px 16px; font: 600 12.5px Poppins, sans-serif; cursor: pointer; }
+.fd-menu.is-placing .fd-slot { outline: 2px dashed #8C3FA8; outline-offset: -2px; cursor: copy; }
+.fd-slot[draggable="true"] { cursor: grab; } .fd-slot[draggable="true"]:active { cursor: grabbing; }
+.fd-ib.fd-place { background: #F9E3FF; }
+@media (prefers-reduced-motion: reduce) { .fd-place-banner { animation: none; } }

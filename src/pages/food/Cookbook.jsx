@@ -10,7 +10,7 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 export const letterOf = (name) => (name ?? '').trim().normalize('NFD').replace(/[̀-ͯ]/g, '').charAt(0).toUpperCase()
 
 /** Recetario por niveles: abecedario (la letra bajo el ratón crece en ola) → cajitas de recetas → receta abierta. */
-export default function Cookbook({ data, update }) {
+export default function Cookbook({ data, update, onPlace }) {
   const dishes = dishesOf(data)
   const active = activeDishOf(data)
   const [letter, setLetter] = useState(null)
@@ -113,6 +113,7 @@ export default function Cookbook({ data, update }) {
         <div className="fd-detail">
           <div className="fd-detail-head">
             <h2>{open.name}</h2>
+            {onPlace && <button className="fd-ib fd-place" onClick={() => onPlace(open.id)} aria-label="Poner en el planificador" title="Poner en el planificador: tocas las casillas donde la quieras"><Icon name="book" size={16} /></button>}
             <button className="fd-ib" onClick={() => setEditing(true)} aria-label="Editar receta" title="Editar receta"><Icon name="pen" size={16} /></button>
             <button className="fd-ib" onClick={remove} aria-label="Borrar receta" title="Borrar receta"><Icon name="trash" size={16} color="#B3261E" /></button>
           </div>
