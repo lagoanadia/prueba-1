@@ -4225,3 +4225,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .sel-bar svg { stroke: currentColor; }
 @media (prefers-reduced-motion: reduce) { .sel-bar { animation: none; } }
 .sel-bar.in { top: 4px; }
+/* Índice del documento: rayitas al borde que se abren al pasar el ratón */
+.doc-index { position: absolute; right: 8px; top: 64px; z-index: 5; display: flex; justify-content: flex-end; }
+.di-ticks { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; padding: 8px 6px; }
+.di-ticks i { display: block; height: 3px; border-radius: 3px; background: #C9CED3; transition: background .2s, transform .2s var(--ease); }
+.di-ticks i.on { background: #202124; }
+.di-pop { position: absolute; right: 0; top: 0; width: 230px; max-height: 60vh; overflow: auto; display: none; flex-direction: column; gap: 1px; padding: 8px 6px; border-radius: 16px; box-shadow: var(--shadow-lg); }
+.di-pop b { font-size: 12px; color: var(--muted); padding: 0 8px 4px; }
+.doc-index:hover .di-pop, .doc-index:focus-within .di-pop { display: flex; animation: sel-in .2s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: top right; }
+.di-it { border: 0; background: none; text-align: left; font: 500 13px Poppins, sans-serif; color: var(--text); padding: 6px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.di-it:hover { background: var(--soft); } .di-it.on { background: #FFF1B8; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .doc-index:hover .di-pop, .doc-index:focus-within .di-pop { animation: none; } }

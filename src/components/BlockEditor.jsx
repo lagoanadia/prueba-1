@@ -325,11 +325,28 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   const only = blocks.length === 1 && isEmpty(blocks[0])
 
+  // Índice: los títulos del documento, para saltar a ellos
+  const heads = blocks.filter((b) => ['h1', 'h2', 'h3'].includes(b.type) && strip(b.html)).map((b) => ({ id: b.id, level: Number(b.type[1]), text: plainHtml(b.html).trim() }))
+  const [curHead, setCurHead] = useState(null)
+  const trackHead = () => {
+    const page = pageRef.current
+    if (!page || nested) return
+    const top = page.getBoundingClientRect().top + 40
+    let cur = null
+    for (const h of heads) { const el = page.querySelector(`:scope > .block-slot[data-id="${h.id}"]`); if (el && el.getBoundingClientRect().top <= top) cur = h.id }
+    setCurHead(cur ?? heads[0]?.id ?? null)
+  }
+  useEffect(trackHead, [blocks])
+  const goTo = (id) => {
+    const el = pageRef.current?.querySelector(`:scope > .block-slot[data-id="${id}"]`)
+    el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+  }
+
   return (
     <div className={nested ? 'blocks-nested' : 'card blocks'}>
       {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
+      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
@@ -398,6 +415,15 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         <Gap last />
         <div className="blocks-tail" aria-hidden="true" />
       </div>
+      {!nested && heads.length > 1 && (
+        <nav className="doc-index" aria-label="Índice" tabIndex={0}>
+          <span className="di-ticks" aria-hidden="true">{heads.map((h) => <i key={h.id} className={h.id === curHead ? 'on' : ''} style={{ width: 24 - (h.level - 1) * 7 }} />)}</span>
+          <span className="card di-pop">
+            <b>Índice</b>
+            {heads.map((h) => <button type="button" key={h.id} className={`di-it ${h.id === curHead ? 'on' : ''}`} style={{ paddingLeft: 8 + (h.level - 1) * 14 }} onClick={() => goTo(h.id)}>{h.text}</button>)}
+          </span>
+        </nav>
+      )}
       {menu && (
         <div className="card slash-menu" role="listbox" aria-label="Tipo de bloque" style={{ left: menu.x, top: menu.y + 6 }}>
           {options.map((t, k) => (
