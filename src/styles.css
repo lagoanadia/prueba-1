@@ -4270,3 +4270,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pdfp-pages { align-items: flex-start; }
 .pdfp-pages > .pdfp-page { margin-inline: auto; }
 .pdfp { min-width: 0; }
+/* Tablas del documento con más contraste */
+.tb td { border-color: #B4BAC2; }
+.tb td.is-head { background: #DDE1E6; }
