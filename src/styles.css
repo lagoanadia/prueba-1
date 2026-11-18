@@ -4412,3 +4412,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .box-wrap .tb-wrap { margin: 4px 0 10px; }
 .box-wrap .tb-addrow { height: 10px; bottom: -12px; border-radius: 6px; }
 .box-wrap .tb-addrow svg { width: 9px; height: 9px; }
+/* Post-it: todos los espacios verticales iguales (arriba, abajo y entre bloques = 12px) */
+.box-wrap { padding: 12px 12px 12px 0; }
+.blocks-page.nested { padding: 0 0 0 54px; }
+.blocks-page.nested .block-gap { display: none; }
+.blocks-page.nested > .block-slot + .block-slot { margin-top: 12px; }
+.box-wrap .tb-wrap { margin: 0; }
+.box-wrap .block-text { margin-top: 0; margin-bottom: 0; }
+.box-wrap .pi-colors { bottom: -7px; right: 14px; }
+.box-wrap .tb-addrow { bottom: -11px; }
+.box-wrap .bt-text .block-text, .box-wrap .bt-h1 .block-text, .box-wrap .bt-h2 .block-text, .box-wrap .bt-h3 .block-text, .box-wrap .bt-bullet .block-text, .box-wrap .bt-numbered .block-text, .box-wrap .bt-todo .block-text { padding-top: 0; padding-bottom: 0; }
+.box-wrap .bt-text .block-text, .box-wrap .bt-h1 .block-text, .box-wrap .bt-h2 .block-text, .box-wrap .bt-h3 .block-text { line-height: 1.3; }
