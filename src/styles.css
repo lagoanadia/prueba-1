@@ -4254,3 +4254,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pi-colors button { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #FFFFFF; padding: 0; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s var(--ease); }
 .pi-colors button:hover { transform: scale(1.18); } .pi-colors button.on { box-shadow: 0 0 0 2px #202124; }
 @media (hover: none) { .pi-colors { opacity: .8; } }
+/* Tabla del Post-it con esquinas redondeadas */
+.box-wrap .tb { border-collapse: separate; border-spacing: 0; }
+.box-wrap .tb td { border: 0; border-right: 1.5px solid var(--pb, #F2B705); border-bottom: 1.5px solid var(--pb, #F2B705); }
+.box-wrap .tb tr:first-child td:not(.tb-end) { border-top: 1.5px solid var(--pb, #F2B705); }
+.box-wrap .tb td:first-child { border-left: 1.5px solid var(--pb, #F2B705); }
+.box-wrap .tb td.tb-end { border: 0; }
+.box-wrap .tb td.is-head:has(+ td.is-head) { border-right-color: var(--pf, #FFF1B8); }
+.box-wrap .tb tr:first-child td:first-child { border-top-left-radius: 12px; }
+.box-wrap .tb tr:first-child td:not(.tb-end):has(+ td.tb-end), .box-wrap .tb tr:first-child td:not(.tb-end):last-child { border-top-right-radius: 12px; }
+.box-wrap .tb tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+.box-wrap .tb tr:last-child td:not(.tb-end):has(+ td.tb-end), .box-wrap .tb tr:last-child td:not(.tb-end):last-child { border-bottom-right-radius: 12px; }
+.box-wrap .tb td input { border-radius: inherit; }
