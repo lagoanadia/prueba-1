@@ -4307,3 +4307,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 /* Los botones + Fila / + Columna no ocupan sitio dentro del Post-it (si no, el margen de abajo parece mayor) */
 .box-wrap .tb-wrap { margin-bottom: 0; }
 .box-wrap .tb-add { position: absolute; left: 0; top: 100%; margin-top: 4px; z-index: 5; }
+/* Añadir fila / columna: barritas pegadas al borde de la tabla; aparecen al acercarte a ese lado y un clic añade */
+.tb-add { display: none; }
+.tb-addcol, .tb-addrow { position: absolute; z-index: 4; border: 1px solid #D5D9DE; background: #F5F6F7; color: #80868B; border-radius: 8px; padding: 0; display: grid; place-items: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s, background .15s, color .15s; }
+.tb-addcol svg, .tb-addrow svg { stroke: currentColor; }
+.tb-addcol { top: 0; bottom: 0; right: -26px; width: 20px; }
+.tb-addrow { left: 0; right: 28px; bottom: -22px; height: 18px; }
+.tb-wrap:hover .tb-addcol, .tb-wrap:hover .tb-addrow, .tb-wrap:focus-within .tb-addcol, .tb-wrap:focus-within .tb-addrow { pointer-events: auto; opacity: .35; }
+.tb-addcol:hover, .tb-addrow:hover, .tb-addcol:focus-visible, .tb-addrow:focus-visible { opacity: 1 !important; background: #E8EAED; color: #202124; }
+.tb-addcol:active, .tb-addrow:active { transform: scale(.97); }
+@media (hover: none) { .tb-addcol, .tb-addrow { opacity: .5; pointer-events: auto; } }
+/* La x de quitar fila / columna: discreta, redonda y se pone roja al acercarse */
+.tb-x { width: 18px; height: 18px; background: #FFFFFF; color: #80868B; border: 1px solid #D5D9DE; box-shadow: 0 1px 3px rgba(60, 64, 67, .18); transition: background .15s, color .15s, border-color .15s, transform .15s var(--ease); }
+.tb-x svg { stroke: currentColor; }
+.tb-x:hover { background: #FDECEE; color: #D93025; border-color: #F4B4BA; transform: scale(1.1); }
+.tb-x-col { top: -9px; }

@@ -146,10 +146,8 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
           ))}
         </tbody>
       </table>
-      <div className="tb-add">
-        <button onClick={addRow}><Icon name="plus" size={14} />Fila</button>
-        <button onClick={addCol}><Icon name="plus" size={14} />Columna</button>
-      </div>
+      <button type="button" className="tb-addcol" onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
+      <button type="button" className="tb-addrow" onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
     </div>
   )
 }
