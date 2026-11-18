@@ -4328,3 +4328,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tb-wrap:hover .tb-addcol, .tb-wrap:hover .tb-addrow, .tb-wrap:focus-within .tb-addcol, .tb-wrap:focus-within .tb-addrow { opacity: .55; }
 .tb-x { background: #EEF4FF; color: var(--blue); border: 1.5px solid #CFE0FF; box-shadow: none; }
 .tb-x:hover { background: #FDECEE; color: #D93025; border-color: #F4B4BA; }
+/* Más contraste y más pegadas a la tabla */
+.tb-addcol, .tb-addrow { background: #D6E6FF; color: #1F6FEB; }
+.tb-addcol { right: -24px; } .tb-addrow { bottom: -22px; }
+.tb-wrap:hover .tb-addcol, .tb-wrap:hover .tb-addrow, .tb-wrap:focus-within .tb-addcol, .tb-wrap:focus-within .tb-addrow { opacity: .9; }
+.tb-addcol:hover, .tb-addrow:hover, .tb-addcol:focus-visible, .tb-addrow:focus-visible { background: var(--blue); color: #FFFFFF; }
+.tb-x { background: #D6E6FF; border-color: #A9C8FF; color: #1F6FEB; }
