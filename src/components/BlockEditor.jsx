@@ -7,6 +7,7 @@ import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
 import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
+import { blocksFromPaste } from '../lib/pasteBlocks.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
 const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
@@ -389,6 +390,31 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const r = document.createRange(); r.setStart(n, off - 2); r.setEnd(n, off); sel.removeAllRanges(); sel.addRange(r)
     return document.execCommand('insertText', false, arrow)
   }
+  // Pegar desde fuera: tablas, listas, títulos, citas y código se convierten en sus bloques; un párrafo suelto se pega en línea con su formato
+  const onPaste = (e, b) => {
+    const cd = e.clipboardData
+    if (!cd) return
+    const specs = blocksFromPaste(cd.getData('text/html'), cd.getData('text/plain'))
+    if (!specs || !specs.length) return // texto normal: se pega como siempre
+    e.preventDefault()
+    if (specs.length === 1 && specs[0].type === 'text') { document.execCommand('insertHTML', false, sanitize(specs[0].html)); return }
+    const made = specs.map((sp) => {
+      if (sp.type === 'table') return { ...newBlock('table'), rich: true, rows: sp.rows }
+      if (sp.type === 'code') return { ...newBlock('code'), code: sp.code }
+      if (sp.type === 'divider') return newBlock('divider')
+      return newBlock(sp.type, sanitize(sp.html))
+    })
+    const cur = blocksRef.current.find((x) => x.id === b.id)
+    const at = blocksRef.current.findIndex((x) => x.id === b.id)
+    const empty = cur && isEmpty(cur)
+    const n = [...blocksRef.current]
+    n.splice(empty ? at : at + 1, empty ? 1 : 0, ...made)
+    hist.current.t = 0
+    commit(n)
+    const last = made[made.length - 1]
+    if (TEXTY.includes(last.type)) setFocusId(last.id)
+    else if (at + made.length >= n.length - (empty ? 0 : 0) - 0 && n[n.length - 1] === last) { const tail = newBlock(); commit([...n, tail]); setFocusId(tail.id) } // si lo pegado acaba en tabla o código y era lo último, queda un bloque debajo para seguir escribiendo
+  }
   const onInput = (e, b) => {
     markTyping()
     if (['>', '-'].includes(e.nativeEvent?.data) && arrowify()) return
@@ -760,7 +786,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
                 {TEXTY.includes(b.type) && (
                   <Line block={b} refCb={(el) => { if (el) refs.current[b.id] = el }} focus={focusId === b.id} done={() => setFocusId(null)}
-                    onInput={(e) => onInput(e, b)} onKeyDown={(e) => onKeyDown(e, b, i)}
+                    onInput={(e) => onInput(e, b)} onKeyDown={(e) => onKeyDown(e, b, i)} onPaste={(e) => onPaste(e, b)}
                     placeholder={only ? 'Escribe aquí o pulsa + o «/» para elegir un bloque' : ''} />
                 )}
                 {b.collapsed && headLevel(b) > 0 && !nested && (
@@ -808,7 +834,7 @@ function Gap({ last = false }) {
 }
 
 /** Una línea editable. Solo se vuelve a escribir su contenido cuando cambia desde fuera (no mientras tecleas). */
-function Line({ block, refCb, focus, done, onInput, onKeyDown, placeholder }) {
+function Line({ block, refCb, focus, done, onInput, onKeyDown, onPaste, placeholder }) {
   const ref = useRef(null)
   useEffect(() => { if (ref.current && ref.current.innerHTML !== block.html) ref.current.innerHTML = block.html }, [block.html, block.type])
   useEffect(() => {
@@ -821,6 +847,6 @@ function Line({ block, refCb, focus, done, onInput, onKeyDown, placeholder }) {
   return (
     <div ref={(el) => { ref.current = el; refCb(el) }} className={`block-text ${block.type === 'todo' && block.checked ? 'is-done' : ''} ${placeholder ? 'is-only' : ''}`} contentEditable suppressContentEditableWarning
       role="textbox" aria-multiline="true" data-placeholder={placeholder || (block.type === 'text' ? '' : BLOCK_TYPES.find((t) => t.type === block.type)?.label)}
-      onInput={onInput} onKeyDown={onKeyDown} spellCheck />
+      onInput={onInput} onKeyDown={onKeyDown} onPaste={onPaste} spellCheck />
   )
 }
