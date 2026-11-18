@@ -43,7 +43,7 @@ export function sheetCss(st) {
 .x-postit .x-table tr + tr td { border-top-color: var(--pb, #F2B705); }
 /* El Post-it va por libre: no le afectan el color ni el redondeo que eliges para la hoja */
 .x-postit .x-table { border-radius: 12px; }
-.x-postit .x-callout { background: rgba(255, 255, 255, .55); border-left-color: var(--pb, #F2B705); border-radius: 12px; }
+.x-postit .x-callout { background: #FDF5CE; border-left-color: #F2B705; border-radius: 12px; }
 .x-postit .x-h2 { color: #202124; }
 .x-postit .x-li > span:first-child { color: var(--pb, #F2B705); }
 .x-postit .x-quote { border-left-color: var(--pb, #F2B705); }
