@@ -12,7 +12,7 @@ export const BLOCK_TYPES = [
   { type: 'todo', label: 'Tareas', icon: 'check', hint: 'tareas casillas checklist []' },
   { type: 'quote', label: 'Cita', icon: 'note', hint: 'cita quote >' },
   { type: 'callout', label: 'Destacado', icon: 'marker', hint: 'destacado idea clave aviso' },
-  { type: 'box', label: 'Recuadro', icon: 'doc', hint: 'recuadro caja nota contenedor amarillo' },
+  { type: 'box', label: 'Post-it', icon: 'doc', hint: 'postit post-it recuadro caja nota contenedor amarillo' },
   { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code programa' },
   { type: 'table', label: 'Tabla', icon: 'table', hint: 'tabla table filas columnas' },
   { type: 'image', label: 'Foto', icon: 'img', hint: 'foto imagen image picture' },

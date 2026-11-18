@@ -164,7 +164,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const el = e.currentTarget
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (nested && onExit && !strip(el.innerHTML) && b.type === 'text' && i === blocks.length - 1 && blocks.length > 1) { remove(b.id); onExit(); return } // Enter en la última línea vacía: sale del recuadro
+      if (nested && onExit && !strip(el.innerHTML) && b.type === 'text' && i === blocks.length - 1 && blocks.length > 1) { remove(b.id); onExit(); return } // Enter en la última línea vacía: sale del post-it
       if (!strip(el.innerHTML) && LIST.includes(b.type)) { toText(b.id); el.innerHTML = ''; return } // Enter en lista vacía: sale de la lista
       insertAfter(b.id, newBlock(LIST.includes(b.type) ? b.type : 'text'))
     } else if (e.key === 'Backspace' && !strip(el.innerHTML)) {
@@ -307,7 +307,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
             <Gap />
             {sel[0] === b.id && (
               <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Bloques marcados">
-                {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Recuadro</button>}
+                {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Post-it</button>}
                 <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>
                 <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
               </span>
@@ -352,7 +352,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'code' && <CodeBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
                 {b.type === 'box' && (
                   <div className="box-wrap">
-                    <BlockEditor nested label="Recuadro" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
+                    <BlockEditor nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
                   </div>
                 )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
