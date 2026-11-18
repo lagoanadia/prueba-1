@@ -32,7 +32,12 @@ const caretStart = (el) => { const sel = window.getSelection(); if (!sel?.rangeC
 export default function TableBlock({ block, onChange, focus, onFocused }) {
   // Las celdas guardan HTML con formato (block.rich). Las tablas antiguas guardaban texto plano: se leen escapadas y se convierten al primer cambio.
   const asHtml = (v) => (block.rich ? v ?? '' : esc(v).replace(/\n/g, '<br>'))
-  const rows = (block.rows ?? [['']]).map((r) => r.map(asHtml))
+  const dest = (m) => (m.to > m.from ? m.to - 1 : m.to) // dónde queda lo que se mueve
+  const [mv, setMv] = useState(null) // { kind: 'row'|'col', from, to } mientras se mueve una fila o columna
+  const moveItem = (arr, from, to) => { const a = [...arr]; const [x] = a.splice(from, 1); a.splice(to > from ? to - 1 : to, 0, x); return a }
+  const baseRows = (block.rows ?? [['']]).map((r) => r.map(asHtml))
+  // mientras se arrastra se ve ya el nuevo orden (sin líneas): al soltar se guarda
+  const rows = mv?.kind === 'row' ? moveItem(baseRows, mv.from, mv.to) : mv?.kind === 'col' ? baseRows.map((r) => moveItem(r, mv.from, mv.to)) : baseRows
   const first = useRef(null)
   const wrap = useRef(null)
   const [live, setLive] = useState(null) // { colW?, rowH? } mientras se arrastra un borde
@@ -49,8 +54,10 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
     return () => ro.disconnect()
   }, [])
   const cols = rows[0].length
-  const colW = live?.colW ?? block.colW
-  const rowH = live?.rowH ?? block.rowH
+  const colW0 = live?.colW ?? block.colW
+  const rowH0 = live?.rowH ?? block.rowH
+  const colW = mv?.kind === 'col' && colW0?.length === cols ? moveItem(colW0, mv.from, mv.to) : colW0
+  const rowH = mv?.kind === 'row' && rowH0 ? moveItem(rows.map((_, k) => rowH0[k] ?? 0), mv.from, mv.to) : rowH0
   const widths = colW && colW.length === cols ? colW : Array(cols).fill(1 / cols)
   const set = (r) => onChange({ ...block, rich: true, rows: r })
   const cell = (r, c, v) => set(rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)))
@@ -117,20 +124,16 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
   // Mover filas y columnas arrastrando su agarre (como en Notion): una línea azul marca dónde caerá; la fila de arriba es siempre la cabecera
-  const [mv, setMv] = useState(null) // { kind: 'row'|'col', from, to, line }
-  const moveItem = (arr, from, to) => { const a = [...arr]; const [x] = a.splice(from, 1); a.splice(to > from ? to - 1 : to, 0, x); return a }
   const startMove = (e, kind, from) => {
     e.preventDefault(); e.stopPropagation()
     const tbl = wrap.current.querySelector('table')
-    const box = wrap.current.getBoundingClientRect()
     const rects = (kind === 'row' ? [...tbl.querySelectorAll('tr')] : [...tbl.querySelectorAll('tr:first-child > td:not(.tb-end)')]).map((x) => x.getBoundingClientRect())
     const horiz = kind === 'col'
     const at = (ev) => {
       const pos = horiz ? ev.clientX : ev.clientY
       let to = 0
       rects.forEach((r, k) => { if (pos > (horiz ? r.left + r.width / 2 : r.top + r.height / 2)) to = k + 1 })
-      const edge = to < rects.length ? (horiz ? rects[to].left : rects[to].top) : (horiz ? rects[to - 1].right : rects[to - 1].bottom)
-      return { kind, from, to, line: edge - (horiz ? box.left : box.top) }
+      return { kind, from, to }
     }
     setMv(at(e))
     let last = at(e)
@@ -156,9 +159,9 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
         </colgroup>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className={mv?.kind === 'row' && mv.from === i ? 'is-moving' : ''} style={rowH?.[i] ? { height: rowH[i] } : undefined}>
+            <tr key={i} className={mv?.kind === 'row' && dest(mv) === i ? 'is-moving' : ''} style={rowH?.[i] ? { height: rowH[i] } : undefined}>
               {row.map((v, j) => (
-                <td key={j} className={`${i === 0 ? 'is-head' : ''} ${mv?.kind === 'col' && mv.from === j ? 'is-moving' : ''}`}>
+                <td key={j} className={`${i === 0 ? 'is-head' : ''} ${mv?.kind === 'col' && dest(mv) === j ? 'is-moving' : ''}`}>
                   {j === 0 && rows.length > 1 && <button type="button" className="tb-grip tb-grip-r" onPointerDown={(e) => startMove(e, 'row', i)} aria-label={`Mover la fila ${i + 1}`} title="Arrastra para mover la fila"><Icon name="grip" size={14} strokeWidth={3} /></button>}
                   {i === 0 && cols > 1 && <button type="button" className="tb-grip tb-grip-c" onPointerDown={(e) => startMove(e, 'col', j)} aria-label={`Mover la columna ${j + 1}`} title="Arrastra para mover la columna"><Icon name="grip" size={14} strokeWidth={3} /></button>}
                   <Cell cellRef={i === 0 && j === 0 ? (el) => { first.current = el } : null} html={v} minH={rowH?.[i] ? rowH[i] - 4 : undefined} label={`Fila ${i + 1}, columna ${j + 1}`} onChange={(h) => cell(i, j, h)}
@@ -177,7 +180,6 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
           ))}
         </tbody>
       </table>
-      {mv && <span className={`tb-drop tb-drop-${mv.kind}`} style={mv.kind === 'row' ? { top: mv.line - 1.5 } : { left: mv.line - 1.5 }} />}
       <button type="button" className="tb-addcol" style={{ right: (rows.length > 1 ? END : 0) - 22.5 }} onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
       <button type="button" className="tb-addrow" style={{ right: rows.length > 1 ? END : 0 }} onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
     </div>

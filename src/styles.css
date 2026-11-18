@@ -4569,7 +4569,4 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tb-grip:hover, .tb-grip:active { background: var(--blue); color: #FFFFFF; cursor: grabbing; }
 @media (hover: none) { .tb-grip { opacity: .7; } }
 .tb tr.is-moving td, .tb td.is-moving { opacity: .45; }
-.tb-drop { position: absolute; z-index: 6; background: var(--blue); border-radius: 2px; pointer-events: none; }
-.tb-drop-row { left: 0; right: 46px; height: 3px; }
-.tb-drop-col { top: 0; bottom: 0; width: 3px; }
 @media (prefers-reduced-motion: reduce) { .tb-grip { transition: none; } }
