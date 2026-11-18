@@ -4210,7 +4210,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cal-bday.is-today { background: #FCE0EA; }
 /* Recuadro: caja amarilla con barra lateral donde caben otros bloques */
 .block-body.bt-box { display: block; }
-.box-wrap { width: 100%; border-left: 5px solid var(--pb, #F2B705); background: var(--pf, #FFF1B8); border-radius: 6px 16px 16px 6px; padding: 10px 12px 34px 0; }
+.box-wrap { width: 100%; border-left: 5px solid var(--pb, #F2B705); background: var(--pf, #FFF1B8); border-radius: 6px 16px 16px 6px; padding: 8px 12px 28px 0; }
 .blocks-nested { width: 100%; }
 .blocks-page.nested { flex: none; overflow: visible; padding: 2px 4px 2px 54px; cursor: text; font-size: inherit; }
 .blocks-page.nested .blocks-tail { min-height: 0; }
@@ -4298,3 +4298,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .np-rename { flex: none; margin-right: auto; }
 .tp-row .tp-pen-row { display: none; } .tp-row:hover .tp-pen-row, .tp-row .tp-pen-row:focus-visible { display: flex; opacity: 1; }
 .file-rename { flex: none; opacity: .6; } .file-bar:hover .file-rename { opacity: 1; }
+/* Post-it: mismo aire arriba y abajo; los puntitos de color caben dentro del margen de abajo sin agrandarlo */
+.pi-colors { bottom: 1px; gap: 5px; }
+.pi-colors button { width: 13px; height: 13px; border-width: 1.5px; }
+.blocks-page.nested .block-gap.is-last { height: 0; }
+.blocks-page.nested .blocks-tail { display: none; }
+.blocks-page.nested { padding-bottom: 0; }
+/* Los botones + Fila / + Columna no ocupan sitio dentro del Post-it (si no, el margen de abajo parece mayor) */
+.box-wrap .tb-wrap { margin-bottom: 0; }
+.box-wrap .tb-add { position: absolute; left: 0; top: 100%; margin-top: 4px; z-index: 5; }
