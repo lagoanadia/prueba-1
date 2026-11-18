@@ -6,12 +6,13 @@ import Icon from './Icon.jsx'
  * Ventana pequeña para pedir (o cambiar) un nombre: se abre centrada con el fondo atenuado.
  * Enter o ✓ acepta, Esc o × cancela.
  */
-export default function NameDialog({ title, initial = '', placeholder = '', maxLength = 50, onSubmit, onClose, onDelete, deleteLabel = 'Eliminar', deleteWarning = 'Se borrará con todo su contenido. No se puede deshacer.' }) {
+export default function NameDialog({ title, initial = '', placeholder = '', maxLength = 50, onSubmit, onClose, onDelete, choices = null, deleteLabel = 'Eliminar', deleteWarning = 'Se borrará con todo su contenido. No se puede deshacer.' }) {
   const [value, setValue] = useState(initial)
   const input = useRef(null)
+  const [choice, setChoice] = useState(choices?.[0]?.id ?? null) // si hay `choices`, además del nombre se elige de qué tipo es
   const [sure, setSure] = useState(false) // eliminar pide una segunda pulsación
   useEffect(() => { input.current?.focus(); input.current?.select() }, [])
-  const submit = (e) => { e.preventDefault(); if (value.trim()) onSubmit(value.trim()) }
+  const submit = (e) => { e.preventDefault(); if (value.trim()) onSubmit(value.trim(), choice) }
 
   // Confirmación de borrado: pantalla propia dentro de la ventana, bien visible
   if (sure) {
@@ -38,6 +39,16 @@ export default function NameDialog({ title, initial = '', placeholder = '', maxL
       <form className="card name-dialog" onSubmit={submit}>
         <b className="name-dialog-title">{title}</b>
         <input ref={input} className="pill-input" value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} maxLength={maxLength} aria-label={title} />
+        {choices && (
+          <div className="name-choices" role="radiogroup" aria-label="Tipo">
+            {choices.map((c) => (
+              <button type="button" key={c.id} role="radio" aria-checked={choice === c.id} className={choice === c.id ? 'on' : ''} onClick={() => setChoice(c.id)}>
+                <span className="name-choice-ic" style={{ background: c.tint }}><Icon name={c.icon} size={20} color={c.ink} /></span>
+                <b>{c.label}</b><small>{c.hint}</small>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="name-dialog-actions">
           {onDelete && (
             <button type="button" className="name-del" onClick={() => setSure(true)}>

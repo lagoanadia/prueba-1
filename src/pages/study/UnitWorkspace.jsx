@@ -11,8 +11,8 @@ import { usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
 import { changeSubject, changeUnit, practicesOf, reorderUnits, soft } from './helpers.js'
 
-// Orden de las pestañas: PDF · Prácticas · Documentos · Recursos
-const TABS = [['estudio', 'split', 'PDF'], ['practicas', 'code', 'Prácticas'], ['documentos', 'doc', 'Documentos'], ['recursos', 'link', 'Recursos']]
+// Pestañas: PDF · Documentos · Recursos (las prácticas viven dentro de Documentos y se abren con su PDF al lado)
+const TABS = [['estudio', 'split', 'PDF'], ['documentos', 'doc', 'Documentos'], ['recursos', 'link', 'Recursos']]
 
 /** Libro abierto: hoja izquierda = PDF del profe, hoja derecha = mis apuntes. La hoja marcada va rellena. */
 function Book({ left, right }) {
@@ -247,7 +247,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
           <div className="ws-tabs" role="tablist">
             <button className="icon-btn ws-toggle" onClick={() => setPanel(!panel)} aria-label={panel ? 'Ocultar unidades' : 'Mostrar unidades'} aria-expanded={panel} title={panel ? 'Ocultar unidades' : 'Mostrar unidades'}><Icon name="tree" /></button>
             {TABS.map(([id, icon, label]) => (
-              <button key={id} role="tab" aria-selected={tab === id} className={`ws-tab ${tab === id ? 'on' : ''}`} onClick={() => go({ ...route, tab: id, itemId: null })}>
+              <button key={id} role="tab" aria-selected={tab === id || (id === 'documentos' && tab === 'practicas')} className={`ws-tab ${tab === id || (id === 'documentos' && tab === 'practicas') ? 'on' : ''}`} onClick={() => go({ ...route, tab: id, itemId: null })}>
                 <Icon name={icon} size={18} />{label}
               </button>
             ))}
@@ -264,12 +264,19 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 
           {tab === 'practicas' && (
             practice
-              ? split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" onPickText={(t) => notesIn.current?.(t)} />,
-                  <NotesPane key={practice.id} item={practice} kind="practice" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${practice.name}`} />)
+              ? <div className="dt-open">
+                <div className="dt-bar">
+                  <button className="icon-btn" onClick={() => go({ ...route, tab: 'documentos', itemId: null })} aria-label="Volver a Documentos" title="Volver a Documentos"><Icon name="back" size={18} /></button>
+                  <b className="w-ellipsis">{data.notesName?.[practice.id] || practice.name}</b>
+                  <span className="dt-pill" style={{ background: '#FFE2C2', color: '#F08A24' }}>Práctica</span>
+                </div>
+                {split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" onPickText={(t) => notesIn.current?.(t)} />,
+                  <NotesPane key={practice.id} item={practice} kind="practice" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${practice.name}`} />)}
+              </div>
               : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
 
-          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} />}
+          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} onNewPractice={addPractice} />}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
         </div>

@@ -4373,3 +4373,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .dt-empty { margin: 16px 6px 0; font-size: 13px; }
 .dt-open { height: 100%; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .dt-bar { display: flex; align-items: center; gap: 6px; padding: 0 4px; } .dt-bar b { flex: 1; font-size: 15px; }
+.dt-open > .ws-split { flex: 1; min-height: 0; }
+.dt-chips { display: flex; gap: 8px; margin: 0 2px 14px; }
+.dt-chip { border: 1.5px solid var(--line); background: #FFFFFF; border-radius: 99px; padding: 4px 14px; font: 600 12.5px Poppins, sans-serif; color: var(--text); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.dt-chip:hover { border-color: #B6D1FF; } .dt-chip.on { background: #202124; border-color: #202124; color: #FFFFFF; }
+/* Elegir el tipo al crear algo (Apuntes / Práctica) */
+.name-choices { display: flex; gap: 10px; margin: 4px 0 6px; }
+.name-choices button { flex: 1; border: 2px solid var(--line); background: #FFFFFF; border-radius: 16px; padding: 12px 8px; font: inherit; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: border-color .2s, background .2s; }
+.name-choices button:hover { border-color: #B6D1FF; } .name-choices button.on { border-color: var(--blue); background: #EEF4FF; }
+.name-choices b { font-size: 14px; } .name-choices small { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.name-choice-ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 4px; }
