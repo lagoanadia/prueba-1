@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { saveFile } from '../../lib/fileStore.js'
 import NotesPane from './NotesPane.jsx'
 import DocsTab from './DocsTab.jsx'
@@ -31,6 +32,9 @@ const LAYOUTS = [['pdf', true, false, 'Solo el PDF del profe'], ['split', true, 
  */
 export default function UnitWorkspace({ data, update, subject, unit, route, go, back }) {
   const [panel, setPanel] = usePanel()
+  const [ctx, setCtx] = useState(null) // menú de un tema o práctica (clic derecho o mantener pulsado): { x, y, meta, name, onRemove }
+  const [inline, setInline] = useState(null) // nombre que se está cambiando ahí mismo (doble clic): { id, value }
+  const pressTimer = useRef(null)
   const [dialog, setDialog] = useState(null) // 'topic' | 'practice' | 'unit' | { rename: unitId }
   const [addMenu, setAddMenu] = useState(false)
   const [pdfNew, setPdfNew] = useState(null) // { type: 'topic' | 'practice', file }: se creó subiendo un PDF y falta el nombre
@@ -66,6 +70,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const practice = practices.find((p) => p.id === route.itemId) ?? practices[0]
 
   useEffect(() => { setOpen((s) => (s.has(unit.id) ? s : new Set([...s, unit.id]))) }, [unit.id])
+  useEffect(() => { if (!ctx) return undefined; const k = (e) => e.key === 'Escape' && setCtx(null); window.addEventListener('keydown', k); window.addEventListener('scroll', () => setCtx(null), true); return () => window.removeEventListener('keydown', k) }, [ctx])
   useEffect(() => {
     if (!addMenu) return
     const close = (e) => { if (!menuRef.current?.contains(e.target)) setAddMenu(false) }
@@ -170,14 +175,26 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       {layout !== 'pdf' && right}
     </div>
   )
+  // Temas y prácticas: sin iconos. Clic derecho (o mantener pulsado) = menú; doble clic = cambiar el nombre ahí mismo; el nombre completo sale al pasar el ratón
+  const openCtx = (x, y, meta, name, onRemove) => setCtx({ x, y, meta, name, onRemove })
+  const saveInline = () => {
+    if (!inline) return
+    const v = inline.value.trim()
+    if (v) renameItem({ type: inline.type, unitId: inline.unitId, id: inline.id }, v)
+    setInline(null)
+  }
   const row = (selected, done, onCheck, icon, name, onPick, onRemove, doneLabel, meta) => (
-    <div key={meta.id} className={`tp-row ${selected ? 'sel' : ''} ${dragging?.id === meta.id ? 'is-dragging' : ''} ${mark?.id === meta.id ? `drop-${mark.pos}` : ''}`} {...dragProps(meta.type, meta.unitId, meta.id)}>
+    <div key={meta.id} className={`tp-row ${selected ? 'sel' : ''} ${dragging?.id === meta.id ? 'is-dragging' : ''} ${mark?.id === meta.id ? `drop-${mark.pos}` : ''}`} {...dragProps(meta.type, meta.unitId, meta.id)}
+      onContextMenu={(e) => { e.preventDefault(); openCtx(e.clientX, e.clientY, meta, name, onRemove) }}
+      onPointerDown={(e) => { if (e.pointerType === 'touch') { const { clientX: x, clientY: y } = e; clearTimeout(pressTimer.current); pressTimer.current = setTimeout(() => openCtx(x, y, meta, name, onRemove), 600) } }}
+      onPointerUp={() => clearTimeout(pressTimer.current)} onPointerMove={() => clearTimeout(pressTimer.current)} onPointerCancel={() => clearTimeout(pressTimer.current)}>
       <span className="tp-grip" aria-hidden="true"><Icon name="grip" size={14} color="#9AA0A6" strokeWidth={3} /></span>
       <button className={`chk ${done ? 'on' : ''}`} onClick={onCheck} aria-pressed={done} aria-label={doneLabel} title={done ? 'Estudiado' : 'Marcar como estudiado'}>{done && <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3.4} />}</button>
       {icon && <Icon name={icon} size={14} color="#9AA0A6" />}
-      <button className="tp-name" onClick={onPick}>{name}</button>
-      <button className="prio-x tp-pen tp-pen-row" onClick={() => setDialog({ renameItem: { type: meta.type, unitId: meta.unitId, id: meta.id, name } })} aria-label={`Cambiar el nombre de «${name}»`} title="Cambiar el nombre"><Icon name="pen" size={14} /></button>
-      <button className="prio-x tp-del" onClick={onRemove} aria-label={`Quitar «${name}»`}><Icon name="trash" size={14} /></button>
+      {inline?.id === meta.id
+        ? <input className="tp-inline" autoFocus value={inline.value} maxLength={60} aria-label="Nombre" onChange={(e) => setInline({ ...inline, value: e.target.value })} onBlur={saveInline}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveInline() } else if (e.key === 'Escape') setInline(null) }} />
+        : <button className="tp-name" onClick={onPick} onDoubleClick={() => setInline({ id: meta.id, type: meta.type, unitId: meta.unitId, value: name })} title={`${name}\nDoble clic: cambiar el nombre · Clic derecho: más opciones`}>{name}</button>}
     </div>
   )
 
@@ -286,6 +303,14 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       {dialog === 'practice' && <NameDialog title="Nombre de la práctica" placeholder="Práctica 1" onSubmit={addPractice} onClose={() => setDialog(null)} />}
       {pdfNew && <NameDialog title={`Nombre ${pdfNew.type === 'topic' ? 'del tema' : 'de la práctica'}`} initial={baseName(pdfNew.file)} onSubmit={addWithPdf} onClose={() => setPdfNew(null)} />}
       {dialog === 'unit' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
+      {ctx && createPortal(
+        <div className="tp-ctx-wrap" onPointerDown={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null) }}>
+          <div className="card tp-ctx" role="menu" style={{ left: Math.min(ctx.x, window.innerWidth - 190), top: Math.min(ctx.y, window.innerHeight - 110) }} onPointerDown={(e) => e.stopPropagation()}>
+            <b className="tp-ctx-t w-ellipsis">{ctx.name}</b>
+            <button role="menuitem" onClick={() => { const c = ctx; setCtx(null); setInline({ id: c.meta.id, type: c.meta.type, unitId: c.meta.unitId, value: c.name }) }}><Icon name="pen" size={16} />Cambiar nombre</button>
+            <button role="menuitem" className="is-danger" onClick={() => { const c = ctx; setCtx(null); c.onRemove() }}><Icon name="trash" size={16} />Eliminar</button>
+          </div>
+        </div>, document.body)}
       {dialog?.renameItem && <NameDialog title={dialog.renameItem.type === 'topic' ? 'Nombre del tema' : 'Nombre de la práctica'} initial={dialog.renameItem.name} onSubmit={(n) => renameItem(dialog.renameItem, n)} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
     </div>

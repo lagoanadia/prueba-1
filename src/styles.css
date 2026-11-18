@@ -4532,3 +4532,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .blocks:hover > .blocks-bar { background: linear-gradient(#FFFFFF 70%, rgba(255, 255, 255, 0)); }
 .blocks:hover > .blocks-bar > :not(.doc-status), .blocks-bar:focus-within > * { opacity: 1; pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) { .file-frame:has(.pdfp) > .file-bar, .blocks-bar, .blocks-bar > :not(.doc-status) { transition: none; } }
+/* Temas y prácticas: menú de clic derecho y cambio de nombre en la propia fila */
+.tp-ctx-wrap { position: fixed; inset: 0; z-index: 80; }
+.tp-ctx { position: fixed; z-index: 81; min-width: 180px; padding: 6px; display: flex; flex-direction: column; gap: 2px; border-radius: 16px; box-shadow: var(--shadow-lg); animation: sel-in .18s cubic-bezier(.2, 1.2, .35, 1) both; }
+.tp-ctx-t { font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 4px 10px 2px; max-width: 220px; }
+.tp-ctx button { display: flex; align-items: center; gap: 8px; border: 0; background: none; border-radius: 10px; padding: 8px 10px; font: 600 13.5px Poppins, sans-serif; color: var(--text); cursor: pointer; text-align: left; }
+.tp-ctx button:hover { background: var(--soft); } .tp-ctx button.is-danger { color: #B3261E; } .tp-ctx button.is-danger:hover { background: #FDECEE; }
+.tp-ctx svg { stroke: currentColor; }
+.tp-inline { flex: 1; min-width: 0; border: 2px solid var(--blue); border-radius: 10px; padding: 3px 8px; font: inherit; font-size: 13.5px; outline: none; background: #FFFFFF; }
+@media (prefers-reduced-motion: reduce) { .tp-ctx { animation: none; } }
