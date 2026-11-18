@@ -123,6 +123,22 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   const numberOf = (i) => { let n = 1; for (let k = i - 1; k >= 0 && blocks[k].type === 'numbered'; k--) n++; return n }
 
+  // Posición del cursor dentro de la línea (en caracteres) y colocarlo en otra
+  const caretOffset = (el) => { const sel = window.getSelection(); if (!sel?.rangeCount || !sel.isCollapsed) return -1; const r = sel.getRangeAt(0).cloneRange(); r.selectNodeContents(el); r.setEnd(sel.anchorNode, sel.anchorOffset); return r.toString().length }
+  const placeCaret = (id, offset) => setTimeout(() => {
+    const el = refs.current[id]; if (!el) return
+    el.focus()
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let left = offset; let n
+    const r = document.createRange(); r.selectNodeContents(el); r.collapse(false)
+    while ((n = w.nextNode())) { if (left <= n.length) { r.setStart(n, left); r.collapse(true); break } left -= n.length }
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r)
+  }, 30)
+  // Une el bloque `b` al final del anterior (Retroceso al principio) o el siguiente al final de `b` (Suprimir al final)
+  const join = (keep, drop) => {
+    const at = (refs.current[keep.id]?.textContent ?? '').length
+    commit(blocks.filter((x) => x.id !== drop.id).map((x) => (x.id === keep.id ? { ...x, html: sanitize(`${refs.current[keep.id]?.innerHTML ?? keep.html}${refs.current[drop.id]?.innerHTML ?? drop.html}`) } : x)))
+    placeCaret(keep.id, at)
+  }
   const onKeyDown = (e, b, i) => {
     if (menu?.id === b.id) {
       if (e.key === 'ArrowDown') { e.preventDefault(); setMenu({ ...menu, i: (menu.i + 1) % Math.max(options.length, 1) }); return }
@@ -140,7 +156,11 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       e.preventDefault()
       if (b.type !== 'text') toText(b.id)
       else if (blocks.length > 1) remove(b.id)
-    } else if (e.key === 'ArrowUp' && i > 0 && window.getSelection()?.anchorOffset === 0) focusBlock(i - 1)
+    } else if (e.key === 'Backspace' && caretOffset(el) === 0 && b.type !== 'text') { e.preventDefault(); patch(b.id, { type: 'text', html: sanitize(el.innerHTML) }) }
+    else if (e.key === 'Backspace' && caretOffset(el) === 0 && i > 0 && TEXTY.includes(blocks[i - 1].type)) { e.preventDefault(); join(blocks[i - 1], b) }
+    else if (e.key === 'Delete' && !strip(el.innerHTML) && blocks.length > 1) { e.preventDefault(); remove(b.id) }
+    else if (e.key === 'Delete' && caretOffset(el) === el.textContent.length && i < blocks.length - 1 && TEXTY.includes(blocks[i + 1].type)) { e.preventDefault(); join(b, blocks[i + 1]) }
+    else if (e.key === 'ArrowUp' && i > 0 && window.getSelection()?.anchorOffset === 0) focusBlock(i - 1)
     else if (e.key === 'ArrowDown' && i < blocks.length - 1 && window.getSelection()?.anchorOffset === el.textContent.length) focusBlock(i + 1)
   }
   const focusBlock = (i) => { const b = blocks[i]; if (b && TEXTY.includes(b.type)) refs.current[b.id]?.focus(); else if (b) setFocusId(b.id) }
