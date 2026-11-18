@@ -30,6 +30,16 @@ const plainHtml = (h) => String(h ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/
 /** Texto plano de un bloque (para copiar) */
 const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.map((c) => (b.rich ? plainHtml(c) : c)).join('\t')).join('\n') : b.type === 'code' ? b.code ?? '' : b.type === 'link' ? b.url ?? '' : plainHtml(b.html))
 
+/** Baldosa de un tipo de bloque: icono de color grande + nombre (menú de bloques en cuadrícula) */
+function Tile({ t }) {
+  return (
+    <>
+      <span className="tile-ic" style={{ background: t.tint, color: t.ink }}>{t.glyph ? <b>{t.glyph}</b> : <Icon name={t.icon} size={22} color={t.ink} />}</span>
+      <span className="tile-nm">{t.label}</span>
+    </>
+  )
+}
+
 /**
  * Editor de documentos por bloques (estilo Notion).
  *  - Al pasar el ratón por el hueco entre bloques sale un «+» que crea una caja de texto ahí.
@@ -205,8 +215,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const onKeyDown = (e, b, i) => {
     if (menu?.id === b.id) {
-      if (e.key === 'ArrowDown') { e.preventDefault(); setMenu({ ...menu, i: (menu.i + 1) % Math.max(options.length, 1) }); return }
-      if (e.key === 'ArrowUp') { e.preventDefault(); setMenu({ ...menu, i: (menu.i - 1 + options.length) % Math.max(options.length, 1) }); return }
+      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 3, ArrowUp: -3 }[e.key]
+      if (step) { e.preventDefault(); setMenu({ ...menu, i: Math.max(0, Math.min(options.length - 1, menu.i + step)) }); return }
       if (e.key === 'Enter') { e.preventDefault(); if (options[menu.i]) pick(options[menu.i].type); return }
       if (e.key === 'Escape') { setMenu(null); return }
     }
@@ -226,11 +236,18 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         const box = document.createElement('div'); box.appendChild(tail.extractContents())
         const nb = newBlock(LIST.includes(b.type) ? b.type : 'text', sanitize(box.innerHTML))
         const at = blocksRef.current.findIndex((x) => x.id === b.id)
-        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, html: sanitize(el.innerHTML) } : x))
+        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, html: sanitize(el.innerHTML), ...(x.collapsed ? { collapsed: false } : {}) } : x))
         n.splice(at + 1, 0, nb)
         hist.current.t = 0
         commit(n)
         placeCaret(nb.id, 0)
+        return
+      }
+      if (b.collapsed) { // título plegado: se despliega y el bloque nuevo entra debajo
+        const nb = newBlock('text')
+        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, collapsed: false } : x))
+        n.splice(blocksRef.current.findIndex((x) => x.id === b.id) + 1, 0, nb)
+        hist.current.t = 0; commit(n); setFocusId(nb.id)
         return
       }
       insertAfter(b.id, newBlock(LIST.includes(b.type) ? b.type : 'text'))
@@ -383,6 +400,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   const only = blocks.length === 1 && isEmpty(blocks[0])
 
+  // Títulos desplegables: un título plegado oculta lo que tiene debajo hasta el siguiente título de su nivel o superior
+  const headLevel = (b) => (['h1', 'h2', 'h3'].includes(b.type) ? Number(b.type[1]) : 0)
+  const folded = new Set()
+  const foldedCount = {}
+  {
+    let cut = 0; let owner = null
+    for (const b of blocks) {
+      const l = headLevel(b)
+      if (cut && l && l <= cut) { cut = 0; owner = null }
+      if (cut) { folded.add(b.id); foldedCount[owner] += 1; continue }
+      if (l && b.collapsed && !nested) { cut = l; owner = b.id; foldedCount[b.id] = 0 }
+    }
+  }
+
   // Al abrir en un punto concreto (seguir unos apuntes en otro tema): se baja hasta ese título y el cursor queda en lo siguiente
   useEffect(() => {
     if (!scrollToId || nested) return undefined
@@ -417,7 +448,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
-        {blocks.map((b, i) => (
+        {blocks.map((b, i) => (folded.has(b.id) ? null : (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
             {firstSel === b.id && (
@@ -427,7 +458,10 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
               </span>
             )}
-            <span className="row-tools">
+            <span className={`row-tools ${headLevel(b) && !nested ? 'has-fold' : ''}`}>
+              {headLevel(b) > 0 && !nested && (
+                <button type="button" className={`row-fold ${b.collapsed ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); patch(b.id, { collapsed: !b.collapsed }) }} aria-expanded={!b.collapsed} aria-label={b.collapsed ? 'Desplegar el título' : 'Plegar el título'} title={b.collapsed ? 'Desplegar' : 'Plegar todo lo de debajo'}><Icon name={b.collapsed ? 'right' : 'down'} size={16} strokeWidth={2.6} /></button>
+              )}
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
                 onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowQ(''); setRowI(0); setRowMenu(rowMenu === b.id ? null : b.id) }}
@@ -442,14 +476,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     <input className="row-menu-q" autoFocus value={rowQ} placeholder="Tipo de bloque… (escribe para buscar)" aria-label="Buscar un tipo de bloque"
                       onChange={(e) => { setRowQ(e.target.value); setRowI(0) }}
                       onKeyDown={(e) => {
-                        if (e.key === 'ArrowDown') { e.preventDefault(); setRowI((rowI + 1) % Math.max(rowOptions.length, 1)) }
-                        else if (e.key === 'ArrowUp') { e.preventDefault(); setRowI((rowI - 1 + rowOptions.length) % Math.max(rowOptions.length, 1)) }
+                        const st = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 3, ArrowUp: -3 }[e.key]
+                        if (st) { e.preventDefault(); setRowI(Math.max(0, Math.min(rowOptions.length - 1, rowI + st))) }
                         else if (e.key === 'Enter') { e.preventDefault(); if (rowOptions[rowI]) convert(b.id, rowOptions[rowI].type) }
                         else if (e.key === 'Escape') setRowMenu(null)
                       }} />
-                    {rowOptions.map((t, k) => (
-                      <button key={t.type} role="menuitemradio" aria-checked={b.type === t.type} className={`${b.type === t.type ? 'on' : ''} ${k === rowI ? 'hi' : ''}`} onMouseEnter={() => setRowI(k)} onClick={() => convert(b.id, t.type)}><Icon name={t.icon} size={16} />{t.label}</button>
-                    ))}
+                    <div className="tile-grid">
+                      {rowOptions.map((t, k) => (
+                        <button key={t.type} role="menuitemradio" aria-checked={b.type === t.type} className={`tile ${b.type === t.type ? 'on' : ''} ${k === rowI ? 'hi' : ''}`} onMouseEnter={() => setRowI(k)} onClick={() => convert(b.id, t.type)}><Tile t={t} /></button>
+                      ))}
+                    </div>
                     {rowOptions.length === 0 && <span className="row-menu-t">Sin resultados</span>}
                     <hr className="row-menu-sep" />
                     {b.type !== 'image' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
@@ -481,10 +517,13 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     onInput={(e) => onInput(e, b)} onKeyDown={(e) => onKeyDown(e, b, i)}
                     placeholder={only ? 'Escribe aquí o pulsa + o «/» para elegir un bloque' : ''} />
                 )}
+                {b.collapsed && headLevel(b) > 0 && !nested && (
+                  <button type="button" className="h-folded" onClick={() => patch(b.id, { collapsed: false })} title="Desplegar">{foldedCount[b.id] ? `${foldedCount[b.id]} ${foldedCount[b.id] === 1 ? 'bloque oculto' : 'bloques ocultos'}` : 'Vacío'}</button>
+                )}
               </div>
             </div>
           </div>
-        ))}
+        )))}
         <Gap last />
         <div className="blocks-tail" aria-hidden="true" />
       </div>
@@ -498,10 +537,18 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         </nav>
       )}
       {menu && (
-        <div className="card slash-menu" role="listbox" aria-label="Tipo de bloque" style={{ left: menu.x, top: menu.y + 6 }}>
-          {options.map((t, k) => (
-            <button key={t.type} role="option" aria-selected={k === menu.i} className={k === menu.i ? 'on' : ''} onMouseDown={(e) => { e.preventDefault(); pick(t.type) }}><Icon name={t.icon} size={18} />{t.label}</button>
-          ))}
+        <div className="card slash-menu" role="listbox" aria-label="Tipo de bloque" style={{ left: menu.x, top: menu.y + 6 }}
+          ref={(el) => { // si no cabe por abajo, sube lo justo (la vista portátil va con zoom)
+            if (!el) return
+            const z = parseFloat(getComputedStyle(el.closest('.d-app') ?? document.body).zoom) || 1
+            const over = el.getBoundingClientRect().bottom - (window.innerHeight - 8)
+            if (over > 0) el.style.top = `${Math.max(8 / z, menu.y + 6 - over / z)}px`
+          }}>
+          <div className="tile-grid">
+            {options.map((t, k) => (
+              <button key={t.type} role="option" aria-selected={k === menu.i} className={`tile ${k === menu.i ? 'on' : ''}`} onMouseDown={(e) => { e.preventDefault(); pick(t.type) }}><Tile t={t} /></button>
+            ))}
+          </div>
           {options.length === 0 && <span className="muted slash-empty">Sin resultados</span>}
         </div>
       )}

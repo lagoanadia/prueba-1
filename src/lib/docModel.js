@@ -3,21 +3,21 @@
 import { sanitize } from './richText.js'
 
 export const BLOCK_TYPES = [
-  { type: 'text', label: 'Texto', icon: 'note', hint: 'texto normal parrafo' },
-  { type: 'h1', label: 'Título 1', icon: 'title', hint: 'titulo grande h1 #' },
-  { type: 'h2', label: 'Título 2', icon: 'title', hint: 'titulo mediano h2 ##' },
-  { type: 'h3', label: 'Título 3', icon: 'title', hint: 'titulo pequeño h3 ###' },
-  { type: 'bullet', label: 'Lista con puntos', icon: 'list', hint: 'lista puntos viñetas -' },
-  { type: 'numbered', label: 'Lista numerada', icon: 'list', hint: 'lista numerada 1.' },
-  { type: 'todo', label: 'Tareas', icon: 'check', hint: 'tareas casillas checklist []' },
-  { type: 'quote', label: 'Cita', icon: 'note', hint: 'cita quote >' },
-  { type: 'callout', label: 'Destacado', icon: 'marker', hint: 'destacado idea clave aviso' },
-  { type: 'box', label: 'Post-it', icon: 'doc', hint: 'postit post-it recuadro caja nota contenedor amarillo' },
-  { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code programa' },
-  { type: 'table', label: 'Tabla', icon: 'table', hint: 'tabla table filas columnas' },
-  { type: 'image', label: 'Foto', icon: 'img', hint: 'foto imagen image picture' },
-  { type: 'link', label: 'Enlace', icon: 'link', hint: 'enlace link url web pagina' },
-  { type: 'divider', label: 'Divisor', icon: 'close', hint: 'divisor linea separador ---' },
+  { type: 'text', label: 'Texto', icon: 'note', tint: '#E8EAED', ink: '#5F6368', hint: 'texto normal parrafo' },
+  { type: 'h1', label: 'Título 1', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H1', hint: 'titulo grande h1 #' },
+  { type: 'h2', label: 'Título 2', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H2', hint: 'titulo mediano h2 ##' },
+  { type: 'h3', label: 'Título 3', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H3', hint: 'titulo pequeño h3 ###' },
+  { type: 'bullet', label: 'Lista con puntos', icon: 'list', tint: '#DFF5E4', ink: '#1FA463', hint: 'lista puntos viñetas -' },
+  { type: 'numbered', label: 'Lista numerada', icon: 'list', tint: '#DFF5E4', ink: '#1FA463', hint: 'lista numerada 1.' },
+  { type: 'todo', label: 'Tareas', icon: 'check', tint: '#DFF5E4', ink: '#1FA463', hint: 'tareas casillas checklist []' },
+  { type: 'quote', label: 'Cita', icon: 'chat', tint: '#FCE0EA', ink: '#E8618C', hint: 'cita quote >' },
+  { type: 'callout', label: 'Destacado', icon: 'marker', tint: '#FFF1B8', ink: '#B58900', hint: 'destacado idea clave aviso' },
+  { type: 'box', label: 'Post-it', icon: 'doc', tint: '#FFE2C2', ink: '#F08A24', hint: 'postit post-it recuadro caja nota contenedor amarillo' },
+  { type: 'code', label: 'Código', icon: 'code', tint: '#E9DDFA', ink: '#7C4DDB', hint: 'codigo code programa' },
+  { type: 'table', label: 'Tabla', icon: 'table', tint: '#E9DDFA', ink: '#7C4DDB', hint: 'tabla table filas columnas' },
+  { type: 'image', label: 'Foto', icon: 'img', tint: '#FCE0EA', ink: '#E8618C', hint: 'foto imagen image picture' },
+  { type: 'link', label: 'Enlace', icon: 'link', tint: '#DDEBFF', ink: '#2F6FED', hint: 'enlace link url web pagina' },
+  { type: 'divider', label: 'Divisor', icon: 'minus', tint: '#E8EAED', ink: '#5F6368', hint: 'divisor linea separador ---' },
 ]
 /** Colores del Post-it: barra (más fuerte) y fondo (suave) */
 export const POSTIT_COLORS = {
