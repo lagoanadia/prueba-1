@@ -62,6 +62,8 @@ ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, 
 .x-img { max-width: 100%; max-height: 420px; border-radius: var(--r); display: block; margin: 0 auto; }
 .x-link { border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); padding: 8px 14px; } .x-link a { color: var(--c); font-weight: 600; text-decoration: none; } .x-link span { display: block; font-size: 11px; color: #5F6368; }
 .x-hr { border: 0; border-top: 2px solid color-mix(in srgb, var(--c) 30%, #fff); margin: 14px 0; }
+.x-sheet span[data-hl] { background: linear-gradient(104deg, transparent 0.4%, var(--hlc) 1.5%, var(--hlc) 98%, transparent 99.6%) no-repeat 0 92% / 100% 62%; padding: 0 3px; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.x-sheet span[data-hl='amarillo'] { --hlc: #FFF1B8; } .x-sheet span[data-hl='naranja'] { --hlc: #FFE2C2; } .x-sheet span[data-hl='rosa'] { --hlc: #FCDCE7; } .x-sheet span[data-hl='azul'] { --hlc: #DCEBFF; } .x-sheet span[data-hl='verde'] { --hlc: #D9F4E2; } .x-sheet span[data-hl='morado'] { --hlc: #E9DDFA; }
 .x-sheet b, .x-sheet strong { font-weight: 700; } .x-sheet mark { background: #FFF3B0; }
 .x-sheet ul, .x-sheet ol { margin: 0; padding-left: 20px; }`
 }

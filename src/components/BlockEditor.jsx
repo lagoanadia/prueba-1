@@ -44,6 +44,16 @@ function sliceHtml(html, from, to) {
   const o = document.createElement('div'); o.appendChild(domRangeFor(d, from, to).cloneContents())
   return o.innerHTML
 }
+/** Subrayador: envuelve en un span de color el texto entre dos posiciones (o lo quita con color 'none'); `root` puede ser un trozo de HTML suelto */
+function wrapHl(root, from, to, color) {
+  const r = domRangeFor(root, from, to)
+  if (r.collapsed) return
+  const frag = r.extractContents()
+  frag.querySelectorAll('span[data-hl]').forEach((sp) => sp.replaceWith(...sp.childNodes)) // lo que ya estaba subrayado se repinta
+  if (color === 'none') r.insertNode(frag)
+  else { const sp = document.createElement('span'); sp.setAttribute('data-hl', color); sp.appendChild(frag); r.insertNode(sp) }
+  root.normalize()
+}
 const offsetIn = (el, node, off) => { const r = document.createRange(); r.selectNodeContents(el); r.setEnd(node, off); return r.toString().length }
 
 // Bloque que se está arrastrando por su asa: así se puede soltar en otro editor (por ejemplo, dentro de un Post-it)
@@ -85,6 +95,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const refs = useRef({})
   const [sel, setSel] = useState([]) // ids de los bloques marcados (arrastrando por varios o con Mayús + clic)
   const [picking, setPicking] = useState(false)
+  const [pen, setPen] = useState({ on: false, color: 'amarillo' }) // subrayador: modo rotulador y color elegido
   const [range, setRange] = useState(null) // selección de texto entre bloques: { a: { id, off }, b: { id, off } }
   const dragSel = useRef(null)
   const suppressClick = useRef(false)
@@ -418,7 +429,32 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     setRange(null)
     if (keep) placeCaret(keep.id, plainHtml(head).length)
   }
-  live.current = { sel, blocks, deleteSel, copySel, pickRange, range, copyRange, deleteRange, caretAt, setRangeNorm }
+  // Subrayador: aplica el color a lo marcado (entre bloques o dentro de uno) y suelta la selección
+  const applyPen = (color) => {
+    if (range && rangeIds.length) {
+      const next = blocksRef.current.map((b) => {
+        if (!rangeIds.includes(b.id) || !TEXTY.includes(b.type)) return b
+        const { from, to } = bounds(b.id)
+        const d = document.createElement('div'); d.innerHTML = b.html
+        wrapHl(d, from, to, color)
+        return { ...b, html: sanitize(d.innerHTML) }
+      })
+      hist.current.t = 0; commit(next); setRange(null)
+      return true
+    }
+    const sel = window.getSelection()
+    if (!sel?.rangeCount || sel.isCollapsed) return false
+    const rg = sel.getRangeAt(0)
+    const hit = Object.entries(refs.current).find(([, el]) => el && el.contains(rg.startContainer) && el.contains(rg.endContainer))
+    if (!hit) return false
+    const [id, el] = hit
+    const d = document.createElement('div'); d.innerHTML = el.innerHTML
+    wrapHl(d, offsetIn(el, rg.startContainer, rg.startOffset), offsetIn(el, rg.endContainer, rg.endOffset), color)
+    hist.current.t = 0; patch(id, { html: sanitize(d.innerHTML) })
+    sel.removeAllRanges()
+    return true
+  }
+  live.current = { pen, applyPen, sel, blocks, deleteSel, copySel, pickRange, range, copyRange, deleteRange, caretAt, setRangeNorm }
   // Arrastrar el ratón de un bloque a otro marca los bloques enteros; Supr/Retroceso los borra, Ctrl+C los copia, Esc los suelta
   useEffect(() => {
     const move = (e) => {
@@ -438,7 +474,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       const end = live.current.caretAt(e.clientX, e.clientY)
       if (end && d.start) live.current.setRangeNorm(d.start, end)
     }
-    const up = () => { if (dragSel.current?.on) { suppressClick.current = true; setTimeout(() => { suppressClick.current = false }, 0) } dragSel.current = null; setPicking(false) } // tras arrastrar no debe saltar el «clic» de la página (enfocaba el último bloque)
+    const up = () => { if (live.current.pen?.on) setTimeout(() => live.current.applyPen(live.current.pen.color), 0); if (dragSel.current?.on) { suppressClick.current = true; setTimeout(() => { suppressClick.current = false }, 0) } dragSel.current = null; setPicking(false) } // tras arrastrar no debe saltar el «clic» de la página (enfocaba el último bloque)
     const key = (e) => {
       const L = live.current
       if (L.range && !e.__picked) {
@@ -548,9 +584,14 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   return (
     <div className={nested ? 'blocks-nested' : 'card blocks'}>
-      {!nested && <div className="blocks-bar"><span className={`doc-status ${saving ? 'on' : ''}`} role="status" aria-live="polite">{saving ? 'Guardando…' : ''}</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF" aria-label="Exportar a PDF"><Icon name="pdf" size={16} /></button>}{bar}</div>}
+      {!nested && <div className="blocks-bar"><span className={`doc-status ${saving ? 'on' : ''}`} role="status" aria-live="polite">{saving ? 'Guardando…' : ''}</span><span className={`hl-tool ${pen.on ? 'on' : ''}`} role="group" aria-label="Subrayador" onMouseDown={(e) => e.preventDefault()}>
+          <button type="button" className="hl-pen" aria-pressed={pen.on} title="Subrayador: pasa por el texto con el color elegido" aria-label="Subrayador" onClick={() => setPen((p) => ({ ...p, on: !p.on }))}><Icon name="marker" size={16} /></button>
+          {Object.entries(POSTIT_COLORS).map(([id, c]) => <button type="button" key={id} className={`hl-dot ${pen.on && pen.color === id ? 'on' : ''}`} style={{ background: c.bar }} title={c.label} aria-label={`Subrayar en ${c.label}`}
+            onClick={() => { setPen({ on: true, color: id }); applyPen(id) }} />)}
+          <button type="button" className={`hl-x ${pen.on && pen.color === 'none' ? 'on' : ''}`} title="Quitar el subrayado de lo que pases" aria-label="Quitar subrayado" onClick={() => { setPen({ on: true, color: 'none' }); applyPen('none') }}><Icon name="close" size={13} strokeWidth={2.8} /></button>
+        </span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF" aria-label="Exportar a PDF"><Icon name="pdf" size={16} /></button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
+      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''} ${pen.on ? 'pen-on' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />

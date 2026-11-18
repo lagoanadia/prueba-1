@@ -1,6 +1,8 @@
 // Limpia el HTML de los apuntes: solo se permiten etiquetas de formato, nunca scripts ni atributos.
 const TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'P', 'DIV', 'BR', 'SPAN', 'MARK'])
 
+const HL = new Set(['amarillo', 'naranja', 'rosa', 'azul', 'verde', 'morado'])
+
 export function sanitize(html) {
   const doc = new DOMParser().parseFromString(`<body>${html ?? ''}</body>`, 'text/html')
   const clean = (node) => {
@@ -8,8 +10,10 @@ export function sanitize(html) {
       if (n.nodeType === 3) return
       if (n.nodeType !== 1 || !TAGS.has(n.tagName)) { n.remove(); return }
       const bg = n.tagName === 'SPAN' ? n.style.backgroundColor : ''
+      const hl = n.tagName === 'SPAN' && HL.has(n.getAttribute('data-hl')) ? n.getAttribute('data-hl') : '' // subrayador: color del post-it
       ;[...n.attributes].forEach((a) => n.removeAttribute(a.name))
       if (bg) n.style.backgroundColor = bg
+      if (hl) n.setAttribute('data-hl', hl)
       clean(n)
     })
   }
