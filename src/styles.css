@@ -4450,3 +4450,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { .doc-status { transition: none; } }
 /* Barra de los apuntes: PDF y compartir son solo iconos */
 .blocks-bar .pill-sm { width: 32px; padding: 0; justify-content: center; }
+/* Bloques marcados: más oscuros y con borde, para ver bien qué está seleccionado */
+.block-slot.is-picked { background: rgba(49, 133, 252, .30); box-shadow: inset 0 0 0 2px rgba(49, 133, 252, .55), inset 4px 0 0 0 #3185FC; border-radius: 8px; }
