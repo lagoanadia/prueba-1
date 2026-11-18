@@ -4394,3 +4394,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .dt-covers { display: flex; flex-wrap: wrap; gap: 5px; }
 .dt-covers .dt-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dt-nm { padding-right: 24px; }
+/* Post-it: menos aire entre una tabla y la siguiente (el párrafo vacío de en medio se queda en una rendija) */
+.box-wrap .tb-wrap { margin: 2px 0; }
+.blocks-page.nested .block-gap { height: 2px; }
+.blocks-page.nested .slot-text .block-text.is-only, .blocks-page.nested .slot-text .block-text:empty { min-height: 10px; line-height: 10px; padding: 0; }
+.dt-covers { align-items: center; }
+.dt-more { display: inline-flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--muted); font: 600 11.5px Poppins, sans-serif; padding: 2px 6px; border-radius: 99px; cursor: pointer; margin-left: auto; }
+.dt-more:hover, .dt-more.on { background: var(--soft); color: var(--text); } .dt-more svg { stroke: currentColor; }
+.dt-list { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 12px; color: #3C4043; }
+.dt-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 14px; position: relative; } .dt-list span::before { content: ''; position: absolute; left: 3px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: #BDC1C6; }
+.dt-more svg { transition: transform .2s var(--ease); } .dt-more.on svg { transform: rotate(180deg); }

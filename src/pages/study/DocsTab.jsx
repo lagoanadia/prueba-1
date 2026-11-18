@@ -16,6 +16,7 @@ const KIND = { topic: { label: 'Tema', tint: '#DDEBFF', ink: '#2F6FED' }, practi
  */
 export default function DocsTab({ data, update, subject, route, go, onNewPractice, onRemovePractice }) {
   const [drag, setDrag] = useState(null) // { id, over, after } al mover una tarjeta
+  const [shown, setShown] = useState(() => new Set()) // tarjetas con la lista de temas que abarcan desplegada
   const [filter, setFilter] = useState('todos') // todos | apuntes | practicas
   const [openId, setOpenId] = useState(null)
   const [dialog, setDialog] = useState(null) // 'new' | { rename: id } | { del: id }
@@ -111,8 +112,17 @@ export default function DocsTab({ data, update, subject, route, go, onNewPractic
               </span>
               <span className="dt-pv">{pv.length ? pv.map((t, i) => <span key={i}>{t}</span>) : <span className="muted">Vacío</span>}</span>
               <span className="dt-covers">
-                {d.kind === 'topic' ? d.covers.map((c, i) => <span key={i} className="dt-pill" style={{ background: k.tint, color: k.ink }} title={c}>{c}</span>) : <span className="dt-pill" style={{ background: k.tint, color: k.ink }}>{k.label}</span>}
+                <span className="dt-pill" style={{ background: k.tint, color: k.ink }}>{k.label}</span>
+                {d.kind === 'topic' && d.covers.length > 0 && (
+                  <button type="button" className={`dt-more ${shown.has(d.id) ? 'on' : ''}`} aria-expanded={shown.has(d.id)}
+                    onClick={(e) => { e.stopPropagation(); setShown((cur) => { const n = new Set(cur); if (n.has(d.id)) n.delete(d.id); else n.add(d.id); return n }) }}>
+                    Abarca {d.covers.length} {d.covers.length === 1 ? 'tema' : 'temas'}<Icon name="down" size={13} strokeWidth={2.6} />
+                  </button>
+                )}
               </span>
+              {shown.has(d.id) && d.covers.length > 0 && (
+                <span className="dt-list">{d.covers.map((c, i) => <span key={i} title={c}>{c}</span>)}</span>
+              )}
             </div>
           )
         })}
