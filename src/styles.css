@@ -4322,3 +4322,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tb-x svg { stroke: currentColor; }
 .tb-x:hover { background: #FDECEE; color: #D93025; border-color: #F4B4BA; transform: scale(1.1); }
 .tb-x-col { top: -9px; }
+/* Estética de la app: barras azul suave que ocupan todo el borde (opción C) */
+.tb-addcol, .tb-addrow { border: 0; background: #EEF4FF; color: var(--blue); border-radius: 10px; }
+.tb-addcol:hover, .tb-addrow:hover, .tb-addcol:focus-visible, .tb-addrow:focus-visible { background: #DCE9FF; color: var(--blue); }
+.tb-wrap:hover .tb-addcol, .tb-wrap:hover .tb-addrow, .tb-wrap:focus-within .tb-addcol, .tb-wrap:focus-within .tb-addrow { opacity: .55; }
+.tb-x { background: #EEF4FF; color: var(--blue); border: 1.5px solid #CFE0FF; box-shadow: none; }
+.tb-x:hover { background: #FDECEE; color: #D93025; border-color: #F4B4BA; }
