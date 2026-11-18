@@ -4541,3 +4541,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tp-ctx svg { stroke: currentColor; }
 .tp-inline { flex: 1; min-width: 0; border: 2px solid var(--blue); border-radius: 10px; padding: 3px 8px; font: inherit; font-size: 13.5px; outline: none; background: #FFFFFF; }
 @media (prefers-reduced-motion: reduce) { .tp-ctx { animation: none; } }
+/* Nombre completo del tema al pasar el ratón: con el estilo de la app (antes salía el aviso del navegador) */
+.tp-tip { position: fixed; z-index: 85; max-width: 320px; background: #FFFFFF; color: var(--text); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 7px 12px; font: 500 13px/1.4 Poppins, sans-serif; pointer-events: none; animation: sel-in .15s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: top left; overflow-wrap: anywhere; }
+.tp-grip { cursor: grab; } .tp-grip:focus-visible { outline: 2px solid var(--blue); border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .tp-tip { animation: none; } }
