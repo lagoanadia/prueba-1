@@ -4423,3 +4423,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .box-wrap .tb-addrow { bottom: -11px; }
 .box-wrap .bt-text .block-text, .box-wrap .bt-h1 .block-text, .box-wrap .bt-h2 .block-text, .box-wrap .bt-h3 .block-text, .box-wrap .bt-bullet .block-text, .box-wrap .bt-numbered .block-text, .box-wrap .bt-todo .block-text { padding-top: 0; padding-bottom: 0; }
 .box-wrap .bt-text .block-text, .box-wrap .bt-h1 .block-text, .box-wrap .bt-h2 .block-text, .box-wrap .bt-h3 .block-text { line-height: 1.3; }
+/* Post-it: más espacio, siempre igual (20px arriba, entre bloques y abajo) */
+.box-wrap { padding: 20px 14px 20px 0; }
+.blocks-page.nested > .block-slot + .block-slot { margin-top: 20px; }
+.box-wrap .tb-addrow { bottom: -15px; }
