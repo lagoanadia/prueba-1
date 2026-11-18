@@ -17,6 +17,7 @@ function Cell({ html, onChange, onKeyDown, label, minH, cellRef }) {
   )
 }
 
+const END = 46 // columna de la derecha: la barra de añadir columna (pegada a la tabla) y la x de quitar fila
 const MIN_COL = 70 // ancho mínimo de una columna (px)
 const MIN_ROW = 36
 const MAX_ROW = 420
@@ -122,8 +123,8 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
     <div className="tb-wrap" ref={wrap}>
       <table className="tb">
         <colgroup>
-          {widths.map((f, j) => <col key={j} style={{ width: tw ? Math.max(40, Math.round(f * (tw - (rows.length > 1 ? 28 : 0)))) : `${(f * 100).toFixed(2)}%` }} />)}
-          {rows.length > 1 && <col style={{ width: 28 }} />}
+          {widths.map((f, j) => <col key={j} style={{ width: tw ? Math.max(40, Math.round(f * (tw - (rows.length > 1 ? END : 0)))) : `${(f * 100).toFixed(2)}%` }} />)}
+          {rows.length > 1 && <col style={{ width: END }} />}
         </colgroup>
         <tbody>
           {rows.map((row, i) => (
@@ -146,8 +147,8 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
           ))}
         </tbody>
       </table>
-      <button type="button" className="tb-addcol" onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
-      <button type="button" className="tb-addrow" onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
+      <button type="button" className="tb-addcol" style={{ right: (rows.length > 1 ? END : 0) - 22 }} onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
+      <button type="button" className="tb-addrow" style={{ right: rows.length > 1 ? END : 0 }} onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
     </div>
   )
 }

@@ -2071,11 +2071,11 @@ button.week-chip:active, button.sport-big:active { transform: scale(.94); }
 .tb td.is-head { background: var(--soft); font-weight: 700; }
 .tb td input { width: 100%; border: none; background: none; font: inherit; padding: 9px 12px; outline: none; font-weight: inherit; }
 .tb td input:focus { background: #EEF4FF; }
-.tb td.tb-end { border: none; width: 28px; }
+.tb td.tb-end { border: none; width: 46px; }
 .tb-x { position: absolute; width: 20px; height: 20px; border: none; border-radius: 50%; background: var(--text); color: #FFFFFF; display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0; z-index: 2; }
 .tb-x svg { stroke: #FFFFFF; }
 .tb-x-col { top: -10px; right: 4px; }
-.tb-end .tb-x { position: static; display: none; margin: 0 4px; }
+.tb-end .tb-x { position: static; display: none; margin: 0 4px 0 auto; }
 .tb tr:hover .tb-end .tb-x, .tb td:hover .tb-x-col { display: flex; }
 .tb-add { display: flex; gap: 8px; margin-top: 6px; opacity: 0; transition: opacity .15s; }
 .tb-wrap:hover .tb-add, .tb-wrap:focus-within .tb-add { opacity: 1; }
@@ -2836,7 +2836,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .tb td textarea { display: block; width: 100%; border: none; background: none; font: inherit; padding: 9px 12px; outline: none; font-weight: inherit; resize: none; overflow: hidden; line-height: 1.4; white-space: pre-wrap; overflow-wrap: break-word; }
 .tb td textarea:focus { background: #EEF4FF; }
 .tb { table-layout: fixed; }
-.tb td.tb-end { width: 28px; }
+.tb td.tb-end { width: 46px; }
 /* Bordes de tabla para cambiar el tamaño de columnas y filas */
 .tb td { position: relative; }
 .tb-rz { position: absolute; z-index: 2; opacity: 0; transition: opacity .12s; background: var(--blue); }
