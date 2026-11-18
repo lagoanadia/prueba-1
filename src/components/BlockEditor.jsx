@@ -24,6 +24,28 @@ const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 
 const LIST = ['bullet', 'numbered', 'todo']
 const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
 
+/** Rango del DOM entre dos posiciones de texto (en caracteres) dentro de `root`; `to` puede ser Infinity (hasta el final) */
+function domRangeFor(root, from, to) {
+  const r = document.createRange()
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  r.setStart(root, root.childNodes.length); r.setEnd(root, root.childNodes.length)
+  let n; let pos = 0; let started = false
+  while ((n = w.nextNode())) {
+    const end = pos + n.length
+    if (!started && from <= end) { r.setStart(n, Math.max(0, from - pos)); started = true }
+    if (started && to <= end) { r.setEnd(n, Math.max(0, to - pos)); return r }
+    pos = end
+  }
+  return r
+}
+/** HTML de lo que hay entre dos posiciones de texto de un bloque */
+function sliceHtml(html, from, to) {
+  const d = document.createElement('div'); d.innerHTML = html
+  const o = document.createElement('div'); o.appendChild(domRangeFor(d, from, to).cloneContents())
+  return o.innerHTML
+}
+const offsetIn = (el, node, off) => { const r = document.createRange(); r.selectNodeContents(el); r.setEnd(node, off); return r.toString().length }
+
 // Bloque que se está arrastrando por su asa: así se puede soltar en otro editor (por ejemplo, dentro de un Post-it)
 let DRAGGING = null
 const plainHtml = (h) => String(h ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
@@ -63,7 +85,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const refs = useRef({})
   const [sel, setSel] = useState([]) // ids de los bloques marcados (arrastrando por varios o con Mayús + clic)
   const [picking, setPicking] = useState(false)
+  const [range, setRange] = useState(null) // selección de texto entre bloques: { a: { id, off }, b: { id, off } }
   const dragSel = useRef(null)
+  const suppressClick = useRef(false)
   const live = useRef({})
   const pageRef = useRef(null)
 
@@ -323,7 +347,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     }
     if (e.shiftKey && anchor && slot && slot.dataset.id !== anchor) { e.preventDefault(); lastId.current = anchor; pickRange(anchor, slot.dataset.id); setPicking(false); window.getSelection()?.removeAllRanges(); return }
     if (sel.length) setSel([])
-    dragSel.current = slot ? { id: slot.dataset.id, on: false } : null
+    if (range) setRange(null)
+    dragSel.current = slot ? { id: slot.dataset.id, on: false, start: caretAt(e.clientX, e.clientY) } : null
   }
   const firstSel = blocks.find((b) => sel.includes(b.id))?.id // el primero (en el orden del documento) lleva la barra
   const wrapSel = () => {
@@ -342,7 +367,58 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (near && TEXTY.includes(near.type)) setFocusId(near.id) // el cursor queda en el bloque de arriba
   }
   const copySel = () => { try { navigator.clipboard?.writeText(blocks.filter((b) => sel.includes(b.id)).map(plainOf).join('\n')) } catch { /* sin permiso */ } }
-  live.current = { sel, blocks, deleteSel, copySel, pickRange }
+  // Selección «desde donde haces clic hasta donde sueltas» entre varios bloques (el navegador no deja seleccionar a través de bloques)
+  const caretAt = (x, y) => {
+    const page = pageRef.current
+    const slots = [...page.children].filter((c) => c.classList?.contains('block-slot'))
+    if (!slots.length) return null
+    const above = y < slots[0].getBoundingClientRect().top
+    const below = y > slots[slots.length - 1].getBoundingClientRect().bottom
+    const slot = slots.find((el) => { const r = el.getBoundingClientRect(); return y >= r.top && y <= r.bottom }) ?? (above ? slots[0] : slots[slots.length - 1])
+    const id = slot.dataset.id
+    const b = blocksRef.current.find((k) => k.id === id)
+    const el = refs.current[id]
+    if (!b || !el || !TEXTY.includes(b.type)) return { id, off: below ? 1e9 : 0 }
+    if (above) return { id, off: 0 }
+    if (below) return { id, off: el.textContent.length }
+    let node = null; let offset = 0
+    const cp = document.caretPositionFromPoint?.(x, y)
+    if (cp) { node = cp.offsetNode; offset = cp.offset } else { const rg = document.caretRangeFromPoint?.(x, y); if (rg) { node = rg.startContainer; offset = rg.startOffset } }
+    if (node && el.contains(node)) return { id, off: offsetIn(el, node, offset) }
+    const r = el.getBoundingClientRect()
+    return { id, off: x < r.left + r.width / 2 ? 0 : el.textContent.length }
+  }
+  const setRangeNorm = (p, q) => {
+    const ip = blocksRef.current.findIndex((k) => k.id === p.id); const iq = blocksRef.current.findIndex((k) => k.id === q.id)
+    if (ip < 0 || iq < 0) return
+    const [a, b] = ip < iq || (ip === iq && p.off <= q.off) ? [p, q] : [q, p]
+    setRange((cur) => (cur && cur.a.id === a.id && cur.a.off === a.off && cur.b.id === b.id && cur.b.off === b.off ? cur : { a, b }))
+  }
+  const rangeIds = (() => {
+    if (!range) return []
+    const i = blocks.findIndex((k) => k.id === range.a.id); const j = blocks.findIndex((k) => k.id === range.b.id)
+    return i < 0 || j < 0 ? [] : blocks.slice(i, j + 1).map((k) => k.id)
+  })()
+  const bounds = (id) => ({ from: id === range.a.id ? range.a.off : 0, to: id === range.b.id ? range.b.off : Infinity })
+  const copyRange = () => {
+    const text = rangeIds.map((id) => { const b = blocks.find((k) => k.id === id); if (!b) return ''; if (!TEXTY.includes(b.type)) return plainOf(b); const { from, to } = bounds(id); return plainHtml(sliceHtml(b.html, from, to)) }).join('\n')
+    try { navigator.clipboard?.writeText(text) } catch { /* sin permiso */ }
+  }
+  const deleteRange = () => {
+    if (!range || !rangeIds.length) return
+    const A = blocks.find((k) => k.id === rangeIds[0]); const Z = blocks.find((k) => k.id === rangeIds[rangeIds.length - 1])
+    const aText = TEXTY.includes(A.type); const zText = TEXTY.includes(Z.type)
+    const head = aText ? sliceHtml(A.html, 0, range.a.off) : ''
+    const tail = zText ? sliceHtml(Z.html, range.b.off, Infinity) : ''
+    const keep = aText ? A : zText ? Z : null
+    const merged = keep ? { ...keep, html: sanitize(head + tail) } : null
+    const n = blocks.filter((k) => !rangeIds.includes(k.id) || k.id === keep?.id).map((k) => (k.id === keep?.id ? merged : k))
+    hist.current.t = 0
+    commit(n.length ? n : [newBlock()])
+    setRange(null)
+    if (keep) placeCaret(keep.id, plainHtml(head).length)
+  }
+  live.current = { sel, blocks, deleteSel, copySel, pickRange, range, copyRange, deleteRange, caretAt, setRangeNorm }
   // Arrastrar el ratón de un bloque a otro marca los bloques enteros; Supr/Retroceso los borra, Ctrl+C los copia, Esc los suelta
   useEffect(() => {
     const move = (e) => {
@@ -352,27 +428,36 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       if (!page) return
       const pr = page.getBoundingClientRect()
       const outside = e.clientY < pr.top || e.clientY > pr.bottom
-      if (nested && outside) { if (d.on) setSel([]); return } // fuera del recuadro manda la página de fuera
+      if (nested && outside) { if (d.on) setRange(null); return } // fuera del recuadro manda la página de fuera
       const slots = [...page.children].filter((c) => c.classList?.contains('block-slot'))
       if (!slots.length) return
       const y = e.clientY
       const hit = slots.find((el) => { const r = el.getBoundingClientRect(); return y >= r.top && y <= r.bottom }) ?? (y < slots[0].getBoundingClientRect().top ? slots[0] : slots[slots.length - 1])
       if (!d.on && hit.dataset.id === d.id) return
       if (!d.on) { d.on = true; setPicking(true); window.getSelection()?.removeAllRanges(); document.activeElement?.blur?.() }
-      live.current.pickRange(d.id, hit.dataset.id)
+      const end = live.current.caretAt(e.clientX, e.clientY)
+      if (end && d.start) live.current.setRangeNorm(d.start, end)
     }
-    const up = () => { dragSel.current = null; setPicking(false) }
+    const up = () => { if (dragSel.current?.on) { suppressClick.current = true; setTimeout(() => { suppressClick.current = false }, 0) } dragSel.current = null; setPicking(false) } // tras arrastrar no debe saltar el «clic» de la página (enfocaba el último bloque)
     const key = (e) => {
       const L = live.current
+      if (L.range && !e.__picked) {
+        const k = e.key.toLowerCase()
+        if (e.key === 'Escape') { setRange(null); return }
+        if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); L.deleteRange(); return }
+        if ((e.ctrlKey || e.metaKey) && k === 'c') { e.preventDefault(); L.copyRange(); return }
+        if ((e.ctrlKey || e.metaKey) && k === 'x') { e.preventDefault(); L.copyRange(); L.deleteRange(); return }
+      }
       if (!L.sel.length || e.__picked) return
       if (e.key === 'Escape') { setSel([]); return }
       if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); L.deleteSel() } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { e.preventDefault(); L.copySel() }
     }
-    const away = (e) => { if (!pageRef.current?.contains(e.target) && !e.target.closest?.('.sel-bar')) setSel([]) }
+    const away = (e) => { if (!pageRef.current?.contains(e.target) && !e.target.closest?.('.sel-bar')) { setSel([]); setRange(null) } }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); document.addEventListener('keydown', key); document.addEventListener('pointerdown', away)
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); document.removeEventListener('keydown', key); document.removeEventListener('pointerdown', away) }
   }, [])
   const onPageClick = (e) => {
+    if (suppressClick.current) return
     if (e.target !== e.currentTarget && !e.target.classList.contains('blocks-tail')) return
     if (e.target.closest('.blocks-page') !== e.currentTarget) return // el hueco de un recuadro de dentro lo gestiona él
     const last = blocks[blocks.length - 1]
@@ -403,6 +488,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
 
   const only = blocks.length === 1 && isEmpty(blocks[0])
+
+  // Resaltado del texto seleccionado entre bloques (API de resaltado del navegador)
+  useEffect(() => {
+    if (!range || typeof Highlight === 'undefined' || !CSS.highlights) return undefined
+    const rs = []
+    rangeIds.forEach((id) => {
+      const el = refs.current[id]; const b = blocks.find((k) => k.id === id)
+      if (!el || !b || !TEXTY.includes(b.type)) return
+      const { from, to } = bounds(id)
+      rs.push(domRangeFor(el, from, to))
+    })
+    CSS.highlights.set('blk-sel', new Highlight(...rs))
+    return () => CSS.highlights.delete('blk-sel')
+  }, [range, blocks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Títulos desplegables: un título plegado oculta lo que tiene debajo hasta el siguiente título de su nivel o superior
   const headLevel = (b) => (['h1', 'h2', 'h3'].includes(b.type) ? Number(b.type[1]) : 0)
@@ -453,14 +552,22 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (
-          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
-            {firstSel === b.id && (
-              <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Bloques marcados">
-                <span className="sel-n">{sel.length} {sel.length === 1 ? 'bloque' : 'bloques'}</span>
-                {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Post-it</button>}
-                <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>
-                <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
+            {(range ? rangeIds[0] : firstSel) === b.id && (
+              <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Selección">
+                {range
+                  ? <>
+                    <span className="sel-n">{rangeIds.length} {rangeIds.length === 1 ? 'bloque' : 'bloques'}</span>
+                    <button type="button" onClick={copyRange}><Icon name="copy" size={15} />Copiar</button>
+                    <button type="button" onClick={deleteRange}><Icon name="trash" size={15} />Borrar</button>
+                  </>
+                  : <>
+                    <span className="sel-n">{sel.length} {sel.length === 1 ? 'bloque' : 'bloques'}</span>
+                    {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Post-it</button>}
+                    <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>
+                    <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
+                  </>}
               </span>
             )}
             <span className={`row-tools ${headLevel(b) && !nested ? 'has-fold' : ''}`}>
