@@ -129,7 +129,17 @@ function fromText(text) {
 /**
  * Lo copiado → lista de bloques { type, html? | rows? | code? }, o null si es un trozo de texto normal (se pega como siempre).
  */
+// las celdas vacías de la cabecera (p. ej. la esquina) se marcan con «x» para que la tabla siga siendo una sola y se vea la columna
+const markHead = (specs) => {
+  specs?.forEach((sp) => { if (sp.type === 'table') sp.rows[0] = sp.rows[0].map((c) => (c ? c : 'x')) })
+  return specs
+}
+
 export function blocksFromPaste(html, text) {
+  return markHead(rawBlocks(html, text))
+}
+
+function rawBlocks(html, text) {
   if (html && /<(table|ul|ol|h[1-6]|pre|blockquote|hr|p|div)\b/i.test(html)) {
     const doc = new DOMParser().parseFromString(html, 'text/html')
     const out = []
