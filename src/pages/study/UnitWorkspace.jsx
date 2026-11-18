@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { saveFile } from '../../lib/fileStore.js'
-import BlockEditor from '../../components/BlockEditor.jsx'
+import NotesPane from './NotesPane.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
 import EmptyAdd from './EmptyAdd.jsx'
@@ -250,18 +250,14 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
           {tab === 'estudio' && (
             topic
               ? split(<FilesPane key={`pdf-${topic.id}`} files={topicFiles} onChange={setTopicFiles} label="Subir el PDF de este tema" onPickText={(t) => notesIn.current?.(t)} />,
-                  <BlockEditor key={topic.id} appendRef={notesIn} exportAs={{ title: topic.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${topic.name}`} value={data.notes?.[topic.id]}
-                    bar={data.notes?.[topic.id] ? <ShareButton kind="doc" title={`Apuntes de ${topic.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${topic.name}`, subtitle: unit.name, blocks: data.notes[topic.id]?.blocks ?? [] }} /> : null}
-                    onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [topic.id]: doc } }))} />)
+                  <NotesPane key={topic.id} item={topic} kind="topic" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${topic.name}`} />)
               : <EmptyAdd icon="book" title="Temario y apuntes" text="Aquí irán los temas de la unidad y tus apuntes." createLabel="Crear tema" onCreate={() => setDialog('topic')} onPdf={(file) => setPdfNew({ type: 'topic', file })} />
           )}
 
           {tab === 'practicas' && (
             practice
               ? split(<FilesPane key={`pf-${practice.id}`} files={practiceFiles} onChange={setPracticeFiles} label="Subir el PDF de esta práctica" onPickText={(t) => notesIn.current?.(t)} />,
-                  <BlockEditor key={practice.id} appendRef={notesIn} exportAs={{ title: practice.name, subtitle: `${subject.short} · ${unit.name}` }} label={`Apuntes de ${practice.name}`} value={data.notes?.[practice.id] ?? practice.doc}
-                    bar={(data.notes?.[practice.id] ?? practice.doc) ? <ShareButton kind="doc" title={`Apuntes de ${practice.name}`} className="pill pill-sm" data={{ title: `${subject.short} · ${practice.name}`, subtitle: unit.name, blocks: (data.notes?.[practice.id] ?? practice.doc)?.blocks ?? [] }} /> : null}
-                    onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [practice.id]: doc } }))} />)
+                  <NotesPane key={practice.id} item={practice} kind="practice" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${practice.name}`} />)
               : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
 

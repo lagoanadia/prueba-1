@@ -39,7 +39,7 @@ const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\
  * `value` = lo guardado; `onChange(doc)` guarda; `bar` = botones extra para la barra (p. ej. Compartir).
  * Cambia la `key` para abrir otro documento.
  */
-export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null }) {
+export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null, scrollToId = null }) {
   const [blocks, setBlocks] = useState(() => toBlocks(value))
   const [focusId, setFocusId] = useState(null)
   const lastId = useRef(null) // último bloque donde tuviste el cursor
@@ -382,6 +382,18 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
 
   const only = blocks.length === 1 && isEmpty(blocks[0])
+
+  // Al abrir en un punto concreto (seguir unos apuntes en otro tema): se baja hasta ese título y el cursor queda en lo siguiente
+  useEffect(() => {
+    if (!scrollToId || nested) return undefined
+    const t = setTimeout(() => {
+      pageRef.current?.querySelector(`:scope > .block-slot[data-id="${scrollToId}"]`)?.scrollIntoView({ block: 'start' })
+      const k = blocksRef.current.findIndex((b) => b.id === scrollToId)
+      const next = blocksRef.current[k + 1]
+      if (next && TEXTY.includes(next.type)) placeCaret(next.id, 0)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [scrollToId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Índice: los títulos del documento, para saltar a ellos
   const heads = blocks.filter((b) => ['h1', 'h2', 'h3'].includes(b.type) && strip(b.html)).map((b) => ({ id: b.id, level: Number(b.type[1]), text: plainHtml(b.html).trim() }))

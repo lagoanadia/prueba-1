@@ -4273,3 +4273,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 /* Tablas del documento con más contraste */
 .tb td { border-color: #B4BAC2; }
 .tb td.is-head { background: #DDE1E6; }
+/* Elegir apuntes de un tema: nuevos o seguir un documento de la unidad */
+.np-choose { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 24px 28px; overflow: auto; }
+.np-title { font-size: 20px; text-align: center; margin-bottom: 4px; }
+.np-cards { display: flex; gap: 10px; }
+.np-cards button { flex: 1; border: 2px solid var(--line); background: #FFFFFF; border-radius: 16px; padding: 14px 10px; font: inherit; cursor: pointer; text-align: center; transition: border-color .2s, background .2s, transform .15s var(--ease); }
+.np-cards button b { display: block; font-size: 14px; } .np-cards button small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+.np-cards button:hover { border-color: #B6D1FF; } .np-cards button:active { transform: scale(.98); }
+.np-cards button.on { border-color: var(--blue); background: #EEF4FF; }
+.np-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
+.np-list button { display: flex; align-items: center; gap: 10px; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 12px; font: 600 13px Poppins, sans-serif; cursor: pointer; text-align: left; color: var(--text); }
+.np-list button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-list button i { flex: none; width: 15px; height: 15px; border-radius: 50%; border: 2px solid #9AA0A6; }
+.np-list button.on { background: #DDEBFF; } .np-list button.on i { border-color: var(--blue); background: var(--blue); }
+.np-opt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #3C4043; margin: 2px 4px; }
+.np-go { align-self: center; flex: none; width: auto; height: auto; margin-top: 4px; gap: 12px; padding: 10px 14px 10px 24px; }
+.np-switch { max-width: 260px; margin-right: auto; }
