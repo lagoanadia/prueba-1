@@ -262,19 +262,19 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         if (!sel.isCollapsed) r.deleteContents()
         const tail = document.createRange(); tail.setStart(r.endContainer, r.endOffset); tail.setEnd(el, el.childNodes.length)
         const box = document.createElement('div'); box.appendChild(tail.extractContents())
-        const nb = newBlock(LIST.includes(b.type) ? b.type : 'text', sanitize(box.innerHTML))
+        const nb = { ...newBlock(LIST.includes(b.type) ? b.type : 'text', sanitize(box.innerHTML)), ...(b.collapsed ? { free: true } : {}) }
         const at = blocksRef.current.findIndex((x) => x.id === b.id)
-        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, html: sanitize(el.innerHTML), ...(x.collapsed ? { collapsed: false } : {}) } : x))
-        n.splice(at + 1, 0, nb)
+        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, html: sanitize(el.innerHTML), } : x))
+        n.splice(at + 1 + (b.collapsed ? (foldedCount[b.id] ?? 0) : 0), 0, nb) // si el título está plegado, lo que sobra va fuera de lo plegado
         hist.current.t = 0
         commit(n)
         placeCaret(nb.id, 0)
         return
       }
-      if (b.collapsed) { // título plegado: se despliega y el bloque nuevo entra debajo
-        const nb = newBlock('text')
-        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, collapsed: false } : x))
-        n.splice(blocksRef.current.findIndex((x) => x.id === b.id) + 1, 0, nb)
+      if (b.collapsed) { // título plegado: el bloque nuevo entra DESPUÉS de lo plegado, fuera, sin tocar lo de dentro
+        const nb = { ...newBlock('text'), free: true }
+        const n = [...blocksRef.current]
+        n.splice(n.findIndex((x) => x.id === b.id) + (foldedCount[b.id] ?? 0) + 1, 0, nb)
         hist.current.t = 0; commit(n); setFocusId(nb.id)
         return
       }
@@ -461,8 +461,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (e.target !== e.currentTarget && !e.target.classList.contains('blocks-tail')) return
     if (e.target.closest('.blocks-page') !== e.currentTarget) return // el hueco de un recuadro de dentro lo gestiona él
     const last = blocks[blocks.length - 1]
-    if (last && TEXTY.includes(last.type)) refs.current[last.id]?.focus()
-    else insertAt(blocks.length, newBlock())
+    if (last && TEXTY.includes(last.type) && !folded.has(last.id)) refs.current[last.id]?.focus()
+    else insertAt(blocks.length, last && folded.has(last.id) ? { ...newBlock(), free: true } : newBlock()) // si lo último está plegado, se escribe en un bloque nuevo fuera
   }
 
   // Texto que llega de fuera (seleccionado en el PDF): se añade al final como un párrafo
@@ -511,7 +511,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     let cut = 0; let owner = null
     for (const b of blocks) {
       const l = headLevel(b)
-      if (cut && l && l <= cut) { cut = 0; owner = null }
+      if (cut && ((l && l <= cut) || b.free)) { cut = 0; owner = null } // un bloque «libre» (creado fuera de un título plegado) cierra la sección y no se oculta
       if (cut) { folded.add(b.id); foldedCount[owner] += 1; continue }
       if (l && b.collapsed && !nested) { cut = l; owner = b.id; foldedCount[b.id] = 0 }
     }
@@ -574,7 +574,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               {headLevel(b) > 0 && !nested && (
                 <button type="button" className={`row-fold ${b.collapsed ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); patch(b.id, { collapsed: !b.collapsed }) }} aria-expanded={!b.collapsed} aria-label={b.collapsed ? 'Desplegar el título' : 'Plegar el título'} title={b.collapsed ? 'Desplegar' : 'Plegar todo lo de debajo'}><Icon name={b.collapsed ? 'right' : 'down'} size={16} strokeWidth={2.6} /></button>
               )}
-              <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
+              <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAt(indexOf(b.id) + (b.collapsed ? (foldedCount[b.id] ?? 0) : 0) + 1, b.collapsed ? { ...newBlock(), free: true } : newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
                 onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowQ(''); setRowI(0); setRowMenu(rowMenu === b.id ? null : b.id) }}
                 onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }); DRAGGING = { block: b, owner: me, detach: () => { const n = blocksRef.current.filter((x) => x.id !== b.id); commit(n.length ? n : [newBlock()]) }, resetOver: () => setDrag((d) => (d ? { ...d, over: null } : d)), finish: () => setDrag(null) } }}
