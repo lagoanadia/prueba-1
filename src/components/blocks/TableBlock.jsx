@@ -36,6 +36,17 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
   const cell = (r, c, v) => set(rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)))
   const addRow = () => set([...rows, Array(cols).fill('')])
   const addCol = () => onChange({ ...block, colW: undefined, rows: rows.map((r) => [...r, '']) })
+  // Retroceso al principio de una celda: su texto sube a la celda de arriba (y la fila se quita si se queda vacía)
+  const joinUp = (i, j) => {
+    const up = rows[i - 1][j]
+    const down = rows[i][j]
+    const merged = up && down ? `${up} ${down}` : up || down
+    let next = rows.map((row, r) => (r === i - 1 ? row.map((x, c) => (c === j ? merged : x)) : r === i ? row.map((x, c) => (c === j ? '' : x)) : row))
+    let rh = rowH
+    if (next[i].every((x) => !x.trim()) && rows.length > 2) { next = next.filter((_, r) => r !== i); rh = rowH?.filter((_, r) => r !== i) }
+    onChange({ ...block, rowH: rh, rows: next })
+    setTimeout(() => { const t = wrap.current?.querySelectorAll('tr')[i - 1]?.querySelectorAll('textarea')[j]; if (t) { t.focus(); t.setSelectionRange(up.length, up.length) } }, 30)
+  }
   const delRow = (i) => rows.length > 1 && onChange({ ...block, rowH: rowH?.filter((_, k) => k !== i), rows: rows.filter((_, k) => k !== i) })
   const delCol = (j) => cols > 1 && onChange({ ...block, colW: undefined, rows: rows.map((r) => r.filter((_, k) => k !== j)) })
 
@@ -92,7 +103,7 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
               {row.map((v, j) => (
                 <td key={j} className={i === 0 ? 'is-head' : ''}>
                   <textarea ref={i === 0 && j === 0 ? first : null} rows={1} data-rh={rowH?.[i] ? rowH[i] - 4 : undefined} value={v} onChange={(e) => cell(i, j, e.target.value)} aria-label={`Fila ${i + 1}, columna ${j + 1}`}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (i === rows.length - 1 && j === cols - 1) addRow() } }} />
+                    onKeyDown={(e) => { if (e.key === 'Backspace' && i > 0 && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); joinUp(i, j) } else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (i === rows.length - 1 && j === cols - 1) addRow() } }} />
                   {j < cols - 1 && <span className="tb-rz tb-rz-c" onPointerDown={(e) => dragCol(e, j)} onDoubleClick={resetCols} title="Arrastra para cambiar el ancho (doble clic: automático)" />}
                   <span className="tb-rz tb-rz-r" onPointerDown={(e) => dragRow(e, i)} onDoubleClick={() => resetRow(i)} title="Arrastra para cambiar el alto (doble clic: automático)" />
                   {i === 0 && cols > 1 && <button className="tb-x tb-x-col" onClick={() => delCol(j)} aria-label={`Quitar la columna ${j + 1}`}><Icon name="close" size={12} /></button>}

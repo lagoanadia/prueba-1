@@ -153,6 +153,7 @@ function PdfPage({ pdf, n, width, root, onSeen }) {
     const key = `${Math.round(width)}`
     if (drawn === key) return undefined
     let task = null
+    let layer = null // capa de texto de esta pasada: si cambia el ancho a media pintura se cancela (si no, el texto salía duplicado)
     let dead = false
     pdf.getPage(n).then((p) => {
       if (dead || !canvas.current) return
@@ -169,10 +170,10 @@ function PdfPage({ pdf, n, width, root, onSeen }) {
         t.replaceChildren()
         const css = p.getViewport({ scale: width / base.width })
         t.style.setProperty('--total-scale-factor', String(css.scale))
-        import('pdfjs-dist').then((pdfjs) => { if (!dead) new pdfjs.TextLayer({ textContentSource: p.streamTextContent(), container: t, viewport: css }).render().catch(() => {}) })
+        import('pdfjs-dist').then((pdfjs) => { if (dead) return; layer = new pdfjs.TextLayer({ textContentSource: p.streamTextContent(), container: t, viewport: css }); layer.render().catch(() => {}) })
       }
     })
-    return () => { dead = true; task?.cancel?.() }
+    return () => { dead = true; task?.cancel?.(); try { layer?.cancel() } catch { /* ya terminada */ } }
   }, [near, pdf, n, width]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

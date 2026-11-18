@@ -33,6 +33,40 @@ function toLines(spans) {
   })
 }
 
+const CONT = /^[a-zñáéíóúü]/ // una celda que empieza en minúscula sigue la frase de la línea de arriba
+
+/**
+ * Líneas con columnas → tablas. Distingue dos casos:
+ *  - tabla de verdad (una fila por línea, todas las columnas en cada línea): una fila por línea;
+ *  - tarjetas / celdas con texto que se parte en varias líneas (cada columna con distinto número de líneas):
+ *    cada fila de tarjetas es UNA fila, las líneas sueltas se unen a su celda y el título corto de arriba va de cabecera.
+ * Devuelve una lista de tablas (cada una = lista de filas de texto).
+ */
+export function tablesFromLines(slice, lefts) {
+  const tol = (slice[0]?.fs ?? 12) * 0.45
+  const colOf = (c) => { let best = 0; lefts.forEach((x, k) => { if (Math.abs(c.left - x) < Math.abs(c.left - lefts[best])) best = k }); return best }
+  const cols = lefts.length
+  const rows = slice.map((l) => { const r = Array(cols).fill(null); l.cells.forEach((c) => { const k = colOf(c); r[k] = r[k] == null ? c.text : `${r[k]} ${c.text}` }); return r })
+  const steps = slice.slice(1).map((l, k) => l.mid - slice[k].mid)
+  const med = median(steps) || 1
+  const gap = (k) => k > 0 && steps[k - 1] > med * 1.7 && steps[k - 1] > slice[k].fs * 1.9 // hueco grande: empieza otra fila de tarjetas
+  const uneven = rows.some((r) => r.some((x) => x == null)) || rows.some((r) => r.some((x) => x != null && CONT.test(x)))
+  const anyGap = slice.some((_, k) => gap(k))
+  if (!uneven && !anyGap) return [rows.map((r) => r.map((x) => x ?? ''))] // tabla normal
+  // Tarjetas: bandas separadas por huecos grandes
+  const bands = []
+  slice.forEach((_, k) => { if (!bands.length || gap(k)) bands.push([]); bands[bands.length - 1].push(k) })
+  const tables = []
+  let plain = null
+  for (const ks of bands) {
+    const per = Array.from({ length: cols }, (_, c) => ks.map((k) => rows[k][c]).filter((x) => x != null))
+    const head = ks.length >= 2 && per.every((a) => a.length >= 2 && a[0].length <= 45 && !/[.!?;]$/.test(a[0]))
+    if (head) { plain = null; tables.push([per.map((a) => a[0]), per.map((a) => a.slice(1).join(' '))]) }
+    else { if (!plain) { plain = []; tables.push(plain) } plain.push(per.map((a) => a.join(' '))) }
+  }
+  return tables
+}
+
 const levelOf = (ratio) => (ratio >= 1.6 ? 'h1' : ratio >= 1.3 ? 'h2' : 'h3')
 
 /**
@@ -63,11 +97,14 @@ function segment(lines, body) {
       out.push({ type: lines.slice(i, j).filter((x) => NUMBERED.test(x.text)).length > items.length / 2 ? 'numbered' : 'bullet', items })
       i = j
     } else if (l.cells.length >= 2 && lines[i + 1]?.cells.length >= 2) { // tabla: líneas seguidas con varias columnas
-      let j = i
-      while (j < lines.length && lines[j].cells.length >= 2 && !isHead(lines[j])) j++
-      const slice = lines.slice(i, j)
-      const cols = slice.map((x) => x.cells.length).sort((a, b) => a - b)[Math.floor(slice.length / 2)]
-      out.push({ type: 'table', rows: slice.map((x) => Array.from({ length: cols }, (_, k) => x.cells[k]?.text ?? '')) })
+      const lefts = l.cells.map((c) => c.left)
+      const near = (c) => lefts.some((x) => Math.abs(c.left - x) < l.fs * 0.45)
+      let j = i + 1
+      while (j < lines.length && !isHead(lines[j]) && lines[j].cells.every(near)) {
+        if (lines[j].cells.length < 2 && lines[j].mid - lines[j - 1].mid > lines[j].fs * 2.2) break // una línea suelta lejos ya no es de la tabla
+        j++
+      }
+      tablesFromLines(lines.slice(i, j), lefts).forEach((rows) => out.push({ type: 'table', rows }))
       i = j
     } else { // párrafo: hasta un título, una viñeta, una tabla o un hueco grande
       let j = i + 1
@@ -124,8 +161,9 @@ export function toPayload(info, type) {
     return { type: numbered ? 'numbered' : 'bullet', items }
   }
   if (type === 'table') {
-    const cols = Math.max(1, info.mode || Math.max(...lines.map((l) => l.cells.length)))
-    return { type: 'table', rows: lines.map((l) => Array.from({ length: cols }, (_, i) => l.cells[i]?.text ?? '')) }
+    const first = lines.find((l) => l.cells.length >= 2) ?? lines[0]
+    const t = tablesFromLines(lines, first.cells.map((c) => c.left)).map((rows) => ({ type: 'table', rows }))
+    return t.length === 1 ? t[0] : t
   }
   return { type: 'text', text: lines.map((l) => l.text).join(' ') }
 }
