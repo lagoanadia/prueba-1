@@ -4243,3 +4243,4 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .box-wrap .tb td.is-head { background: #F2B705; }
 .box-wrap .tb td.tb-end { border: none; }
 .box-wrap .tb-add button { background: #FFF1B8; border-color: #F2B705; }
+.box-wrap .tb td.is-head { border-color: #FFF1B8; }
