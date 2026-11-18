@@ -62,6 +62,12 @@ export default {
     }
     const handler = ROUTES[pathname]
     if (!handler) return json({ error: 'Not found' }, 404)
-    return handler({ request, env })
+    try {
+      return await handler({ request, env })
+    } catch (e) {
+      // Un fallo interno (p. ej. KV lleno o con el límite de escrituras diarias) se devuelve con su motivo, no como una página de error
+      const reason = String(e?.message ?? e).slice(0, 200)
+      return json({ error: /limit|quota|429/i.test(reason) ? 'Se ha alcanzado el límite de escrituras de la base de datos; vuelve a intentarlo más tarde' : 'Algo ha fallado en el servidor', reason }, 500)
+    }
   },
 }

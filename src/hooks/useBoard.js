@@ -40,8 +40,15 @@ export default function useBoard(area) {
   useEffect(() => {
     if (!board) return
     if (!loaded.current) { loaded.current = true; return } // la primera vez es la carga, no un cambio
-    const t = setTimeout(() => saveBoard(area, { layout: board.layout, data: board.data }).then(() => setSaveError('')).catch((e) => setSaveError(e.message || 'No se ha podido guardar')), 600)
-    return () => clearTimeout(t)
+    // Se guarda al dejar de escribir unos segundos (menos escrituras en la base de datos) y siempre al salir de la pestaña
+    const run = () => saveBoard(area, { layout: board.layout, data: board.data }).then(() => setSaveError('')).catch((e) => setSaveError(e.message || 'No se ha podido guardar'))
+    let done = false
+    const once = () => { if (done) return; done = true; clearTimeout(t); document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', once); run() }
+    const onHide = () => { if (document.visibilityState === 'hidden') once() }
+    const t = setTimeout(once, 2500)
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', once)
+    return () => { clearTimeout(t); document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', once) }
   }, [board, area, retry])
 
   const updateData = (fn) => setBoard((b) => ({ ...b, data: fn(b.data) }))
