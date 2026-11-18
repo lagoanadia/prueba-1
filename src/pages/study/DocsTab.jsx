@@ -14,7 +14,8 @@ const KIND = { topic: { label: 'Tema', tint: '#DDEBFF', ink: '#2F6FED' }, practi
  * Pestaña «Documentos»: todos los apuntes de la asignatura en un solo sitio (los de los temas y prácticas, y los documentos sueltos).
  * Un documento de un tema o práctica se abre en su sitio (con su PDF al lado); los sueltos se abren aquí mismo.
  */
-export default function DocsTab({ data, update, subject, route, go, onNewPractice }) {
+export default function DocsTab({ data, update, subject, route, go, onNewPractice, onRemovePractice }) {
+  const [drag, setDrag] = useState(null) // { id, over, after } al mover una tarjeta
   const [filter, setFilter] = useState('todos') // todos | apuntes | practicas
   const [openId, setOpenId] = useState(null)
   const [dialog, setDialog] = useState(null) // 'new' | { rename: id } | { del: id }
@@ -27,13 +28,35 @@ export default function DocsTab({ data, update, subject, route, go, onNewPractic
     items.forEach((it) => {
       const doc = data.notes?.[it.id] ?? it.doc
       if (it.kind === 'topic' && contentOf(doc).length === 0) return // un tema sin apuntes no es un documento todavía; una práctica sí (tiene su PDF)
-      const users = items.concat(subject.units.flatMap((x) => [...x.topics, ...practicesOf(x)])).filter((x, k, a) => data.notesLink?.[x.id] === it.id && a.findIndex((y) => y.id === x.id) === k)
-      docs.push({ id: it.id, name: nameOf(it.id, it.name), kind: it.kind, unitId: u.id, doc, users: users.length, blocks: contentOf(doc).length })
+      const users = subject.units.flatMap((x) => [...x.topics, ...practicesOf(x)]).filter((x) => data.notesLink?.[x.id] === it.id)
+      const covers = it.kind === 'topic' ? [it.name, ...users.map((x) => x.name)] : []
+      docs.push({ id: it.id, name: nameOf(it.id, it.name), kind: it.kind, unitId: u.id, doc, users: users.length, covers, blocks: contentOf(doc).length })
     })
   })
-  const free = (data.freeDocs ?? []).map((f) => ({ id: f.id, name: f.name, kind: 'free', doc: data.notes?.[f.id], users: 0, blocks: contentOf(data.notes?.[f.id]).length }))
-  const all = [...docs, ...free].filter((d) => filter === 'todos' || (filter === 'practicas' ? d.kind === 'practice' : d.kind !== 'practice'))
+  const free = (data.freeDocs ?? []).map((f) => ({ id: f.id, name: f.name, kind: 'free', doc: data.notes?.[f.id], users: 0, covers: [], blocks: contentOf(data.notes?.[f.id]).length }))
+  // Orden elegido arrastrando las tarjetas (los que no tienen sitio guardado van al final, en su orden)
+  const naturalOrder = [...docs, ...free]
+  const rank = (d) => { const k = (data.docsOrder ?? []).indexOf(d.id); return k < 0 ? 1e6 + naturalOrder.indexOf(d) : k }
+  const ordered = [...naturalOrder].sort((a, b) => rank(a) - rank(b))
+  const all = ordered.filter((d) => filter === 'todos' || (filter === 'practicas' ? d.kind === 'practice' : d.kind !== 'practice'))
 
+  const dropCard = () => {
+    if (!drag || !drag.over || drag.over === drag.id) { setDrag(null); return }
+    const ids = ordered.map((d) => d.id).filter((id) => id !== drag.id)
+    ids.splice(ids.indexOf(drag.over) + (drag.after ? 1 : 0), 0, drag.id)
+    update((d) => ({ ...d, docsOrder: ids }))
+    setDrag(null)
+  }
+  const removeDoc = (d) => {
+    if (d.kind === 'practice') { onRemovePractice(d.unitId, d.id); return }
+    if (!window.confirm(d.kind === 'free' ? `¿Borrar «${d.name}»?` : `¿Borrar los apuntes «${d.name}»? Los temas que los siguen se quedan sin apuntes.`)) return
+    update((dd) => {
+      const notes = { ...(dd.notes ?? {}) }; delete notes[d.id]
+      const link = { ...(dd.notesLink ?? {}) }; const anchor = { ...(dd.notesAnchor ?? {}) }
+      Object.keys(link).forEach((k) => { if (link[k] === d.id) { delete link[k]; delete anchor[k] } })
+      return { ...dd, notes, notesLink: link, notesAnchor: anchor, freeDocs: (dd.freeDocs ?? []).filter((f) => f.id !== d.id), docsOrder: (dd.docsOrder ?? []).filter((id) => id !== d.id) }
+    })
+  }
   const open = (d) => {
     if (d.kind === 'free') { setOpenId(d.id); return }
     go({ ...route, unitId: d.unitId, tab: d.kind === 'topic' ? 'estudio' : 'practicas', itemId: d.id })
@@ -76,14 +99,21 @@ export default function DocsTab({ data, update, subject, route, go, onNewPractic
           const k = KIND[d.kind]
           const pv = preview(d.doc)
           return (
-            <button type="button" key={d.id} className="dt-card" onClick={() => open(d)}>
+            <div key={d.id} role="button" tabIndex={0} className={`dt-card ${drag?.id === d.id ? 'is-dragging' : ''} ${drag?.over === d.id && drag.id !== d.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`} onClick={() => open(d)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(d) } }}
+              draggable onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', d.id); setDrag({ id: d.id, over: null, after: false }) }} onDragEnd={() => setDrag(null)}
+              onDragOver={(e) => { if (!drag) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientX > r.left + r.width / 2; if (drag.over !== d.id || drag.after !== after) setDrag({ ...drag, over: d.id, after }) }}
+              onDrop={(e) => { e.preventDefault(); dropCard() }}>
+              <button type="button" className="dt-del" onClick={(e) => { e.stopPropagation(); removeDoc(d) }} aria-label={`Borrar «${d.name}»`} title="Borrar"><Icon name="trash" size={15} /></button>
               <span className="dt-top">
                 <span className="dt-ic" style={{ background: k.tint, color: k.ink }}><Icon name="doc" size={20} color={k.ink} /></span>
                 <span className="dt-nm"><b>{d.name}</b><small>{d.kind === 'practice' ? `${d.blocks} ${d.blocks === 1 ? 'bloque' : 'bloques'} · con PDF` : `${d.blocks} ${d.blocks === 1 ? 'bloque' : 'bloques'}`}</small></span>
               </span>
               <span className="dt-pv">{pv.length ? pv.map((t, i) => <span key={i}>{t}</span>) : <span className="muted">Vacío</span>}</span>
-              <span className="dt-pill" style={{ background: k.tint, color: k.ink }}>{d.users > 1 ? `${k.label} · lo siguen ${d.users}` : k.label}</span>
-            </button>
+              <span className="dt-covers">
+                {d.kind === 'topic' ? d.covers.map((c, i) => <span key={i} className="dt-pill" style={{ background: k.tint, color: k.ink }} title={c}>{c}</span>) : <span className="dt-pill" style={{ background: k.tint, color: k.ink }}>{k.label}</span>}
+              </span>
+            </div>
           )
         })}
         <button type="button" className="dt-new" onClick={() => setDialog('new')}><Icon name="plus" size={18} strokeWidth={2.6} />Documento nuevo</button>

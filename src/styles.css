@@ -4383,3 +4383,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .name-choices button:hover { border-color: #B6D1FF; } .name-choices button.on { border-color: var(--blue); background: #EEF4FF; }
 .name-choices b { font-size: 14px; } .name-choices small { font-size: 11px; color: var(--muted); line-height: 1.3; }
 .name-choice-ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 4px; }
+/* Documentos: borrar y mover tarjetas, temas que abarca cada documento */
+.dt-card { position: relative; cursor: grab; } .dt-card:active { cursor: grabbing; }
+.dt-card.is-dragging { opacity: .4; }
+.dt-card.drop-before::before, .dt-card.drop-after::after { content: ''; position: absolute; top: 6px; bottom: 6px; width: 4px; border-radius: 3px; background: var(--blue); }
+.dt-card.drop-before::before { left: -8px; } .dt-card.drop-after::after { right: -8px; }
+.dt-del { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: #9AA0A6; display: none; place-items: center; cursor: pointer; padding: 0; }
+.dt-card:hover .dt-del, .dt-card:focus-within .dt-del { display: grid; } .dt-del:hover { background: #FDECEE; color: #D93025; }
+.dt-del svg { stroke: currentColor; }
+.dt-covers { display: flex; flex-wrap: wrap; gap: 5px; }
+.dt-covers .dt-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-nm { padding-right: 24px; }

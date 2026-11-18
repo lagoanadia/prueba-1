@@ -276,7 +276,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
 
-          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} onNewPractice={addPractice} />}
+          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} onNewPractice={addPractice} onRemovePractice={removePractice} />}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
         </div>
