@@ -59,7 +59,33 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   const blocksRef = useRef(blocks) // siempre al día, aunque haya varios cambios seguidos (mover entre editores)
   const me = useRef({}).current
-  const commit = (next) => { blocksRef.current = next; setBlocks(next); onChange(toDoc(next)) }
+  // Deshacer / rehacer (Ctrl+Z, Ctrl+Mayús+Z o Ctrl+Y) de todo el documento; lo que se escribe seguido se agrupa en un solo paso
+  const hist = useRef({ past: [], future: [], t: 0 })
+  const [rev, setRev] = useState(0) // sube al deshacer: los Post-it de dentro se vuelven a cargar
+  const commit = (next) => {
+    if (!nested) {
+      const h = hist.current; const now = Date.now()
+      if (!h.past.length || now - h.t > 600) { h.past.push(blocksRef.current); if (h.past.length > 150) h.past.shift() }
+      h.t = now; h.future = []
+    }
+    blocksRef.current = next; setBlocks(next); onChange(toDoc(next))
+  }
+  const travel = (from, to) => {
+    const h = hist.current
+    if (!h[from].length) return
+    h[to].push(blocksRef.current)
+    const target = h[from].pop()
+    h.t = 0
+    blocksRef.current = target; setBlocks(target); onChange(toDoc(target)); setRev((r) => r + 1); setSel([]); setMenu(null)
+    const keep = target.find((b) => b.id === lastId.current)
+    if (keep && TEXTY.includes(keep.type)) setFocusId(keep.id)
+  }
+  const onUndoKey = (e) => {
+    if (nested || !(e.ctrlKey || e.metaKey) || e.altKey) return
+    const k = e.key.toLowerCase()
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); travel('past', 'future') }
+    else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); e.stopPropagation(); travel('future', 'past') }
+  }
   const patch = (id, p) => commit(blocksRef.current.map((b) => (b.id === id ? { ...b, ...p } : b)))
   const indexOf = (id) => blocks.findIndex((b) => b.id === id)
   const insertAt = (index, b) => { const n = [...blocks]; n.splice(index, 0, b); commit(n); setFocusId(b.id) }
@@ -361,7 +387,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     <div className={nested ? 'blocks-nested' : 'card blocks'}>
       {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
+      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
@@ -415,7 +441,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     <span className="pi-colors" role="radiogroup" aria-label="Color del post-it">
                       {Object.entries(POSTIT_COLORS).map(([id, c]) => <button type="button" key={id} role="radio" aria-checked={(b.color ?? 'amarillo') === id} className={(b.color ?? 'amarillo') === id ? 'on' : ''} style={{ background: c.bar }} title={c.label} aria-label={c.label} onClick={() => patch(b.id, { color: id })} />)}
                     </span>
-                    <BlockEditor nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
+                    <BlockEditor key={rev} nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
                   </div>
                 )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
