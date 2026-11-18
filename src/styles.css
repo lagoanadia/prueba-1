@@ -4444,3 +4444,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .blocks-bar .pill-sm, .blocks-bar .doc-status, .blocks-bar .sel, .blocks-bar .np-rename { height: 32px; display: inline-flex; align-items: center; }
 .blocks-bar .np-rename { width: 32px; justify-content: center; padding: 0; }
 .blocks-bar .pill-sm { padding-top: 0; padding-bottom: 0; gap: 6px; }
+/* Estado de guardado: invisible hasta que haces un cambio; entonces «Guardando…» en gris claro */
+.doc-status, .blocks-bar .doc-status { background: transparent; color: #AEB3B8; font-weight: 500; padding: 0 8px; opacity: 0; transition: opacity .25s; min-width: 84px; justify-content: flex-end; }
+.doc-status.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .doc-status { transition: none; } }
+/* Barra de los apuntes: PDF y compartir son solo iconos */
+.blocks-bar .pill-sm { width: 32px; padding: 0; justify-content: center; }

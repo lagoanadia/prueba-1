@@ -14,8 +14,8 @@ export default function ShareButton({ kind, data, title, className = 'pill', lab
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button type="button" className={`share-btn ${className}`} onClick={(e) => { e.stopPropagation(); setOpen(true) }} onPointerDown={(e) => e.stopPropagation()} title="Compartir">
-        <Icon name="arrow" size={14} /> {label}
+      <button type="button" className={`share-btn ${className}`} onClick={(e) => { e.stopPropagation(); setOpen(true) }} onPointerDown={(e) => e.stopPropagation()} title="Compartir" aria-label="Compartir">
+        <Icon name="arrow" size={14} />{label ? ` ${label}` : ''}
       </button>
       {open && <ShareSheet kind={kind} data={data} title={title} onClose={() => setOpen(false)} />}
     </>

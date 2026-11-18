@@ -71,6 +71,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const me = useRef({}).current
   // Deshacer / rehacer (Ctrl+Z, Ctrl+Mayús+Z o Ctrl+Y) de todo el documento; lo que se escribe seguido se agrupa en un solo paso
   const hist = useRef({ past: [], future: [], t: 0 })
+  const [saving, setSaving] = useState(false) // «Guardando…» en gris claro mientras haces cambios
+  const saveTimer = useRef(null)
+  const flagSaving = () => { setSaving(true); clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => setSaving(false), 1400) }
   const [rev, setRev] = useState(0) // sube al deshacer: los Post-it de dentro se vuelven a cargar
   const commit = (next) => {
     if (!nested) {
@@ -79,6 +82,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       h.t = now; h.future = []
     }
     blocksRef.current = next; setBlocks(next); onChange(toDoc(next))
+    flagSaving()
   }
   const travel = (from, to) => {
     const h = hist.current
@@ -86,7 +90,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     h[to].push(blocksRef.current)
     const target = h[from].pop()
     h.t = 0
-    blocksRef.current = target; setBlocks(target); onChange(toDoc(target)); setRev((r) => r + 1); setSel([]); setMenu(null)
+    blocksRef.current = target; setBlocks(target); onChange(toDoc(target)); flagSaving(); setRev((r) => r + 1); setSel([]); setMenu(null)
     const keep = target.find((b) => b.id === lastId.current)
     if (keep && TEXTY.includes(keep.type)) setFocusId(keep.id)
   }
@@ -445,7 +449,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
 
   return (
     <div className={nested ? 'blocks-nested' : 'card blocks'}>
-      {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
+      {!nested && <div className="blocks-bar"><span className={`doc-status ${saving ? 'on' : ''}`} role="status" aria-live="polite">{saving ? 'Guardando…' : ''}</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF" aria-label="Exportar a PDF"><Icon name="pdf" size={16} /></button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (

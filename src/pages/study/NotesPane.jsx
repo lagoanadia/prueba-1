@@ -107,7 +107,7 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
   return (
     <BlockEditor key={docId} appendRef={notesIn} scrollToId={linkedItem ? data.notesAnchor?.[item.id] : null}
       exportAs={{ title: shareName, subtitle: `${subject.short} · ${unit.name}` }} label={label} value={current}
-      bar={<>{switcher}{current ? <ShareButton kind="doc" title={`Apuntes de ${shareName}`} className="pill pill-sm" data={{ title: `${subject.short} · ${shareName}`, subtitle: unit.name, blocks: current?.blocks ?? [] }} /> : null}</>}
+      bar={<>{switcher}{current ? <ShareButton kind="doc" title={`Apuntes de ${shareName}`} className="pill pill-sm" label="" data={{ title: `${subject.short} · ${shareName}`, subtitle: unit.name, blocks: current?.blocks ?? [] }} /> : null}</>}
       onChange={(doc) => update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [docId]: doc } }))} />
   )
 }
