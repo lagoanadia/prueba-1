@@ -4355,3 +4355,21 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (max-width: 899px) { .blocks-page:not(.nested) { padding-left: 34px; } .row-tools.has-fold { left: -30px; } .row-fold { display: none; } }
 .tile-nm { text-transform: none; }
 .h-folded { margin-right: 40px; }
+/* Lista de temas: el asa de mover ya no pisa el círculo de estudiado */
+.tp-row { padding-left: 34px; }
+.tp-row .tp-grip { left: 6px; }
+/* Pestaña Documentos */
+.dt { height: 100%; overflow: auto; padding: 6px 4px 20px; }
+.dt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.dt-card { display: flex; flex-direction: column; gap: 10px; text-align: left; border: 2px solid var(--line); background: #FFFFFF; border-radius: 18px; padding: 14px; font: inherit; color: var(--text); cursor: pointer; transition: border-color .2s, transform .15s var(--ease), box-shadow .2s; }
+.dt-card:hover { border-color: #B6D1FF; box-shadow: 0 6px 18px rgba(49, 133, 252, .12); } .dt-card:active { transform: scale(.99); }
+.dt-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dt-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; }
+.dt-nm { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; } .dt-nm b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .dt-nm small { font-size: 11.5px; color: var(--muted); }
+.dt-pv { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5F6368; line-height: 1.4; min-height: 34px; } .dt-pv span { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.dt-pill { align-self: flex-start; border-radius: 99px; padding: 2px 11px; font-size: 11px; font-weight: 600; }
+.dt-new { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 130px; border: 2px dashed #CFE0FF; background: #F6F9FF; color: var(--blue); border-radius: 18px; font: 600 14px Poppins, sans-serif; cursor: pointer; transition: background .2s; } .dt-new:hover { background: #EEF4FF; }
+.dt-new svg { stroke: currentColor; }
+.dt-empty { margin: 16px 6px 0; font-size: 13px; }
+.dt-open { height: 100%; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.dt-bar { display: flex; align-items: center; gap: 6px; padding: 0 4px; } .dt-bar b { flex: 1; font-size: 15px; }

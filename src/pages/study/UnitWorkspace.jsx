@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { saveFile } from '../../lib/fileStore.js'
 import NotesPane from './NotesPane.jsx'
+import DocsTab from './DocsTab.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
 import Icon from '../../components/Icon.jsx'
 import EmptyAdd from './EmptyAdd.jsx'
@@ -10,8 +11,8 @@ import { usePanel } from '../../screens/focus.js'
 import ResourceFrames from './ResourceFrames.jsx'
 import { changeSubject, changeUnit, practicesOf, reorderUnits, soft } from './helpers.js'
 
-// Orden de las pestañas: Temario y apuntes · Prácticas · Recursos (al final)
-const TABS = [['estudio', 'split', 'Temario y apuntes'], ['practicas', 'code', 'Prácticas'], ['recursos', 'link', 'Recursos']]
+// Orden de las pestañas: PDF · Prácticas · Documentos · Recursos
+const TABS = [['estudio', 'split', 'PDF'], ['practicas', 'code', 'Prácticas'], ['documentos', 'doc', 'Documentos'], ['recursos', 'link', 'Recursos']]
 
 /** Libro abierto: hoja izquierda = PDF del profe, hoja derecha = mis apuntes. La hoja marcada va rellena. */
 function Book({ left, right }) {
@@ -250,7 +251,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                 <Icon name={icon} size={18} />{label}
               </button>
             ))}
-            {tab !== 'recursos' && layouts()}
+            {tab !== 'recursos' && tab !== 'documentos' && layouts()}
             <div className="layouts ws-mode"><button className={`icon-btn ws-full-btn ${full ? 'on' : ''}`} onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? 'Salir del modo estudio' : 'Modo estudio: ocupar toda la pantalla'} title={full ? 'Salir del modo estudio (Esc)' : 'Modo estudio'}><Icon name={full ? 'shrink' : 'expand'} size={20} /></button></div>
           </div>
 
@@ -258,7 +259,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
             topic
               ? split(<FilesPane key={`pdf-${topic.id}`} files={topicFiles} onChange={setTopicFiles} label="Subir el PDF de este tema" onPickText={(t) => notesIn.current?.(t)} />,
                   <NotesPane key={topic.id} item={topic} kind="topic" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${topic.name}`} />)
-              : <EmptyAdd icon="book" title="Temario y apuntes" text="Aquí irán los temas de la unidad y tus apuntes." createLabel="Crear tema" onCreate={() => setDialog('topic')} onPdf={(file) => setPdfNew({ type: 'topic', file })} />
+              : <EmptyAdd icon="book" title="PDF" text="Aquí irán los temas de la unidad y tus apuntes." createLabel="Crear tema" onCreate={() => setDialog('topic')} onPdf={(file) => setPdfNew({ type: 'topic', file })} />
           )}
 
           {tab === 'practicas' && (
@@ -267,6 +268,8 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
                   <NotesPane key={practice.id} item={practice} kind="practice" unit={unit} subject={subject} data={data} update={update} notesIn={notesIn} label={`Apuntes de ${practice.name}`} />)
               : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
+
+          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} />}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
         </div>
