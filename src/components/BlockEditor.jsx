@@ -145,7 +145,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const focusBlock = (i) => { const b = blocks[i]; if (b && TEXTY.includes(b.type)) refs.current[b.id]?.focus(); else if (b) setFocusId(b.id) }
 
+  // Al escribir «->» o «<-» se cambian por una flecha (→ ←)
+  const arrowify = () => {
+    const sel = window.getSelection()
+    const n = sel?.anchorNode
+    if (!sel?.isCollapsed || n?.nodeType !== 3) return false
+    const off = sel.anchorOffset
+    const pair = n.textContent.slice(Math.max(0, off - 2), off)
+    const arrow = { '->': '→', '<-': '←' }[pair]
+    if (!arrow) return false
+    const r = document.createRange(); r.setStart(n, off - 2); r.setEnd(n, off); sel.removeAllRanges(); sel.addRange(r)
+    return document.execCommand('insertText', false, arrow)
+  }
   const onInput = (e, b) => {
+    if (['>', '-'].includes(e.nativeEvent?.data) && arrowify()) return
     const el = e.currentTarget
     const text = el.textContent
     const sc = b.type === 'text' && SHORTCUTS.find(([re]) => re.test(text))
