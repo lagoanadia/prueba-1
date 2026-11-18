@@ -116,6 +116,34 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
     const end = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); setLive(null); onChange({ ...block, rowH: last }) }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
+  // Mover filas y columnas arrastrando su agarre (como en Notion): una línea azul marca dónde caerá; la fila de arriba es siempre la cabecera
+  const [mv, setMv] = useState(null) // { kind: 'row'|'col', from, to, line }
+  const moveItem = (arr, from, to) => { const a = [...arr]; const [x] = a.splice(from, 1); a.splice(to > from ? to - 1 : to, 0, x); return a }
+  const startMove = (e, kind, from) => {
+    e.preventDefault(); e.stopPropagation()
+    const tbl = wrap.current.querySelector('table')
+    const box = wrap.current.getBoundingClientRect()
+    const rects = (kind === 'row' ? [...tbl.querySelectorAll('tr')] : [...tbl.querySelectorAll('tr:first-child > td:not(.tb-end)')]).map((x) => x.getBoundingClientRect())
+    const horiz = kind === 'col'
+    const at = (ev) => {
+      const pos = horiz ? ev.clientX : ev.clientY
+      let to = 0
+      rects.forEach((r, k) => { if (pos > (horiz ? r.left + r.width / 2 : r.top + r.height / 2)) to = k + 1 })
+      const edge = to < rects.length ? (horiz ? rects[to].left : rects[to].top) : (horiz ? rects[to - 1].right : rects[to - 1].bottom)
+      return { kind, from, to, line: edge - (horiz ? box.left : box.top) }
+    }
+    setMv(at(e))
+    let last = at(e)
+    const move = (ev) => { last = at(ev); setMv(last) }
+    const end = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end)
+      setMv(null)
+      if (last.to === from || last.to === from + 1) return
+      if (kind === 'row') onChange({ ...block, rich: true, rowH: rowH ? moveItem(rows.map((_, k) => rowH[k] ?? 0), from, last.to) : undefined, rows: moveItem(rows, from, last.to) })
+      else onChange({ ...block, rich: true, colW: colW && colW.length === cols ? moveItem(colW, from, last.to) : undefined, rows: rows.map((r) => moveItem(r, from, last.to)) })
+    }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
+  }
   const resetCols = () => onChange({ ...block, colW: undefined })
   const resetRow = (i) => onChange({ ...block, rowH: rows.map((_, k) => (k === i ? 0 : rowH?.[k] ?? 0)) })
 
@@ -128,9 +156,11 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
         </colgroup>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} style={rowH?.[i] ? { height: rowH[i] } : undefined}>
+            <tr key={i} className={mv?.kind === 'row' && mv.from === i ? 'is-moving' : ''} style={rowH?.[i] ? { height: rowH[i] } : undefined}>
               {row.map((v, j) => (
-                <td key={j} className={i === 0 ? 'is-head' : ''}>
+                <td key={j} className={`${i === 0 ? 'is-head' : ''} ${mv?.kind === 'col' && mv.from === j ? 'is-moving' : ''}`}>
+                  {j === 0 && rows.length > 1 && <button type="button" className="tb-grip tb-grip-r" onPointerDown={(e) => startMove(e, 'row', i)} aria-label={`Mover la fila ${i + 1}`} title="Arrastra para mover la fila"><Icon name="grip" size={14} strokeWidth={3} /></button>}
+                  {i === 0 && cols > 1 && <button type="button" className="tb-grip tb-grip-c" onPointerDown={(e) => startMove(e, 'col', j)} aria-label={`Mover la columna ${j + 1}`} title="Arrastra para mover la columna"><Icon name="grip" size={14} strokeWidth={3} /></button>}
                   <Cell cellRef={i === 0 && j === 0 ? (el) => { first.current = el } : null} html={v} minH={rowH?.[i] ? rowH[i] - 4 : undefined} label={`Fila ${i + 1}, columna ${j + 1}`} onChange={(h) => cell(i, j, h)}
                     onKeyDown={(e) => {
                       if (e.key === 'Backspace' && i > 0 && caretStart(e.currentTarget)) { e.preventDefault(); joinUp(i, j) }
@@ -147,6 +177,7 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
           ))}
         </tbody>
       </table>
+      {mv && <span className={`tb-drop tb-drop-${mv.kind}`} style={mv.kind === 'row' ? { top: mv.line - 1.5 } : { left: mv.line - 1.5 }} />}
       <button type="button" className="tb-addcol" style={{ right: (rows.length > 1 ? END : 0) - 22.5 }} onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
       <button type="button" className="tb-addrow" style={{ right: rows.length > 1 ? END : 0 }} onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
     </div>

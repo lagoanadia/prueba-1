@@ -4557,3 +4557,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .blocks-bar:has(.hl-tool.on) > .hl-tool { opacity: 1; pointer-events: auto; }
 .blocks-page.pen-on .block-text { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23202124' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.5 5l5.5 5.5-6.5 6.5H8v-4.5z' fill='%23FFE680'/><path d='M4 20.5h7.5'/></svg>") 4 20, text; }
 .blocks-page.pen-on .tb-cell { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23202124' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.5 5l5.5 5.5-6.5 6.5H8v-4.5z' fill='%23FFE680'/><path d='M4 20.5h7.5'/></svg>") 4 20, text; }
+
+/* Mover filas y columnas (agarre como en Notion) */
+.tb-grip { position: absolute; z-index: 3; display: grid; place-items: center; border: 0; padding: 0; background: #D6E6FF; color: #1F6FEB; border-radius: 7px; cursor: grab; opacity: 0; transition: opacity .12s, background .12s; touch-action: none; }
+.tb-grip svg { stroke: currentColor; }
+.tb-grip-r { left: -10px; top: 50%; width: 18px; height: 26px; margin-top: -13px; }
+.tb-grip-r svg { transform: none; }
+.tb-grip-c { top: -10px; left: 50%; width: 26px; height: 18px; margin-left: -13px; }
+.tb-grip-c svg { transform: rotate(90deg); }
+.tb tr:hover > td:first-child > .tb-grip-r, .tb tr:first-child > td:hover > .tb-grip-c { opacity: 1; }
+.tb-grip:hover, .tb-grip:active { background: var(--blue); color: #FFFFFF; cursor: grabbing; }
+@media (hover: none) { .tb-grip { opacity: .7; } }
+.tb tr.is-moving td, .tb td.is-moving { opacity: .45; }
+.tb-drop { position: absolute; z-index: 6; background: var(--blue); border-radius: 2px; pointer-events: none; }
+.tb-drop-row { left: 0; right: 46px; height: 3px; }
+.tb-drop-col { top: 0; bottom: 0; width: 3px; }
+@media (prefers-reduced-motion: reduce) { .tb-grip { transition: none; } }
