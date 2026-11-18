@@ -24,6 +24,8 @@ const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 
 const LIST = ['bullet', 'numbered', 'todo']
 const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
 
+// Bloque que se está arrastrando por su asa: así se puede soltar en otro editor (por ejemplo, dentro de un Post-it)
+let DRAGGING = null
 const plainHtml = (h) => String(h ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 /** Texto plano de un bloque (para copiar) */
 const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.join('\t')).join('\n') : b.type === 'code' ? b.code ?? '' : b.type === 'link' ? b.url ?? '' : plainHtml(b.html))
@@ -55,14 +57,29 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const live = useRef({})
   const pageRef = useRef(null)
 
-  const commit = (next) => { setBlocks(next); onChange(toDoc(next)) }
-  const patch = (id, p) => commit(blocks.map((b) => (b.id === id ? { ...b, ...p } : b)))
+  const blocksRef = useRef(blocks) // siempre al día, aunque haya varios cambios seguidos (mover entre editores)
+  const me = useRef({}).current
+  const commit = (next) => { blocksRef.current = next; setBlocks(next); onChange(toDoc(next)) }
+  const patch = (id, p) => commit(blocksRef.current.map((b) => (b.id === id ? { ...b, ...p } : b)))
   const indexOf = (id) => blocks.findIndex((b) => b.id === id)
   const insertAt = (index, b) => { const n = [...blocks]; n.splice(index, 0, b); commit(n); setFocusId(b.id) }
   const insertAfter = (id, b) => insertAt(indexOf(id) + 1, b)
   const remove = (id) => { const i = indexOf(id); const n = blocks.filter((b) => b.id !== id); commit(n.length ? n : [newBlock()]); setFocusId((n[i - 1] ?? n[0])?.id ?? null) }
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; commit(n) }
   const dropDrag = () => {
+    if (drag?.foreign) { // viene de otro editor (p. ej. de fuera a dentro de un Post-it, o al revés)
+      const D = DRAGGING; DRAGGING = null
+      if (D) {
+        const base = blocksRef.current
+        const found = base.findIndex((b) => b.id === drag.over)
+        const at = found < 0 ? base.length : found + (drag.after ? 1 : 0)
+        const empty = base.length === 1 && isEmpty(base[0])
+        commit(empty ? [D.block] : [...base.slice(0, at), D.block, ...base.slice(at)])
+        D.detach(); D.finish()
+      }
+      setDrag(null)
+      return
+    }
     if (!drag?.over || drag.over === drag.id) { setDrag(null); return }
     const item = blocks.find((b) => b.id === drag.id)
     const rest = blocks.filter((b) => b.id !== drag.id)
@@ -73,10 +90,17 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   // Arrastrando se puede soltar en cualquier punto de la página: se elige el bloque más cercano y se desplaza sola al llegar al borde
   const dragOverPage = (e) => {
-    if (!drag) return
+    const foreign = Boolean(DRAGGING && DRAGGING.owner !== me)
+    if (!drag && !foreign) return
+    if (foreign) {
+      const blk = DRAGGING.block
+      if (nested && blk.type === 'box') return // un Post-it no entra en otro
+      if (pageRef.current.closest(`.block-slot[data-id="${blk.id}"]`)) return // ni dentro de sí mismo
+      e.stopPropagation(); DRAGGING.resetOver()
+    }
     e.preventDefault()
     const page = pageRef.current
-    const slots = [...page.querySelectorAll('.block-slot')]
+    const slots = [...page.children].filter((c) => c.classList?.contains('block-slot'))
     if (!slots.length) return
     const y = e.clientY
     let hit = slots.find((el) => { const r = el.getBoundingClientRect(); return y >= r.top && y <= r.bottom })
@@ -84,7 +108,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const r = hit.getBoundingClientRect()
     const over = hit.dataset.id
     const after = y > r.top + r.height / 2
-    if (drag.over !== over || drag.after !== after) setDrag({ ...drag, over, after })
+    if (!drag || drag.over !== over || drag.after !== after) setDrag(foreign ? { id: DRAGGING.block.id, foreign: true, over, after } : { ...drag, over, after })
     const pr = page.getBoundingClientRect()
     if (y < pr.top + 50) page.scrollTop -= 14
     else if (y > pr.bottom - 50) page.scrollTop += 14
@@ -222,7 +246,11 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     rememberBlock(e)
     if (e.button !== 0) return
     if (e.target.closest?.('.row-tools, .row-menu, .row-backdrop')) return
-    const slot = ownSlot(e.target)
+    let slot = ownSlot(e.target)
+    if (!slot && e.target === pageRef.current) { // margen de la página: la casilla más cercana por altura
+      const all = [...pageRef.current.children].filter((c) => c.classList?.contains('block-slot'))
+      slot = all.find((el) => { const r = el.getBoundingClientRect(); return e.clientY >= r.top && e.clientY <= r.bottom }) ?? null
+    }
     if (e.shiftKey && anchor && slot && slot.dataset.id !== anchor) { e.preventDefault(); lastId.current = anchor; pickRange(anchor, slot.dataset.id); setPicking(false); window.getSelection()?.removeAllRanges(); return }
     if (sel.length) setSel([])
     dragSel.current = slot ? { id: slot.dataset.id, on: false } : null
@@ -301,7 +329,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     <div className={nested ? 'blocks-nested' : 'card blocks'}>
       {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
+      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
@@ -316,8 +344,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
                 onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowQ(''); setRowI(0); setRowMenu(rowMenu === b.id ? null : b.id) }}
-                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }) }}
-                onDragEnd={() => setDrag(null)}>
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }); DRAGGING = { block: b, owner: me, detach: () => { const n = blocksRef.current.filter((x) => x.id !== b.id); commit(n.length ? n : [newBlock()]) }, resetOver: () => setDrag((d) => (d ? { ...d, over: null } : d)), finish: () => setDrag(null) } }}
+                onDragEnd={() => { setDrag(null); DRAGGING = null }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">{[3, 7, 11].flatMap((y) => [4.5, 9.5].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" />))}</svg>
               </button>
               {rowMenu === b.id && (
