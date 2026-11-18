@@ -44,6 +44,17 @@ function sliceHtml(html, from, to) {
   const o = document.createElement('div'); o.appendChild(domRangeFor(d, from, to).cloneContents())
   return o.innerHTML
 }
+// Ctrl+Z / Ctrl+Y aunque no haya nada enfocado (por ejemplo, justo después de subrayar o de convertir un bloque)
+let ACTIVE_EDITOR = null
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || !ACTIVE_EDITOR) return
+    const k = e.key.toLowerCase()
+    if (k !== 'z' && k !== 'y') return
+    if (e.target.closest?.('input, textarea, select, [contenteditable=true]')) return // si hay un campo enfocado, lo gestiona él
+    ACTIVE_EDITOR(e)
+  })
+}
 // Estado del subrayador compartido por todos los editores (también los de dentro de un Post-it)
 const penStore = { s: { on: false, color: 'amarillo' }, subs: new Set() }
 const setPenStore = (p) => { penStore.s = typeof p === 'function' ? p(penStore.s) : p; penStore.subs.forEach((f) => f()) }
@@ -53,6 +64,12 @@ const isWordChar = (c) => /[\p{L}\p{N}_]/u.test(c ?? '')
 function snapWord(text, from, to) {
   while (from > 0 && isWordChar(text[from - 1]) && isWordChar(text[from])) from -= 1
   while (to < text.length && isWordChar(text[to]) && isWordChar(text[to - 1])) to += 1
+  return [from, to]
+}
+/** Quita los espacios del principio y del final de lo marcado (no se subraya el aire ni «la nada») */
+function trimSpaces(text, from, to) {
+  while (from < to && /\s/.test(text[from])) from += 1
+  while (to > from && /\s/.test(text[to - 1])) to -= 1
   return [from, to]
 }
 /** Subrayador: envuelve en un span de color el texto entre dos posiciones (o lo quita con color 'none'); `root` puede ser un trozo de HTML suelto */
@@ -118,6 +135,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const me = useRef({}).current
   // Deshacer / rehacer (Ctrl+Z, Ctrl+Mayús+Z o Ctrl+Y) de todo el documento; lo que se escribe seguido se agrupa en un solo paso
   const hist = useRef({ past: [], future: [], t: 0 })
+  const typingRef = useRef(false) // verdadero mientras se teclea: lo que se escribe seguido es un solo paso de Ctrl+Z; todo lo demás (convertir, subrayar, mover…) es un paso propio
+  const markTyping = () => { typingRef.current = true; setTimeout(() => { typingRef.current = false }, 0) }
   const [saving, setSaving] = useState(false) // «Guardando…» en gris claro mientras haces cambios
   const saveTimer = useRef(null)
   const flagSaving = () => { setSaving(true); clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => setSaving(false), 1400) }
@@ -125,7 +144,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const commit = (next) => {
     if (!nested) {
       const h = hist.current; const now = Date.now()
-      if (!h.past.length || now - h.t > 600) { h.past.push(blocksRef.current); if (h.past.length > 150) h.past.shift() }
+      const typing = typingRef.current; typingRef.current = false
+      if (!h.past.length || !typing || now - h.t > 600) { h.past.push(blocksRef.current); if (h.past.length > 150) h.past.shift() }
       h.t = now; h.future = []
     }
     blocksRef.current = next; setBlocks(next); onChange(toDoc(next))
@@ -147,6 +167,14 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (k === 'z' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); travel('past', 'future') }
     else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); e.stopPropagation(); travel('future', 'past') }
   }
+  const undoRun = useRef(null)
+  undoRun.current = onUndoKey
+  useEffect(() => {
+    if (nested) return undefined
+    const me = (e) => undoRun.current(e)
+    ACTIVE_EDITOR = me
+    return () => { if (ACTIVE_EDITOR === me) ACTIVE_EDITOR = null }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const patch = (id, p) => commit(blocksRef.current.map((b) => (b.id === id ? { ...b, ...p } : b)))
   const indexOf = (id) => blocks.findIndex((b) => b.id === id)
   const insertAt = (index, b) => { const n = [...blocks]; n.splice(index, 0, b); commit(n); setFocusId(b.id) }
@@ -328,6 +356,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     return document.execCommand('insertText', false, arrow)
   }
   const onInput = (e, b) => {
+    markTyping()
     if (['>', '-'].includes(e.nativeEvent?.data) && arrowify()) return
     const el = e.currentTarget
     const text = el.textContent
@@ -448,11 +477,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         if (!rangeIds.includes(b.id) || !TEXTY.includes(b.type)) return b
         const d = document.createElement('div'); d.innerHTML = b.html
         const bd = bounds(b.id)
-        const [from, to] = snapWord(d.textContent, bd.from, Math.min(bd.to, d.textContent.length))
+        const [f0, t0] = snapWord(d.textContent, bd.from, Math.min(bd.to, d.textContent.length))
+        const [from, to] = trimSpaces(d.textContent, f0, t0)
+        if (to <= from) return b // nada que subrayar (solo espacios o vacío)
         wrapHl(d, from, to, color)
-        return { ...b, html: sanitize(d.innerHTML) }
+        const html = sanitize(d.innerHTML)
+        return html === sanitize(b.html) ? b : { ...b, html }
       })
-      hist.current.t = 0; commit(next); setRange(null)
+      setRange(null)
+      if (next.every((b, i) => b === blocksRef.current[i])) return true // no cambió nada
+      hist.current.t = 0; commit(next)
       return true
     }
     const sel = window.getSelection()
@@ -461,7 +495,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const node = rg.commonAncestorContainer.nodeType === 1 ? rg.commonAncestorContainer : rg.commonAncestorContainer.parentElement
     const el = node?.closest?.('[contenteditable=true]')
     if (!el || el.closest('.blocks-page') !== pageRef.current) return false // cada editor atiende solo lo suyo (el de dentro de un Post-it, el suyo)
-    const [from, to] = snapWord(el.textContent, offsetIn(el, rg.startContainer, rg.startOffset), offsetIn(el, rg.endContainer, rg.endOffset))
+    const [f0, t0] = snapWord(el.textContent, offsetIn(el, rg.startContainer, rg.startOffset), offsetIn(el, rg.endContainer, rg.endOffset))
+    const [from, to] = trimSpaces(el.textContent, f0, t0)
+    if (to <= from) { sel.removeAllRanges(); return true } // marcaste solo espacios o nada: no se subraya
     const d = document.createElement('div'); d.innerHTML = el.innerHTML
     wrapHl(d, from, to, color)
     hist.current.t = 0
@@ -671,7 +707,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               )}
             </span>
             <div className={`block block-${b.type}`}>
-              <div className={`block-body bt-${b.type}`}>
+              <div className={`block-body bt-${b.type}`} onInputCapture={markTyping}>
                 {b.type === 'bullet' && <span className="block-mark" aria-hidden="true">•</span>}
                 {b.type === 'numbered' && <span className="block-mark" aria-hidden="true">{numberOf(i)}.</span>}
                 {b.type === 'todo' && <input type="checkbox" className="block-check" checked={!!b.checked} onChange={() => patch(b.id, { checked: !b.checked })} aria-label="Hecha" />}
