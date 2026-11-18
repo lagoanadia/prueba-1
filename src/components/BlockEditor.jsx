@@ -217,6 +217,22 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       e.preventDefault()
       if (nested && onExit && !strip(el.innerHTML) && b.type === 'text' && i === blocks.length - 1 && blocks.length > 1) { remove(b.id); onExit(); return } // Enter en la última línea vacía: sale del post-it
       if (!strip(el.innerHTML) && LIST.includes(b.type)) { toText(b.id); el.innerHTML = ''; return } // Enter en lista vacía: sale de la lista
+      // Enter con el cursor en medio: lo que queda a la derecha pasa a un bloque nuevo debajo
+      const sel = window.getSelection()
+      if (sel?.rangeCount && el.contains(sel.anchorNode) && caretOffset(el) < el.textContent.length) {
+        const r = sel.getRangeAt(0)
+        if (!sel.isCollapsed) r.deleteContents()
+        const tail = document.createRange(); tail.setStart(r.endContainer, r.endOffset); tail.setEnd(el, el.childNodes.length)
+        const box = document.createElement('div'); box.appendChild(tail.extractContents())
+        const nb = newBlock(LIST.includes(b.type) ? b.type : 'text', sanitize(box.innerHTML))
+        const at = blocksRef.current.findIndex((x) => x.id === b.id)
+        const n = blocksRef.current.map((x) => (x.id === b.id ? { ...x, html: sanitize(el.innerHTML) } : x))
+        n.splice(at + 1, 0, nb)
+        hist.current.t = 0
+        commit(n)
+        placeCaret(nb.id, 0)
+        return
+      }
       insertAfter(b.id, newBlock(LIST.includes(b.type) ? b.type : 'text'))
     } else if (e.key === 'Backspace' && !strip(el.innerHTML)) {
       e.preventDefault()
