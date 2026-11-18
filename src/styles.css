@@ -4404,3 +4404,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .dt-list { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 12px; color: #3C4043; }
 .dt-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 14px; position: relative; } .dt-list span::before { content: ''; position: absolute; left: 3px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: #BDC1C6; }
 .dt-more svg { transition: transform .2s var(--ease); } .dt-more.on svg { transform: rotate(180deg); }
+/* Tablas: el texto de todas las celdas empieza arriba (antes las de menos texto quedaban centradas y no alineadas con las de al lado) */
+.tb td { vertical-align: top; }
+.tb td .tb-cell { min-height: 0; }
+.box-wrap .tb-wrap { margin: 4px 0 6px; }
+/* Post-it: la barra de añadir fila es más fina y cabe en el hueco (no tapa el bloque de abajo) */
+.box-wrap .tb-wrap { margin: 4px 0 10px; }
+.box-wrap .tb-addrow { height: 10px; bottom: -12px; border-radius: 6px; }
+.box-wrap .tb-addrow svg { width: 9px; height: 9px; }
