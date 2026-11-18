@@ -19,6 +19,7 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
   const [pick, setPick] = useState(null) // { x, y, text, info, type } de lo seleccionado
   const [done, setDone] = useState(false)
   const root = useRef(null)
+  const fitted = useRef(false)
 
   useEffect(() => {
     let dead = false
@@ -32,6 +33,33 @@ export default function PdfPages({ blob, name, onFallback, onPickText }) {
     })()
     return () => { dead = true }
   }, [blob]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Al abrir, el PDF se acerca solo lo máximo posible: se mide dónde está el texto (sin los márgenes en blanco) y se ajusta a eso
+  useEffect(() => {
+    if (!pdf || fitted.current) return undefined
+    let dead = false
+    ;(async () => {
+      try {
+        let lo = Infinity; let hi = -Infinity; let pw = 0
+        for (let n = 1; n <= Math.min(3, pdf.numPages); n++) {
+          const p = await pdf.getPage(n)
+          const [x0, , x1] = p.view
+          pw = Math.max(pw, x1 - x0)
+          const { items } = await p.getTextContent()
+          items.filter((it) => it.str.trim()).forEach((it) => { lo = Math.min(lo, it.transform[4] - x0); hi = Math.max(hi, it.transform[4] - x0 + it.width) })
+        }
+        if (dead || !pw || !(hi > lo)) return
+        const pad = pw * 0.04 // un poco de aire para no cortar cajas y fondos que sobresalen del texto
+        const z = Math.min(1.8, Math.max(1, +(pw / (hi - lo + pad * 2)).toFixed(2)))
+        fitted.current = true
+        if (z > 1.02) {
+          setZoom(z)
+          setTimeout(() => { const el = box.current; if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2 }, 250) // centrado en el contenido
+        }
+      } catch { /* sin medida: se queda en ancho de página */ }
+    })()
+    return () => { dead = true }
+  }, [pdf])
 
   useEffect(() => {
     const el = box.current

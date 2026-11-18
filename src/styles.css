@@ -4266,3 +4266,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .box-wrap .tb tr:last-child td:first-child { border-bottom-left-radius: 12px; }
 .box-wrap .tb tr:last-child td:not(.tb-end):has(+ td.tb-end), .box-wrap .tb tr:last-child td:not(.tb-end):last-child { border-bottom-right-radius: 12px; }
 .box-wrap .tb td input { border-radius: inherit; }
+/* PDF acercado: se puede recorrer por los dos lados (antes quedaba cortada la parte izquierda) */
+.pdfp-pages { align-items: flex-start; }
+.pdfp-pages > .pdfp-page { margin-inline: auto; }
+.pdfp { min-width: 0; }
