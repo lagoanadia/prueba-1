@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Icon from './Icon.jsx'
 import ExportDialog from './ExportDialog.jsx'
 import CodeBlock from './blocks/CodeBlock.jsx'
@@ -43,6 +43,17 @@ function sliceHtml(html, from, to) {
   const d = document.createElement('div'); d.innerHTML = html
   const o = document.createElement('div'); o.appendChild(domRangeFor(d, from, to).cloneContents())
   return o.innerHTML
+}
+// Estado del subrayador compartido por todos los editores (también los de dentro de un Post-it)
+const penStore = { s: { on: false, color: 'amarillo' }, subs: new Set() }
+const setPenStore = (p) => { penStore.s = typeof p === 'function' ? p(penStore.s) : p; penStore.subs.forEach((f) => f()) }
+const usePen = () => useSyncExternalStore((f) => { penStore.subs.add(f); return () => penStore.subs.delete(f) }, () => penStore.s)
+const isWordChar = (c) => /[\p{L}\p{N}_]/u.test(c ?? '')
+/** Si el principio o el final caen a mitad de una palabra, se amplía a la palabra entera */
+function snapWord(text, from, to) {
+  while (from > 0 && isWordChar(text[from - 1]) && isWordChar(text[from])) from -= 1
+  while (to < text.length && isWordChar(text[to]) && isWordChar(text[to - 1])) to += 1
+  return [from, to]
 }
 /** Subrayador: envuelve en un span de color el texto entre dos posiciones (o lo quita con color 'none'); `root` puede ser un trozo de HTML suelto */
 function wrapHl(root, from, to, color) {
@@ -95,7 +106,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const refs = useRef({})
   const [sel, setSel] = useState([]) // ids de los bloques marcados (arrastrando por varios o con Mayús + clic)
   const [picking, setPicking] = useState(false)
-  const [pen, setPen] = useState({ on: false, color: 'amarillo' }) // subrayador: modo rotulador y color elegido
+  const pen = usePen() // subrayador: modo rotulador y color elegido
+  const setPen = setPenStore
   const [range, setRange] = useState(null) // selección de texto entre bloques: { a: { id, off }, b: { id, off } }
   const dragSel = useRef(null)
   const suppressClick = useRef(false)
@@ -434,8 +446,9 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (range && rangeIds.length) {
       const next = blocksRef.current.map((b) => {
         if (!rangeIds.includes(b.id) || !TEXTY.includes(b.type)) return b
-        const { from, to } = bounds(b.id)
         const d = document.createElement('div'); d.innerHTML = b.html
+        const bd = bounds(b.id)
+        const [from, to] = snapWord(d.textContent, bd.from, Math.min(bd.to, d.textContent.length))
         wrapHl(d, from, to, color)
         return { ...b, html: sanitize(d.innerHTML) }
       })
@@ -445,12 +458,15 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const sel = window.getSelection()
     if (!sel?.rangeCount || sel.isCollapsed) return false
     const rg = sel.getRangeAt(0)
-    const hit = Object.entries(refs.current).find(([, el]) => el && el.contains(rg.startContainer) && el.contains(rg.endContainer))
-    if (!hit) return false
-    const [id, el] = hit
+    const node = rg.commonAncestorContainer.nodeType === 1 ? rg.commonAncestorContainer : rg.commonAncestorContainer.parentElement
+    const el = node?.closest?.('[contenteditable=true]')
+    if (!el || el.closest('.blocks-page') !== pageRef.current) return false // cada editor atiende solo lo suyo (el de dentro de un Post-it, el suyo)
+    const [from, to] = snapWord(el.textContent, offsetIn(el, rg.startContainer, rg.startOffset), offsetIn(el, rg.endContainer, rg.endOffset))
     const d = document.createElement('div'); d.innerHTML = el.innerHTML
-    wrapHl(d, offsetIn(el, rg.startContainer, rg.startOffset), offsetIn(el, rg.endContainer, rg.endOffset), color)
-    hist.current.t = 0; patch(id, { html: sanitize(d.innerHTML) })
+    wrapHl(d, from, to, color)
+    hist.current.t = 0
+    el.innerHTML = sanitize(d.innerHTML)
+    el.dispatchEvent(new Event('input', { bubbles: true })) // el editor guarda el cambio como si lo hubieras escrito
     sel.removeAllRanges()
     return true
   }
@@ -477,6 +493,13 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const up = () => { if (live.current.pen?.on) setTimeout(() => live.current.applyPen(live.current.pen.color), 0); if (dragSel.current?.on) { suppressClick.current = true; setTimeout(() => { suppressClick.current = false }, 0) } dragSel.current = null; setPicking(false) } // tras arrastrar no debe saltar el «clic» de la página (enfocaba el último bloque)
     const key = (e) => {
       const L = live.current
+      // S: con texto marcado lo subraya; sin escribir en ningún sitio, activa o desactiva el rotulador
+      if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.defaultPrevented && !e.target.closest?.('input, textarea, select')) {
+        const sl = window.getSelection()
+        const marked = L.range || (sl && !sl.isCollapsed && pageRef.current?.contains(sl.anchorNode))
+        if (marked) { if (L.applyPen(L.pen.color === 'none' ? 'amarillo' : L.pen.color)) { e.preventDefault(); setPenStore((p) => ({ ...p, on: true, color: p.color })) } return }
+        if (!e.target.isContentEditable && !nested) { e.preventDefault(); setPenStore((p) => ({ ...p, on: !p.on })); return }
+      }
       if (L.range && !e.__picked) {
         const k = e.key.toLowerCase()
         if (e.key === 'Escape') { setRange(null); return }
