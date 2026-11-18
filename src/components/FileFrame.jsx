@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import NameDialog from './NameDialog.jsx'
 import Icon from './Icon.jsx'
 import { deleteFile, getFile, saveFile } from '../lib/fileStore.js'
 import PdfPages from './PdfPages.jsx'
@@ -8,6 +9,7 @@ import PdfPages from './PdfPages.jsx'
  * `file` = { id, name, type } o null. `onChange(file|null)` guarda la referencia en los datos.
  */
 export default function FileFrame({ file, onChange, label = 'Subir archivo', extra = null, onPickText }) {
+  const [renaming, setRenaming] = useState(false)
   const [url, setUrl] = useState(null)
   const [blob, setBlob] = useState(null)
   const [plain, setPlain] = useState(false) // si el PDF no se puede dibujar, se usa el visor del navegador
@@ -35,6 +37,8 @@ export default function FileFrame({ file, onChange, label = 'Subir archivo', ext
       <div className="file-bar">
         <Icon name={file?.type?.startsWith('image/') ? 'eye' : 'pdf'} size={20} color="#E84855" />
         <b className="w-ellipsis">{file?.name ?? 'Sin archivo'}</b>
+        {file && <button className="icon-btn file-rename" onClick={() => setRenaming(true)} aria-label="Cambiar el nombre del archivo" title="Cambiar el nombre"><Icon name="pen" size={16} /></button>}
+        {renaming && file && <NameDialog title="Nombre del archivo" initial={file.name} maxLength={120} onSubmit={(n) => { onChange({ ...file, name: n }); setRenaming(false) }} onClose={() => setRenaming(false)} />}
         <span style={{ flex: 1 }} />
         {extra}
         {!extra && <button className="icon-btn" onClick={() => input.current?.click()} aria-label={file ? 'Cambiar archivo' : label} title={file ? 'Cambiar archivo' : label}><Icon name="upload" size={20} /></button>}

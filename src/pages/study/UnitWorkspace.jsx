@@ -93,6 +93,12 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
   const addUnit = (name) => { const id = crypto.randomUUID(); changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id, name, topics: [] }] })); setDialog(null); go({ ...route, unitId: id, tab: 'estudio', itemId: null }) }
   // Eliminar una unidad; si es la que tengo abierta, vuelvo a la asignatura
   const removeUnit = (id) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.filter((u) => u.id !== id) })); setDialog(null); if (id === unit.id) back() }
+  const renameItem = (r, name) => {
+    changeUnit(update, subject.id, r.unitId, (u) => (r.type === 'topic'
+      ? { ...u, topics: u.topics.map((t) => (t.id === r.id ? { ...t, name } : t)) }
+      : { ...u, practices: practicesOf(u).map((p) => (p.id === r.id ? { ...p, name } : p)) }))
+    setDialog(null)
+  }
   const renameUnit = (id, name) => { changeUnit(update, subject.id, id, (u) => ({ ...u, name })); setDialog(null) }
   const removeTopic = (uid, id) => { if (!window.confirm('¿Quitar este tema y sus apuntes?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, topics: u.topics.filter((t) => t.id !== id) })); go({ ...route, itemId: null }) }
   const removePractice = (uid, id) => { if (!window.confirm('¿Quitar esta práctica?')) return; changeUnit(update, subject.id, uid, (u) => ({ ...u, practices: practicesOf(u).filter((p) => p.id !== id) })); go({ ...route, itemId: null }) }
@@ -169,6 +175,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       <button className={`chk ${done ? 'on' : ''}`} onClick={onCheck} aria-pressed={done} aria-label={doneLabel} title={done ? 'Estudiado' : 'Marcar como estudiado'}>{done && <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3.4} />}</button>
       {icon && <Icon name={icon} size={14} color="#9AA0A6" />}
       <button className="tp-name" onClick={onPick}>{name}</button>
+      <button className="prio-x tp-pen tp-pen-row" onClick={() => setDialog({ renameItem: { type: meta.type, unitId: meta.unitId, id: meta.id, name } })} aria-label={`Cambiar el nombre de «${name}»`} title="Cambiar el nombre"><Icon name="pen" size={14} /></button>
       <button className="prio-x tp-del" onClick={onRemove} aria-label={`Quitar «${name}»`}><Icon name="trash" size={14} /></button>
     </div>
   )
@@ -269,6 +276,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
       {dialog === 'practice' && <NameDialog title="Nombre de la práctica" placeholder="Práctica 1" onSubmit={addPractice} onClose={() => setDialog(null)} />}
       {pdfNew && <NameDialog title={`Nombre ${pdfNew.type === 'topic' ? 'del tema' : 'de la práctica'}`} initial={baseName(pdfNew.file)} onSubmit={addWithPdf} onClose={() => setPdfNew(null)} />}
       {dialog === 'unit' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
+      {dialog?.renameItem && <NameDialog title={dialog.renameItem.type === 'topic' ? 'Nombre del tema' : 'Nombre de la práctica'} initial={dialog.renameItem.name} onSubmit={(n) => renameItem(dialog.renameItem, n)} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
     </div>
   )

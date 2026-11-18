@@ -4296,3 +4296,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tb td .tb-cell b, .tb td .tb-cell strong { font-weight: 800; }
 .np-name { font: 600 13px Poppins, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .np-rename { flex: none; margin-right: auto; }
+.tp-row .tp-pen-row { display: none; } .tp-row:hover .tp-pen-row, .tp-row .tp-pen-row:focus-visible { display: flex; opacity: 1; }
+.file-rename { flex: none; opacity: .6; } .file-bar:hover .file-rename { opacity: 1; }
