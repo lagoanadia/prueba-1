@@ -72,14 +72,48 @@ function trimSpaces(text, from, to) {
   while (to > from && /\s/.test(text[to - 1])) to -= 1
   return [from, to]
 }
-/** Subrayador: envuelve en un span de color el texto entre dos posiciones (o lo quita con color 'none'); `root` puede ser un trozo de HTML suelto */
+/**
+ * Subrayador: pone el color a lo que hay entre dos posiciones de texto (o lo quita con 'none'). Si ya estaba subrayado solo cambia
+ * el color (nunca se subraya encima de otro subrayado). `root` puede ser un trozo de HTML suelto.
+ */
 function wrapHl(root, from, to, color) {
-  const r = domRangeFor(root, from, to)
-  if (r.collapsed) return
-  const frag = r.extractContents()
-  frag.querySelectorAll('span[data-hl]').forEach((sp) => sp.replaceWith(...sp.childNodes)) // lo que ya estaba subrayado se repinta
-  if (color === 'none') r.insertNode(frag)
-  else { const sp = document.createElement('span'); sp.setAttribute('data-hl', color); sp.appendChild(frag); r.insertNode(sp) }
+  if (to <= from) return
+  // 1) cada trozo de texto con su color actual
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const items = []
+  let pos = 0
+  let n
+  while ((n = walker.nextNode())) {
+    const sp = n.parentElement?.closest('span[data-hl]')
+    items.push({ n, start: pos, end: pos + n.length, c: sp && root.contains(sp) ? sp.getAttribute('data-hl') : null })
+    pos += n.length
+  }
+  // 2) se quitan todos los subrayados y se vuelven a poner después con el color final de cada trozo
+  root.querySelectorAll('span[data-hl]').forEach((sp) => sp.replaceWith(...sp.childNodes))
+  const pieces = []
+  for (const it of items) {
+    if (!it.n.length) continue
+    const cuts = [it.start, ...[from, to].filter((x) => x > it.start && x < it.end), it.end]
+    let node = it.n
+    for (let k = 1; k < cuts.length; k++) {
+      const last = k === cuts.length - 1
+      const rest = last ? null : node.splitText(cuts[k] - cuts[k - 1])
+      const inside = cuts[k - 1] >= from && cuts[k] <= to
+      pieces.push({ node, c: inside ? (color === 'none' ? null : color) : it.c })
+      node = rest
+    }
+  }
+  pieces.forEach((p) => { if (p.c) { const sp = document.createElement('span'); sp.setAttribute('data-hl', p.c); p.node.replaceWith(sp); sp.appendChild(p.node) } })
+  // 3) los trozos seguidos del mismo color se juntan en uno solo
+  root.querySelectorAll('span[data-hl]').forEach((sp) => {
+    let nx = sp.nextSibling
+    while (nx && nx.nodeType === 1 && nx.tagName === 'SPAN' && nx.getAttribute('data-hl') === sp.getAttribute('data-hl')) {
+      while (nx.firstChild) sp.appendChild(nx.firstChild)
+      const t = nx
+      nx = nx.nextSibling
+      t.remove()
+    }
+  })
   root.normalize()
 }
 const offsetIn = (el, node, off) => { const r = document.createRange(); r.selectNodeContents(el); r.setEnd(node, off); return r.toString().length }
