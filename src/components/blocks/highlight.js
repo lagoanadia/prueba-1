@@ -34,3 +34,39 @@ export function highlight(code, lang) {
   }
   return out + esc(code.slice(last))
 }
+
+/**
+ * ¿Es código lo que se ha pegado? Devuelve el lenguaje (uno de LANGS) o null si parece texto normal.
+ * Mira marcas muy propias del código (llaves, punto y coma, flechas, palabras clave, etiquetas…) en varias líneas.
+ */
+export function detectCode(raw) {
+  const text = String(raw ?? '').replace(/\r\n?/g, '\n').replace(/\n+$/, '')
+  if (!text.trim() || text.length > 60000) return null
+  const lines = text.split('\n').filter((l) => l.trim())
+  const t = text.trim()
+  // JSON válido
+  if (/^[[{]/.test(t) && /[\]}]$/.test(t) && lines.length > 1) { try { JSON.parse(t); return 'JSON' } catch { /* no es JSON */ } }
+  const has = (re) => lines.filter((l) => re.test(l)).length
+  const lang = {
+    HTML: has(/<\/?[a-z][a-z0-9-]*(\s[^<>]*)?\/?>/i) >= Math.max(1, lines.length * 0.6) && /^\s*</.test(t) ? 6 : 0,
+    SQL: /^\s*(select|insert\s+into|update|delete\s+from|create\s+table|alter\s+table|with)\b/i.test(t) && /\b(from|into|set|values|table|where)\b/i.test(t) ? 6 : 0,
+    Python: has(/^\s*(def|class)\s+\w+.*:\s*$/) * 3 + has(/^\s*(import \w+|from \w+(\.\w+)* import)\b/) * 2 + has(/^\s*(elif|except|with .* as)\b.*:\s*$/) * 2 + has(/\bprint\(|\bself\.|^\s*#\s/) + (/:\s*$/m.test(t) && !/[;{}]/.test(t) ? 1 : 0),
+    Bash: has(/^#!.*\b(ba)?sh\b/) * 6 + has(/^\s*(\$ |sudo |apt(-get)? |npm |git |cd |ls\b|echo |chmod |export \w+=)/) * 2,
+    Java: has(/\b(public|private|protected)\s+(static\s+)?(final\s+)?(class|void|int|String)\b/) * 3 + has(/System\.out\./) * 3,
+    Kotlin: has(/^\s*(fun|val|data class|object)\s+\w+/) * 3,
+    C: has(/^\s*#include\s*[<"]/) * 4 + has(/\b(int|void|char)\s+\w+\s*\(.*\)\s*\{?\s*$/) * 2 + has(/\b(printf|scanf)\(/) * 2,
+    TypeScript: has(/^\s*(interface|type)\s+\w+/) * 3 + has(/\w+\s*:\s*(string|number|boolean|any)\b/) * 2,
+    JavaScript: has(/^\s*(const|let|var)\s+[\w{[]/) * 2 + has(/=>/) * 2 + has(/\bfunction\b\s*\w*\(/) * 2 + has(/console\.\w+\(/) * 3 + has(/^\s*(import .* from |export (default )?|require\()/) * 2 + has(/^\s*(if|for|while)\s*\(.*\)\s*\{?\s*$/),
+    CSS: has(/^\s*[.#]?[\w-][\w\s.#:>,-]*\{\s*$/) * 2 + has(/^\s*[\w-]+\s*:\s*[^;]+;\s*$/) * 2,
+  }
+  // marcas generales (sirven a cualquier lenguaje)
+  const generic = has(/[;{}]\s*$/) + has(/^\s{2,}\S/) * 0.5 + has(/\w\(.*\)/) * 0.5
+  let best = null
+  let top = 0
+  for (const [k, v] of Object.entries(lang)) if (v > top) { best = k; top = v }
+  // TypeScript gana a JavaScript si tiene tipos; Kotlin/Java dudosos pasan por lo que más puntúe
+  if (best === 'JavaScript' && lang.TypeScript > 0 && lang.TypeScript + 2 >= lang.JavaScript) best = 'TypeScript'
+  if (!best) return generic >= Math.max(3, lines.length * 0.7) && lines.length >= 3 ? 'JavaScript' : null
+  const need = lines.length === 1 ? 4 : 3
+  return top + (generic >= 2 ? 1 : 0) >= need ? best : null
+}

@@ -1,6 +1,7 @@
 // Pegar desde fuera: lo copiado (una web, Word, Google Docs, Excel…) se convierte en bloques de la app:
 // tablas → tabla, listas → listas, títulos → títulos, citas, código, divisores y párrafos con negrita/cursiva/subrayado.
 import { sanitize } from './richText.js'
+import { detectCode } from '../components/blocks/highlight.js'
 
 const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 const SKIP = new Set(['SCRIPT', 'STYLE', 'META', 'LINK', 'TITLE', 'HEAD', 'NOSCRIPT', 'IMG', 'SVG', 'IFRAME', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'])
@@ -83,7 +84,7 @@ function walk(node, out, para) {
       return
     }
     if (tag === 'BLOCKQUOTE') { flush(); const h = clean(inline(n)); if (h) out.push({ type: 'quote', html: h }); return }
-    if (tag === 'PRE') { flush(); const code = (n.textContent || '').replace(/\n+$/, ''); if (code.trim()) out.push({ type: 'code', code }); return }
+    if (tag === 'PRE') { flush(); const code = (n.textContent || '').replace(/\n+$/, ''); if (code.trim()) out.push({ type: 'code', code, lang: detectCode(code) ?? undefined }); return }
     if (tag === 'HR') { flush(); out.push({ type: 'divider' }); return }
     if (tag === 'BR') { para.h += '<br>'; return }
     if (BLOCKY.has(tag)) {
@@ -140,6 +141,9 @@ export function blocksFromPaste(html, text) {
 }
 
 function rawBlocks(html, text) {
+  // lo copiado parece código (de un editor, de una web…): bloque de código con su lenguaje, sin tocar la estructura si venía con tablas o listas
+  const lang = text ? detectCode(text) : null
+  if (lang && !/<(table|ul|ol|h[1-6])\b/i.test(html || '')) return [{ type: 'code', code: text.replace(/\r\n?/g, '\n').replace(/\n+$/, ''), lang }]
   if (html && /<(table|ul|ol|h[1-6]|pre|blockquote|hr|p|div)\b/i.test(html)) {
     const doc = new DOMParser().parseFromString(html, 'text/html')
     const out = []

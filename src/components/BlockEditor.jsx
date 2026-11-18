@@ -400,7 +400,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (specs.length === 1 && specs[0].type === 'text') { document.execCommand('insertHTML', false, sanitize(specs[0].html)); return }
     const made = specs.map((sp) => {
       if (sp.type === 'table') return { ...newBlock('table'), rich: true, rows: sp.rows }
-      if (sp.type === 'code') return { ...newBlock('code'), code: sp.code }
+      if (sp.type === 'code') return { ...newBlock('code'), code: sp.code, ...(sp.lang ? { lang: sp.lang } : {}) }
       if (sp.type === 'divider') return newBlock('divider')
       return newBlock(sp.type, sanitize(sp.html))
     })
