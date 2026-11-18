@@ -48,8 +48,9 @@ export function tablesFromLines(slice, lefts) {
   const cols = lefts.length
   const rows = slice.map((l) => { const r = Array(cols).fill(null); l.cells.forEach((c) => { const k = colOf(c); r[k] = r[k] == null ? c.text : `${r[k]} ${c.text}` }); return r })
   const steps = slice.slice(1).map((l, k) => l.mid - slice[k].mid)
-  const med = median(steps) || 1
-  const gap = (k) => k > 0 && steps[k - 1] > med * 1.7 && steps[k - 1] > slice[k].fs * 1.9 // hueco grande: empieza otra fila de tarjetas
+  // Paso normal entre líneas de una misma celda = el más corto (el cuartil bajo; la mediana se contamina cuando hay muchas filas)
+  const base = [...steps].sort((x, y) => x - y)[Math.floor((steps.length - 1) * 0.25)] || 1
+  const gap = (k) => k > 0 && steps[k - 1] > base * 1.45 && steps[k - 1] > slice[k].fs * 1.6 // hueco mayor: empieza otra fila / otra fila de tarjetas
   const uneven = rows.some((r) => r.some((x) => x == null)) || rows.some((r) => r.some((x) => x != null && CONT.test(x)))
   const anyGap = slice.some((_, k) => gap(k))
   if (!uneven && !anyGap) return [rows.map((r) => r.map((x) => x ?? ''))] // tabla normal
