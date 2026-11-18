@@ -36,6 +36,7 @@ const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'co
 export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null }) {
   const [blocks, setBlocks] = useState(() => toBlocks(value))
   const [focusId, setFocusId] = useState(null)
+  const lastId = useRef(null) // último bloque donde tuviste el cursor
   const [menu, setMenu] = useState(null) // { id, q, i, x, y }
   const [exporting, setExporting] = useState(false)
   const [drag, setDrag] = useState(null) // { id, over, after } al arrastrar un bloque por su asa
@@ -193,6 +194,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
 
   // Pulsar en el hueco de la página: escribe en el último bloque (o crea uno si el último no es de texto)
+  const rememberBlock = (e) => { const id = e.target.closest?.('[data-id]')?.dataset.id; if (id) lastId.current = id } // dónde estás escribiendo
   const onPageClick = (e) => {
     if (e.target !== e.currentTarget && !e.target.classList.contains('blocks-tail')) return
     const last = blocks[blocks.length - 1]
@@ -211,9 +213,13 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       }
       const list = Array.isArray(payload) ? payload : [typeof payload === 'string' ? { type: 'text', text: payload } : payload]
       const made = list.flatMap(one) // varios trozos (título + texto…) entran juntos y en su orden
-      const last = blocks[blocks.length - 1]
-      if (last && last.type === 'text' && !strip(last.html)) commit([...blocks.slice(0, -1), ...made]) // el bloque vacío del final se aprovecha
-      else commit([...blocks, ...made])
+      // Entra justo debajo del bloque donde estaba el cursor / donde pulsaste por última vez; si no hay, al final
+      const at = blocks.findIndex((x) => x.id === lastId.current)
+      const i = at >= 0 ? at : blocks.length - 1
+      const cur = blocks[i]
+      const next = cur && cur.type === 'text' && !strip(cur.html) ? [...blocks.slice(0, i), ...made, ...blocks.slice(i + 1)] : [...blocks.slice(0, i + 1), ...made, ...blocks.slice(i + 1)] // un bloque vacío se aprovecha
+      commit(next.length ? next : made)
+      lastId.current = made[made.length - 1]?.id
     }
   }
 
@@ -223,7 +229,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     <div className="card blocks">
       <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>
       {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
+      <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onPointerDownCapture={rememberBlock} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
         {blocks.map((b, i) => (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
