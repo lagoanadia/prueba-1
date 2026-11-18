@@ -4452,3 +4452,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .blocks-bar .pill-sm { width: 32px; padding: 0; justify-content: center; }
 /* Bloques marcados: más oscuros y con borde, para ver bien qué está seleccionado */
 .block-slot.is-picked { background: rgba(49, 133, 252, .30); box-shadow: inset 0 0 0 2px rgba(49, 133, 252, .55), inset 4px 0 0 0 #3185FC; border-radius: 8px; }
+/* Bloques marcados: una sola caja azul fuerte con borde grueso y separadores (opción C) */
+.block-slot.is-picked { background: #A9CBFF; box-shadow: none; border-radius: 0; border-left: 2px solid #1F6FEB; border-right: 2px solid #1F6FEB; }
+.block-slot.is-picked.pk-top { border-top: 2px solid #1F6FEB; border-radius: 14px 14px 0 0; }
+.block-slot.is-picked.pk-bot { border-bottom: 2px solid #1F6FEB; border-radius: 0 0 14px 14px; }
+.block-slot.is-picked.pk-top.pk-bot { border-radius: 14px; }
+.block-slot.is-picked + .block-slot.is-picked:not(.pk-top) { border-top: 1px dashed rgba(31, 111, 235, .5); }
+.block-slot.is-picked > .block { padding: 2px 10px; }
+.sel-bar .sel-n { color: #9CC3FF; font: 600 12.5px Poppins, sans-serif; padding: 5px 10px 5px 8px; }
