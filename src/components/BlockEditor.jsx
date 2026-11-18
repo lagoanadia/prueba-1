@@ -184,6 +184,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       if (e.key === 'Enter') { e.preventDefault(); if (options[menu.i]) pick(options[menu.i].type); return }
       if (e.key === 'Escape') { setMenu(null); return }
     }
+    if (e.key === 'Escape' && TEXTY.includes(b.type)) { e.preventDefault(); e.currentTarget.blur(); e.nativeEvent.__picked = true; setSel([b.id]); return } // Esc: marca este bloque entero (luego Retroceso lo borra)
     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); move(i, e.key === 'ArrowUp' ? -1 : 1); return }
     const el = e.currentTarget
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -251,10 +252,17 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       const all = [...pageRef.current.children].filter((c) => c.classList?.contains('block-slot'))
       slot = all.find((el) => { const r = el.getBoundingClientRect(); return e.clientY >= r.top && e.clientY <= r.bottom }) ?? null
     }
+    if ((e.ctrlKey || e.metaKey) && slot) { // Ctrl/Cmd + clic: marca o desmarca ese bloque (varios a la vez)
+      e.preventDefault(); lastId.current = slot.dataset.id; dragSel.current = null
+      document.activeElement?.blur?.(); window.getSelection()?.removeAllRanges()
+      setSel((cur) => (cur.includes(slot.dataset.id) ? cur.filter((x) => x !== slot.dataset.id) : [...cur, slot.dataset.id]))
+      return
+    }
     if (e.shiftKey && anchor && slot && slot.dataset.id !== anchor) { e.preventDefault(); lastId.current = anchor; pickRange(anchor, slot.dataset.id); setPicking(false); window.getSelection()?.removeAllRanges(); return }
     if (sel.length) setSel([])
     dragSel.current = slot ? { id: slot.dataset.id, on: false } : null
   }
+  const firstSel = blocks.find((b) => sel.includes(b.id))?.id // el primero (en el orden del documento) lleva la barra
   const wrapSel = () => {
     const idx = blocks.map((b, k) => (sel.includes(b.id) ? k : -1)).filter((k) => k >= 0)
     if (!idx.length) return
@@ -262,7 +270,14 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     commit(blocks.flatMap((b, k) => (k === idx[0] ? [box] : sel.includes(b.id) ? [] : [b])))
     setSel([])
   }
-  const deleteSel = () => { const n = blocks.filter((b) => !sel.includes(b.id)); commit(n.length ? n : [newBlock()]); setSel([]) }
+  const deleteSel = () => {
+    const first = blocks.findIndex((b) => sel.includes(b.id))
+    const n = blocks.filter((b) => !sel.includes(b.id))
+    commit(n.length ? n : [newBlock()])
+    setSel([])
+    const near = n[Math.max(0, Math.min(first, n.length) - 1)]
+    if (near && TEXTY.includes(near.type)) setFocusId(near.id) // el cursor queda en el bloque de arriba
+  }
   const copySel = () => { try { navigator.clipboard?.writeText(blocks.filter((b) => sel.includes(b.id)).map(plainOf).join('\n')) } catch { /* sin permiso */ } }
   live.current = { sel, blocks, deleteSel, copySel, pickRange }
   // Arrastrar el ratón de un bloque a otro marca los bloques enteros; Supr/Retroceso los borra, Ctrl+C los copia, Esc los suelta
@@ -286,7 +301,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const up = () => { dragSel.current = null; setPicking(false) }
     const key = (e) => {
       const L = live.current
-      if (!L.sel.length) return
+      if (!L.sel.length || e.__picked) return
       if (e.key === 'Escape') { setSel([]); return }
       if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); L.deleteSel() } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { e.preventDefault(); L.copySel() }
     }
@@ -350,7 +365,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         {blocks.map((b, i) => (
           <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
-            {sel[0] === b.id && (
+            {firstSel === b.id && (
               <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Bloques marcados">
                 {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Post-it</button>}
                 <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>

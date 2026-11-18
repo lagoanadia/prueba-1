@@ -4210,7 +4210,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cal-bday.is-today { background: #FCE0EA; }
 /* Recuadro: caja amarilla con barra lateral donde caben otros bloques */
 .block-body.bt-box { display: block; }
-.box-wrap { width: 100%; border-left: 5px solid var(--pb, #F2B705); background: var(--pf, #FFF1B8); border-radius: 6px 16px 16px 6px; padding: 6px 12px 6px 0; }
+.box-wrap { width: 100%; border-left: 5px solid var(--pb, #F2B705); background: var(--pf, #FFF1B8); border-radius: 6px 16px 16px 6px; padding: 34px 12px 6px 0; }
 .blocks-nested { width: 100%; }
 .blocks-page.nested { flex: none; overflow: visible; padding: 2px 4px 2px 54px; cursor: text; font-size: inherit; }
 .blocks-page.nested .blocks-tail { min-height: 0; }
