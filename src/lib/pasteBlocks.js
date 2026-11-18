@@ -134,6 +134,14 @@ export function blocksFromPaste(html, text) {
     const doc = new DOMParser().parseFromString(html, 'text/html')
     const out = []
     walk(doc.body, out, { h: '' })
+    // una tabla de una sola fila (la cabecera) seguida de otra: son una sola tabla; la columna que falta en la cabecera (esquina vacía) se crea por la izquierda
+    for (let i = 0; i < out.length - 1; i++) {
+      const a = out[i], b = out[i + 1]
+      if (a.type !== 'table' || b.type !== 'table' || a.rows.length !== 1) continue
+      const cols = Math.max(a.rows[0].length, b.rows[0].length)
+      const head = [...Array(cols - a.rows[0].length).fill(''), ...a.rows[0]]
+      out.splice(i, 2, { type: 'table', rows: [head, ...b.rows.map((r) => [...r, ...Array(cols - r.length).fill('')])] })
+    }
     if (out.length === 1 && out[0].type === 'text') return out // un solo párrafo: se pega en línea (con su formato)
     if (out.length) return out
   }
