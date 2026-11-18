@@ -33,7 +33,22 @@ export function sheetCss(st) {
 .x-box.on { background: var(--c); } .x-box.on::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .x-done { text-decoration: line-through; color: #80868B; }
 .x-quote { border-left: 4px solid var(--c); padding: 4px 0 4px 14px; color: #3C4043; font-style: italic; }
-.x-box { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 10px 14px 2px; }
+.x-postit { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 12px 16px 4px; break-inside: auto; page-break-inside: auto; }
+.x-postit .x-b:last-child { margin-bottom: 8px; }
+.x-postit .x-table { border-color: var(--pb, #F2B705); background: transparent; }
+.x-postit .x-table th { background: var(--pb, #F2B705); color: #202124; }
+.x-postit .x-table td { background: transparent !important; }
+.x-postit .x-table th + th { border-left-color: var(--pf, #FFF1B8); }
+.x-postit .x-table td + td { border-left-color: var(--pb, #F2B705); }
+.x-postit .x-table tr + tr td { border-top-color: var(--pb, #F2B705); }
+/* El Post-it va por libre: no le afectan el color ni el redondeo que eliges para la hoja */
+.x-postit .x-table { border-radius: 12px; }
+.x-postit .x-callout { background: rgba(255, 255, 255, .55); border-left-color: var(--pb, #F2B705); border-radius: 12px; }
+.x-postit .x-h2 { color: #202124; }
+.x-postit .x-li > span:first-child { color: var(--pb, #F2B705); }
+.x-postit .x-quote { border-left-color: var(--pb, #F2B705); }
+.x-postit .x-box { border-color: var(--pb, #F2B705); border-radius: 4px; } .x-postit .x-box.on { background: var(--pb, #F2B705); }
+.x-postit .x-code, .x-postit .x-img, .x-postit .x-link { border-radius: 12px; } .x-postit .x-link { border-color: var(--pb, #F2B705); } .x-postit .x-link a { color: #202124; }
 .x-callout { background: color-mix(in srgb, var(--c) 12%, #fff); border-left: 4px solid var(--c); border-radius: ${Math.max(r - 2, 0)}px; padding: 10px 14px; }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
@@ -61,7 +76,7 @@ export function blockHtml(b, n, imgs) {
     case 'todo': return `<div class="x-b x-li"><span class="x-box ${b.checked ? 'on' : ''}"></span><div class="${b.checked ? 'x-done' : ''}">${rich(b.html)}</div></div>`
     case 'quote': return `<div class="x-b x-quote">${rich(b.html)}</div>`
     case 'callout': return `<div class="x-b x-callout">${rich(b.html)}</div>`
-    case 'box': { let k = 0; const pc = POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo; return `<div class="x-b x-box" style="--pb:${pc.bar};--pf:${pc.bg}">${(b.blocks ?? []).map((c) => { k = c.type === 'numbered' ? k + 1 : 0; return blockHtml(c, k, imgs) }).join('')}</div>` }
+    case 'box': { let k = 0; const pc = POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo; return `<div class="x-b x-postit" style="--pb:${pc.bar};--pf:${pc.bg}">${(b.blocks ?? []).map((c) => { k = c.type === 'numbered' ? k + 1 : 0; return blockHtml(c, k, imgs) }).join('')}</div>` }
     case 'code': return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${esc(b.code)}</div>`
     case 'table': {
       const rows = b.rows ?? []
