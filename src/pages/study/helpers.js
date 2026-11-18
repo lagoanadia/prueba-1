@@ -15,7 +15,7 @@ export const practicesOf = (u) => u.practices ?? (u.exercises ?? []).map((x) => 
 export const KINDS = { practica: { label: 'Práctica', icon: 'code' }, examen: { label: 'Examen', icon: 'exam' }, trabajo: { label: 'Trabajo', icon: 'doc' } }
 
 // Qué cuenta para el progreso de una asignatura (lo decide el usuario)
-export const METRICS = { topics: { label: 'Teoría' }, practices: { label: 'Prácticas' }, assignments: { label: 'Entregas' } }
+export const METRICS = { topics: { label: 'Teoría' }, assignments: { label: 'Entregas' } } // las prácticas ya no cuentan aparte (van como entregas)
 export const metricsOf = (s) => ({ topics: true, practices: true, assignments: false, ...(s.metrics ?? {}) })
 
 export function progressFor(subject, assignments = []) {
