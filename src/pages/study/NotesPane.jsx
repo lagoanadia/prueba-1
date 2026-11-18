@@ -3,6 +3,7 @@ import BlockEditor from '../../components/BlockEditor.jsx'
 import ShareButton from '../../components/ShareButton.jsx'
 import Select from '../../components/Select.jsx'
 import Icon from '../../components/Icon.jsx'
+import NameDialog from '../../components/NameDialog.jsx'
 import { newBlock, toBlocks, toDoc } from '../../lib/docModel.js'
 import { practicesOf } from './helpers.js'
 
@@ -20,12 +21,14 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
   const [src, setSrc] = useState(null)
   const [withTitle, setWithTitle] = useState(true)
   const [skipped, setSkipped] = useState(false) // eligió «apuntes nuevos»
+  const [renaming, setRenaming] = useState(false)
 
   const all = [
     ...unit.topics.map((t) => ({ id: t.id, name: t.name, kind: 'topic', doc: undefined })),
     ...practicesOf(unit).map((p) => ({ id: p.id, name: p.name, kind: 'practice', doc: p.doc })),
   ]
   const docOf = (x) => data.notes?.[x.id] ?? x.doc
+  const nameOf = (x) => data.notesName?.[x.id] || x.name // nombre elegido para los apuntes, o el del tema
   const sources = all.filter((x) => x.id !== item.id && hasContent(docOf(x)))
   const ownDoc = data.notes?.[item.id] ?? item.doc
   const linked = data.notesLink?.[item.id]
@@ -74,7 +77,7 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
             <div className="np-list" role="radiogroup" aria-label="Documentos de este apartado">
               {sources.map((s) => (
                 <button type="button" key={s.id} role="radio" aria-checked={src === s.id} className={src === s.id ? 'on' : ''} onClick={() => setSrc(s.id)}>
-                  <i aria-hidden="true" /><Icon name={s.kind === 'topic' ? 'doc' : 'code'} size={15} /><span>{s.name}</span>
+                  <i aria-hidden="true" /><Icon name={s.kind === 'topic' ? 'doc' : 'code'} size={15} /><span>{nameOf(s)}</span>
                 </button>
               ))}
             </div>
@@ -86,13 +89,21 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
     )
   }
 
-  const switcher = sources.length > 0 || linkedItem ? (
-    <Select className="np-switch" label="Documento de apuntes" value={linkedItem ? linked : 'own'} placeholder="Apuntes"
-      options={[{ value: 'own', label: 'Apuntes de este ' + (kind === 'topic' ? 'tema' : 'práctica') }, ...sources.map((s) => ({ value: s.id, label: s.name })), ...(linkedItem && !sources.some((s) => s.id === linked) ? [{ value: linked, label: linkedItem.name }] : [])]}
-      onChange={(v) => (v === 'own' ? unlink() : follow(v, true))} />
-  ) : null
+  const shown = linkedItem ?? item // el documento que se está viendo
+  const rename = (name) => { update((d) => ({ ...d, notesName: { ...(d.notesName ?? {}), [shown.id]: name } })); setRenaming(false) }
+  const switcher = (
+    <>
+      {sources.length > 0 || linkedItem ? (
+        <Select className="np-switch" label="Documento de apuntes" value={linkedItem ? linked : 'own'} placeholder="Apuntes"
+          options={[{ value: 'own', label: data.notesName?.[item.id] || 'Apuntes de este ' + (kind === 'topic' ? 'tema' : 'práctica') }, ...sources.map((s) => ({ value: s.id, label: nameOf(s) })), ...(linkedItem && !sources.some((s) => s.id === linked) ? [{ value: linked, label: nameOf(linkedItem) }] : [])]}
+          onChange={(v) => (v === 'own' ? unlink() : follow(v, true))} />
+      ) : <span className="np-switch np-name">{nameOf(item)}</span>}
+      <button type="button" className="icon-btn np-rename" onClick={() => setRenaming(true)} aria-label="Cambiar el nombre de los apuntes" title="Cambiar el nombre de los apuntes"><Icon name="pen" size={16} /></button>
+      {renaming && <NameDialog title="Nombre de los apuntes" initial={nameOf(shown)} placeholder="Apuntes del tema" onSubmit={rename} onClose={() => setRenaming(false)} />}
+    </>
+  )
 
-  const shareName = linkedItem ? linkedItem.name : item.name
+  const shareName = nameOf(shown)
   return (
     <BlockEditor key={docId} appendRef={notesIn} scrollToId={linkedItem ? data.notesAnchor?.[item.id] : null}
       exportAs={{ title: shareName, subtitle: `${subject.short} · ${unit.name}` }} label={label} value={current}
