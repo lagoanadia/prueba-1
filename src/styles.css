@@ -4518,3 +4518,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tk-editing { background: #FFFFFF !important; box-shadow: inset 0 0 0 2px var(--blue); }
 .tk-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .tk-edit input { flex: 1; min-width: 140px; border: 0; background: transparent; font: inherit; font-size: 14px; outline: none; padding: 4px 6px; }
+/* Lista de temas: el nombre ocupa una línea y se corta con «…» donde ya no cabe; los iconos de editar y borrar flotan encima sin mover nada */
+.tp-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-row .tp-pen-row, .tp-row .tp-del { position: absolute; top: 50%; transform: translateY(-50%); display: flex; opacity: 0; pointer-events: none; background: #FFFFFF; border-radius: 50%; box-shadow: 0 1px 4px rgba(60, 64, 67, .22); }
+.tp-row .tp-pen-row { right: 36px; } .tp-row .tp-del { right: 6px; }
+.tp-row:hover .tp-pen-row, .tp-row:hover .tp-del, .tp-row .tp-pen-row:focus-visible, .tp-row .tp-del:focus-visible { opacity: 1; pointer-events: auto; }
+/* Barras de los documentos (nombre del PDF y de los apuntes): ocultas y salen al pasar por encima, sin mover el contenido */
+.file-frame { position: relative; }
+.file-frame:has(.pdfp) > .file-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 6; background: linear-gradient(#FFFFFF 78%, rgba(255, 255, 255, 0)); border-bottom: 0; opacity: 0; pointer-events: none; transition: opacity .18s; }
+.file-frame:has(.pdfp):hover > .file-bar, .file-frame:has(.pdfp) > .file-bar:focus-within { opacity: 1; pointer-events: auto; }
+.blocks-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 6; border-bottom: 0; pointer-events: none; padding-bottom: 14px; transition: background .18s; }
+.blocks-bar > :not(.doc-status) { opacity: 0; pointer-events: none; transition: opacity .18s; }
+.blocks:hover > .blocks-bar { background: linear-gradient(#FFFFFF 70%, rgba(255, 255, 255, 0)); }
+.blocks:hover > .blocks-bar > :not(.doc-status), .blocks-bar:focus-within > * { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .file-frame:has(.pdfp) > .file-bar, .blocks-bar, .blocks-bar > :not(.doc-status) { transition: none; } }
