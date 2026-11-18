@@ -9,12 +9,14 @@ import Deliveries from './Deliveries.jsx'
 import QuickNote from './QuickNote.jsx'
 import Schedule from './Schedule.jsx'
 import Tools from './Tools.jsx'
+import Tasks from './Tasks.jsx'
 
 const DEFAULT_BLOCKS = [
   { id: 'entregas', type: 'entregas', span: 1 },
   { id: 'examenes', type: 'examenes', span: 1 },
   { id: 'tools', type: 'tools', span: 1 },
   { id: 'note-1', type: 'note', span: 1 },
+  { id: 'tareas', type: 'tareas', span: 3 },
   { id: 'schedule', type: 'schedule', span: 3 },
 ]
 /** Ancho (1-3 columnas) del primer hueco libre del tablero; si no hay hueco, una fila entera. */
@@ -29,8 +31,8 @@ export function freeSpan(blocks) {
   return col > 0 ? 3 - col : 3
 }
 
-const LABELS = { entregas: 'Próximas entregas', examenes: 'Exámenes', tools: 'Herramientas', schedule: 'Horario' }
-const ICONS = { entregas: 'doc', examenes: 'exam', tools: 'link', schedule: 'clock' }
+const LABELS = { entregas: 'Próximas entregas', examenes: 'Exámenes', tareas: 'Tareas', tools: 'Herramientas', schedule: 'Horario' }
+const ICONS = { entregas: 'doc', examenes: 'exam', tareas: 'check', tools: 'link', schedule: 'clock' }
 
 /**
  * Planificador de estudios: asignaturas arriba y debajo bloques que se pueden personalizar
@@ -51,6 +53,16 @@ export default function Planner({ data, update, openSubject }) {
       const hasExam = (d.assignments ?? []).some((a) => a.kind === 'examen')
       const next = hasExam && !cur.some((b) => b.type === 'examenes') ? [...cur, { id: 'examenes', type: 'examenes', span: 1 }] : cur
       return { ...d, planner: { ...(d.planner ?? {}), blocks: next, examsMigrated: true } }
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Las tareas por asignatura son un bloque nuevo: a quien ya tenía el tablero guardado se le añade una sola vez
+  useEffect(() => {
+    if (data.planner?.tareasAdded) return
+    update((d) => {
+      const cur = d.planner?.blocks ?? DEFAULT_BLOCKS
+      const next = cur.some((b) => b.type === 'tareas') ? cur : [...cur, { id: 'tareas', type: 'tareas', span: 3 }]
+      return { ...d, planner: { ...(d.planner ?? {}), blocks: next, tareasAdded: true } }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -77,6 +89,7 @@ export default function Planner({ data, update, openSubject }) {
   const render = (b) => {
     if (b.type === 'entregas') return <Deliveries data={data} update={update} subjects={subjects} />
     if (b.type === 'examenes') return <Deliveries data={data} update={update} subjects={subjects} exams />
+    if (b.type === 'tareas') return <Tasks data={data} update={update} subjects={subjects} />
     if (b.type === 'tools') return <Tools data={data} update={update} />
     if (b.type === 'schedule') return <Schedule data={data} update={update} subjects={subjects} />
     const note = data.quickNotes?.[b.id] ?? { html: '' }
