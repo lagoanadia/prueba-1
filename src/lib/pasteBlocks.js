@@ -30,15 +30,27 @@ function inline(node) {
 const clean = (h) => sanitize(h).replace(/^(\s|<br>)+|(\s|<br>)+$/g, '').trim()
 const plainOf = (n) => (n.textContent || '').replace(/ /g, ' ').trim()
 
-function tableOf(t) {
-  const rows = [...t.querySelectorAll('tr')].filter((tr) => tr.closest('table') === t).map((tr) => [...tr.children].filter((c) => c.tagName === 'TD' || c.tagName === 'TH').flatMap((c) => {
-    const span = Math.min(Number(c.getAttribute('colspan')) || 1, 6)
-    const h = clean(inline(c).replace(/(<br>\s*)+$/g, ''))
-    return [h, ...Array(span - 1).fill('')]
-  })).filter((r) => r.length)
+function tableOf(t, extra = []) {
+  // varias tablas pegadas seguidas (cabecera y cuerpo por separado) se unen en una
+  const trs = [t, ...extra].flatMap((tb) => [...tb.querySelectorAll('tr')].filter((tr) => tr.closest('table') === tb))
+  const rows = trs.map((tr) => {
+    const cells = [...tr.children].filter((c) => c.tagName === 'TD' || c.tagName === 'TH')
+    return { rowHead: cells[0]?.tagName === 'TH' && cells.length > 1, cells: cells.flatMap((c) => {
+      const span = Math.min(Number(c.getAttribute('colspan')) || 1, 6)
+      const h = clean(inline(c).replace(/(<br>\s*)+$/g, ''))
+      return [h, ...Array(span - 1).fill('')]
+    }) }
+  }).filter((r) => r.cells.length)
   if (!rows.length) return null
-  const cols = Math.max(...rows.map((r) => r.length))
-  return { type: 'table', rows: rows.map((r) => [...r, ...Array(cols - r.length).fill('')]) }
+  const cols = Math.max(...rows.map((r) => r.cells.length))
+  // una celda vacía al principio de la cabecera que se ha perdido al copiar: se rellena por la izquierda (no por la derecha)
+  const bodyHead = rows.slice(1).some((r) => r.cells.length === cols && r.rowHead)
+  const fix = (r, i) => {
+    const gap = cols - r.cells.length
+    if (!gap) return r.cells
+    return i === 0 && bodyHead ? [...Array(gap).fill(''), ...r.cells] : [...r.cells, ...Array(gap).fill('')]
+  }
+  return { type: 'table', rows: rows.map(fix) }
 }
 
 function walk(node, out, para) {
@@ -48,7 +60,14 @@ function walk(node, out, para) {
     if (n.nodeType !== 1 || SKIP.has(n.tagName)) return
     const tag = n.tagName
     if (/^H[1-6]$/.test(tag)) { flush(); const h = clean(inline(n)); if (h) out.push({ type: `h${Math.min(Number(tag[1]), 3)}`, html: h }); return }
-    if (tag === 'TABLE') { flush(); const t = tableOf(n); if (t) out.push(t); return }
+    if (tag === 'TABLE') {
+      flush()
+      if (n.dataset.merged) return
+      // tablas hermanas contiguas se unen en una
+      const extra = []
+      for (let nx = n.nextElementSibling; nx && nx.tagName === 'TABLE'; nx = nx.nextElementSibling) { extra.push(nx); nx.dataset.merged = '1' }
+      const t = tableOf(n, extra); if (t) out.push(t); return
+    }
     if (tag === 'UL' || tag === 'OL') {
       flush()
       const kind = tag === 'OL' ? 'numbered' : 'bullet'
