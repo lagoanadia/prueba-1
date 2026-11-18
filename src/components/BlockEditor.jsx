@@ -346,6 +346,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   // Texto que llega de fuera (seleccionado en el PDF): se añade al final como un párrafo
   if (appendRef) {
     appendRef.current = (payload) => {
+      hist.current.t = 0 // lo que llega del PDF es siempre un paso propio de Ctrl+Z (aunque acabes de escribir)
       const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
       const one = (p) => {
         if (p.type === 'table') return [{ ...newBlock('table'), rows: p.rows }]

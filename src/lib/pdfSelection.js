@@ -56,6 +56,10 @@ export function tablesFromLines(slice, lefts) {
   // Tarjetas: bandas separadas por huecos grandes
   const bands = []
   slice.forEach((_, k) => { if (!bands.length || gap(k)) bands.push([]); bands[bands.length - 1].push(k) })
+  // Cabecera de una sola línea y luego filas con celdas de varias líneas: es una tabla normal (una fila por banda), no tarjetas
+  if (bands.length >= 2 && bands[0].length === 1) {
+    return [bands.map((ks) => Array.from({ length: cols }, (_, c) => ks.map((k) => rows[k][c]).filter((x) => x != null).join(' ')))]
+  }
   const tables = []
   let plain = null
   for (const ks of bands) {
