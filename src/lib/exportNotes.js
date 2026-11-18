@@ -66,6 +66,9 @@ ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, 
 .x-sheet ul, .x-sheet ol { margin: 0; padding-left: 20px; }`
 }
 
+/** Celda de tabla: con formato si la tabla es nueva, texto plano si es antigua */
+const cellHtml = (b, c) => (b.rich ? c ?? '' : esc(c))
+
 /** Cada bloque → su HTML. `n` = número en una lista numerada; `imgs` = id de archivo → data URL. */
 export function blockHtml(b, n, imgs) {
   const rich = (h) => h || ''
@@ -81,7 +84,7 @@ export function blockHtml(b, n, imgs) {
     case 'table': {
       const rows = b.rows ?? []
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
-      return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
+      return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""></div>` : ''
     case 'link': return b.url ? `<div class="x-b x-link"><a href="${esc(b.url)}">${esc(b.title || b.url)}</a>${b.title ? `<span>${esc(b.url)}</span>` : ''}</div>` : ''

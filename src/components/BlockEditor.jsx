@@ -28,7 +28,7 @@ const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEX
 let DRAGGING = null
 const plainHtml = (h) => String(h ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 /** Texto plano de un bloque (para copiar) */
-const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.join('\t')).join('\n') : b.type === 'code' ? b.code ?? '' : b.type === 'link' ? b.url ?? '' : plainHtml(b.html))
+const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.map((c) => (b.rich ? plainHtml(c) : c)).join('\t')).join('\n') : b.type === 'code' ? b.code ?? '' : b.type === 'link' ? b.url ?? '' : plainHtml(b.html))
 
 /**
  * Editor de documentos por bloques (estilo Notion).

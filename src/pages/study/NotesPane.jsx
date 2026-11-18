@@ -33,28 +33,32 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
   const docId = linkedItem ? linked : item.id
   const current = linkedItem ? docOf(linkedItem) : ownDoc
 
-  const setLink = (srcId, anchor) => update((d) => {
-    const link = { ...(d.notesLink ?? {}) }
-    const anc = { ...(d.notesAnchor ?? {}) }
-    if (srcId) link[item.id] = srcId; else delete link[item.id]
-    if (anchor) anc[item.id] = anchor; else delete anc[item.id]
-    return { ...d, notesLink: link, notesAnchor: anc }
-  })
-
-  // Seguir un documento: se añade al final un título con el nombre del tema (y un hueco para escribir) y se enlaza
-  const follow = () => {
-    const from = all.find((x) => x.id === src)
+  // Seguir un documento: se añade al final un título con el nombre del tema (y un hueco para escribir) y se enlaza.
+  // Si ese documento ya tiene el título de este tema (porque ya se siguió antes), se reutiliza y no se duplica.
+  const follow = (srcId, titled = true) => {
+    const from = all.find((x) => x.id === srcId)
     if (!from) return
-    let anchor = null
     update((d) => {
       const base = toBlocks(d.notes?.[from.id] ?? from.doc)
-      const trimmed = base.length && base[base.length - 1].type === 'text' && !plain(base[base.length - 1].html) ? base.slice(0, -1) : base
-      const extra = withTitle ? [newBlock('h1', esc(item.name)), newBlock()] : []
-      anchor = withTitle ? extra[0].id : null
-      const notes = { ...(d.notes ?? {}), [from.id]: toDoc([...trimmed, ...(extra.length ? extra : [newBlock()])]) }
-      return { ...d, notes, notesLink: { ...(d.notesLink ?? {}), [item.id]: from.id }, notesAnchor: anchor ? { ...(d.notesAnchor ?? {}), [item.id]: anchor } : (d.notesAnchor ?? {}) }
+      const existing = base.find((x) => x.type === 'h1' && plain(x.html) === item.name)
+      let anchor = existing?.id ?? null
+      let blocks = base
+      if (!existing && titled) {
+        const trimmed = base.length && base[base.length - 1].type === 'text' && !plain(base[base.length - 1].html) ? base.slice(0, -1) : base
+        const extra = [newBlock('h1', esc(item.name)), newBlock()]
+        anchor = extra[0].id
+        blocks = [...trimmed, ...extra]
+      }
+      const anc = { ...(d.notesAnchor ?? {}) }
+      if (anchor) anc[item.id] = anchor; else delete anc[item.id]
+      return { ...d, notes: blocks === base ? (d.notes ?? {}) : { ...(d.notes ?? {}), [from.id]: toDoc(blocks) }, notesLink: { ...(d.notesLink ?? {}), [item.id]: from.id }, notesAnchor: anc }
     })
   }
+  const unlink = () => update((d) => {
+    const link = { ...(d.notesLink ?? {}) }; const anc = { ...(d.notesAnchor ?? {}) }
+    delete link[item.id]; delete anc[item.id]
+    return { ...d, notesLink: link, notesAnchor: anc }
+  })
 
   const choosing = !linkedItem && data.notes?.[item.id] === undefined && !item.doc && sources.length > 0 && !skipped
   if (choosing) {
@@ -77,7 +81,7 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
             <label className="np-opt"><input type="checkbox" checked={withTitle} onChange={(e) => setWithTitle(e.target.checked)} />Empezar con un título al final del documento</label>
           </>
         )}
-        <button type="button" className="btn-primary np-go" disabled={mode === 'use' && !src} onClick={() => (mode === 'use' ? follow() : setSkipped(true))}>{mode === 'use' ? 'Seguir aquí' : 'Empezar'}<span className="btn-arrow"><Icon name="arrow" size={16} strokeWidth={2.6} /></span></button>
+        <button type="button" className="btn-primary np-go" disabled={mode === 'use' && !src} onClick={() => (mode === 'use' ? follow(src, withTitle) : setSkipped(true))}>{mode === 'use' ? 'Seguir aquí' : 'Empezar'}<span className="btn-arrow"><Icon name="arrow" size={16} strokeWidth={2.6} /></span></button>
       </div>
     )
   }
@@ -85,7 +89,7 @@ export default function NotesPane({ item, kind, unit, subject, data, update, not
   const switcher = sources.length > 0 || linkedItem ? (
     <Select className="np-switch" label="Documento de apuntes" value={linkedItem ? linked : 'own'} placeholder="Apuntes"
       options={[{ value: 'own', label: 'Apuntes de este ' + (kind === 'topic' ? 'tema' : 'práctica') }, ...sources.map((s) => ({ value: s.id, label: s.name })), ...(linkedItem && !sources.some((s) => s.id === linked) ? [{ value: linked, label: linkedItem.name }] : [])]}
-      onChange={(v) => setLink(v === 'own' ? null : v, null)} />
+      onChange={(v) => (v === 'own' ? unlink() : follow(v, true))} />
   ) : null
 
   const shareName = linkedItem ? linkedItem.name : item.name

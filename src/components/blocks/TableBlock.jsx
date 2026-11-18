@@ -1,5 +1,21 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
+import { sanitize } from '../../lib/richText.js'
+
+const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+const textOf = (h) => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent ?? '' }
+
+/** Celda con formato (negrita, cursiva, subrayado con Ctrl+B / I / U). Solo reescribe su contenido cuando cambia desde fuera. */
+function Cell({ html, onChange, onKeyDown, label, minH, cellRef }) {
+  const ref = useRef(null)
+  useEffect(() => { if (ref.current && ref.current.innerHTML !== html) ref.current.innerHTML = html }, [html])
+  return (
+    <div ref={(el) => { ref.current = el; if (cellRef) cellRef(el) }} className="tb-cell" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" aria-label={label}
+      style={minH ? { minHeight: minH } : undefined}
+      onInput={(e) => onChange(sanitize(e.currentTarget.innerHTML))} onKeyDown={onKeyDown}
+      onPaste={(e) => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')) }} spellCheck />
+  )
+}
 
 const MIN_COL = 70 // ancho mínimo de una columna (px)
 const MIN_ROW = 36
@@ -10,16 +26,19 @@ const MAX_ROW = 420
  * Los bordes de columnas y filas se arrastran para darles el tamaño que quieras (con un mínimo y un máximo);
  * doble clic en un borde vuelve al tamaño automático. Se guarda en `colW` (fracciones) y `rowH` (px).
  */
+const caretStart = (el) => { const sel = window.getSelection(); if (!sel?.rangeCount || !sel.isCollapsed || !el.contains(sel.anchorNode)) return false; const r = sel.getRangeAt(0).cloneRange(); r.selectNodeContents(el); r.setEnd(sel.anchorNode, sel.anchorOffset); return r.toString().length === 0 }
+
 export default function TableBlock({ block, onChange, focus, onFocused }) {
-  const rows = block.rows ?? [['']]
+  // Las celdas guardan HTML con formato (block.rich). Las tablas antiguas guardaban texto plano: se leen escapadas y se convierten al primer cambio.
+  const asHtml = (v) => (block.rich ? v ?? '' : esc(v).replace(/\n/g, '<br>'))
+  const rows = (block.rows ?? [['']]).map((r) => r.map(asHtml))
   const first = useRef(null)
   const wrap = useRef(null)
   const [live, setLive] = useState(null) // { colW?, rowH? } mientras se arrastra un borde
   const [tw, setTw] = useState(0) // ancho disponible de la tabla (px)
   useEffect(() => { if (focus) { first.current?.focus(); onFocused?.() } }, [focus])
   // Las celdas crecen con su texto: nada se corta (se reajusta al escribir, al cambiar el ancho y al cargar)
-  const fit = () => wrap.current?.querySelectorAll('textarea').forEach((t) => { t.style.height = 'auto'; t.style.height = `${Math.max(t.scrollHeight, Number(t.dataset.rh) || 0)}px` })
-  useLayoutEffect(fit)
+  const fit = () => {} // las celdas crecen solas con su texto
   useEffect(() => {
     const el = wrap.current
     if (!el) return undefined
@@ -32,10 +51,10 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
   const colW = live?.colW ?? block.colW
   const rowH = live?.rowH ?? block.rowH
   const widths = colW && colW.length === cols ? colW : Array(cols).fill(1 / cols)
-  const set = (r) => onChange({ ...block, rows: r })
+  const set = (r) => onChange({ ...block, rich: true, rows: r })
   const cell = (r, c, v) => set(rows.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row)))
   const addRow = () => set([...rows, Array(cols).fill('')])
-  const addCol = () => onChange({ ...block, colW: undefined, rows: rows.map((r) => [...r, '']) })
+  const addCol = () => onChange({ ...block, rich: true, colW: undefined, rows: rows.map((r) => [...r, '']) })
   // Retroceso al principio de una celda: su texto sube a la celda de arriba (y la fila se quita si se queda vacía)
   const joinUp = (i, j) => {
     const up = rows[i - 1][j]
@@ -43,12 +62,21 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
     const merged = up && down ? `${up} ${down}` : up || down
     let next = rows.map((row, r) => (r === i - 1 ? row.map((x, c) => (c === j ? merged : x)) : r === i ? row.map((x, c) => (c === j ? '' : x)) : row))
     let rh = rowH
-    if (next[i].every((x) => !x.trim()) && rows.length > 2) { next = next.filter((_, r) => r !== i); rh = rowH?.filter((_, r) => r !== i) }
-    onChange({ ...block, rowH: rh, rows: next })
-    setTimeout(() => { const t = wrap.current?.querySelectorAll('tr')[i - 1]?.querySelectorAll('textarea')[j]; if (t) { t.focus(); t.setSelectionRange(up.length, up.length) } }, 30)
+    if (next[i].every((x) => !textOf(x).trim()) && rows.length > 2) { next = next.filter((_, r) => r !== i); rh = rowH?.filter((_, r) => r !== i) }
+    onChange({ ...block, rich: true, rowH: rh, rows: next })
+    const at = textOf(up).length
+    setTimeout(() => { // el cursor queda en la unión
+      const t = wrap.current?.querySelectorAll('tr')[i - 1]?.querySelectorAll('.tb-cell')[j]
+      if (!t) return
+      t.focus()
+      const w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT); let left = at; let n
+      const r = document.createRange(); r.selectNodeContents(t); r.collapse(false)
+      while ((n = w.nextNode())) { if (left <= n.length) { r.setStart(n, left); r.collapse(true); break } left -= n.length }
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r)
+    }, 30)
   }
-  const delRow = (i) => rows.length > 1 && onChange({ ...block, rowH: rowH?.filter((_, k) => k !== i), rows: rows.filter((_, k) => k !== i) })
-  const delCol = (j) => cols > 1 && onChange({ ...block, colW: undefined, rows: rows.map((r) => r.filter((_, k) => k !== j)) })
+  const delRow = (i) => rows.length > 1 && onChange({ ...block, rich: true, rowH: rowH?.filter((_, k) => k !== i), rows: rows.filter((_, k) => k !== i) })
+  const delCol = (j) => cols > 1 && onChange({ ...block, rich: true, colW: undefined, rows: rows.map((r) => r.filter((_, k) => k !== j)) })
 
   // Arrastrar el borde derecho de la columna j: se reparte entre ella y la siguiente
   const dragCol = (e, j) => {
@@ -102,8 +130,12 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
             <tr key={i} style={rowH?.[i] ? { height: rowH[i] } : undefined}>
               {row.map((v, j) => (
                 <td key={j} className={i === 0 ? 'is-head' : ''}>
-                  <textarea ref={i === 0 && j === 0 ? first : null} rows={1} data-rh={rowH?.[i] ? rowH[i] - 4 : undefined} value={v} onChange={(e) => cell(i, j, e.target.value)} aria-label={`Fila ${i + 1}, columna ${j + 1}`}
-                    onKeyDown={(e) => { if (e.key === 'Backspace' && i > 0 && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); joinUp(i, j) } else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (i === rows.length - 1 && j === cols - 1) addRow() } }} />
+                  <Cell cellRef={i === 0 && j === 0 ? (el) => { first.current = el } : null} html={v} minH={rowH?.[i] ? rowH[i] - 4 : undefined} label={`Fila ${i + 1}, columna ${j + 1}`} onChange={(h) => cell(i, j, h)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace' && i > 0 && caretStart(e.currentTarget)) { e.preventDefault(); joinUp(i, j) }
+                      else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (i === rows.length - 1 && j === cols - 1) addRow() }
+                      else if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak') }
+                    }} />
                   {j < cols - 1 && <span className="tb-rz tb-rz-c" onPointerDown={(e) => dragCol(e, j)} onDoubleClick={resetCols} title="Arrastra para cambiar el ancho (doble clic: automático)" />}
                   <span className="tb-rz tb-rz-r" onPointerDown={(e) => dragRow(e, i)} onDoubleClick={() => resetRow(i)} title="Arrastra para cambiar el alto (doble clic: automático)" />
                   {i === 0 && cols > 1 && <button className="tb-x tb-x-col" onClick={() => delCol(j)} aria-label={`Quitar la columna ${j + 1}`}><Icon name="close" size={12} /></button>}

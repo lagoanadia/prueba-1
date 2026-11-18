@@ -4289,3 +4289,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .np-opt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #3C4043; margin: 2px 4px; }
 .np-go { align-self: center; flex: none; width: auto; height: auto; margin-top: 4px; gap: 12px; padding: 10px 14px 10px 24px; }
 .np-switch { max-width: 260px; margin-right: auto; }
+/* Celdas de tabla con formato (antes eran textarea) */
+.tb td .tb-cell { display: block; width: 100%; min-height: 100%; padding: 9px 12px; outline: none; line-height: 1.4; white-space: pre-wrap; overflow-wrap: break-word; font: inherit; font-weight: inherit; }
+.tb td .tb-cell:focus { background: #EEF4FF; }
+.tb td.is-head .tb-cell { font-weight: 700; }
+.tb td .tb-cell b, .tb td .tb-cell strong { font-weight: 800; }
