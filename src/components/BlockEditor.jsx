@@ -422,6 +422,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const text = el.textContent
     const sc = b.type === 'text' && SHORTCUTS.find(([re]) => re.test(text))
     if (sc) { el.innerHTML = ''; setMenu(null); patch(b.id, { type: sc[1], html: '', ...(sc[1] === 'todo' ? { checked: false } : {}) }); return }
+    // Marca puesta DELANTE de un texto que ya existe («## » antes de un título…): el bloque cambia de tipo y se queda el resto del texto
+    if (e.nativeEvent?.data === ' ' && TEXTY.includes(b.type) && b.type !== 'callout') {
+      const m = text.match(/^(#{1,3}|[-*]|>|1\.|\[\])\s(?=\S)/)
+      const kind = m && { '#': 'h1', '##': 'h2', '###': 'h3', '-': 'bullet', '*': 'bullet', '>': 'quote', '1.': 'numbered', '[]': 'todo' }[m[1]]
+      const first = el.firstChild
+      const sel = window.getSelection()
+      if (kind && kind !== b.type && first?.nodeType === 3 && sel?.anchorNode === first && sel.anchorOffset === m[0].length && first.textContent.startsWith(m[0])) {
+        first.textContent = first.textContent.slice(m[0].length)
+        setMenu(null)
+        patch(b.id, { type: kind, html: sanitize(el.innerHTML), ...(kind === 'todo' ? { checked: false } : {}) })
+        const r = document.createRange(); r.setStart(first, 0); r.collapse(true); sel.removeAllRanges(); sel.addRange(r)
+        return
+      }
+    }
     // «+» o «/» al empezar abre el menú de bloques
     if ((text.startsWith('/') || text.startsWith('+')) && TEXTY.includes(b.type)) {
       const r = el.getBoundingClientRect()
