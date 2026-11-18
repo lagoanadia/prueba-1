@@ -4215,7 +4215,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .blocks-page.nested { flex: none; overflow: visible; padding: 2px 4px 2px 54px; cursor: text; font-size: inherit; }
 .blocks-page.nested .blocks-tail { min-height: 0; }
 .blocks-page.nested .block-gap { height: 4px; }
-.box-wrap .bt-table table, .box-wrap .tb-wrap { background: #FFFFFF; }
 /* Varios bloques marcados */
 .block-slot.is-picked { background: rgba(49, 133, 252, .16); border-radius: 8px; }
 .blocks-page.is-picking, .blocks-page.is-picking * { user-select: none; cursor: default; }
@@ -4236,3 +4235,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .di-it { border: 0; background: none; text-align: left; font: 500 13px Poppins, sans-serif; color: var(--text); padding: 6px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .di-it:hover { background: var(--soft); } .di-it.on { background: #FFF1B8; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .doc-index:hover .di-pop, .doc-index:focus-within .di-pop { animation: none; } }
+/* Tabla dentro de un Post-it: sin blanco; cabecera en amarillo fuerte, resto del color del post-it y líneas en amarillo fuerte */
+.box-wrap .tb-wrap { background: transparent; }
+.box-wrap .tb { background: transparent; }
+.box-wrap .tb td, .box-wrap .tb th { border-color: #F2B705; }
+.box-wrap .tb td { background: transparent; }
+.box-wrap .tb td.is-head { background: #FFE07A; }
+.box-wrap .tb td.tb-end { border: none; }
+.box-wrap .tb-add button { background: #FFF1B8; border-color: #F2B705; }
