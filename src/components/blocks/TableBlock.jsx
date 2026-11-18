@@ -147,7 +147,7 @@ export default function TableBlock({ block, onChange, focus, onFocused }) {
           ))}
         </tbody>
       </table>
-      <button type="button" className="tb-addcol" style={{ right: (rows.length > 1 ? END : 0) - 22 }} onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
+      <button type="button" className="tb-addcol" style={{ right: (rows.length > 1 ? END : 0) - 22.5 }} onClick={addCol} aria-label="Añadir columna" title="Añadir columna"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
       <button type="button" className="tb-addrow" style={{ right: rows.length > 1 ? END : 0 }} onClick={addRow} aria-label="Añadir fila" title="Añadir fila"><Icon name="plus" size={14} strokeWidth={2.4} /></button>
     </div>
   )

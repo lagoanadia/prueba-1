@@ -4427,3 +4427,20 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .box-wrap { padding: 20px 14px 20px 0; }
 .blocks-page.nested > .block-slot + .block-slot { margin-top: 20px; }
 .box-wrap .tb-addrow { bottom: -15px; }
+/* Las barras de añadir fila (abajo) y columna (lado): mismo grosor, mismo hueco con la tabla y mismo icono */
+.tb-addcol, .tb-addrow { border-radius: 9px; }
+.tb-addcol { width: 18px; }
+.tb-addrow, .box-wrap .tb-addrow { height: 18px; bottom: -22px; border-radius: 9px; }
+.box-wrap .tb-addrow svg { width: 14px; height: 14px; }
+/* Los iconos de las barras de añadir fila y columna, del mismo tamaño */
+.tb-wrap .tb-addcol svg, .tb-wrap .tb-addrow svg { width: 15px; height: 15px; }
+/* Barra de arriba de los apuntes ordenada: a la izquierda el nombre y el lápiz; a la derecha estado, PDF y Compartir, todo a la misma altura */
+.blocks-bar { gap: 8px; align-items: center; justify-content: flex-start; }
+.blocks-bar > * { flex: none; }
+.blocks-bar .np-switch, .blocks-bar .np-name { order: 0; }
+.blocks-bar .np-rename { order: 1; margin-right: 0; }
+.blocks-bar .doc-status { order: 2; margin-left: auto; }
+.blocks-bar .pill-sm { order: 3; }
+.blocks-bar .pill-sm, .blocks-bar .doc-status, .blocks-bar .sel, .blocks-bar .np-rename { height: 32px; display: inline-flex; align-items: center; }
+.blocks-bar .np-rename { width: 32px; justify-content: center; padding: 0; }
+.blocks-bar .pill-sm { padding-top: 0; padding-bottom: 0; gap: 6px; }
