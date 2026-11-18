@@ -4208,3 +4208,20 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cal-bday { border: 0; border-radius: 99px; padding: 5px 12px; background: var(--soft); font: 500 13px Poppins, sans-serif; color: var(--text); cursor: pointer; transition: transform .15s var(--ease), background .15s; }
 .cal-bday b { font-weight: 700; margin-left: 4px; } .cal-bday:hover { background: color-mix(in srgb, #F6A6C1 35%, #FFFFFF); } .cal-bday:active { transform: scale(.96); }
 .cal-bday.is-today { background: #FCE0EA; }
+/* Recuadro: caja amarilla con barra lateral donde caben otros bloques */
+.block-body.bt-box { display: block; }
+.box-wrap { width: 100%; border-left: 5px solid #F2B705; background: #FFF1B8; border-radius: 6px 16px 16px 6px; padding: 6px 12px 6px 0; }
+.blocks-nested { width: 100%; }
+.blocks-page.nested { flex: none; overflow: visible; padding: 2px 4px 2px 54px; cursor: text; font-size: inherit; }
+.blocks-page.nested .blocks-tail { min-height: 0; }
+.blocks-page.nested .block-gap { height: 4px; }
+.box-wrap .bt-table table, .box-wrap .tb-wrap { background: #FFFFFF; }
+/* Varios bloques marcados */
+.block-slot.is-picked { background: rgba(49, 133, 252, .16); border-radius: 8px; }
+.blocks-page.is-picking, .blocks-page.is-picking * { user-select: none; cursor: default; }
+.sel-bar { position: absolute; right: 6px; top: -38px; z-index: 6; display: flex; gap: 2px; padding: 4px; background: #202124; border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); animation: sel-in .18s cubic-bezier(.2, 1.2, .35, 1) both; }
+.sel-bar button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; color: #FFFFFF; font: 600 12.5px Poppins, sans-serif; padding: 5px 10px; border-radius: 10px; cursor: pointer; }
+.sel-bar button:hover { background: rgba(255, 255, 255, .16); }
+.sel-bar svg { stroke: currentColor; }
+@media (prefers-reduced-motion: reduce) { .sel-bar { animation: none; } }
+.sel-bar.in { top: 4px; }

@@ -12,6 +12,7 @@ export const BLOCK_TYPES = [
   { type: 'todo', label: 'Tareas', icon: 'check', hint: 'tareas casillas checklist []' },
   { type: 'quote', label: 'Cita', icon: 'note', hint: 'cita quote >' },
   { type: 'callout', label: 'Destacado', icon: 'marker', hint: 'destacado idea clave aviso' },
+  { type: 'box', label: 'Recuadro', icon: 'doc', hint: 'recuadro caja nota contenedor amarillo' },
   { type: 'code', label: 'Código', icon: 'code', hint: 'codigo code programa' },
   { type: 'table', label: 'Tabla', icon: 'table', hint: 'tabla table filas columnas' },
   { type: 'image', label: 'Foto', icon: 'img', hint: 'foto imagen image picture' },
@@ -23,6 +24,7 @@ const savedTheme = () => { try { return localStorage.getItem('codeTheme') || 'no
 export const newBlock = (type = 'text', html = '') => ({
   id: crypto.randomUUID(), type, html,
   ...(type === 'todo' ? { checked: false } : {}),
+  ...(type === 'box' ? { blocks: [newBlock()] } : {}),
   ...(type === 'table' ? { rows: [['', '', ''], ['', '', '']] } : {}),
   ...(type === 'image' ? { file: null } : {}),
   ...(type === 'link' ? { url: '', title: '' } : {}),

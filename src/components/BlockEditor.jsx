@@ -22,7 +22,11 @@ const filterTypes = (text) => {
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
-const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
+const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
+
+const plainHtml = (h) => String(h ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+/** Texto plano de un bloque (para copiar) */
+const plainOf = (b) => (b.type === 'box' ? (b.blocks ?? []).map(plainOf).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.join('\t')).join('\n') : b.type === 'code' ? b.code ?? '' : b.type === 'link' ? b.url ?? '' : plainHtml(b.html))
 
 /**
  * Editor de documentos por bloques (estilo Notion).
@@ -33,7 +37,7 @@ const isEmpty = (b) => (TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'co
  * `value` = lo guardado; `onChange(doc)` guarda; `bar` = botones extra para la barra (p. ej. Compartir).
  * Cambia la `key` para abrir otro documento.
  */
-export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null }) {
+export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null }) {
   const [blocks, setBlocks] = useState(() => toBlocks(value))
   const [focusId, setFocusId] = useState(null)
   const lastId = useRef(null) // último bloque donde tuviste el cursor
@@ -45,6 +49,10 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const [rowI, setRowI] = useState(0)
   const [rowUp, setRowUp] = useState(false) // el menú se abre hacia arriba si el asa está en la parte baja
   const refs = useRef({})
+  const [sel, setSel] = useState([]) // ids de los bloques marcados (arrastrando por varios o con Mayús + clic)
+  const [picking, setPicking] = useState(false)
+  const dragSel = useRef(null)
+  const live = useRef({})
   const pageRef = useRef(null)
 
   const commit = (next) => { setBlocks(next); onChange(toDoc(next)) }
@@ -87,6 +95,11 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const convert = (id, type) => {
     const cur = blocks.find((b) => b.id === id)
     if (!cur || cur.type === type) { setRowMenu(null); return }
+    if (type === 'box' && cur.type !== 'box') { // el bloque entra dentro de un recuadro
+      commit(blocks.map((b) => (b.id === id ? { ...newBlock('box'), blocks: [b] } : b)))
+      setRowMenu(null)
+      return
+    }
     if (CONVERTIBLE.includes(cur.type) && CONVERTIBLE.includes(type)) {
       // texto ↔ títulos, listas, tareas, cita, destacado y código: el texto se conserva
       commit(blocks.map((b) => {
@@ -109,8 +122,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const toText = (id) => commit(blocks.map((b) => (b.id === id ? { id, type: 'text', html: '' } : b)))
 
   // Al escribir tras «+» o «/» se quedan solo los tipos cuya palabra empieza por lo escrito (primero los del nombre)
-  const options = useMemo(() => (menu ? filterTypes(menu.q) : []), [menu?.q])
-  const rowOptions = useMemo(() => filterTypes(rowQ), [rowQ])
+  const options = useMemo(() => (menu ? filterTypes(menu.q).filter((t) => !nested || t.type !== 'box') : []), [menu?.q])
+  const rowOptions = useMemo(() => filterTypes(rowQ).filter((t) => !nested || t.type !== 'box'), [rowQ])
 
   // Convierte el bloque vacío donde escribiste «+» o «/» en el tipo elegido
   const pick = (type) => {
@@ -151,6 +164,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const el = e.currentTarget
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      if (nested && onExit && !strip(el.innerHTML) && b.type === 'text' && i === blocks.length - 1 && blocks.length > 1) { remove(b.id); onExit(); return } // Enter en la última línea vacía: sale del recuadro
       if (!strip(el.innerHTML) && LIST.includes(b.type)) { toText(b.id); el.innerHTML = ''; return } // Enter en lista vacía: sale de la lista
       insertAfter(b.id, newBlock(LIST.includes(b.type) ? b.type : 'text'))
     } else if (e.key === 'Backspace' && !strip(el.innerHTML)) {
@@ -194,9 +208,67 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
 
   // Pulsar en el hueco de la página: escribe en el último bloque (o crea uno si el último no es de texto)
-  const rememberBlock = (e) => { const id = e.target.closest?.('[data-id]')?.dataset.id; if (id) lastId.current = id } // dónde estás escribiendo
+  // Casilla (de ESTA página, no de un recuadro de dentro) que contiene el elemento
+  const ownSlot = (t) => { let el = t?.closest?.('.block-slot'); while (el && el.parentElement !== pageRef.current) el = el.parentElement?.closest('.block-slot'); return el }
+  const rememberBlock = (e) => { const id = ownSlot(e.target)?.dataset.id; if (id) lastId.current = id } // dónde estás escribiendo
+  const pickRange = (a, b) => {
+    const x = blocks.findIndex((k) => k.id === a); const y = blocks.findIndex((k) => k.id === b)
+    if (x < 0 || y < 0) return
+    setSel(blocks.slice(Math.min(x, y), Math.max(x, y) + 1).map((k) => k.id))
+  }
+  const onPageDown = (e) => {
+    if (e.target.closest?.('.sel-bar')) return
+    const anchor = lastId.current
+    rememberBlock(e)
+    if (e.button !== 0) return
+    if (e.target.closest?.('.row-tools, .row-menu, .row-backdrop')) return
+    const slot = ownSlot(e.target)
+    if (e.shiftKey && anchor && slot && slot.dataset.id !== anchor) { e.preventDefault(); lastId.current = anchor; pickRange(anchor, slot.dataset.id); setPicking(false); window.getSelection()?.removeAllRanges(); return }
+    if (sel.length) setSel([])
+    dragSel.current = slot ? { id: slot.dataset.id, on: false } : null
+  }
+  const wrapSel = () => {
+    const idx = blocks.map((b, k) => (sel.includes(b.id) ? k : -1)).filter((k) => k >= 0)
+    if (!idx.length) return
+    const box = { ...newBlock('box'), blocks: idx.map((k) => blocks[k]) }
+    commit(blocks.flatMap((b, k) => (k === idx[0] ? [box] : sel.includes(b.id) ? [] : [b])))
+    setSel([])
+  }
+  const deleteSel = () => { const n = blocks.filter((b) => !sel.includes(b.id)); commit(n.length ? n : [newBlock()]); setSel([]) }
+  const copySel = () => { try { navigator.clipboard?.writeText(blocks.filter((b) => sel.includes(b.id)).map(plainOf).join('\n')) } catch { /* sin permiso */ } }
+  live.current = { sel, blocks, deleteSel, copySel, pickRange }
+  // Arrastrar el ratón de un bloque a otro marca los bloques enteros; Supr/Retroceso los borra, Ctrl+C los copia, Esc los suelta
+  useEffect(() => {
+    const move = (e) => {
+      const d = dragSel.current
+      if (!d || e.buttons !== 1) return
+      const page = pageRef.current
+      if (!page) return
+      const pr = page.getBoundingClientRect()
+      const outside = e.clientY < pr.top || e.clientY > pr.bottom
+      if (nested && outside) { if (d.on) setSel([]); return } // fuera del recuadro manda la página de fuera
+      const slots = [...page.children].filter((c) => c.classList?.contains('block-slot'))
+      if (!slots.length) return
+      const y = e.clientY
+      const hit = slots.find((el) => { const r = el.getBoundingClientRect(); return y >= r.top && y <= r.bottom }) ?? (y < slots[0].getBoundingClientRect().top ? slots[0] : slots[slots.length - 1])
+      if (!d.on && hit.dataset.id === d.id) return
+      if (!d.on) { d.on = true; setPicking(true); window.getSelection()?.removeAllRanges(); document.activeElement?.blur?.() }
+      live.current.pickRange(d.id, hit.dataset.id)
+    }
+    const up = () => { dragSel.current = null; setPicking(false) }
+    const key = (e) => {
+      const L = live.current
+      if (!L.sel.length) return
+      if (e.key === 'Escape') { setSel([]); return }
+      if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); L.deleteSel() } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { e.preventDefault(); L.copySel() }
+    }
+    const away = (e) => { if (!pageRef.current?.contains(e.target) && !e.target.closest?.('.sel-bar')) setSel([]) }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); document.addEventListener('keydown', key); document.addEventListener('pointerdown', away)
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); document.removeEventListener('keydown', key); document.removeEventListener('pointerdown', away) }
+  }, [])
   const onPageClick = (e) => {
     if (e.target !== e.currentTarget && !e.target.classList.contains('blocks-tail')) return
+    if (e.target.closest('.blocks-page') !== e.currentTarget) return // el hueco de un recuadro de dentro lo gestiona él
     const last = blocks[blocks.length - 1]
     if (last && TEXTY.includes(last.type)) refs.current[last.id]?.focus()
     else insertAt(blocks.length, newBlock())
@@ -226,13 +298,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const only = blocks.length === 1 && isEmpty(blocks[0])
 
   return (
-    <div className="card blocks">
-      <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>
-      {exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
-      <div ref={pageRef} className="blocks-page" role="group" aria-label={label} onPointerDownCapture={rememberBlock} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
+    <div className={nested ? 'blocks-nested' : 'card blocks'}>
+      {!nested && <div className="blocks-bar"><span className="doc-status" role="status">Se guarda solo</span>{exportAs && <button type="button" className="pill pill-sm" onClick={() => setExporting(true)} title="Exportar a PDF"><Icon name="pdf" size={14} /> PDF</button>}{bar}</div>}
+      {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
+      <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''}`} role="group" aria-label={label} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDrop={(e) => { e.preventDefault(); dropDrag() }}>
         {blocks.map((b, i) => (
-          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? 'is-picked' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
+            {sel[0] === b.id && (
+              <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Bloques marcados">
+                {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Recuadro</button>}
+                <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>
+                <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
+              </span>
+            )}
             <span className="row-tools">
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAfter(b.id, newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
@@ -271,6 +350,11 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'todo' && <input type="checkbox" className="block-check" checked={!!b.checked} onChange={() => patch(b.id, { checked: !b.checked })} aria-label="Hecha" />}
                 {b.type === 'divider' && <hr className="block-divider" tabIndex={0} onKeyDown={(e) => (e.key === 'Backspace' || e.key === 'Delete') && remove(b.id)} />}
                 {b.type === 'code' && <CodeBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
+                {b.type === 'box' && (
+                  <div className="box-wrap">
+                    <BlockEditor nested label="Recuadro" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
+                  </div>
+                )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
                 {b.type === 'link' && <LinkBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
                 {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
