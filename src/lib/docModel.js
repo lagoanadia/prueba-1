@@ -19,6 +19,15 @@ export const BLOCK_TYPES = [
   { type: 'link', label: 'Enlace', icon: 'link', hint: 'enlace link url web pagina' },
   { type: 'divider', label: 'Divisor', icon: 'close', hint: 'divisor linea separador ---' },
 ]
+/** Colores del Post-it: barra (más fuerte) y fondo (suave) */
+export const POSTIT_COLORS = {
+  amarillo: { label: 'Amarillo', bar: '#F2B705', bg: '#FFF1B8' },
+  naranja: { label: 'Naranja', bar: '#F08A24', bg: '#FFE2C2' },
+  rosa: { label: 'Rosa', bar: '#E8618C', bg: '#FCDCE7' },
+  azul: { label: 'Azul', bar: '#4A90E2', bg: '#DCEBFF' },
+  verde: { label: 'Verde', bar: '#3FBF6B', bg: '#D9F4E2' },
+  morado: { label: 'Morado', bar: '#9B6BDF', bg: '#E9DDFA' },
+}
 const plain = (html) => String(html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 const savedTheme = () => { try { return localStorage.getItem('codeTheme') || 'noche' } catch { return 'noche' } }
 export const newBlock = (type = 'text', html = '') => ({

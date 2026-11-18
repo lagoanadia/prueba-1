@@ -1,6 +1,7 @@
 // Exportar apuntes a PDF: se arma una hoja HTML con el estilo elegido y se imprime como PDF.
 // Los bloques llevan «break-inside: avoid» para que no se corte nada entre páginas.
 import { getFile } from './fileStore.js'
+import { POSTIT_COLORS } from './docModel.js'
 
 export const FONTS = { poppins: "'Poppins', sans-serif", lora: "'Lora', Georgia, serif", mono: "ui-monospace, Menlo, Consolas, monospace" }
 export const COLORS = ['#2F6FED', '#E0457B', '#2FA36B', '#F29D38', '#8B5CF6', '#5F6368']
@@ -32,7 +33,7 @@ export function sheetCss(st) {
 .x-box.on { background: var(--c); } .x-box.on::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .x-done { text-decoration: line-through; color: #80868B; }
 .x-quote { border-left: 4px solid var(--c); padding: 4px 0 4px 14px; color: #3C4043; font-style: italic; }
-.x-box { background: #FFF1B8; border-left: 5px solid #F2B705; border-radius: 4px 12px 12px 4px; padding: 10px 14px 2px; }
+.x-box { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 10px 14px 2px; }
 .x-callout { background: color-mix(in srgb, var(--c) 12%, #fff); border-left: 4px solid var(--c); border-radius: ${Math.max(r - 2, 0)}px; padding: 10px 14px; }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
@@ -60,7 +61,7 @@ export function blockHtml(b, n, imgs) {
     case 'todo': return `<div class="x-b x-li"><span class="x-box ${b.checked ? 'on' : ''}"></span><div class="${b.checked ? 'x-done' : ''}">${rich(b.html)}</div></div>`
     case 'quote': return `<div class="x-b x-quote">${rich(b.html)}</div>`
     case 'callout': return `<div class="x-b x-callout">${rich(b.html)}</div>`
-    case 'box': { let k = 0; return `<div class="x-b x-box">${(b.blocks ?? []).map((c) => { k = c.type === 'numbered' ? k + 1 : 0; return blockHtml(c, k, imgs) }).join('')}</div>` }
+    case 'box': { let k = 0; const pc = POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo; return `<div class="x-b x-box" style="--pb:${pc.bar};--pf:${pc.bg}">${(b.blocks ?? []).map((c) => { k = c.type === 'numbered' ? k + 1 : 0; return blockHtml(c, k, imgs) }).join('')}</div>` }
     case 'code': return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${esc(b.code)}</div>`
     case 'table': {
       const rows = b.rows ?? []

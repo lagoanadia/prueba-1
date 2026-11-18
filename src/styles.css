@@ -4210,7 +4210,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cal-bday.is-today { background: #FCE0EA; }
 /* Recuadro: caja amarilla con barra lateral donde caben otros bloques */
 .block-body.bt-box { display: block; }
-.box-wrap { width: 100%; border-left: 5px solid #F2B705; background: #FFF1B8; border-radius: 6px 16px 16px 6px; padding: 6px 12px 6px 0; }
+.box-wrap { width: 100%; border-left: 5px solid var(--pb, #F2B705); background: var(--pf, #FFF1B8); border-radius: 6px 16px 16px 6px; padding: 6px 12px 6px 0; }
 .blocks-nested { width: 100%; }
 .blocks-page.nested { flex: none; overflow: visible; padding: 2px 4px 2px 54px; cursor: text; font-size: inherit; }
 .blocks-page.nested .blocks-tail { min-height: 0; }
@@ -4238,9 +4238,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 /* Tabla dentro de un Post-it: sin blanco; cabecera en amarillo fuerte, resto del color del post-it y líneas en amarillo fuerte */
 .box-wrap .tb-wrap { background: transparent; }
 .box-wrap .tb { background: transparent; }
-.box-wrap .tb td, .box-wrap .tb th { border-color: #F2B705; }
+.box-wrap .tb td, .box-wrap .tb th { border-color: var(--pb, #F2B705); }
 .box-wrap .tb td { background: transparent; }
-.box-wrap .tb td.is-head { background: #F2B705; }
+.box-wrap .tb td.is-head { background: var(--pb, #F2B705); }
 .box-wrap .tb td.tb-end { border: none; }
-.box-wrap .tb-add button { background: #FFF1B8; border-color: #F2B705; }
-.box-wrap .tb td.is-head { border-color: #FFF1B8; }
+.box-wrap .tb-add button { background: var(--pf, #FFF1B8); border-color: var(--pb, #F2B705); }
+.box-wrap .tb td.is-head { border-color: var(--pb, #F2B705); }
+.box-wrap .tb td.is-head + td.is-head { border-left-color: var(--pf, #FFF1B8); }
+.box-wrap .tb td.is-head:has(+ td.is-head) { border-right-color: var(--pf, #FFF1B8); } /* solo la raya que separa una cajita de otra */
+
+/* Color del Post-it */
+.box-wrap { position: relative; }
+.pi-colors { position: absolute; top: 8px; right: 12px; z-index: 4; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+.box-wrap:hover > .pi-colors, .pi-colors:focus-within { opacity: 1; }
+.pi-colors button { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #FFFFFF; padding: 0; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s var(--ease); }
+.pi-colors button:hover { transform: scale(1.18); } .pi-colors button.on { box-shadow: 0 0 0 2px #202124; }
+@media (hover: none) { .pi-colors { opacity: .8; } }

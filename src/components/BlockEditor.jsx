@@ -5,7 +5,7 @@ import CodeBlock from './blocks/CodeBlock.jsx'
 import ImageBlock from './blocks/ImageBlock.jsx'
 import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
-import { BLOCK_TYPES, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
+import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
@@ -396,7 +396,10 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'divider' && <hr className="block-divider" tabIndex={0} onKeyDown={(e) => (e.key === 'Backspace' || e.key === 'Delete') && remove(b.id)} />}
                 {b.type === 'code' && <CodeBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
                 {b.type === 'box' && (
-                  <div className="box-wrap">
+                  <div className="box-wrap" style={{ '--pb': (POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo).bar, '--pf': (POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo).bg }}>
+                    <span className="pi-colors" role="radiogroup" aria-label="Color del post-it">
+                      {Object.entries(POSTIT_COLORS).map(([id, c]) => <button type="button" key={id} role="radio" aria-checked={(b.color ?? 'amarillo') === id} className={(b.color ?? 'amarillo') === id ? 'on' : ''} style={{ background: c.bar }} title={c.label} aria-label={c.label} onClick={() => patch(b.id, { color: id })} />)}
+                    </span>
                     <BlockEditor nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
                   </div>
                 )}
