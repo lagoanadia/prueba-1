@@ -4492,3 +4492,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tk-chip { display: inline-flex; align-items: center; gap: 6px; border: 2px solid transparent; border-radius: 99px; padding: 3px 11px; font: 700 12px Poppins, sans-serif; cursor: pointer; transition: transform .15s var(--ease); } .tk-chip:active { transform: scale(.95); }
 .tk-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .tk-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Tareas: lista agrupada (sin vincular + una sección plegable por asignatura) */
+.tk-link, .tk-tag { --c: #F1F3F4; }
+.tk-link { min-width: 150px; }
+.tk-tag { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; opacity: .75; } .tk-row:hover .tk-tag { opacity: 1; }
+.tk-group { border-radius: 16px; padding: 2px 4px 4px; transition: background .15s, box-shadow .15s; }
+.tk-group.is-over { background: color-mix(in srgb, var(--c) 14%, #fff); box-shadow: inset 0 0 0 2px var(--c); }
+.tk-head { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 8px 6px 4px; font: inherit; font-size: 13.5px; color: var(--c); cursor: pointer; text-align: left; }
+.tk-head i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; } .tk-head svg { stroke: currentColor; }
+.tk-head em { margin-left: auto; font-style: normal; font-size: 12px; color: #9AA0A6; font-weight: 500; }
+.tk-group .tk-list { gap: 4px; }
+.tk-group .tk-row { background: #F8F9FA; cursor: grab; } .tk-row:active { cursor: grabbing; }
+.tk-empty { font-size: 12.5px; color: var(--muted); padding: 4px 8px; }

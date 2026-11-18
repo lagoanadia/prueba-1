@@ -1,103 +1,96 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import History from '../../components/History.jsx'
 import DatePicker from '../../components/DatePicker.jsx'
+import Select from '../../components/Select.jsx'
 import { daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { soft } from './helpers.js'
 
 /**
- * Tareas por asignatura: una columna por asignatura, con su color. Cada «+ Tarea» ya sabe de qué asignatura es.
- * Al marcar una tarea se va al historial (reloj). data.tasks = [{ id, course, title, due?, done, doneAt? }]
+ * Tareas: una lista agrupada. Arriba las que no están vinculadas a ninguna asignatura y debajo una sección plegable por
+ * asignatura. Vincular es opcional: al añadir se elige con «Vincular a…», después se cambia con la etiqueta de la tarea o
+ * arrastrándola a otro grupo. Al marcar una tarea se va al historial (reloj).
+ * data.tasks = [{ id, course | null, title, due?, done, doneAt? }]
  */
 export default function Tasks({ data, update, subjects }) {
   const today = todayISO()
   const all = data.tasks ?? []
   const done = all.filter((t) => t.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''))
   const pending = all.filter((t) => !t.done)
-  const [adding, setAdding] = useState(null) // { course, title, due }: el «+ Tarea» de una columna
-  const [draft, setDraft] = useState({ title: '', course: null, due: '' }) // la barra de arriba: escribes, tocas la asignatura y añades
-  const [filter, setFilter] = useState('todas')
   const known = new Set(subjects.map((s) => s.short))
-  const orphans = pending.filter((t) => !known.has(t.course))
+  const [draft, setDraft] = useState({ title: '', course: '', due: '' }) // course '' = sin vincular
+  const [closed, setClosed] = useState(() => new Set()) // grupos plegados
+  const [over, setOver] = useState(null) // grupo sobre el que se arrastra una tarea
+  const dragId = useRef(null) // tarea que se está arrastrando
 
+  const courseOf = (t) => (t.course && known.has(t.course) ? t.course : '') // una asignatura que ya no existe cuenta como sin vincular
   const sorted = (list) => [...list].sort((a, b) => (a.due ?? '9999').localeCompare(b.due ?? '9999'))
-  const when = (d) => { if (!d) return ''; const n = daysUntil(d, today); return n < 0 ? 'Vencida' : n === 0 ? 'Hoy' : n === 1 ? 'Mañana' : formatShort(d) }
-  const finish = (id) => update((d) => ({ ...d, tasks: (d.tasks ?? []).map((t) => (t.id === id ? { ...t, done: true, doneAt: today } : t)) }))
-  const restore = (id) => update((d) => ({ ...d, tasks: (d.tasks ?? []).map((t) => (t.id === id ? { ...t, done: false, doneAt: null } : t)) }))
-  const remove = (id) => update((d) => ({ ...d, tasks: (d.tasks ?? []).filter((t) => t.id !== id) }))
-  const draftCourse = draft.course && subjects.some((s) => s.short === draft.course) ? draft.course : subjects[0]?.short
-  const addTop = (e) => {
+  const when = (d) => { const n = daysUntil(d, today); return n < 0 ? 'Vencida' : n === 0 ? 'Hoy' : n === 1 ? 'Mañana' : formatShort(d) }
+  const colorOf = (c) => subjects.find((s) => s.short === c)?.color ?? '#9AA0A6'
+  const options = [{ value: '', label: 'Sin vincular', color: '#E8EAED' }, ...subjects.map((s) => ({ value: s.short, label: s.short, color: s.color }))]
+
+  const add = (e) => {
     e.preventDefault()
-    if (!draft.title.trim() || !draftCourse) return
-    update((d) => ({ ...d, tasks: [...(d.tasks ?? []), { id: crypto.randomUUID(), course: draftCourse, title: draft.title.trim(), due: draft.due || null, done: false }] }))
+    if (!draft.title.trim()) return
+    update((d) => ({ ...d, tasks: [...(d.tasks ?? []), { id: crypto.randomUUID(), course: draft.course || null, title: draft.title.trim(), due: draft.due || null, done: false }] }))
     setDraft({ ...draft, title: '', due: '' })
   }
-  const save = (e) => {
-    e.preventDefault()
-    if (!adding?.title.trim()) return
-    update((d) => ({ ...d, tasks: [...(d.tasks ?? []), { id: crypto.randomUUID(), course: adding.course, title: adding.title.trim(), due: adding.due || null, done: false }] }))
-    setAdding(null)
-  }
+  const patch = (id, p) => update((d) => ({ ...d, tasks: (d.tasks ?? []).map((t) => (t.id === id ? { ...t, ...p } : t)) }))
+  const finish = (id) => patch(id, { done: true, doneAt: today })
+  const restore = (id) => patch(id, { done: false, doneAt: null })
+  const remove = (id) => update((d) => ({ ...d, tasks: (d.tasks ?? []).filter((t) => t.id !== id) }))
+  const toggle = (key) => setClosed((cur) => { const n = new Set(cur); if (n.has(key)) n.delete(key); else n.add(key); return n })
 
-  const column = (key, label, color, list, canAdd) => (
-    <div key={key} className="tk-col" style={{ background: soft(color, 20) }}>
-      <b className="tk-name" style={{ color }}><i style={{ background: color }} />{label}</b>
-      <ul className="tk-list">
-        {sorted(list).map((t) => (
-          <li key={t.id} className="tk-row">
-            <button className="tk-check" onClick={() => finish(t.id)} aria-label={`Marcar «${t.title}» como hecha`} style={{ borderColor: color }} />
-            <span className="tk-title">{t.title}</span>
-            {t.due && <small className={`tk-when ${t.due < today ? 'is-late' : ''}`}>{when(t.due)}</small>}
-            <button className="prio-x tk-del" onClick={() => remove(t.id)} aria-label={`Quitar «${t.title}»`}><Icon name="close" size={12} /></button>
-          </li>
-        ))}
-      </ul>
-      {canAdd && (adding?.course === key
-        ? (
-          <form className="tk-form" onSubmit={save}>
-            <input autoFocus value={adding.title} placeholder="Nueva tarea…" maxLength={80} onChange={(e) => setAdding({ ...adding, title: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setAdding(null)} aria-label={`Nueva tarea de ${label}`} />
-            <span className="tk-form-row">
-              <DatePicker value={adding.due} onChange={(v) => setAdding({ ...adding, due: v })} label="Fecha de la tarea" placeholder="Fecha" color={color} />
-              <button className="icon-btn on" disabled={!adding.title.trim()} aria-label="Añadir" title="Añadir"><Icon name="check" size={18} /></button>
-            </span>
-          </form>
-        )
-        : <button className="tk-add" style={{ color }} onClick={() => setAdding({ course: key, title: '', due: '' })}>+ Tarea</button>)}
-    </div>
-  )
+  const groups = [{ key: '', label: 'Sin vincular', color: '#80868B' }, ...subjects.map((s) => ({ key: s.short, label: s.short, color: s.color }))]
+    .map((g) => ({ ...g, list: sorted(pending.filter((t) => courseOf(t) === g.key)) }))
+    .filter((g) => g.key === '' || g.list.length > 0)
 
   return (
     <div className="tareas">
       <div className="deliv-head">
         <h2 className="page-h2"><span className="dot-study" aria-hidden="true" />Tareas</h2>
         <History title="Tareas hechas" empty="Aún no has terminado ninguna tarea" onRestore={restore}
-          items={done.map((t) => ({ id: t.id, date: t.doneAt ? formatShort(t.doneAt) : '', text: `${t.course} · ${t.title}` }))} />
+          items={done.map((t) => ({ id: t.id, date: t.doneAt ? formatShort(t.doneAt) : '', text: `${t.course ? t.course + ' · ' : ''}${t.title}` }))} />
       </div>
-      {subjects.length === 0 && <p className="muted">Añade una asignatura arriba y aquí tendrás una columna para sus tareas.</p>}
-      {subjects.length > 0 && (
-        <form className="tk-top" onSubmit={addTop}>
-          <input value={draft.title} placeholder="Nueva tarea…" maxLength={80} onChange={(e) => setDraft({ ...draft, title: e.target.value })} aria-label="Nueva tarea" />
-          <span className="tk-chips" role="radiogroup" aria-label="Asignatura de la tarea">
-            {subjects.map((s) => (
-              <button type="button" key={s.id} role="radio" aria-checked={draftCourse === s.short} className={`tk-chip ${draftCourse === s.short ? 'on' : ''}`}
-                style={{ background: soft(s.color, 22), color: s.color, borderColor: draftCourse === s.short ? s.color : 'transparent' }} onClick={() => setDraft({ ...draft, course: s.short })}>
-                <i style={{ background: s.color }} />{s.short}
-              </button>
-            ))}
-          </span>
-          <DatePicker value={draft.due} onChange={(v) => setDraft({ ...draft, due: v })} label="Fecha de la tarea" placeholder="Fecha" />
-          <button className="icon-btn on" disabled={!draft.title.trim()} aria-label="Añadir tarea" title="Añadir"><Icon name="plus" size={18} strokeWidth={2.6} /></button>
-        </form>
-      )}
-      {subjects.length > 1 && (
-        <div className="tk-filter" role="group" aria-label="Filtrar por asignatura">
-          {[['todas', 'Todas'], ...subjects.map((s) => [s.short, s.short])].map(([id, l]) => <button type="button" key={id} className={`dt-chip ${filter === id ? 'on' : ''}`} aria-pressed={filter === id} onClick={() => setFilter(id)}>{l}</button>)}
-        </div>
-      )}
-      <div className="tk-cols">
-        {subjects.filter((s) => filter === 'todas' || filter === s.short).map((s) => column(s.short, s.short, s.color, pending.filter((t) => t.course === s.short), true))}
-        {filter === 'todas' && orphans.length > 0 && column('__sin', 'Sin asignatura', '#9AA0A6', orphans, false)}
-      </div>
+
+      <form className="tk-top" onSubmit={add}>
+        <input value={draft.title} placeholder="Nueva tarea…" maxLength={80} onChange={(e) => setDraft({ ...draft, title: e.target.value })} aria-label="Nueva tarea" />
+        <Select className="tk-link" label="Vincular a una asignatura" value={subjects.some((s) => s.short === draft.course) ? draft.course : ''} options={options} onChange={(v) => setDraft({ ...draft, course: v })} />
+        <DatePicker value={draft.due} onChange={(v) => setDraft({ ...draft, due: v })} label="Fecha de la tarea" placeholder="Fecha" />
+        <button className="icon-btn on" disabled={!draft.title.trim()} aria-label="Añadir tarea" title="Añadir"><Icon name="plus" size={18} strokeWidth={2.6} /></button>
+      </form>
+
+      {groups.map((g) => {
+        const shut = closed.has(g.key)
+        return (
+          <section key={g.key || 'sin'} className={`tk-group ${over === g.key ? 'is-over' : ''}`} style={{ '--c': g.color }}
+            onDragOver={(e) => { if (dragId.current) { e.preventDefault(); if (over !== g.key) setOver(g.key) } }}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(null) }}
+            onDrop={(e) => { e.preventDefault(); if (dragId.current) patch(dragId.current, { course: g.key || null }); dragId.current = null; setOver(null) }}>
+            <button type="button" className="tk-head" onClick={() => toggle(g.key)} aria-expanded={!shut}>
+              <Icon name={shut ? 'right' : 'down'} size={14} strokeWidth={2.6} />
+              {g.key && <i style={{ background: g.color }} />}
+              <b>{g.label}</b>
+              <em>{g.list.length}</em>
+            </button>
+            {!shut && (
+              <ul className="tk-list">
+                {g.list.map((t) => (
+                  <li key={t.id} className="tk-row" style={g.key ? { background: soft(g.color, 14) } : undefined} draggable
+                    onDragStart={(e) => { dragId.current = t.id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', t.id) }} onDragEnd={() => { dragId.current = null; setOver(null) }}>
+                    <button className="tk-check" onClick={() => finish(t.id)} aria-label={`Marcar «${t.title}» como hecha`} style={g.key ? { borderColor: g.color } : undefined} />
+                    <span className="tk-title">{t.title}</span>
+                    {t.due && <small className={`tk-when ${t.due < today ? 'is-late' : ''}`}>{when(t.due)}</small>}
+                    <Select className="tk-tag" label={`Asignatura de «${t.title}»`} value={courseOf(t)} options={options} onChange={(v) => patch(t.id, { course: v || null })} placeholder="Vincular" />
+                    <button className="prio-x tk-del" onClick={() => remove(t.id)} aria-label={`Quitar «${t.title}»`}><Icon name="close" size={12} /></button>
+                  </li>
+                ))}
+                {g.list.length === 0 && <li className="tk-empty">{g.key === '' ? 'Aquí van las tareas que no son de ninguna asignatura. Arrastra una tarea para vincularla.' : 'Sin tareas'}</li>}
+              </ul>
+            )}
+          </section>
+        )
+      })}
     </div>
   )
 }
