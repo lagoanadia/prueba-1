@@ -59,11 +59,19 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
     setReview(buildReview(result, docs)); setReviewMsg(msg); setBusy(false)
   }
   const create = () => {
-    const { units, resources } = applyReview(review, subject.id)
+    const { units, merges, resources } = applyReview(review, subject.id)
     const c = countReview(review)
     changeSubject(update, subject.id, (s) => {
-      const empty = s.units.every((u) => !u.topics.length && !practicesOf(u).length && !u.temario) // solo unidades vacías: se sustituyen
-      return units.length ? { ...s, units: empty ? units : [...s.units, ...units] } : s
+      const empty = !merges.length && s.units.every((u) => !u.topics.length && !practicesOf(u).length && !u.temario) // solo unidades vacías: se sustituyen
+      // los temas de una unidad que ya existía se añaden a ella (si el tema ya está, se le suman los documentos)
+      const base = s.units.map((u) => {
+        const add = merges.filter((m) => m.unitId === u.id).flatMap((m) => m.topics)
+        if (!add.length) return u
+        const topics = [...u.topics]
+        add.forEach((t) => { const k = topics.findIndex((x) => x.name.trim().toLowerCase() === t.name.trim().toLowerCase()); if (k >= 0) topics[k] = { ...topics[k], pdfs: [...(topics[k].pdfs ?? []), ...t.pdfs] }; else topics.push(t) })
+        return { ...u, topics }
+      })
+      return units.length || merges.length ? { ...s, units: empty ? units : [...base, ...units] } : s
     })
     if (resources.length) update((d) => ({ ...d, resources: [...(d.resources ?? []), ...resources] }))
     setReview(null)
@@ -100,7 +108,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       </header>
 
       {banner && <p className="og-banner" role="status"><Icon name="check" size={20} color="#0F6B45" strokeWidth={3} />{banner}</p>}
-      {review ? <OrganizeReview review={review} setReview={setReview} message={reviewMsg} busy={busy} onCreate={create} onRedo={redo} onCancel={cancelReview} /> : (<>
+      {review ? <OrganizeReview review={review} setReview={setReview} existing={subject.units} message={reviewMsg} busy={busy} onCreate={create} onRedo={redo} onCancel={cancelReview} /> : (<>
       <div className="study-mid subject-top">
         <section className="card progress-card" style={{ background: soft(subject.color, 28), boxShadow: 'none' }}>
           <svg className="ring-svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso ${p.pct} %`}>
@@ -139,7 +147,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
               <span className="w-row"><b className="unit-title">{u.name}</b><b>{up.clear} de {up.total}</b></span>
               <span className="bar"><span style={{ width: `${up.total ? (up.clear / up.total) * 100 : 0}%`, background: subject.color }} /></span>
               <span className="state-chip" style={{ background: soft(st.color, 35) }}>{st.label}</span>
-              {u.topics.slice(0, 4).map((t) => <span key={t.id} className="w-row unit-topic"><span className="w-ellipsis">{t.name}</span><Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={TOPIC_STATES.find((x) => x.id === t.state)?.id === 'clear' ? '#3DDC97' : '#9AA0A6'} /></span>)}
+              {u.topics.map((t) => <span key={t.id} className="unit-topic"><span className="unit-topic-name">{t.name}</span><Icon name={t.state === 'clear' ? 'check' : 'clock'} size={16} color={TOPIC_STATES.find((x) => x.id === t.state)?.id === 'clear' ? '#3DDC97' : '#9AA0A6'} /></span>)}
             </button>
             <button className="icon-btn unit-edit" onClick={() => setDialog({ rename: u.id })} aria-label={`Cambiar el nombre de ${u.name}`} title="Editar unidad"><Icon name="pen" size={16} /></button>
             </div>

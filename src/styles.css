@@ -4570,3 +4570,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (hover: none) { .tb-grip { opacity: .7; } }
 .tb tr.is-moving td, .tb td.is-moving { opacity: .45; }
 @media (prefers-reduced-motion: reduce) { .tb-grip { transition: none; } }
+
+/* Unidades: todos los temas, con el título completo y el check pegado a él */
+.unit-topic { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; text-align: left; }
+.unit-topic-name { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.unit-topic svg { flex-shrink: 0; margin-top: 2px; }
+/* Revisión: la unidad propuesta se llama igual que una que ya existe */
+.og-same { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #E3EEFF; border-radius: 14px; padding: 8px 12px; font-size: 14px; }
+.og-same svg { flex-shrink: 0; stroke: #3185FC; }
+.og-same-txt { flex: 1; min-width: 160px; }
+.og-same-btn { border: 0; border-radius: 12px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; background: #FFFFFF; color: var(--muted); cursor: pointer; transition: background .15s, color .15s, transform .15s var(--ease); }
+.og-same-btn:hover { color: var(--text); } .og-same-btn:active { transform: scale(.95); }
+.og-same-btn.is-main, .og-same-btn.is-on { background: #3185FC; color: #FFFFFF; }
+.og-same-btn.is-main:hover { background: #1F6FEB; }
+@media (prefers-reduced-motion: reduce) { .og-same-btn { transition: none; } }

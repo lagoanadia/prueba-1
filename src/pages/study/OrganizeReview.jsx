@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import { deleteFile } from '../../lib/fileStore.js'
-import { countReview } from './organize.js'
+import { countReview, sameUnit } from './organize.js'
 
 /**
  * Revisión de la propuesta: unidades → temas → documentos, todo editable (renombrar, mover, quitar, añadir).
  * Lo que no se pueda clasificar queda en «Sin clasificar» y, al crear, va a los Recursos de la asignatura.
  */
-export default function OrganizeReview({ review, setReview, message, busy, onCreate, onRedo, onCancel }) {
+export default function OrganizeReview({ review, setReview, existing = [], message, busy, onCreate, onRedo, onCancel }) {
   const [dialog, setDialog] = useState(null) // 'unit' | { topicIn: unitId }
   const [menu, setMenu] = useState(null) // id del documento con el menú «mover» abierto
   const [dragId, setDragId] = useState(null)
@@ -32,6 +32,7 @@ export default function OrganizeReview({ review, setReview, message, busy, onCre
   const removeUnit = (uid) => edit((r) => { const u = r.units.find((x) => x.id === uid); u.topics.forEach((t) => r.loose.push(...t.docs)); r.units = r.units.filter((x) => x.id !== uid); return r })
   const addUnit = (name) => { edit((r) => { r.units.push({ id: crypto.randomUUID(), name, topics: [] }); return r }); setDialog(null) }
   const addTopic = (uid, name) => { edit((r) => { r.units.find((u) => u.id === uid).topics.push({ id: crypto.randomUUID(), name, docs: [] }); return r }); setDialog(null) }
+  const setMerge = (uid, v) => edit((r) => { const u = r.units.find((x) => x.id === uid); u.mergeInto = v; u.apart = !v; return r })
   const drop = (dest) => { if (dragId) move(dragId, dest); setDragId(null) }
 
   const docRow = (id) => {
@@ -69,6 +70,18 @@ export default function OrganizeReview({ review, setReview, message, busy, onCre
                 <input className="og-input og-uname" value={u.name} maxLength={80} onChange={(e) => renameUnit(u.id, e.target.value)} aria-label="Nombre de la unidad" />
                 <button className="icon-btn" onClick={() => removeUnit(u.id)} aria-label={`Quitar la unidad ${u.name}`} title="Quitar unidad"><Icon name="close" size={16} /></button>
               </div>
+              {(() => {
+                const ex = sameUnit(existing, u.name)
+                if (!ex || !u.topics.length) return null
+                return (
+                  <div className="og-same" role="group" aria-label={`Ya tienes ${ex.name}`}>
+                    <Icon name="link" size={18} color="#3185FC" />
+                    <span className="og-same-txt">{u.mergeInto ? <>Se añadirá a tu <b>{ex.name}</b></> : u.apart ? <>Se creará aparte</> : <>Ya tienes <b>{ex.name}</b> ({ex.topics.length} {ex.topics.length === 1 ? 'tema' : 'temas'})</>}</span>
+                    <button type="button" className={`og-same-btn ${u.mergeInto ? 'is-on' : 'is-main'}`} onClick={() => setMerge(u.id, ex.id)}>Añadir a ella</button>
+                    <button type="button" className={`og-same-btn ${u.apart ? 'is-on' : ''}`} onClick={() => setMerge(u.id, null)}>Crear aparte</button>
+                  </div>
+                )
+              })()}
               {!closed.has(u.id) && (
                 <>
                   {u.topics.map((t) => (

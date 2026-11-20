@@ -39,12 +39,19 @@ export const countReview = (r) => ({
   loose: r.loose.length,
 })
 
-/** Unidades nuevas de la asignatura + recursos para lo que quede sin clasificar. */
+// «UD 2», «ud2» y «Unidad 2» son la misma unidad
+export const unitKey = (n) => String(n ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/unidad/g, 'ud').replace(/[^a-z0-9]+/g, '')
+/** Unidad de la asignatura que se llama igual que la propuesta (o undefined) */
+export const sameUnit = (existing, name) => (unitKey(name) ? existing.find((e) => unitKey(e.name) === unitKey(name)) : undefined)
+
+/** Unidades nuevas de la asignatura + temas que se añaden a unidades que ya existen + recursos para lo que quede sin clasificar. */
 export function applyReview(review, subjectId) {
-  const units = review.units.filter((u) => u.topics.length).map((u) => ({
+  const mk = (t) => ({ id: uid(), name: t.name, state: 'todo', pdfs: t.docs.map((id) => review.docs[id].file) })
+  const merges = review.units.filter((u) => u.topics.length && u.mergeInto).map((u) => ({ unitId: u.mergeInto, topics: u.topics.map(mk) }))
+  const units = review.units.filter((u) => u.topics.length && !u.mergeInto).map((u) => ({
     id: uid(), name: u.name, practices: [],
     topics: u.topics.map((t) => ({ id: uid(), name: t.name, state: 'todo', pdfs: t.docs.map((id) => review.docs[id].file) })),
   }))
   const resources = review.loose.map((id) => ({ id: uid(), title: review.docs[id].file.name, file: review.docs[id].file, subjectId, unitId: null }))
-  return { units, resources }
+  return { units, merges, resources }
 }
