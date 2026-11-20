@@ -6,13 +6,22 @@ import Icon from './Icon.jsx'
  * Ventana pequeña para pedir (o cambiar) un nombre: se abre centrada con el fondo atenuado.
  * Enter o ✓ acepta, Esc o × cancela.
  */
-export default function NameDialog({ title, initial = '', placeholder = '', maxLength = 50, onSubmit, onClose, onDelete, choices = null, deleteLabel = 'Eliminar', deleteWarning = 'Se borrará con todo su contenido. No se puede deshacer.' }) {
+export default function NameDialog({ title, initial = '', placeholder = '', maxLength = 50, onSubmit, onClose, onDelete, choices = null, fileSlot = null, deleteLabel = 'Eliminar', deleteWarning = 'Se borrará con todo su contenido. No se puede deshacer.' }) {
   const [value, setValue] = useState(initial)
   const input = useRef(null)
   const [choice, setChoice] = useState(choices?.[0]?.id ?? null) // si hay `choices`, además del nombre se elige de qué tipo es
+  const [file, setFile] = useState(null) // PDF (u otro archivo) que se suelta en el cuadro punteado
+  const [over, setOver] = useState(false)
+  const fileInput = useRef(null)
   const [sure, setSure] = useState(false) // eliminar pide una segunda pulsación
   useEffect(() => { input.current?.focus(); input.current?.select() }, [])
-  const submit = (e) => { e.preventDefault(); if (value.trim()) onSubmit(value.trim(), choice) }
+  const submit = (e) => { e.preventDefault(); if (value.trim()) onSubmit(value.trim(), choice, fileSlot && (!fileSlot.forChoice || choice === fileSlot.forChoice) ? file : null) }
+  const takeFile = (f) => {
+    if (!f) return
+    if (fileSlot?.accept && !new RegExp(fileSlot.accept, 'i').test(`${f.type} ${f.name}`)) return
+    setFile(f)
+    if (!value.trim()) setValue(f.name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').slice(0, maxLength)) // sin nombre: el del archivo
+  }
 
   // Confirmación de borrado: pantalla propia dentro de la ventana, bien visible
   if (sure) {
@@ -47,6 +56,18 @@ export default function NameDialog({ title, initial = '', placeholder = '', maxL
                 <b>{c.label}</b><small>{c.hint}</small>
               </button>
             ))}
+          </div>
+        )}
+        {fileSlot && (!fileSlot.forChoice || choice === fileSlot.forChoice) && (
+          <div className={`name-drop ${over ? 'is-over' : ''} ${file ? 'has-file' : ''}`} role="button" tabIndex={0} aria-label={fileSlot.label}
+            onClick={() => fileInput.current?.click()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.current?.click() } }}
+            onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); takeFile(e.dataTransfer.files?.[0]) }}>
+            <input ref={fileInput} type="file" accept={fileSlot.input} hidden onChange={(e) => { takeFile(e.target.files?.[0]); e.target.value = '' }} />
+            <Icon name={fileSlot.icon} size={26} color="#E84855" />
+            {file
+              ? <span className="name-drop-txt"><b className="w-ellipsis">{file.name}</b><span className="muted">{fileSlot.ready}</span></span>
+              : <span className="name-drop-txt"><b>{fileSlot.label}</b><span className="muted">{fileSlot.hint}</span></span>}
+            {file && <button type="button" className="icon-btn" onClick={(e) => { e.stopPropagation(); setFile(null) }} aria-label="Quitar el archivo" title="Quitar"><Icon name="close" size={16} /></button>}
           </div>
         )}
         <div className="name-dialog-actions">

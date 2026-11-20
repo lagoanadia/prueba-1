@@ -103,7 +103,7 @@ function segment(lines, body) {
       i = j
     } else if (l.cells.length >= 2 && lines[i + 1]?.cells.length >= 2) { // tabla: líneas seguidas con varias columnas
       const lefts = l.cells.map((c) => c.left)
-      const near = (c) => lefts.some((x) => Math.abs(c.left - x) < l.fs * 0.45)
+      const near = (c) => l.cells.some((h) => Math.abs(c.left - h.left) < l.fs * 0.45 || (c.left < h.right && c.right > h.left)) // pegada a una columna, o debajo de ella aunque la cabecera esté centrada
       let j = i + 1
       while (j < lines.length && !isHead(lines[j]) && lines[j].cells.every(near)) {
         if (lines[j].cells.length < 2 && lines[j].mid - lines[j - 1].mid > lines[j].fs * 2.2) break // una línea suelta lejos ya no es de la tabla
@@ -176,3 +176,6 @@ export function toPayload(info, type) {
 /** Lo que se pega con el modo «auto»: una lista de bloques, cada uno con su tipo. */
 export const autoPayload = (info) => info.segments
 export const SEGMENT_LABEL = { h1: 'Título', h2: 'Título', h3: 'Título', text: 'Texto', bullet: 'Lista', numbered: 'Lista', table: 'Tabla' }
+
+/** Trozos de texto ya medidos (left/right/top/bottom/fs/text) → bloques sueltos {type, text | items | rows}. Sirve para pasar un PDF entero. */
+export const segmentsFromSpans = (spans, body) => (spans.length ? segment(toLines(spans), body) : [])

@@ -4584,3 +4584,18 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .og-same-btn.is-main, .og-same-btn.is-on { background: #3185FC; color: #FFFFFF; }
 .og-same-btn.is-main:hover { background: #1F6FEB; }
 @media (prefers-reduced-motion: reduce) { .og-same-btn { transition: none; } }
+
+/* Documento nuevo desde un PDF: zona para soltar el archivo */
+.name-drop { display: flex; align-items: center; gap: 12px; border: 2px dashed #9AA0A6; border-radius: 18px; padding: 14px; background: #FBFCFD; cursor: pointer; transition: border-color .15s, background .15s; }
+.name-drop:hover, .name-drop:focus-visible, .name-drop.is-over { border-color: var(--blue); background: #EEF4FF; outline: none; }
+.name-drop.has-file { border-style: solid; border-color: #F4B4BA; background: #FFF1F2; }
+.name-drop svg { flex-shrink: 0; }
+.name-drop-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; font-size: 14px; line-height: 1.35; text-align: left; }
+.name-drop-txt .muted { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .name-drop { transition: none; } }
+.dt-conv { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; }
+.dt-conv-top { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.dt-conv-top b { flex: 1; min-width: 0; }
+.dt-conv .bar { height: 8px; }
+.dt-conv .bar span { display: block; height: 100%; background: var(--blue); transition: width .25s var(--ease); }
+.dt-conv.is-error { background: #FDECEE; }
