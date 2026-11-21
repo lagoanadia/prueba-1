@@ -8,8 +8,17 @@ const JUSTIFY = { left: 'flex-start', center: 'center', right: 'flex-end' }
 const ALIGN_PATH = { left: 'M4 6h16M4 12h10M4 18h14', center: 'M4 6h16M7 12h10M5 18h14', right: 'M4 6h16M10 12h10M6 18h14' }
 const ALIGN_LABEL = { left: 'Alinear a la izquierda', center: 'Centrar', right: 'Alinear a la derecha' }
 
+/** Ancho y alto de una foto (para repartirlas sin recortarlas) */
+const sizeOf = (file) => new Promise((resolve) => {
+  const url = URL.createObjectURL(file)
+  const img = new Image()
+  img.onload = () => { resolve({ w: img.naturalWidth, h: img.naturalHeight }); URL.revokeObjectURL(url) }
+  img.onerror = () => { resolve({}); URL.revokeObjectURL(url) }
+  img.src = url
+})
+
 /** Una foto de la galería (se lee del almacén de archivos) */
-function Thumb({ file, onRemove, drag, onDragStart, onDragOver, onDrop, onDragEnd }) {
+function Thumb({ file, ratio, onRatio, onRemove, drag, onDragStart, onDragOver, onDrop, onDragEnd }) {
   const [url, setUrl] = useState(null)
   useEffect(() => {
     let alive = true
@@ -19,8 +28,8 @@ function Thumb({ file, onRemove, drag, onDragStart, onDragOver, onDrop, onDragEn
     return () => { alive = false; if (made) URL.revokeObjectURL(made) }
   }, [file.id])
   return (
-    <div className={`gal-item ${drag === 'src' ? 'is-drag' : ''} ${drag === 'over' ? 'is-over' : ''}`} draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} onDragEnd={onDragEnd}>
-      {url ? <img src={url} alt={file.name ?? ''} draggable={false} /> : <span className="gal-load" />}
+    <div className={`gal-item ${drag === 'src' ? 'is-drag' : ''} ${drag === 'over' ? 'is-over' : ''}`} style={{ '--ar': ratio }} draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} onDragEnd={onDragEnd}>
+      {url ? <img src={url} alt={file.name ?? ''} draggable={false} onLoad={(e) => onRatio?.(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)} /> : <span className="gal-load" />}
       <button type="button" className="gal-x" onClick={onRemove} aria-label={`Quitar ${file.name ?? 'la foto'}`} title="Quitar"><Icon name="close" size={14} /></button>
     </div>
   )
@@ -35,12 +44,15 @@ export default function GalleryBlock({ block, onChange }) {
   const fig = useRef(null)
   const frame = useRef(null)
   const [picked, setPicked] = useState(false) // galería seleccionada: marco, asas y barra
+  const [ratios, setRatios] = useState({}) // proporciones leídas al cargar (para fotos guardadas sin medidas)
   const [live, setLive] = useState(null) // ancho (%) mientras se arrastra una asa
   const [drag, setDrag] = useState(null) // { from, over }
   const files = block.files ?? []
   const layout = block.layout ?? 'row'
   const align = block.align ?? 'left'
   const width = live ?? block.w ?? 100
+  const ratioOf = (f) => (f.w && f.h ? f.w / f.h : ratios[f.id] ?? 4 / 3)
+  const per = layout === 'grid' ? 3 : 0 // fotos por fila en la cuadrícula
   useEffect(() => {
     if (!picked) return undefined
     const away = (e) => { if (!fig.current?.contains(e.target)) setPicked(false) }
@@ -65,7 +77,7 @@ export default function GalleryBlock({ block, onChange }) {
     e.target.value = ''
     if (!list.length) return
     const saved = []
-    for (const f of list) saved.push(await saveFile(f))
+    for (const f of list) saved.push({ ...(await saveFile(f)), ...(await sizeOf(f)) }) // cada foto entra con sus proporciones
     onChange({ ...block, files: [...files, ...saved] })
   }
   const remove = (i) => { deleteFile(files[i].id).catch(() => {}); onChange({ ...block, files: files.filter((_, k) => k !== i) }) }
@@ -79,6 +91,14 @@ export default function GalleryBlock({ block, onChange }) {
     setDrag(null)
   }
 
+  const thumb = (f, i) => (
+    <Thumb key={f.id} file={f} ratio={ratioOf(f)} onRatio={(r) => setRatios((m) => (m[f.id] === r ? m : { ...m, [f.id]: r }))} onRemove={() => remove(i)} drag={drag?.from === i ? 'src' : drag?.over === i && drag.from !== i ? 'over' : null}
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', f.id); setDrag({ from: i, over: null }) }}
+      onDragOver={(e) => { if (!drag) return; e.preventDefault(); if (drag.over !== i) setDrag({ ...drag, over: i }) }}
+      onDrop={(e) => { e.preventDefault(); drop() }} onDragEnd={() => setDrag(null)} />
+  )
+  const addBtn = <button type="button" className="gal-add" onClick={() => input.current?.click()} aria-label="Añadir fotos" title="Añadir fotos"><Icon name="plus" size={22} /></button>
+
   return (
     <div className="gal-block">
       <input ref={input} type="file" accept="image/*" multiple hidden onChange={add} />
@@ -87,15 +107,23 @@ export default function GalleryBlock({ block, onChange }) {
         : (
           <div ref={fig} className="gal-fig" style={{ justifyContent: JUSTIFY[align] }}>
             <div ref={frame} className={`gal-frame ${picked ? 'is-picked' : ''}`} style={{ width: `${width}%` }} onClick={() => setPicked(true)}>
-              <div className={`gal gal-${layout} gal-n${Math.min(files.length, 4)}`} style={layout === 'row' ? { gridTemplateColumns: `repeat(${files.length}, minmax(0, 1fr)) 56px` } : undefined}>
-                {files.map((f, i) => (
-                  <Thumb key={f.id} file={f} onRemove={() => remove(i)} drag={drag?.from === i ? 'src' : drag?.over === i && drag.from !== i ? 'over' : null}
-                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', f.id); setDrag({ from: i, over: null }) }}
-                    onDragOver={(e) => { if (!drag) return; e.preventDefault(); if (drag.over !== i) setDrag({ ...drag, over: i }) }}
-                    onDrop={(e) => { e.preventDefault(); drop() }} onDragEnd={() => setDrag(null)} />
-                ))}
-                <button type="button" className="gal-add" onClick={() => input.current?.click()} aria-label="Añadir fotos" title="Añadir fotos"><Icon name="plus" size={22} /></button>
-              </div>
+              {layout === 'grid' ? (
+                // cuadrícula: filas de tres, cada fila a la misma altura y cada foto con su proporción
+                <div className="gal gal-grid">
+                  {Array.from({ length: Math.ceil((files.length + 1) / per) }, (_, r) => (
+                    <div key={r} className="gal-line">
+                      {files.slice(r * per, r * per + per).map((f, k) => thumb(f, r * per + k))}
+                      {r * per + per > files.length && <span className="gal-spacer" style={{ flex: `${(per - files.slice(r * per, r * per + per).length) * 1.33} 1 0` }} />}
+                      {r * per + per > files.length && r * per <= files.length && addBtn}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`gal gal-${layout}`} style={layout === 'mosaic' ? { columnCount: files.length < 2 ? 1 : files.length < 5 ? 2 : 3 } : undefined}>
+                  {files.map(thumb)}
+                  {addBtn}
+                </div>
+              )}
               {picked && (
                 <>
                   {['tl', 'tr', 'bl', 'br'].map((c) => <i key={c} className={`img-h img-h-${c}`} onPointerDown={(e) => startResize(e, c[1] === 'l' ? 'l' : 'r')} role="presentation" />)}

@@ -1599,7 +1599,7 @@ label.pv-stat { cursor: pointer; }
 .site-letter { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700; color: var(--text); }
 .site-small { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .site-small img { width: 44%; height: auto; image-rendering: auto; }
-.tool a { container-type: inline-size; }
+.tool a { }
 .site-letter { font-size: 42cqw; }
 .site-small img { width: auto; max-width: 46%; min-width: 30%; }
 /* + para añadir desde cualquier tamaño de widget */
@@ -2889,7 +2889,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .sa-sess > b { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.25; }
 .sa-sess { border-radius: 14px; padding: 6px 10px; }
 /* El tamaño del nombre se ajusta al ancho de la columna (hasta 15 px, como en Estudios) */
-.sa-plan-grid { container-type: inline-size; }
+.sa-plan-grid { }
 .sa-sess > b { font-size: clamp(10px, calc((100cqw - 40px) / var(--c) / 5.4), 15px); padding-right: 0; }
 .sa-sess { padding: 6px 8px; }
 .sa-sess.is-live .sa-sess-x { display: none; }
@@ -3014,7 +3014,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .cs-filters button { font-size: 13px; padding: 6px 15px; }
 /* Pastillero: cada medicamento de cada día es un cuadrado con una cápsula grande; si hay más, se reparten en filas y el widget crece */
 .pl-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; background: none; padding: 0; border-bottom: 0; border-radius: 0; justify-content: stretch; }
-.pl-med { width: auto; aspect-ratio: 1; container-type: inline-size; justify-content: center; gap: 4cqw; padding: 6cqw; background: #F8F9FA; border-radius: 20px; box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--c) 45%, #FFFFFF); }
+.pl-med { width: auto; aspect-ratio: 1; justify-content: center; gap: 4cqw; padding: 6cqw; background: #F8F9FA; border-radius: 20px; box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--c) 45%, #FFFFFF); }
 .pl-capwrap { height: auto; width: 100%; padding: 8cqw 0 4cqw; }
 .pl-cap { width: 68cqw; height: auto; }
 .pl-medname { font-size: clamp(11px, 9cqw, 16px); } .pl-med .pl-chip { font-size: clamp(10.5px, 8cqw, 14px); padding: 2px 12px; }
@@ -3076,7 +3076,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .pl-dailybox { max-width: none; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
 .pl-shelf { flex: 1; display: grid; grid-template-columns: 1fr; grid-auto-rows: minmax(120px, 1fr); justify-content: stretch; gap: 10px; }
 .pl-cards:not(:has(.pl-treats)) .pl-shelf { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.pl-med { width: auto; height: auto; aspect-ratio: auto; container-type: inline-size; padding: 10px 8px 12px; }
+.pl-med { width: auto; height: auto; aspect-ratio: auto; padding: 10px 8px 12px; }
 .pl-cap { width: 62cqw; height: auto; }
 .pl-medname { font-size: clamp(12px, 8.5cqw, 20px); } .pl-med .pl-chip { font-size: clamp(11px, 6.5cqw, 16px); padding: 3px 14px; }
 .pl-treats { max-width: none; flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -3124,7 +3124,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .fd-trash { transition: none; } .fd-trash.over { transform: none; } }
 
 /* Cápsula del pastillero: la hora va dentro, en la mitad derecha; al tomarla se llena y la hora pasa a blanco */
-.pl-cap { position: relative; display: inline-block; line-height: 0; container-type: inline-size; }
+.pl-cap { position: relative; display: inline-block; line-height: 0; }
 .pl-cap .pl-capsule { display: block; width: 100%; height: auto; }
 .pl-cap-times { position: absolute; top: 12.5%; bottom: 12.5%; left: 52%; right: 4%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; }
 .pl-cap-t { border: 0; background: transparent; padding: 0 2cqw; border-radius: 99px; font: 500 9cqw/1.15 Poppins, sans-serif; color: #80868B; cursor: pointer; transition: color .2s, background .2s; }
@@ -3212,7 +3212,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .wk-empty-t { font-size: 14px; color: #5F6368; max-width: 320px; }
 .wk-projects:has(.wk-empty-state) .wk-chips:has(> .wk-plus:only-child) { display: none; }
 /* Pomodoro de Trabajo: el círculo se ve grande y se va llenando */
-.wk-block.wk-focus .wk-focus { margin-top: 0; height: auto; min-height: 0; container-type: inline-size; }
+.wk-block.wk-focus .wk-focus { margin-top: 0; height: auto; min-height: 0; }
 .wk-block.wk-focus .focus { padding-bottom: 4px; }
 .wk-block.wk-focus .focus-T .focus-ring-wrap, .wk-block.wk-focus .focus-L .focus-ring-wrap { width: min(100%, 190px); max-height: none; }
 .wk-block.wk-focus .focus-ring { --soft: #E9ECEF; font-size: 15px; }
@@ -3583,7 +3583,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .sc-M .sa-row { gap: 8px; } .sc-M .sa-label { font-size: 11.5px; }
 .sc-M .sa-card { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 6px 10px; } .sc-M .sa-card b { font-size: 17px; } .sc-M .sa-card small { font-size: 10.5px; }
 .pl-M .pl-cap { flex: none; width: 90px; height: auto; margin: 6px 2px; } .pl-M .pl-capsule { width: 100%; height: auto; }
-.pt-blk { container-type: inline-size; } @container (max-width: 74px) { .pt-blk em { display: none; } }
+.pt-blk { } @container (max-width: 74px) { .pt-blk em { display: none; } }
 .wo-M .wo-donut { width: 108px; } .wo-M .wo-hole { width: 74%; height: 74%; padding: 4px; } .wo-M .wo-hole span { display: none; } .wo-M .wo-hole b { font-size: 13px; }
 .wo-side .wk-range { flex-direction: row; align-self: flex-start; border-radius: 16px; padding: 3px; } .wo-side .wk-range button { width: auto; }
 
@@ -3622,7 +3622,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .sa-summary { flex: 1; align-content: center; }
 /* Entrenamientos: aire bajo el título; el texto de la rueda se ajusta a su hueco (si no cabe en una línea, baja a otra) */
 .wo-M { padding-top: 10px; } .wo-M .wo-donut { width: 96px; }
-.wo-donut { container-type: inline-size; }
+.wo-donut { }
 .wo-hole { width: 72%; height: 72%; padding: 6% ; }
 .wo-hole span { font-size: clamp(9px, 7cqw, 12px); }
 .wo-hole b { font-size: clamp(11px, 12cqw, 22px); white-space: normal; overflow-wrap: anywhere; line-height: 1.1; text-overflow: clip; }
@@ -3679,7 +3679,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .undo-toast { animation: none; } }
 
 /* Tareas: tablero que se adapta al ancho de su bloque (los globos solo en el más ancho; si no, tarjetas) */
-.wk-board { container-type: inline-size; container-name: wkb; }
+.wk-board { container-name: wkb; }
 @container wkb (max-width: 699px) {
   .wk-col { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
   .wk-task { width: 100%; max-width: none; border-radius: 14px; padding: 9px 12px; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 5px; }
@@ -3755,7 +3755,7 @@ button.bottle-tag { border: none; font-family: inherit; cursor: pointer; }
 .plan-grid.is-editing .plan-block { padding-top: 52px; }
 .study .plan-grid.is-editing .plan-block:not(:has(.schedule)) { height: 352px; }
 /* Horario en un bloque estrecho (1 columna): un solo día con pestañas, como en el móvil, en vez de 5 columnas apretadas */
-.plan-block:has(> .schedule.sv), .plan-block:has(.sv) { container-type: inline-size; }
+.plan-block:has(> .schedule.sv), .plan-block:has(.sv) { }
 @container (max-width: 560px) {
   .sv-days { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: var(--soft); }
   .sv-daytab { flex: 1; border: none; background: none; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 0; border-radius: 12px; color: var(--muted); cursor: pointer; }
@@ -4637,21 +4637,32 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .gal-item:hover .gal-x, .gal-item:focus-within .gal-x { display: grid; }
 .gal-add { border: 2px dashed #9AA0A6; border-radius: 12px; background: #F6F8FA; color: #5F6368; display: grid; place-items: center; cursor: pointer; min-height: 60px; }
 .gal-add:hover { border-color: var(--blue); color: var(--blue); background: #EEF4FF; } .gal-add svg { stroke: currentColor; }
-/* fila: todas en una línea, a la misma altura */
-.gal-row { grid-template-rows: none; } .gal-row .gal-item { aspect-ratio: 4 / 3; }
-/* cuadrícula: tres por fila (dos si hay pocas) */
-.gal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: calc((100cqw - 16px) / 4); }
-.gal-grid.gal-n1 { grid-template-columns: 1fr; grid-auto-rows: calc(100cqw * .6); } .gal-grid.gal-n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: calc((100cqw - 8px) / 2 * .75); }
-/* mosaico: la primera foto grande y las demás alrededor */
-.gal-mosaic { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: calc((100cqw - 16px) / 3 * .72); }
-.gal-mosaic .gal-item:first-child { grid-column: span 2; grid-row: span 2; }
-.gal-mosaic.gal-n1 .gal-item:first-child, .gal-mosaic.gal-n2 .gal-item:first-child { grid-column: auto; grid-row: auto; }
-.gal-mosaic.gal-n1 { grid-template-columns: 1fr; grid-auto-rows: calc(100cqw * .6); } .gal-mosaic.gal-n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: calc((100cqw - 8px) / 2 * .75); }
+/* Las fotos entran con su proporción (sin recortar) y todo se agranda como un bloque.
+   Fila y cuadrícula: cada fila a la misma altura (cada foto crece según su forma); mosaico: columnas. */
+.gal-row { display: flex; gap: 8px; align-items: stretch; }
+.gal-grid { display: flex; flex-direction: column; gap: 8px; }
+.gal-line { display: flex; gap: 8px; align-items: stretch; }
+.gal-row .gal-item, .gal-line .gal-item { flex: var(--ar, 1.33) 1 0; min-width: 0; }
+.gal-row .gal-add, .gal-line .gal-add { flex: 0 0 56px; min-height: 56px; }
+.gal-mosaic { display: block; column-gap: 8px; }
+.gal-mosaic .gal-item { break-inside: avoid; margin-bottom: 8px; }
+.gal-mosaic .gal-add { width: 100%; height: 70px; break-inside: avoid; }
+.gal-item img { height: auto; }
 @media (prefers-reduced-motion: reduce) { .gal-item, .gal-chip, .gal-bar { transition: none; } }
 
 /* Galería: marco que se agranda como una foto */
 .gal-fig { display: flex; }
-.gal-frame { position: relative; max-width: 100%; container-type: inline-size; border-radius: 14px; cursor: pointer; }
+.gal-frame { position: relative; max-width: 100%; border-radius: 14px; cursor: pointer; }
 .gal-frame.is-picked { outline: 2px solid var(--blue); outline-offset: 3px; cursor: default; }
 .img-bar .gal-chip { height: 30px; }
 .gal-row .gal-add { min-height: 0; }
+
+/* La barra va dentro del marco (no se esconde tras el bloque de arriba) y el bloque seleccionado queda por encima */
+.img-bar { top: -46px; flex-wrap: nowrap; }
+.block-slot:has(.is-picked) { position: relative; z-index: 30; }
+.gal-frame.is-picked, .img-frame.is-picked { z-index: 2; }
+
+.gal-item { aspect-ratio: var(--ar, 1.33); }
+.gal-item img { object-fit: contain; }
+.gal-block { width: 100%; }
+.gal-spacer { min-width: 0; pointer-events: none; }
