@@ -9,6 +9,7 @@ import TableBlock from './blocks/TableBlock.jsx'
 import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
 import { blocksFromPaste } from '../lib/pasteBlocks.js'
+import { saveFile } from '../lib/fileStore.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
 const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
@@ -395,7 +396,25 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const onPaste = (e, b) => {
     const cd = e.clipboardData
     if (!cd) return
-    const specs = blocksFromPaste(cd.getData('text/html'), cd.getData('text/plain'))
+    // Una imagen copiada (captura, «copiar imagen» de una web…) se pega como bloque de foto, con sus mismas opciones;
+    // varias a la vez, como galería. Si además viene texto (p. ej. celdas de Excel), manda el texto.
+    const pics = [...(cd.files ?? [])].filter((f) => f.type.startsWith('image/'))
+    const html = cd.getData('text/html')
+    const onlyImg = !html || !/<(table|p|div|h[1-6]|ul|ol|pre)\b/i.test(html.replace(/<img\b[^>]*>/gi, ''))
+    if (pics.length && !cd.getData('text/plain').trim() && onlyImg) {
+      e.preventDefault()
+      Promise.all(pics.map(async (f, k) => saveFile(f.name && f.name !== 'image.png' ? f : new File([f], `imagen-${Date.now()}-${k}.${(f.type.split('/')[1] || 'png').replace('jpeg', 'jpg')}`, { type: f.type })))).then((saved) => {
+        const blockMade = saved.length === 1 ? { ...newBlock('image'), file: saved[0] } : { ...newBlock('gallery'), files: saved }
+        const cur = blocksRef.current.find((x) => x.id === b.id)
+        const at = blocksRef.current.findIndex((x) => x.id === b.id)
+        const n = [...blocksRef.current]
+        n.splice(cur && isEmpty(cur) ? at : at + 1, cur && isEmpty(cur) ? 1 : 0, blockMade)
+        hist.current.t = 0
+        commit(n[n.length - 1] === blockMade ? [...n, newBlock()] : n) // si queda la última, hay un bloque debajo para seguir escribiendo
+      }).catch(() => {})
+      return
+    }
+    const specs = blocksFromPaste(html, cd.getData('text/plain'))
     if (!specs || !specs.length) return // texto normal: se pega como siempre
     e.preventDefault()
     if (specs.length === 1 && specs[0].type === 'text') { document.execCommand('insertHTML', false, sanitize(specs[0].html)); return }
