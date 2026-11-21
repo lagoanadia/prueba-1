@@ -88,7 +88,7 @@ export function blockHtml(b, n, imgs) {
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
       return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
-    case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""></div>` : ''
+    case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""${b.w || b.align ? ` style="${b.w ? `width:${b.w}%;max-height:none;` : ''}margin:0 ${b.align === 'left' || !b.align ? 'auto 0 0' : b.align === 'right' ? '0 0 auto' : 'auto'};"` : ''}></div>` : ''
     case 'link': return b.url ? `<div class="x-b x-link"><a href="${esc(b.url)}">${esc(b.title || b.url)}</a>${b.title ? `<span>${esc(b.url)}</span>` : ''}</div>` : ''
     case 'divider': return '<hr class="x-hr">'
     default: return `<div class="x-b x-text">${rich(b.html)}</div>`
