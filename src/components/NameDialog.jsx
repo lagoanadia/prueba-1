@@ -65,7 +65,7 @@ export default function NameDialog({ title, initial = '', placeholder = '', maxL
             <input ref={fileInput} type="file" accept={fileSlot.input} hidden onChange={(e) => { takeFile(e.target.files?.[0]); e.target.value = '' }} />
             <Icon name={fileSlot.icon} size={26} color="#E84855" />
             {file
-              ? <span className="name-drop-txt"><b className="w-ellipsis">{file.name}</b><span className="muted">{fileSlot.ready}</span></span>
+              ? <span className="name-drop-txt"><b className="w-ellipsis">{file.name}</b><span className="muted">{typeof fileSlot.ready === 'function' ? fileSlot.ready(choice) : fileSlot.ready}</span></span>
               : <span className="name-drop-txt"><b>{fileSlot.label}</b><span className="muted">{fileSlot.hint}</span></span>}
             {file && <button type="button" className="icon-btn" onClick={(e) => { e.stopPropagation(); setFile(null) }} aria-label="Quitar el archivo" title="Quitar"><Icon name="close" size={16} /></button>}
           </div>

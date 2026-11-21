@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { saveFile } from '../../lib/fileStore.js'
+import { toDoc } from '../../lib/docModel.js'
 import NotesPane from './NotesPane.jsx'
 import DocsTab from './DocsTab.jsx'
 import FileFrame from '../../components/FileFrame.jsx'
@@ -93,6 +94,15 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
     setPdfNew(null)
     const desc = await saveFile(file)
     const id = crypto.randomUUID()
+    if (type === 'topic') changeU((u) => ({ ...u, topics: [...u.topics, { id, name, state: 'todo', pdfs: [desc] }] }))
+    else setPractices((l) => [...l, { id, name, done: false, pdfs: [desc] }])
+    go({ ...route, tab: type === 'topic' ? 'estudio' : 'practicas', itemId: id })
+  }
+  // Tema o práctica nuevos desde un PDF ya convertido: el PDF queda al lado y los apuntes salen en su barra
+  const addFromPdf = async (type, name, file, blocks) => {
+    const desc = await saveFile(file)
+    const id = crypto.randomUUID()
+    update((d) => ({ ...d, notes: { ...(d.notes ?? {}), [id]: toDoc(blocks) } }))
     if (type === 'topic') changeU((u) => ({ ...u, topics: [...u.topics, { id, name, state: 'todo', pdfs: [desc] }] }))
     else setPractices((l) => [...l, { id, name, done: false, pdfs: [desc] }])
     go({ ...route, tab: type === 'topic' ? 'estudio' : 'practicas', itemId: id })
@@ -298,7 +308,7 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
               : <EmptyAdd icon="code" title="Prácticas" text="Aquí irán las prácticas de la asignatura." createLabel="Crear práctica" onCreate={() => setDialog('practice')} onPdf={(file) => setPdfNew({ type: 'practice', file })} />
           )}
 
-          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} onNewPractice={addPractice} onRemovePractice={removePractice} />}
+          {tab === 'documentos' && <DocsTab data={data} update={update} subject={subject} route={route} go={go} onNewPractice={addPractice} onNewFromPdf={addFromPdf} onRemovePractice={removePractice} />}
 
           {tab === 'recursos' && <ResourceFrames data={data} update={update} subjectId={subject.id} unitId={unit.id} />}
         </div>

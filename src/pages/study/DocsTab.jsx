@@ -15,7 +15,7 @@ const KIND = { topic: { label: 'Tema', tint: '#DDEBFF', ink: '#2F6FED' }, practi
  * Pestaña «Documentos»: todos los apuntes de la asignatura en un solo sitio (los de los temas y prácticas, y los documentos sueltos).
  * Un documento de un tema o práctica se abre en su sitio (con su PDF al lado); los sueltos se abren aquí mismo.
  */
-export default function DocsTab({ data, update, subject, route, go, onNewPractice, onRemovePractice }) {
+export default function DocsTab({ data, update, subject, route, go, onNewPractice, onNewFromPdf, onRemovePractice }) {
   const [drag, setDrag] = useState(null) // { id, over, after } al mover una tarjeta
   const [shown, setShown] = useState(() => new Set()) // tarjetas con la lista de temas que abarcan desplegada
   const [filter, setFilter] = useState('todos') // todos | apuntes | practicas
@@ -65,23 +65,20 @@ export default function DocsTab({ data, update, subject, route, go, onNewPractic
   }
   const [conv, setConv] = useState(null) // { name, page, total, error? } mientras un PDF se pasa a documento
   // Documento nuevo a partir de un PDF: se convierte solo (texto, tablas e imágenes) y, al acabar, se abre
-  const createFromPdf = async (name, file) => {
+  const createFromPdf = async (name, kind, file) => {
     setDialog(null)
     setConv({ name, page: 0, total: 0 })
     try {
-      const { blocks, images } = await pdfToBlocks(file, (page, total) => setConv({ name, page, total }))
+      const { blocks } = await pdfToBlocks(file, (page, total) => setConv({ name, page, total }))
       if (!blocks.length) throw new Error('vacío')
-      const id = crypto.randomUUID()
-      update((d) => ({ ...d, freeDocs: [...(d.freeDocs ?? []), { id, name }], notes: { ...(d.notes ?? {}), [id]: toDoc([...blocks, newBlock()]) } }))
+      await onNewFromPdf(kind === 'practica' ? 'practice' : 'topic', name, file, [...blocks, newBlock()]) // queda como tema o práctica, con su PDF al lado
       setConv(null)
-      setOpenId(id)
-      return images
     } catch {
       setConv({ name, page: 0, total: 0, error: 'No se ha podido pasar este PDF (¿está protegido o dañado?).' })
     }
   }
   const create = (name, kind, file) => {
-    if (file && kind !== 'practica') { createFromPdf(name, file); return }
+    if (file) { createFromPdf(name, kind, file); return }
     if (kind === 'practica') { setDialog(null); onNewPractice(name); return }
     const id = crypto.randomUUID()
     update((d) => ({ ...d, freeDocs: [...(d.freeDocs ?? []), { id, name }], notes: { ...(d.notes ?? {}), [id]: toDoc([newBlock()]) } }))
@@ -154,7 +151,7 @@ export default function DocsTab({ data, update, subject, route, go, onNewPractic
         <button type="button" className="dt-new" onClick={() => setDialog('new')}><Icon name="plus" size={18} strokeWidth={2.6} />Documento nuevo</button>
       </div>
       {all.length === 0 && <p className="muted dt-empty">Aquí se juntan todos tus apuntes. Los de los temas y prácticas salen solos en cuanto escribas algo; también puedes crear documentos sueltos.</p>}
-      {dialog === 'new' && <NameDialog title="Documento nuevo" placeholder="Nombre del documento" onSubmit={create} onClose={() => setDialog(null)} fileSlot={{ forChoice: 'apuntes', icon: 'pdf', accept: 'pdf', input: 'application/pdf,.pdf', label: 'Soltar un PDF aquí', hint: 'Se pasa solo al documento, con texto, tablas e imágenes', ready: 'Se convertirá al aceptar' }} choices={[{ id: 'apuntes', label: 'Apuntes', hint: 'Texto libre, como tus apuntes', icon: 'doc', tint: '#DFF5E4', ink: '#1FA463' }, { id: 'practica', label: 'Práctica', hint: 'Con su PDF al lado', icon: 'code', tint: '#FFE2C2', ink: '#F08A24' }]} />}
+      {dialog === 'new' && <NameDialog title="Documento nuevo" placeholder="Nombre del documento" onSubmit={create} onClose={() => setDialog(null)} fileSlot={{ icon: 'pdf', accept: 'pdf', input: 'application/pdf,.pdf', label: 'Soltar un PDF aquí', hint: 'Queda al lado y se pasa solo a editable', ready: (c) => (c === 'practica' ? 'Saldrá como práctica, con su PDF al lado' : 'Saldrá como tema, con su PDF al lado') }} choices={[{ id: 'apuntes', label: 'Apuntes', hint: 'Texto libre, como tus apuntes', icon: 'doc', tint: '#DFF5E4', ink: '#1FA463' }, { id: 'practica', label: 'Práctica', hint: 'Con su PDF al lado', icon: 'code', tint: '#FFE2C2', ink: '#F08A24' }]} />}
     </div>
   )
 }
