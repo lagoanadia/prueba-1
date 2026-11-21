@@ -4599,3 +4599,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .dt-conv .bar { height: 8px; }
 .dt-conv .bar span { display: block; height: 100%; background: var(--blue); transition: width .25s var(--ease); }
 .dt-conv.is-error { background: #FDECEE; }
+
+/* Índice con muchos títulos: las filas no se aplastan (se desplaza) y los títulos largos ocupan hasta dos líneas */
+.di-pop { width: 280px; max-height: min(60vh, 520px); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.di-pop b, .di-it { flex-shrink: 0; }
+.di-it { width: 100%; white-space: normal; line-height: 1.3; overflow: hidden; }
+.di-t { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }

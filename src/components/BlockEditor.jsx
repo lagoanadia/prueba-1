@@ -818,7 +818,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
           <span className="di-ticks" aria-hidden="true">{heads.map((h) => <i key={h.id} className={h.id === curHead ? 'on' : ''} style={{ width: 24 - (h.level - 1) * 7 }} />)}</span>
           <span className="card di-pop">
             <b>Índice</b>
-            {heads.map((h) => <button type="button" key={h.id} className={`di-it ${h.id === curHead ? 'on' : ''}`} style={{ paddingLeft: 8 + (h.level - 1) * 14 }} onClick={() => goTo(h.id)}>{h.text}</button>)}
+            {heads.map((h) => <button type="button" key={h.id} className={`di-it ${h.id === curHead ? 'on' : ''}`} style={{ paddingLeft: 8 + (h.level - 1) * 14 }} onClick={() => goTo(h.id)}><span className="di-t">{h.text}</span></button>)}
           </span>
         </nav>
       )}
