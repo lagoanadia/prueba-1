@@ -24,6 +24,7 @@ function inline(node) {
     if (bold && !(n.tagName === 'B' && /font-weight:\s*normal/.test(st))) h = `<b>${h}</b>`
     if (ital) h = `<i>${h}</i>`
     if (und && n.tagName !== 'A') h = `<u>${h}</u>`
+    if (n.tagName === 'CODE' || n.tagName === 'KBD' || n.tagName === 'TT') h = `<code>${h}</code>` // código dentro de una línea
     out += h
   })
   return out

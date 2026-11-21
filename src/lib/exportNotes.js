@@ -20,6 +20,7 @@ export function sheetCss(st) {
 .x-sheet { overflow-wrap: anywhere; word-break: break-word; } /* ningún texto se sale de la hoja, ni sin espacios */
 .x-head { font-size: 11px; color: #5F6368; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
+.x-b code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #EEE9FB; color: #5B34B8; border-radius: 4px; padding: 1px 5px; }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
 /* El texto sí puede continuar en la página siguiente; lo demás (tablas, código, fotos…) pasa entero */
 .x-text, .x-li, .x-quote { break-inside: auto; page-break-inside: auto; orphans: 3; widows: 3; }

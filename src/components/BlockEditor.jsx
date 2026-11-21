@@ -329,7 +329,31 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     commit(blocks.filter((x) => x.id !== drop.id).map((x) => (x.id === keep.id ? { ...x, html: sanitize(`${refs.current[keep.id]?.innerHTML ?? keep.html}${refs.current[drop.id]?.innerHTML ?? drop.html}`) } : x)))
     placeCaret(keep.id, at)
   }
+  // Código dentro de una línea (como la negrita): lo seleccionado se pone con letra de código; si ya lo es, se quita
+  const toggleCode = (el, id) => {
+    const sel = window.getSelection()
+    if (!sel?.rangeCount || sel.isCollapsed || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) return false
+    const r = sel.getRangeAt(0)
+    const codeOf = (n) => (n.nodeType === 3 ? n.parentElement : n)?.closest('code')
+    const a = codeOf(r.startContainer)
+    let made
+    if (a && a === codeOf(r.endContainer)) { made = [...a.childNodes]; a.replaceWith(...made) } // ya era código: se quita
+    else {
+      const frag = r.extractContents()
+      frag.querySelectorAll('code').forEach((c) => c.replaceWith(...c.childNodes))
+      const c = document.createElement('code'); c.appendChild(frag)
+      if (!c.textContent.trim()) { r.insertNode(c); c.replaceWith(...c.childNodes); return true }
+      r.insertNode(c); made = [c]
+    }
+    el.normalize()
+    const nr = document.createRange(); nr.selectNodeContents(made[0].nodeType ? made[0] : el); if (made.length > 1) nr.setEndAfter(made[made.length - 1])
+    sel.removeAllRanges(); sel.addRange(nr)
+    hist.current.t = 0
+    patch(id, { html: sanitize(el.innerHTML) })
+    return true
+  }
   const onKeyDown = (e, b, i) => {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'e' && (TEXTY.includes(b.type) || b.type === 'callout')) { if (toggleCode(e.currentTarget, b.id)) e.preventDefault(); return }
     if (menu?.id === b.id) {
       const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 3, ArrowUp: -3 }[e.key]
       if (step) { e.preventDefault(); setMenu({ ...menu, i: Math.max(0, Math.min(options.length - 1, menu.i + step)) }); return }
@@ -437,6 +461,15 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const onInput = (e, b) => {
     markTyping()
+    if (e.nativeEvent?.data === '`') { // `así` se convierte en código dentro de la línea
+      const sl = window.getSelection(); const nd = sl?.anchorNode
+      const m = nd?.nodeType === 3 && e.currentTarget.contains(nd) && !nd.parentElement.closest('code') ? nd.textContent.slice(0, sl.anchorOffset).match(/`([^`\n]+)`$/) : null
+      if (m) {
+        const r = document.createRange(); r.setStart(nd, sl.anchorOffset - m[0].length); r.setEnd(nd, sl.anchorOffset); sl.removeAllRanges(); sl.addRange(r)
+        document.execCommand('insertHTML', false, `<code>${m[1].replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</code>&nbsp;`)
+        return
+      }
+    }
     if (['>', '-'].includes(e.nativeEvent?.data) && arrowify()) return
     const el = e.currentTarget
     const text = el.textContent
