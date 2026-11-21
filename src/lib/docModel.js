@@ -16,6 +16,7 @@ export const BLOCK_TYPES = [
   { type: 'code', label: 'Código', icon: 'code', tint: '#E9DDFA', ink: '#7C4DDB', hint: 'codigo code programa' },
   { type: 'table', label: 'Tabla', icon: 'table', tint: '#E9DDFA', ink: '#7C4DDB', hint: 'tabla table filas columnas' },
   { type: 'image', label: 'Foto', icon: 'img', tint: '#FCE0EA', ink: '#E8618C', hint: 'foto imagen image picture' },
+  { type: 'gallery', label: 'Galería', icon: 'img', tint: '#FCE0EA', ink: '#E8618C', hint: 'galeria fotos imagenes varias collage mosaico' },
   { type: 'link', label: 'Enlace', icon: 'link', tint: '#DDEBFF', ink: '#2F6FED', hint: 'enlace link url web pagina' },
   { type: 'divider', label: 'Divisor', icon: 'minus', tint: '#E8EAED', ink: '#5F6368', hint: 'divisor linea separador ---' },
 ]
@@ -36,6 +37,7 @@ export const newBlock = (type = 'text', html = '') => ({
   ...(type === 'box' ? { blocks: [newBlock()] } : {}),
   ...(type === 'table' ? { rows: [['', '', ''], ['', '', '']] } : {}),
   ...(type === 'image' ? { file: null } : {}),
+  ...(type === 'gallery' ? { files: [], layout: 'row' } : {}),
   ...(type === 'link' ? { url: '', title: '' } : {}),
   ...(type === 'code' ? { code: '', lang: 'JavaScript', theme: savedTheme() } : {}),
 })

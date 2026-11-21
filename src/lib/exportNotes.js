@@ -59,6 +59,10 @@ export function sheetCss(st) {
 ${st.stripes ? '.x-table tr:nth-child(even) td { background: color-mix(in srgb, var(--c) 7%, #fff); }' : ''}
 .x-table td + td, .x-table th + th { border-left: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
 .x-table tr + tr td { border-top: 1px solid color-mix(in srgb, var(--c) 18%, #fff); }
+.x-gal { display: grid; gap: 6px; } .x-gal img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r); display: block; }
+.x-gal-row { grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-rows: 160px; }
+.x-gal-grid { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 120px; }
+.x-gal-mosaic { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 110px; } .x-gal-mosaic img:first-child { grid-column: span 2; grid-row: span 2; }
 .x-img { max-width: 100%; max-height: 420px; border-radius: var(--r); display: block; margin: 0 auto; }
 .x-link { border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); padding: 8px 14px; } .x-link a { color: var(--c); font-weight: 600; text-decoration: none; } .x-link span { display: block; font-size: 11px; color: #5F6368; }
 .x-hr { border: 0; border-top: 2px solid color-mix(in srgb, var(--c) 30%, #fff); margin: 14px 0; }
@@ -88,6 +92,7 @@ export function blockHtml(b, n, imgs) {
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
       return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
+    case 'gallery': return (b.files ?? []).some((f) => imgs[f.id]) ? `<div class="x-b x-gal x-gal-${b.layout ?? 'row'}">${(b.files ?? []).filter((f) => imgs[f.id]).map((f) => `<img src="${imgs[f.id]}" alt="">`).join('')}</div>` : ''
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""${b.w || b.align ? ` style="${b.w ? `width:${b.w}%;max-height:none;` : ''}margin:0 ${b.align === 'left' || !b.align ? 'auto 0 0' : b.align === 'right' ? '0 0 auto' : 'auto'};"` : ''}></div>` : ''
     case 'link': return b.url ? `<div class="x-b x-link"><a href="${esc(b.url)}">${esc(b.title || b.url)}</a>${b.title ? `<span>${esc(b.url)}</span>` : ''}</div>` : ''
     case 'divider': return '<hr class="x-hr">'
@@ -109,10 +114,11 @@ export function sheetHtml({ title, subtitle, blocks, breaks, imgs, dots = true }
 /** Fotos de los apuntes → data URL (para que salgan en el PDF). */
 export async function loadImages(blocks) {
   const out = {}
-  await Promise.all(blocks.filter((b) => b.type === 'image' && b.file?.id).map(async (b) => {
+  const files = blocks.flatMap((b) => (b.type === 'image' && b.file?.id ? [b.file] : b.type === 'gallery' ? (b.files ?? []).filter((f) => f?.id) : []))
+  await Promise.all(files.map(async (file) => {
     try {
-      const blob = await getFile(b.file.id)
-      if (blob) out[b.file.id] = await new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(f.result); f.onerror = rej; f.readAsDataURL(blob) })
+      const blob = await getFile(file.id)
+      if (blob) out[file.id] = await new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(f.result); f.onerror = rej; f.readAsDataURL(blob) })
     } catch { /* sin foto */ }
   }))
   return out

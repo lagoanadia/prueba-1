@@ -3,6 +3,7 @@ import Icon from './Icon.jsx'
 import ExportDialog from './ExportDialog.jsx'
 import CodeBlock from './blocks/CodeBlock.jsx'
 import ImageBlock from './blocks/ImageBlock.jsx'
+import GalleryBlock from './blocks/GalleryBlock.jsx'
 import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
 import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
@@ -23,7 +24,7 @@ const filterTypes = (text) => {
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
-const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : false)
+const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : b.type === 'gallery' ? !(b.files ?? []).length : false)
 
 /** Rango del DOM entre dos posiciones de texto (en caracteres) dentro de `root`; `to` puede ser Infinity (hasta el final) */
 function domRangeFor(root, from, to) {
@@ -789,7 +790,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     </div>
                     {rowOptions.length === 0 && <span className="row-menu-t">Sin resultados</span>}
                     <hr className="row-menu-sep" />
-                    {b.type !== 'image' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
+                    {b.type !== 'image' && b.type !== 'gallery' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
                     <button role="menuitem" onClick={() => { setRowMenu(null); remove(b.id) }}><Icon name="trash" size={16} />Eliminar</button>
                   </span>
                 </>
@@ -812,6 +813,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
                 {b.type === 'link' && <LinkBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
+                {b.type === 'gallery' && <GalleryBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
                 {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
                 {TEXTY.includes(b.type) && (
                   <Line block={b} refCb={(el) => { if (el) refs.current[b.id] = el }} focus={focusId === b.id} done={() => setFocusId(null)}
