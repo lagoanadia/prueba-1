@@ -20,7 +20,7 @@ export const metricsOf = (s) => ({ topics: true, practices: true, assignments: f
 
 export function progressFor(subject, assignments = []) {
   const units = subject.units
-  const mine = assignments.filter((a) => a.course === subject.short)
+  const mine = assignments.filter((a) => a.course === subject.short && a.kind !== 'examen') // los exámenes no son entregas: no cuentan para el progreso
   const counts = {
     topics: { done: units.reduce((n, u) => n + u.topics.filter((t) => t.state === 'clear').length, 0), total: units.reduce((n, u) => n + u.topics.length, 0) },
     practices: { done: units.reduce((n, u) => n + practicesOf(u).filter((p) => p.done).length, 0), total: units.reduce((n, u) => n + practicesOf(u).length, 0) },
