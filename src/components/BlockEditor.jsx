@@ -629,6 +629,21 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (suppressClick.current) return
     if (e.target !== e.currentTarget && !e.target.classList.contains('blocks-tail')) return
     if (e.target.closest('.blocks-page') !== e.currentTarget) return // el hueco de un recuadro de dentro lo gestiona él
+    // Pulsar en el margen junto a un bloque: el cursor va a ESE bloque (al principio), no al final del documento
+    const slots = [...(pageRef.current?.querySelectorAll(':scope > .block-slot') ?? [])]
+    const lastBox = slots[slots.length - 1]?.getBoundingClientRect()
+    if (lastBox && e.clientY < lastBox.bottom) {
+      const hit = slots.find((el) => { const r = el.getBoundingClientRect(); return e.clientY >= r.top && e.clientY <= r.bottom })
+        ?? slots.reduce((best, el) => { const r = el.getBoundingClientRect(); const d = Math.min(Math.abs(e.clientY - r.top), Math.abs(e.clientY - r.bottom)); return !best || d < best.d ? { el, d } : best }, null)?.el
+      const b = blocks.find((x) => x.id === hit?.dataset.id)
+      const target = b && TEXTY.includes(b.type) ? refs.current[b.id] : null
+      if (target) {
+        target.focus()
+        const r = document.createRange(); r.selectNodeContents(target); r.collapse(true)
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r)
+      }
+      return
+    }
     const last = blocks[blocks.length - 1]
     if (last && TEXTY.includes(last.type) && !folded.has(last.id)) refs.current[last.id]?.focus()
     else insertAt(blocks.length, last && folded.has(last.id) ? { ...newBlock(), free: true } : newBlock()) // si lo último está plegado, se escribe en un bloque nuevo fuera
