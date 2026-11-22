@@ -36,8 +36,7 @@ export function sheetCss(st) {
 .x-box.on { background: var(--c); } .x-box.on::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .x-done { text-decoration: line-through; color: #80868B; }
 .x-quote { border-left: 4px solid var(--c); padding: 4px 0 4px 14px; color: #3C4043; font-style: italic; }
-.x-postit { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 12px 16px 4px; break-inside: avoid; page-break-inside: avoid; }
-.x-postit .x-b.x-split { break-inside: avoid; page-break-inside: avoid; }
+.x-postit { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 12px 16px 4px; break-inside: auto; page-break-inside: auto; -webkit-box-decoration-break: clone; box-decoration-break: clone; } /* si se corta, cada trozo queda como un Post-it cerrado */
 .x-postit .x-b:last-child { margin-bottom: 8px; }
 .x-postit .x-table { border-color: var(--pb, #F2B705); background: transparent; }
 .x-postit .x-table th { background: var(--pb, #F2B705); color: #202124; }
@@ -94,7 +93,7 @@ export function blockHtml(b, n, imgs) {
     case 'table': {
       const rows = b.rows ?? []
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
-      return `<div class="x-b${rows.length > 4 ? ' x-split' : ''}"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
+      return `<div class="x-b${rows.length > 2 ? ' x-split' : ''}"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'gallery': return (b.files ?? []).some((f) => imgs[f.id]) ? `<div class="x-b x-gal x-gal-${b.layout ?? 'row'}"${b.w ? ` style="width:${b.w}%;${b.align === 'center' ? 'margin-left:auto;margin-right:auto;' : b.align === 'right' ? 'margin-left:auto;' : ''}"` : ''}>${(b.files ?? []).filter((f) => imgs[f.id]).map((f) => `<img src="${imgs[f.id]}" alt="">`).join('')}</div>` : ''
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""${b.w || b.align ? ` style="${b.w ? `width:${b.w}%;max-height:none;` : ''}margin:0 ${b.align === 'left' || !b.align ? 'auto 0 0' : b.align === 'right' ? '0 0 auto' : 'auto'};"` : ''}></div>` : ''
@@ -166,7 +165,7 @@ const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
 /**
  * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
  * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final (ni una hoja con solo un título); los saltos de página que pones tú mandan.
- * `items` = [{ top, bottom, type, force, cuts? }] en orden (`cuts` = alturas donde se puede cortar dentro de un bloque: filas de una tabla larga; un Post-it no se corta solo). Devuelve [[desde, hasta], …] en px de la tira.
+ * `items` = [{ top, bottom, type, force, cuts? }] en orden (`cuts` = alturas donde se puede cortar dentro de un bloque: filas de una tabla larga; un Post-it se corta entre bloques o filas). Devuelve [[desde, hasta], …] en px de la tira.
  */
 export function paginate(items, total, H = PAGE.content) {
   const pages = []

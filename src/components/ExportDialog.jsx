@@ -42,9 +42,14 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
     if (!el) return
     // altura de un elemento de dentro respecto a la tira (para saber dónde se puede cortar un bloque largo)
     const topIn = (node) => { let y = 0; let n = node; while (n && n !== el) { y += n.offsetTop; n = n.offsetParent } return y }
-    const cutsOf = (c) => [...c.querySelectorAll('.x-split tr')].map(topIn).filter((y) => y > 0)
-    const items = [...el.children].map((c, i) => ({ top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight, type: i === 0 ? 'head' : blocks[i - 1]?.type, force: i > 0 && breaks.has(blocks[i - 1]?.id), cuts: !c.classList.contains('x-postit') && c.querySelector('.x-split') ? cutsOf(c) : [] })) // los Post-it no se cortan solos: los divides tú desde el editor
-    const next = paginate(items, el.scrollHeight)
+    const cutsOf = (c) => [...c.querySelectorAll('.x-postit > .x-b, .x-split tr')].map(topIn).filter((y) => y > 0)
+    const items = [...el.children].map((c, i) => {
+      const pi = c.querySelector('.x-postit')
+      const cs = pi ? getComputedStyle(pi) : null
+      return { top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight, type: i === 0 ? 'head' : blocks[i - 1]?.type, force: i > 0 && breaks.has(blocks[i - 1]?.id), cuts: pi || c.querySelector('.x-split') ? cutsOf(c) : [], box: cs ? { pf: cs.getPropertyValue('--pf').trim(), pb: cs.getPropertyValue('--pb').trim() } : null }
+    })
+    // Si una hoja corta un Post-it por la mitad, se le dibuja un borde de cierre abajo y uno de apertura arriba en la siguiente (cada trozo se ve como un Post-it entero)
+    const next = paginate(items, el.scrollHeight).map(([a, z]) => [a, z, { bottom: items.find((it) => it.box && it.top < z - 1 && it.bottom > z + 1)?.box ?? null, top: items.find((it) => it.box && it.top < a - 1 && it.bottom > a + 1)?.box ?? null }])
     setPages((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next))
   }
   useLayoutEffect(() => {
@@ -147,8 +152,10 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
             <style>{sheetCss(st)}</style>
             <div style={{ width: PAGE.w * scale, height: (pages.length * (PAGE.h + 18)) * scale, margin: '0 auto' }}>
               <div className="xp-pages" style={{ width: PAGE.w, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                {pages.map(([from, to], k) => (
+                {pages.map(([from, to, cap], k) => (
                   <div key={k} className="xp-page">
+                    {cap?.top && <i className="xp-cap xp-cap-t" style={{ '--pf': cap.top.pf, '--pb': cap.top.pb }} />}
+                    {cap?.bottom && <i className="xp-cap xp-cap-b" style={{ top: PAGE.m + Math.max(to - from, 1), '--pf': cap.bottom.pf, '--pb': cap.bottom.pb }} />}
                     <div className="xp-win" style={{ height: Math.max(to - from, 1) }}>
                       <div className="xp-strip" ref={k === 0 ? strip : null} style={{ transform: `translateY(${-from}px)` }}>
                         <div className="x-sheet"><div className="x-head"><i />{title}{subtitle ? ` · ${subtitle}` : ''}</div></div>
