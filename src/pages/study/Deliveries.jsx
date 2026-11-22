@@ -87,11 +87,11 @@ export default function Deliveries({ data, update, subjects, course = null, exam
 
       {exams && view === 'count' && pending.length > 0 && !form ? (
         <div className="exam-c">
-          <div className={`exam-big ${daysUntil(pending[0].due) < 0 ? 'is-late' : ''}`} style={{ '--c': color(pending[0].course) }}>
+          <div className={`exam-big ${daysUntil(pending[0].due) < 0 ? 'is-late' : ''}`} style={{ '--c': color(pending[0].course), background: soft(color(pending[0].course), 32) }}>
             <b>{Math.abs(daysUntil(pending[0].due))}</b>
             <span>{Math.abs(daysUntil(pending[0].due)) === 1 ? 'día' : 'días'}</span>
             <small>{pending[0].title}</small>
-            <small className="exam-big-sub">{pending[0].course} · {daysUntil(pending[0].due) < 0 ? 'hace' : daysUntil(pending[0].due) === 0 ? 'es hoy' : 'faltan'} · {formatLong(pending[0].due)}</small>
+            <small className="exam-big-sub">{formatLong(pending[0].due)}</small>
           </div>
           {pending.length > 1 && (
             <div className="exam-side">
