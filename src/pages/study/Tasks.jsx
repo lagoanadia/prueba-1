@@ -36,7 +36,6 @@ export default function Tasks({ data, update, subjects }) {
     setOpen(false)
   }
   const patch = (id, p) => update((d) => ({ ...d, tasks: (d.tasks ?? []).map((t) => (t.id === id ? { ...t, ...p } : t)) }))
-  const setCourses = (id, courses) => patch(id, { courses, course: courses[0] ?? null })
   const saveEdit = (e) => {
     e.preventDefault()
     if (!edit?.title.trim()) return
@@ -57,7 +56,6 @@ export default function Tasks({ data, update, subjects }) {
   boxes.sort((a, b) => first(a).localeCompare(first(b)))
 
   const row = (t, boxColor) => {
-    const cs = coursesOf(t)
     const isToday = t.due === today
     const late = t.due && t.due < today
     if (edit?.id === t.id) {
@@ -78,7 +76,6 @@ export default function Tasks({ data, update, subjects }) {
         <button className="tk-check" onClick={() => finish(t.id)} aria-label={`Marcar «${t.title}» como hecha`} style={{ borderColor: boxColor }} />
         <button type="button" className="tk-title tk-title-btn" onClick={() => startEdit(t)} title="Editar la tarea">{t.title}</button>
         {t.due && <small className={`tk-when ${late ? 'is-late' : ''} ${isToday ? 'is-now' : ''}`}>{when(t.due)}</small>}
-        <SubjectPicker compact subjects={subjects} value={cs} onChange={(v) => setCourses(t.id, v)} label={`Asignatura de «${t.title}»`} />
         <button className="tk-ic" onClick={() => startEdit(t)} aria-label={`Editar «${t.title}»`} title="Editar"><Icon name="pen" size={15} /></button>
         <button className="tk-ic" onClick={() => remove(t.id)} aria-label={`Quitar «${t.title}»`} title="Quitar"><Icon name="trash" size={15} /></button>
       </li>

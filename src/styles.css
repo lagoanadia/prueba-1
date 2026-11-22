@@ -4718,3 +4718,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .exam-mini-d { flex: 0 0 30px; text-align: right; }
 .exam-more { font-size: 12px; padding-left: 4px; }
 .exam-tag { flex: none; border-radius: 9px; padding: 1px 9px; font-size: 11.5px; font-weight: 700; color: color-mix(in srgb, var(--c) 50%, #000); }
+
+/* Tareas: las cajas se juntan (sin huecos en blanco entre ellas) */
+.tk-cols { display: block; column-width: 270px; column-gap: 12px; }
+.tk-col { break-inside: avoid; margin-bottom: 12px; display: flex; }
+.tk-cols > .tk-empty { column-span: all; }
