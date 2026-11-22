@@ -22,6 +22,8 @@ export function sheetCss(st) {
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
 .x-b code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #161B2E; color: #E7EAF6; border-radius: 4px; padding: 1px 6px; }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
+/* Las tablas largas pueden seguir en la hoja siguiente (entre filas) en vez de dejar un hueco enorme */
+.x-b.x-split { break-inside: auto; page-break-inside: auto; } .x-table tr { break-inside: avoid; page-break-inside: avoid; }
 /* El texto sí puede continuar en la página siguiente; lo demás (tablas, código, fotos…) pasa entero */
 .x-text, .x-li, .x-quote { break-inside: auto; page-break-inside: auto; orphans: 3; widows: 3; }
 .x-pb { break-before: page; page-break-before: always; }
@@ -91,7 +93,7 @@ export function blockHtml(b, n, imgs) {
     case 'table': {
       const rows = b.rows ?? []
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''
-      return `<div class="x-b"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
+      return `<div class="x-b${rows.length > 4 ? ' x-split' : ''}"><table class="x-table">${cg}${rows.map((r, i) => `<tr${b.rowH?.[i] ? ` style="height:${b.rowH[i]}px"` : ''}>${r.map((c) => (i === 0 ? `<th>${cellHtml(b, c)}</th>` : `<td>${cellHtml(b, c)}</td>`)).join('')}</tr>`).join('')}</table></div>`
     }
     case 'gallery': return (b.files ?? []).some((f) => imgs[f.id]) ? `<div class="x-b x-gal x-gal-${b.layout ?? 'row'}"${b.w ? ` style="width:${b.w}%;${b.align === 'center' ? 'margin-left:auto;margin-right:auto;' : b.align === 'right' ? 'margin-left:auto;' : ''}"` : ''}>${(b.files ?? []).filter((f) => imgs[f.id]).map((f) => `<img src="${imgs[f.id]}" alt="">`).join('')}</div>` : ''
     case 'image': return imgs[b.file?.id] ? `<div class="x-b"><img class="x-img" src="${imgs[b.file.id]}" alt=""${b.w || b.align ? ` style="${b.w ? `width:${b.w}%;max-height:none;` : ''}margin:0 ${b.align === 'left' || !b.align ? 'auto 0 0' : b.align === 'right' ? '0 0 auto' : 'auto'};"` : ''}></div>` : ''
@@ -163,7 +165,7 @@ const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
 /**
  * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
  * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final (ni una hoja con solo un título); los saltos de página que pones tú mandan.
- * `items` = [{ top, bottom, type, force }] en orden. Devuelve [[desde, hasta], …] en px de la tira.
+ * `items` = [{ top, bottom, type, force, cuts? }] en orden (`cuts` = alturas donde se puede cortar dentro de un bloque: filas de una tabla larga, bloques de un Post-it). Devuelve [[desde, hasta], …] en px de la tira.
  */
 export function paginate(items, total, H = PAGE.content) {
   const pages = []
@@ -179,7 +181,13 @@ export function paginate(items, total, H = PAGE.content) {
         if (SPLITTABLE.includes(cross.type)) {
           const cut = cross.top + Math.floor((end - cross.top) / LH) * LH
           end = cut - cross.top >= 2 * LH && cut > start ? cut : (cross.top > start ? cross.top : cut > start ? cut : end)
-        } else if (cross.top > start && cross.bottom - cross.top <= H) end = cross.top // pasa entero a la hoja siguiente… salvo que sea más alto que una hoja: entonces se corta ahí mismo (así su título no se queda solo)
+        } else if (cross.top > start) {
+          // Tablas largas y Post-it con varias cosas dentro se pueden cortar entre filas / entre bloques: si pasarlos enteros dejaría un hueco grande, se corta
+          const cuts = (cross.cuts ?? []).filter((c) => c > cross.top + 24 && c > start + 1 && c <= end + 0.5)
+          const tall = cross.bottom - cross.top > H
+          if (cuts.length && (tall || end - cross.top > H * 0.2)) end = cuts[cuts.length - 1]
+          else if (!tall) end = cross.top // pasa entero a la hoja siguiente… salvo que sea más alto que una hoja: entonces se corta ahí mismo (así su título no se queda solo)
+        }
       }
       // Un título (o varios seguidos) nunca queda al final de una hoja: se va con lo que le sigue. Los saltos que pones tú se respetan siempre.
       let last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop()
