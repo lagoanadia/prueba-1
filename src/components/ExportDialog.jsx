@@ -42,8 +42,8 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
     if (!el) return
     // altura de un elemento de dentro respecto a la tira (para saber dónde se puede cortar un bloque largo)
     const topIn = (node) => { let y = 0; let n = node; while (n && n !== el) { y += n.offsetTop; n = n.offsetParent } return y }
-    const cutsOf = (c) => [...c.querySelectorAll(':scope > .x-b, .x-split tr')].map(topIn).filter((y) => y > 0)
-    const items = [...el.children].map((c, i) => ({ top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight, type: i === 0 ? 'head' : blocks[i - 1]?.type, force: i > 0 && breaks.has(blocks[i - 1]?.id), cuts: c.classList.contains('x-postit') || c.querySelector('.x-split') ? cutsOf(c) : [] }))
+    const cutsOf = (c) => [...c.querySelectorAll('.x-split tr')].map(topIn).filter((y) => y > 0)
+    const items = [...el.children].map((c, i) => ({ top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight, type: i === 0 ? 'head' : blocks[i - 1]?.type, force: i > 0 && breaks.has(blocks[i - 1]?.id), cuts: !c.classList.contains('x-postit') && c.querySelector('.x-split') ? cutsOf(c) : [] })) // los Post-it no se cortan solos: los divides tú desde el editor
     const next = paginate(items, el.scrollHeight)
     setPages((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next))
   }

@@ -36,7 +36,8 @@ export function sheetCss(st) {
 .x-box.on { background: var(--c); } .x-box.on::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .x-done { text-decoration: line-through; color: #80868B; }
 .x-quote { border-left: 4px solid var(--c); padding: 4px 0 4px 14px; color: #3C4043; font-style: italic; }
-.x-postit { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 12px 16px 4px; break-inside: auto; page-break-inside: auto; }
+.x-postit { background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); border-radius: 4px 12px 12px 4px; padding: 12px 16px 4px; break-inside: avoid; page-break-inside: avoid; }
+.x-postit .x-b.x-split { break-inside: avoid; page-break-inside: avoid; }
 .x-postit .x-b:last-child { margin-bottom: 8px; }
 .x-postit .x-table { border-color: var(--pb, #F2B705); background: transparent; }
 .x-postit .x-table th { background: var(--pb, #F2B705); color: #202124; }
@@ -165,7 +166,7 @@ const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
 /**
  * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
  * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final (ni una hoja con solo un título); los saltos de página que pones tú mandan.
- * `items` = [{ top, bottom, type, force, cuts? }] en orden (`cuts` = alturas donde se puede cortar dentro de un bloque: filas de una tabla larga, bloques de un Post-it). Devuelve [[desde, hasta], …] en px de la tira.
+ * `items` = [{ top, bottom, type, force, cuts? }] en orden (`cuts` = alturas donde se puede cortar dentro de un bloque: filas de una tabla larga; un Post-it no se corta solo). Devuelve [[desde, hasta], …] en px de la tira.
  */
 export function paginate(items, total, H = PAGE.content) {
   const pages = []

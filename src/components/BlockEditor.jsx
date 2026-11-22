@@ -146,7 +146,7 @@ function Tile({ t }) {
  * `value` = lo guardado; `onChange(doc)` guarda; `bar` = botones extra para la barra (p. ej. Compartir).
  * Cambia la `key` para abrir otro documento.
  */
-export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null, scrollToId = null }) {
+export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null, onSplit = null, scrollToId = null }) {
   const [blocks, setBlocks] = useState(() => toBlocks(value))
   const [focusId, setFocusId] = useState(null)
   const lastId = useRef(null) // último bloque donde tuviste el cursor
@@ -216,6 +216,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const indexOf = (id) => blocks.findIndex((b) => b.id === id)
   const insertAt = (index, b) => { const n = [...blocks]; n.splice(index, 0, b); commit(n); setFocusId(b.id) }
   const insertAfter = (id, b) => insertAt(indexOf(id) + 1, b)
+  // Dividir un Post-it en dos (del mismo color): lo que va desde el bloque elegido pasa a un Post-it nuevo justo debajo
+  const splitBox = (boxId, childId) => {
+    const box = blocksRef.current.find((x) => x.id === boxId)
+    const k = (box?.blocks ?? []).findIndex((x) => x.id === childId)
+    if (!box || k < 1) return
+    hist.current.t = 0
+    const second = { ...newBlock('box'), color: box.color, blocks: box.blocks.slice(k) }
+    commit(blocksRef.current.flatMap((x) => (x.id === boxId ? [{ ...x, blocks: box.blocks.slice(0, k) }, second] : [x])))
+    setRev((r) => r + 1) // el Post-it de arriba se vuelve a pintar con lo que le queda
+  }
   const remove = (id) => { const i = indexOf(id); const n = blocks.filter((b) => b.id !== id); commit(n.length ? n : [newBlock()]); setFocusId((n[i - 1] ?? n[0])?.id ?? null) }
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; commit(n) }
   const dropDrag = () => {
@@ -851,6 +861,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     </div>
                     {rowOptions.length === 0 && <span className="row-menu-t">Sin resultados</span>}
                     <hr className="row-menu-sep" />
+                    {nested && onSplit && i > 0 && <button role="menuitem" onClick={() => { setRowMenu(null); onSplit(b.id) }}><Icon name="minus" size={16} />Dividir el post-it desde aquí</button>}
                     {b.type !== 'image' && b.type !== 'gallery' && <button role="menuitem" onClick={() => duplicate(b.id)}><Icon name="note" size={16} />Duplicar</button>}
                     <button role="menuitem" onClick={() => { setRowMenu(null); remove(b.id) }}><Icon name="trash" size={16} />Eliminar</button>
                   </span>
@@ -869,7 +880,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                     <span className="pi-colors" role="radiogroup" aria-label="Color del post-it">
                       {Object.entries(POSTIT_COLORS).map(([id, c]) => <button type="button" key={id} role="radio" aria-checked={(b.color ?? 'amarillo') === id} className={(b.color ?? 'amarillo') === id ? 'on' : ''} style={{ background: c.bar }} title={c.label} aria-label={c.label} onClick={() => patch(b.id, { color: id })} />)}
                     </span>
-                    <BlockEditor key={rev} nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} />
+                    <BlockEditor key={rev} nested label="Post-it" value={{ blocks: b.blocks ?? [] }} onChange={(doc) => patch(b.id, { blocks: doc.blocks })} onExit={() => insertAfter(b.id, newBlock())} onSplit={(childId) => splitBox(b.id, childId)} />
                   </div>
                 )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
