@@ -461,6 +461,15 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const onInput = (e, b) => {
     markTyping()
+    // «---» en una línea de texto sola → divisor (y debajo queda una línea para seguir escribiendo)
+    if (e.nativeEvent?.data === '-' && b.type === 'text' && e.currentTarget.textContent.trim() === '---') {
+      e.currentTarget.innerHTML = ''; setMenu(null)
+      const nb = newBlock()
+      hist.current.t = 0
+      commit(blocksRef.current.flatMap((x) => (x.id === b.id ? [{ ...newBlock('divider'), id: b.id }, nb] : [x])))
+      setFocusId(nb.id)
+      return
+    }
     if (e.nativeEvent?.data === '`') { // `así` se convierte en código dentro de la línea
       const sl = window.getSelection(); const nd = sl?.anchorNode
       const m = nd?.nodeType === 3 && e.currentTarget.contains(nd) && !nd.parentElement.closest('code') ? nd.textContent.slice(0, sl.anchorOffset).match(/`([^`\n]+)`$/) : null
