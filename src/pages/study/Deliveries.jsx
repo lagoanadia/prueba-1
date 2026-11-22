@@ -45,9 +45,9 @@ export default function Deliveries({ data, update, subjects, course = null, exam
   const restore = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, done: false, doneAt: null, tick: false, tickAt: null } : a)) })) // desde el reloj
   const untick = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, tick: false, tickAt: null } : a)) }))
 
-  const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : `${n} días` }
-  const groups = course ? [[course, pending]] : subjects.map((s) => [s.short, pending.filter((a) => a.course === s.short)]).filter(([, l]) => l.length)
-  const orphans = course ? [] : pending.filter((a) => !subjects.some((s) => s.short === a.course))
+  const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : n === 1 ? 'mañana' : `${n} días` }
+  const groups = exams ? [['', pending]] : course ? [[course, pending]] : subjects.map((s) => [s.short, pending.filter((a) => a.course === s.short)]).filter(([, l]) => l.length)
+  const orphans = course || exams ? [] : pending.filter((a) => !subjects.some((s) => s.short === a.course))
   if (orphans.length) groups.push(['Sin asignatura', orphans])
 
   return (
@@ -86,22 +86,41 @@ export default function Deliveries({ data, update, subjects, course = null, exam
       )}
 
       {exams && view === 'count' && pending.length > 0 && !form ? (
-        <div className="exam-count">
-          <span className="exam-count-name">{pending[0].course} · {pending[0].title}</span>
-          <div className={`exam-count-n ${pending[0].due < today ? 'is-late' : ''}`} style={{ color: pending[0].due < today ? undefined : color(pending[0].course) }}>{Math.abs(daysUntil(pending[0].due))}<small>{Math.abs(daysUntil(pending[0].due)) === 1 ? 'día' : 'días'}</small></div>
-          <span className="muted">{daysUntil(pending[0].due) < 0 ? 'hace' : daysUntil(pending[0].due) === 0 ? 'es hoy' : 'faltan'} · {formatLong(pending[0].due)}</span>
-          {pending.length > 1 && <div className="exam-next">{pending.slice(1, 4).map((a) => <span key={a.id} style={{ background: soft(color(a.course), 40) }}>{a.course} {Math.max(daysUntil(a.due), 0)} d</span>)}</div>}
+        <div className="exam-c">
+          <div className={`exam-big ${daysUntil(pending[0].due) < 0 ? 'is-late' : ''}`} style={{ '--c': color(pending[0].course) }}>
+            <b>{Math.abs(daysUntil(pending[0].due))}</b>
+            <span>{Math.abs(daysUntil(pending[0].due)) === 1 ? 'día' : 'días'}</span>
+            <small>{pending[0].title}</small>
+            <small className="exam-big-sub">{pending[0].course} · {daysUntil(pending[0].due) < 0 ? 'hace' : daysUntil(pending[0].due) === 0 ? 'es hoy' : 'faltan'} · {formatLong(pending[0].due)}</small>
+          </div>
+          {pending.length > 1 && (
+            <div className="exam-side">
+              {pending.slice(1, 7).map((a) => {
+                const n = Math.max(daysUntil(a.due), 0)
+                return (
+                  <div key={a.id} className="exam-mini" style={{ background: soft(color(a.course), 30), '--c': color(a.course) }} title={`${a.course} · ${a.title} · ${formatLong(a.due)}`}>
+                    <b className="w-ellipsis">{a.course}</b>
+                    <span className="exam-mini-t w-ellipsis">{a.title}</span>
+                    <span className="exam-bar" aria-hidden="true"><i style={{ width: `${Math.max(8, 100 - n * 8)}%`, background: color(a.course) }} /></span>
+                    <b className="exam-mini-d">{n} d</b>
+                  </div>
+                )
+              })}
+              {pending.length > 7 && <span className="muted exam-more">+{pending.length - 7} más en la lista</span>}
+            </div>
+          )}
         </div>
       ) : (
         <>
       {groups.map(([short, list]) => (
         <div key={short} className="deliv-group">
-          {!course && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
+          {!course && !exams && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
           {list.map((a) => (
             <div key={a.id} className="deliv-row is-click" style={{ background: soft(color(a.course), 16) }} role="button" tabIndex={0}
               onClick={() => tick(a.id)} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tick(a.id) } }}
               aria-label={`Marcar «${a.title}» como hecha`} title="Toca para marcarla como hecha">
               <span className="deliv-ic" style={{ background: soft(color(a.course), 55) }} aria-hidden="true"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></span>
+              {exams && <span className="exam-tag" style={{ background: soft(color(a.course), 45), '--c': color(a.course) }}>{a.course}</span>}
               <span className="deliv-name w-ellipsis">{a.title}</span>
               {exams ? <span className={`exam-chip ${a.due < today ? 'is-late' : ''}`}>{daysText(a.due)}</span> : <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>}
               <button className="prio-x" onClick={(e) => { e.stopPropagation(); open(a) }} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>
