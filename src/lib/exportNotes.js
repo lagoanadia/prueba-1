@@ -162,7 +162,7 @@ const SPLITTABLE = ['text', 'bullet', 'numbered', 'todo', 'quote']
 
 /**
  * Reparte una tira continua en páginas A4 como lo haría el PDF: el texto puede continuar en la página siguiente
- * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final.
+ * (cortando entre líneas); tablas, código, fotos, destacados… pasan enteros; un título no se queda solo al final (ni una hoja con solo un título); los saltos de página que pones tú mandan.
  * `items` = [{ top, bottom, type, force }] en orden. Devuelve [[desde, hasta], …] en px de la tira.
  */
 export function paginate(items, total, H = PAGE.content) {
@@ -179,10 +179,11 @@ export function paginate(items, total, H = PAGE.content) {
         if (SPLITTABLE.includes(cross.type)) {
           const cut = cross.top + Math.floor((end - cross.top) / LH) * LH
           end = cut - cross.top >= 2 * LH && cut > start ? cut : (cross.top > start ? cross.top : cut > start ? cut : end)
-        } else if (cross.top > start) end = cross.top
+        } else if (cross.top > start && cross.bottom - cross.top <= H) end = cross.top // pasa entero a la hoja siguiente… salvo que sea más alto que una hoja: entonces se corta ahí mismo (así su título no se queda solo)
       }
-      const last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop()
-      if (last && /^h[123]$/.test(last.type) && last.top > start && end - last.bottom < 30) end = last.top
+      // Un título (o varios seguidos) nunca queda al final de una hoja: se va con lo que le sigue. Los saltos que pones tú se respetan siempre.
+      let last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop()
+      while (last && /^h[123]$/.test(last.type) && last.top > start) { end = last.top; last = items.filter((it) => it.bottom <= end + 0.5 && it.top >= start).pop() }
     }
     if (end <= start + 1) end = start + H
     pages.push([start, end])
