@@ -7,17 +7,23 @@ import { daysUntil, formatShort, todayISO } from '../../lib/dates.js'
 import { soft } from './helpers.js'
 
 /**
- * Tareas: una caja por asignatura (las de «sin vincular» van aparte), cada una con sus tareas por orden de fecha.
+ * Tareas: una caja por asignatura o por etiqueta (el nombre que quieras; las demás van en «Otras»), cada una con sus tareas por orden de fecha.
  * Cada tarea es de una asignatura (o de ninguna). Lo de hoy se ve destacado.
  * Al marcar una tarea se va al historial (reloj). El lápiz y la papelera siempre están en su sitio.
- * data.tasks = [{ id, course | null, courses: [course] (por compatibilidad), title, due?, done, doneAt? }]
+ * data.tasks = [{ id, course | null (sigla de asignatura o nombre de etiqueta), courses: [course] (por compatibilidad), title, due?, done, doneAt? }]
+ * data.taskLabels = [{ name, color }]: etiquetas propias
  */
 export default function Tasks({ data, update, subjects }) {
   const today = todayISO()
   const all = data.tasks ?? []
   const done = all.filter((t) => t.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''))
   const pending = all.filter((t) => !t.done)
-  const known = new Set(subjects.map((s) => s.short))
+  const labels = data.taskLabels ?? []
+  const known = new Set([...subjects.map((s) => s.short), ...labels.map((l) => l.name)])
+  // Asignaturas y etiquetas propias juntas, para elegir una al crear o editar
+  const options = [...subjects.map((s) => ({ id: s.id, short: s.short, color: s.color })), ...labels.map((l) => ({ id: `l-${l.name}`, short: l.name, color: l.color, custom: true }))]
+  const createLabel = (name, color) => update((d) => ((d.taskLabels ?? []).some((l) => l.name.toLowerCase() === name.toLowerCase()) ? d : { ...d, taskLabels: [...(d.taskLabels ?? []), { name, color }] }))
+  const deleteLabel = (name) => update((d) => ({ ...d, taskLabels: (d.taskLabels ?? []).filter((l) => l.name !== name), tasks: (d.tasks ?? []).map((t) => (t.course === name || t.courses?.[0] === name ? { ...t, course: null, courses: [] } : t)) }))
   const [draft, setDraft] = useState({ title: '', courses: [], due: '' })
   const [open, setOpen] = useState(false) // la barra de «Nueva tarea» solo sale al pulsar el +
   const [edit, setEdit] = useState(null) // { id, title, courses, due }: tarea que se está editando
@@ -26,7 +32,6 @@ export default function Tasks({ data, update, subjects }) {
   const coursesOf = (t) => [(t.courses?.length ? t.courses[0] : t.course)].filter((c) => c && known.has(c))
   const byDate = (list) => [...list].sort((a, b) => (a.due ?? '9999').localeCompare(b.due ?? '9999'))
   const when = (d) => { const n = daysUntil(d, today); return n < 0 ? 'Vencida' : n === 0 ? 'Hoy' : n === 1 ? 'Mañana' : formatShort(d) }
-  const sub = (c) => subjects.find((s) => s.short === c)
 
   const add = (e) => {
     e.preventDefault()
@@ -48,9 +53,9 @@ export default function Tasks({ data, update, subjects }) {
   const startEdit = (t) => setEdit({ id: t.id, title: t.title, courses: coursesOf(t), due: t.due ?? '' })
 
   // Una caja por asignatura + la de sin vincular
-  const boxes = subjects.map((s) => ({ key: s.short, name: s.short, color: s.color, list: byDate(pending.filter((t) => coursesOf(t).includes(s.short))) })).filter((b) => b.list.length)
+  const boxes = options.map((s) => ({ key: s.short, name: s.short, color: s.color, list: byDate(pending.filter((t) => coursesOf(t).includes(s.short))) })).filter((b) => b.list.length)
   const loose = byDate(pending.filter((t) => !coursesOf(t).length))
-  if (loose.length) boxes.push({ key: '', name: 'Sin vincular', color: '#80868B', list: loose })
+  if (loose.length) boxes.push({ key: '', name: 'Otras', color: '#80868B', list: loose })
   // Las cajas con algo para hoy primero, y luego por la fecha de su tarea más cercana
   const first = (b) => b.list[0]?.due ?? '9999'
   boxes.sort((a, b) => first(a).localeCompare(first(b)))
@@ -63,7 +68,7 @@ export default function Tasks({ data, update, subjects }) {
         <li key={t.id} className="tk-row tk-editing">
           <form className="tk-edit" onSubmit={saveEdit} onKeyDown={(e) => e.key === 'Escape' && setEdit(null)}>
             <input autoFocus value={edit.title} maxLength={80} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Nombre de la tarea" />
-            <SubjectPicker subjects={subjects} value={edit.courses} onChange={(v) => setEdit({ ...edit, courses: v })} label="Asignatura de la tarea" />
+            <SubjectPicker subjects={options} onCreate={createLabel} onDelete={deleteLabel} value={edit.courses} onChange={(v) => setEdit({ ...edit, courses: v })} label="Asignatura o etiqueta de la tarea" />
             <DatePicker value={edit.due} onChange={(v) => setEdit({ ...edit, due: v })} label="Fecha de la tarea" placeholder="Fecha" />
             <button type="button" className="icon-btn" onClick={() => setEdit(null)} aria-label="Cancelar" title="Cancelar"><Icon name="close" size={18} /></button>
             <button className="icon-btn on" disabled={!edit.title.trim()} aria-label="Guardar" title="Guardar"><Icon name="check" size={18} /></button>
@@ -72,10 +77,10 @@ export default function Tasks({ data, update, subjects }) {
       )
     }
     return (
-      <li key={t.id} className={`tk-row ${isToday ? 'is-today' : ''} ${late ? 'is-lateRow' : ''}`} style={{ '--bc': boxColor, ...(isToday ? { background: soft(boxColor, 34), boxShadow: `inset 4px 0 0 ${boxColor}` } : {}) }}>
+      <li key={t.id} className={`tk-row ${isToday ? 'is-today' : ''} ${late ? 'is-lateRow' : ''}`} style={{ '--bc': boxColor, ...(isToday ? { background: soft(boxColor, 34), boxShadow: `inset 4px 0 0 ${boxColor}, 0 0 0 2px ${soft(boxColor, 60)}, 0 4px 14px ${soft(boxColor, 55)}` } : {}) }}>
         <button className="tk-check" onClick={() => finish(t.id)} aria-label={`Marcar «${t.title}» como hecha`} style={{ borderColor: boxColor }} />
         <button type="button" className="tk-title tk-title-btn" onClick={() => startEdit(t)} title="Editar la tarea">{t.title}</button>
-        {t.due && <small className={`tk-when ${late ? 'is-late' : ''} ${isToday ? 'is-now' : ''}`}>{when(t.due)}</small>}
+        {t.due && !isToday && <small className={`tk-when ${late ? 'is-late' : ''}`}>{when(t.due)}</small>}
         <button className="tk-ic" onClick={() => startEdit(t)} aria-label={`Editar «${t.title}»`} title="Editar"><Icon name="pen" size={15} /></button>
         <button className="tk-ic" onClick={() => remove(t.id)} aria-label={`Quitar «${t.title}»`} title="Quitar"><Icon name="trash" size={15} /></button>
       </li>
@@ -96,7 +101,7 @@ export default function Tasks({ data, update, subjects }) {
       {open && (
         <form className="tk-top" onSubmit={add} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
           <input autoFocus value={draft.title} placeholder="Nueva tarea…" maxLength={80} onChange={(e) => setDraft({ ...draft, title: e.target.value })} aria-label="Nueva tarea" />
-          <SubjectPicker subjects={subjects} value={draft.courses} onChange={(v) => setDraft({ ...draft, courses: v })} label="Vincular a una asignatura" />
+          <SubjectPicker subjects={options} onCreate={createLabel} onDelete={deleteLabel} value={draft.courses} onChange={(v) => setDraft({ ...draft, courses: v })} label="Asignatura o etiqueta" />
           <DatePicker value={draft.due} onChange={(v) => setDraft({ ...draft, due: v })} label="Fecha de la tarea" placeholder="Fecha" />
           <button className="icon-btn on" disabled={!draft.title.trim()} aria-label="Añadir tarea" title="Añadir"><Icon name="check" size={18} /></button>
         </form>
