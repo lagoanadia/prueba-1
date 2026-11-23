@@ -77,9 +77,9 @@ export default function Tasks({ data, update, subjects }) {
       )
     }
     return (
-      <li key={t.id} className={`tk-row ${isToday ? 'is-today' : ''} ${late ? 'is-lateRow' : ''}`} style={{ '--bc': boxColor, ...(isToday ? { background: soft(boxColor, 34), boxShadow: `inset 4px 0 0 ${boxColor}, 0 0 0 2px ${soft(boxColor, 60)}, 0 4px 14px ${soft(boxColor, 55)}` } : {}) }}>
+      <li key={t.id} className={`tk-row ${isToday ? 'is-today' : ''} ${late ? 'is-lateRow' : ''}`} style={{ '--bc': boxColor }}>
         <button className="tk-check" onClick={() => finish(t.id)} aria-label={`Marcar «${t.title}» como hecha`} style={{ borderColor: boxColor }} />
-        <button type="button" className="tk-title tk-title-btn" onClick={() => startEdit(t)} title="Editar la tarea">{t.title}</button>
+        <button type="button" className="tk-title tk-title-btn" onClick={() => startEdit(t)} title="Editar la tarea">{isToday ? <span className="tk-mark">{t.title}</span> : t.title}</button>
         {t.due && !isToday && <small className={`tk-when ${late ? 'is-late' : ''}`}>{when(t.due)}</small>}
         <button className="tk-ic" onClick={() => startEdit(t)} aria-label={`Editar «${t.title}»`} title="Editar"><Icon name="pen" size={15} /></button>
         <button className="tk-ic" onClick={() => remove(t.id)} aria-label={`Quitar «${t.title}»`} title="Quitar"><Icon name="trash" size={15} /></button>

@@ -4749,8 +4749,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .exam-band i { flex: 1; }
 .exam-mini-d { flex-basis: 44px; }
 
-/* Varios exámenes hoy: una tarjeta por examen, igual que la de la cuenta atrás */
-.exam-todays { flex: 0 0 auto; width: 270px; display: grid; gap: 10px; align-content: start; }
-.exam-big.exam-tcard { flex: none; min-height: 96px; border-radius: 22px; padding: 10px 8px; gap: 0; }
-.exam-tcard b { font-size: 30px; }
-.exam-tcard small { margin-top: 4px; font-size: 13px; }
+/* Varios exámenes hoy: «HOY» arriba y una tarjeta de color por examen */
+.exam-todays { flex: 0 0 auto; width: 290px; display: flex; flex-direction: column; gap: 8px; }
+.exam-todays-h { font-size: 36px; line-height: 1; letter-spacing: .02em; color: var(--text); }
+.exam-todays-h small { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.exam-tgrid { display: grid; gap: 8px; }
+.exam-tcard { border-radius: 18px; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px; border-bottom: 5px solid var(--c); min-width: 0; }
+.exam-tcard b { color: color-mix(in srgb, var(--c) 52%, #000); font-size: 16px; }
+.exam-tcard span { font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+
+/* Tarea de hoy: título en negrita subrayado con rotulador del color de su asignatura (sin brillos) */
+.tk-col .tk-row.is-today { background: #FFFFFF; box-shadow: none; }
+.tk-mark { background: linear-gradient(transparent 48%, color-mix(in srgb, var(--bc) 60%, #FFFFFF) 48%, color-mix(in srgb, var(--bc) 60%, #FFFFFF) 94%, transparent 94%); padding: 0 3px; margin: 0 -3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; border-radius: 3px; }

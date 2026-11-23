@@ -95,14 +95,17 @@ export default function Deliveries({ data, update, subjects, course = null, exam
             return (
               <>
                 {isToday && todays.length > 1 ? (
-                  // Varios exámenes hoy: una tarjeta como la de la cuenta atrás por cada uno (mismo color suave, HOY y su nombre)
-                  <div className="exam-todays" style={{ gridTemplateColumns: `repeat(${todays.length === 2 ? 2 : 2}, minmax(0, 1fr))` }}>
-                    {todays.map((a) => (
-                      <div key={a.id} className="exam-big exam-today exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>
-                        <b>HOY</b>
-                        <small>{a.title}</small>
-                      </div>
-                    ))}
+                  // Varios exámenes hoy: «HOY» como título y una tarjeta de color por examen (con la barrita de su asignatura)
+                  <div className="exam-todays">
+                    <b className="exam-todays-h">HOY <small>{todays.length} exámenes</small></b>
+                    <div className="exam-tgrid" style={{ gridTemplateColumns: todays.length === 2 ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+                      {todays.map((a) => (
+                        <div key={a.id} className="exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>
+                          <b>{a.course}</b>
+                          <span>{a.title}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : isToday ? (
                   <div className="exam-big exam-today" style={{ '--c': color(todays[0].course), background: soft(color(todays[0].course), 32) }}>
