@@ -85,6 +85,8 @@ function segment(lines, body) {
   const isItem = (l) => BULLET.test(l.text) || NUMBERED.test(l.text)
   let i = 0
   while (i < lines.length) {
+    const before = out.length
+    const i0 = i
     const l = lines[i]
     if (isHead(l)) { // línea(s) de título seguidas con el mismo tamaño
       let j = i + 1
@@ -123,6 +125,7 @@ function segment(lines, body) {
       else out.push({ type: 'text', text: run.map((x) => x.text).join(' ') })
       i = j
     }
+    out.slice(before).forEach((o) => { o.from = i0; o.to = i }) // qué líneas ocupa (para dibujar el recuadro del bloque)
   }
   return out
 }
@@ -179,3 +182,35 @@ export const SEGMENT_LABEL = { h1: 'Título', h2: 'Título', h3: 'Título', text
 
 /** Trozos de texto ya medidos (left/right/top/bottom/fs/text) → bloques sueltos {type, text | items | rows}. Sirve para pasar un PDF entero. */
 export const segmentsFromSpans = (spans, body) => (spans.length ? segment(toLines(spans), body) : [])
+
+
+const median2 = (a) => { const t = [...a].sort((x, y) => x - y); return t.length ? t[Math.floor(t.length / 2)] : 0 }
+const QUESTION = /^\s*\(?\d{1,3}[.)]\s+/
+
+/**
+ * Bloques de una página del PDF (títulos, textos, listas, tablas y, si el texto va numerado, preguntas con sus opciones).
+ * Cada bloque lleva su recuadro (`rect`, relativo a la página, en px de pantalla) y el nombre que se le enseña.
+ */
+export function blocksOfPage(pageEl) {
+  const pr = pageEl.getBoundingClientRect()
+  const els = [...pageEl.querySelectorAll('.textLayer span')].filter((x) => x.textContent.trim() && !x.classList.contains('markedContent'))
+  if (!els.length) return []
+  const spans = els.map((x) => { const r = x.getBoundingClientRect(); return { text: x.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom, fs: parseFloat(getComputedStyle(x).fontSize) || r.height } })
+  const body = median2(spans.map((x) => x.fs).filter(Boolean))
+  const lines = toLines(spans)
+  if (!lines.length) return []
+  const rectOf = (a, b) => {
+    const ls = lines.slice(a, b)
+    return { left: Math.min(...ls.flatMap((l) => l.cells.map((c) => c.left))) - pr.left, right: Math.max(...ls.flatMap((l) => l.cells.map((c) => c.right))) - pr.left, top: Math.min(...ls.map((l) => l.mid - l.fs * 0.62)) - pr.top, bottom: Math.max(...ls.map((l) => l.mid + l.fs * 0.62)) - pr.top }
+  }
+  const out = []
+  const push = (kind, a, b, label) => { if (b > a) out.push({ kind, label, from: a, to: b, rect: rectOf(a, b), text: lines.slice(a, b).map((l) => l.text).join(' ') }) }
+  const leftMin = Math.min(...lines.map((l) => l.cells[0].left))
+  const starts = lines.map((l, i) => (QUESTION.test(l.text) && Math.abs(l.cells[0].left - leftMin) < l.fs * 1.2 ? i : -1)).filter((i) => i >= 0)
+  const addSegments = (from, to) => { segment(lines.slice(from, to), body).forEach((sg) => push(sg.type, from + sg.from, from + sg.to, SEGMENT_LABEL[sg.type] ?? 'Texto')) }
+  if (starts.length >= 2) {
+    addSegments(0, starts[0])
+    starts.forEach((st, k) => push('question', st, starts[k + 1] ?? lines.length, `Pregunta ${parseInt(lines[st].text.match(/\d+/)[0], 10)}`))
+  } else addSegments(0, lines.length)
+  return out
+}
