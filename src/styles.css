@@ -4757,7 +4757,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .exam-tcard { border-radius: 18px; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px; border-bottom: 5px solid var(--c); min-width: 0; }
 .exam-tcard b { color: color-mix(in srgb, var(--c) 52%, #000); font-size: 16px; }
 .exam-tcard span { font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
-
-/* Tarea de hoy: título en negrita subrayado con rotulador del color de su asignatura (sin brillos) */
-.tk-col .tk-row.is-today { background: #FFFFFF; box-shadow: none; }
-.tk-mark { background: linear-gradient(transparent 48%, color-mix(in srgb, var(--bc) 60%, #FFFFFF) 48%, color-mix(in srgb, var(--bc) 60%, #FFFFFF) 94%, transparent 94%); padding: 0 3px; margin: 0 -3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; border-radius: 3px; }
+/* Tarea de hoy: fondo blanco como las demás, título en negrita y la raya de color a la izquierda (sin brillos) */
+.tk-col .tk-row.is-today { background: #FFFFFF; }
