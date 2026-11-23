@@ -4782,3 +4782,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pdfp-pick { z-index: 6; }
 .pdfp-page .textLayer ::selection { background: rgba(49, 133, 252, .38); }
 .pdfp-selbox b { top: auto; bottom: -11px; }
+
+.note-text ol { margin: 4px 0; padding-left: 24px; }

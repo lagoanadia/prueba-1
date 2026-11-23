@@ -5,6 +5,7 @@ import { SUBJECT_COLORS, soft } from './helpers.js'
 
 const FORMATS = [
   ['list', 'Puntos', () => document.execCommand('insertUnorderedList')],
+  ['listnum', 'Numerada', () => document.execCommand('insertOrderedList')],
   ['bold', 'Negrita', () => document.execCommand('bold')],
   ['italic', 'Cursiva', () => document.execCommand('italic')],
   ['underline', 'Subrayado', () => document.execCommand('underline')],
@@ -37,7 +38,27 @@ export default function QuickNote({ note, onChange, onDelete }) {
         </div>
       )}
       <div ref={ref} className="note-text" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" aria-label="Nota rápida" data-empty="Escribe lo que quieras"
-        onInput={(e) => onChange({ ...note, html: sanitize(e.currentTarget.innerHTML) })} />
+        onInput={(e) => {
+          // «- », «* » o «1. » al empezar una línea la convierten en lista (como en los documentos)
+          const sel = window.getSelection(); const nd = sel?.anchorNode
+          if (/^insert/.test(e.nativeEvent?.inputType ?? '') && /^[ \u00A0]$/.test(e.nativeEvent?.data ?? '') && nd?.nodeType === 3 && sel.isCollapsed) {
+            const before = nd.textContent.slice(0, sel.anchorOffset)
+            const first = !nd.previousSibling || nd.previousSibling.nodeName === 'BR' || nd.previousSibling.nodeType === 1 // primer texto de su línea
+            const m = first && /^(?:[-*•]|1[.)])[ \u00A0]$/.exec(before)
+            if (m && !nd.parentElement.closest('li')) {
+              // primero se convierte la línea en lista y luego se quita el marcador del principio (así el navegador no mezcla líneas)
+              const n = m[0].length
+              document.execCommand(/^1/.test(m[0]) ? 'insertOrderedList' : 'insertUnorderedList')
+              const s2 = window.getSelection(); const t = s2?.anchorNode
+              if (t?.nodeType === 3 && t.textContent.slice(0, n) === m[0]) {
+                const off = s2.anchorOffset
+                const r = document.createRange(); r.setStart(t, 0); r.setEnd(t, n); r.deleteContents()
+                const c = document.createRange(); c.setStart(t, Math.max(0, off - n)); c.collapse(true); s2.removeAllRanges(); s2.addRange(c)
+              }
+            }
+          }
+          onChange({ ...note, html: sanitize(e.currentTarget.innerHTML) })
+        }} />
       {active && (
         <div className="note-colors">
           {palette
