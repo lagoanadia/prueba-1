@@ -23,6 +23,7 @@ const filterTypes = (text) => {
   return BLOCK_TYPES.filter((t) => starts(t.label) || starts(t.hint)).sort((a, b) => Number(starts(b.label)) - Number(starts(a.label)))
 }
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+const IMG = ['image', 'gallery']
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
 const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : b.type === 'gallery' ? !(b.files ?? []).length : false)
@@ -243,6 +244,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       return
     }
     if (!drag?.over || drag.over === drag.id) { setDrag(null); return }
+    // Una foto soltada ENCIMA de otra (en el centro) se junta con ella en una galería
+    if (drag.merge) {
+      const moving = blocks.find((b) => b.id === drag.id)
+      const target = blocks.find((b) => b.id === drag.over)
+      const filesOf = (b) => (b.type === 'gallery' ? b.files ?? [] : b.file ? [b.file] : [])
+      if (moving && target && IMG.includes(moving.type) && IMG.includes(target.type)) {
+        const files = [...filesOf(target), ...filesOf(moving)]
+        const gallery = target.type === 'gallery' ? { ...target, files } : { ...newBlock('gallery'), id: target.id, files, layout: 'row' }
+        hist.current.t = 0
+        commit(blocks.filter((b) => b.id !== moving.id).map((b) => (b.id === target.id ? gallery : b)))
+        setDrag(null)
+        return
+      }
+    }
     const item = blocks.find((b) => b.id === drag.id)
     const rest = blocks.filter((b) => b.id !== drag.id)
     const at = rest.findIndex((b) => b.id === drag.over) + (drag.after ? 1 : 0)
@@ -270,7 +285,11 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const r = hit.getBoundingClientRect()
     const over = hit.dataset.id
     const after = y > r.top + r.height / 2
-    if (!drag || drag.over !== over || drag.after !== after) setDrag(foreign ? { id: DRAGGING.block.id, foreign: true, over, after } : { ...drag, over, after })
+    // Arrastrando una foto sobre el centro de otra foto: se juntarán en una galería
+    const moving = !foreign && blocksRef.current.find((b) => b.id === drag?.id)
+    const target = !foreign && blocksRef.current.find((b) => b.id === over)
+    const merge = Boolean(moving && target && moving.id !== target.id && IMG.includes(moving.type) && IMG.includes(target.type) && y > r.top + r.height * 0.25 && y < r.bottom - r.height * 0.25)
+    if (!drag || drag.over !== over || drag.after !== after || Boolean(drag.merge) !== merge) setDrag(foreign ? { id: DRAGGING.block.id, foreign: true, over, after } : { ...drag, over, after, merge })
     const pr = page.getBoundingClientRect()
     if (y < pr.top + 50) page.scrollTop -= 14
     else if (y > pr.bottom - 50) page.scrollTop += 14
@@ -813,7 +832,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''} ${pen.on ? 'pen-on' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (
-          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.after ? 'drop-after' : 'drop-before') : ''}`}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.merge ? 'drop-merge' : drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
             {(range ? rangeIds[0] : firstSel) === b.id && (
               <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Selección">
