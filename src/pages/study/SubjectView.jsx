@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
 import NameDialog from '../../components/NameDialog.jsx'
 import { TOPIC_STATES } from '../../widgets/estudios/study.js'
@@ -29,6 +29,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
   const [palette, setPalette] = useState(false) // selector de color de la asignatura
   const [banner, setBanner] = useState('')
   const subjects = data.subjects ?? []
+  const titleRef = useRef(null)
   const [editName, setEditName] = useState(null) // nombre de la asignatura mientras se edita (doble clic en el título)
   const p = progressFor(subject, data.assignments)
   const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
@@ -102,14 +103,18 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       <header className="page-head">
         <div className="head-line">
           <button className="icon-btn" onClick={back} aria-label="Volver a Estudios" title="Volver"><Icon name="back" /></button>
-          {editName === null
-            ? <h1 className="sv-title" onDoubleClick={() => setEditName(subject.name)} title="Doble clic para cambiar el nombre">{subject.name}</h1>
-            : (
-              <input className="sv-title-input" autoFocus value={editName} maxLength={40} aria-label="Nombre de la asignatura"
-                onChange={(e) => setEditName(e.target.value)} onFocus={(e) => e.target.select()}
-                onBlur={() => { const n = editName.trim(); setEditName(null); if (n && n !== subject.name) renameSubject(n) }}
-                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); else if (e.key === 'Escape') { setEditName(null) } }} />
-            )}
+          {/* Doble clic: la palabra queda seleccionada y el propio título se puede editar (sin cambiar de sitio nada de lo de al lado) */}
+          <h1 className={`sv-title ${editName !== null ? 'is-editing' : ''}`} ref={titleRef} contentEditable={editName !== null} suppressContentEditableWarning spellCheck={false}
+            title={editName === null ? 'Doble clic para cambiar el nombre' : undefined} aria-label={editName !== null ? 'Nombre de la asignatura' : undefined}
+            onDoubleClick={() => {
+              if (editName !== null) return
+              const sel = window.getSelection(); const keep = sel?.rangeCount ? sel.getRangeAt(0).cloneRange() : null
+              setEditName(subject.name)
+              requestAnimationFrame(() => { const el = titleRef.current; if (!el) return; el.focus(); if (keep) { sel.removeAllRanges(); sel.addRange(keep) } })
+            }}
+            onBlur={(e) => { if (editName === null) return; const n = e.currentTarget.textContent.replace(/\s+/g, ' ').trim(); setEditName(null); if (n && n !== subject.name) renameSubject(n); else e.currentTarget.textContent = subject.name }}
+            onKeyDown={(e) => { if (editName === null) return; if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } else if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.textContent = subject.name; setEditName(null); e.currentTarget.blur() } }}
+            onPaste={(e) => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain').replace(/\s+/g, ' ')) }}>{subject.name}</h1>
           <div className="sc-wrap">
             <button className="sc-dot" style={{ background: subject.color, '--c': subject.color }} onClick={() => setPalette(!palette)} aria-expanded={palette} aria-label="Cambiar el color de la asignatura" title="Cambiar color" />
             {palette && (
