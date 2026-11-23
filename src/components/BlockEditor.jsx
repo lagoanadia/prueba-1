@@ -412,6 +412,10 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (e.key === 'Escape' && TEXTY.includes(b.type)) { e.preventDefault(); e.currentTarget.blur(); e.nativeEvent.__picked = true; setSel([b.id]); return } // Esc: marca este bloque entero (luego Retroceso lo borra)
     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); move(i, e.key === 'ArrowUp' ? -1 : 1); return }
     const el = e.currentTarget
+    if (e.key === 'Enter' && !e.shiftKey && b.type === 'callout') { // dentro de una lista de un Destacado, Enter sigue la lista (y con una viñeta vacía sale de ella)
+      const an = window.getSelection()?.anchorNode
+      if ((an?.nodeType === 3 ? an.parentElement : an)?.closest?.('li') && el.contains(an)) return
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (nested && onExit && !strip(el.innerHTML) && b.type === 'text' && i === blocks.length - 1 && blocks.length > 1) { remove(b.id); onExit(); return } // Enter en la última línea vacía: sale del post-it
@@ -510,6 +514,25 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const onInput = (e, b) => {
     markTyping()
+    // Dentro de un Destacado: «- », «* » o «1. » al empezar una línea la convierten en lista (con puntos o numerada)
+    if (b.type === 'callout' && /^[ \u00A0]$/.test(e.nativeEvent?.data ?? '') && /^insert/.test(e.nativeEvent?.inputType ?? '')) {
+      const sl = window.getSelection(); const nd = sl?.anchorNode
+      if (nd?.nodeType === 3 && sl.isCollapsed && e.currentTarget.contains(nd) && !nd.parentElement.closest('li')) {
+        const before = nd.textContent.slice(0, sl.anchorOffset)
+        const first = !nd.previousSibling || nd.previousSibling.nodeName === 'BR' || nd.previousSibling.nodeType === 1
+        const mm = first && /^(?:[-*•]|1[.)])[ \u00A0]$/.exec(before)
+        if (mm) {
+          const n = mm[0].length
+          document.execCommand(/^1/.test(mm[0]) ? 'insertOrderedList' : 'insertUnorderedList')
+          const s2 = window.getSelection(); const t = s2?.anchorNode
+          if (t?.nodeType === 3 && t.textContent.slice(0, n) === mm[0]) { // se quita el marcador y el cursor se queda en su sitio
+            const off = s2.anchorOffset
+            const rg = document.createRange(); rg.setStart(t, 0); rg.setEnd(t, n); rg.deleteContents()
+            const cc = document.createRange(); cc.setStart(t, Math.max(0, off - n)); cc.collapse(true); s2.removeAllRanges(); s2.addRange(cc)
+          }
+        }
+      }
+    }
     // «---» en una línea de texto sola → divisor (y debajo queda una línea para seguir escribiendo)
     if (e.nativeEvent?.data === '-' && b.type === 'text' && e.currentTarget.textContent.trim() === '---') {
       e.currentTarget.innerHTML = ''; setMenu(null)

@@ -4784,3 +4784,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .pdfp-selbox b { top: auto; bottom: -11px; }
 
 .note-text ol { margin: 4px 0; padding-left: 24px; }
+
+.bt-callout .block-text ul, .bt-callout .block-text ol { margin: 4px 0; padding-left: 22px; }
+.bt-callout .block-text li { margin: 1px 0; }
