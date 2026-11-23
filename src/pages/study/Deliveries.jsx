@@ -94,12 +94,20 @@ export default function Deliveries({ data, update, subjects, course = null, exam
             const n0 = Math.abs(daysUntil(pending[0].due))
             return (
               <>
-                {isToday ? (
-                  // Hoy: en vez de «0 días» pone HOY; si hay varios exámenes, la misma tarjeta con una banda con los colores de cada asignatura y sus nombres
-                  <div className={`exam-big exam-today ${todays.length > 1 ? 'is-multi' : ''}`} style={{ '--c': color(todays[0].course), ...(todays.length > 1 ? {} : { background: soft(color(todays[0].course), 32) }) }}>
-                    {todays.length > 1 && <span className="exam-band" aria-hidden="true">{todays.map((a) => <i key={a.id} style={{ background: color(a.course) }} />)}</span>}
+                {isToday && todays.length > 1 ? (
+                  // Varios exámenes hoy: una tarjeta como la de la cuenta atrás por cada uno (mismo color suave, HOY y su nombre)
+                  <div className="exam-todays" style={{ gridTemplateColumns: `repeat(${todays.length === 2 ? 2 : 2}, minmax(0, 1fr))` }}>
+                    {todays.map((a) => (
+                      <div key={a.id} className="exam-big exam-today exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>
+                        <b>HOY</b>
+                        <small>{a.title}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : isToday ? (
+                  <div className="exam-big exam-today" style={{ '--c': color(todays[0].course), background: soft(color(todays[0].course), 32) }}>
                     <b>HOY</b>
-                    {todays.map((a) => <small key={a.id} className="exam-today-n">{todays.length > 1 && <i style={{ background: color(a.course) }} />}{a.title}</small>)}
+                    <small>{todays[0].title}</small>
                     <small className="exam-big-sub">{formatLong(pending[0].due)}</small>
                   </div>
                 ) : (
