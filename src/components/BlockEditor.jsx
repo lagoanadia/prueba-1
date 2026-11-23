@@ -551,6 +551,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     }
     e.preventDefault()
     if (specs.length === 1 && specs[0].type === 'text') { document.execCommand('insertHTML', false, sanitize(specs[0].html)); return }
+    if (b.type === 'callout') { document.execCommand('insertHTML', false, sanitize(htmlOfBlocks(specs.map((sp) => (sp.type === 'table' ? { ...sp, rich: true } : sp))))); return } // dentro de un Destacado: todo entra en el mismo recuadro, con su formato
     const made = specs.map((sp) => {
       if (sp.type === 'table') return { ...newBlock('table'), rich: true, rows: sp.rows }
       if (sp.type === 'code') return { ...newBlock('code'), code: sp.code, ...(sp.lang ? { lang: sp.lang } : {}) }

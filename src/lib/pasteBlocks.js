@@ -85,7 +85,7 @@ function walk(node, out, para) {
       return
     }
     if (tag === 'BLOCKQUOTE') { flush(); const h = clean(inline(n)); if (h) out.push({ type: 'quote', html: h }); return }
-    if (tag === 'PRE') { flush(); const code = (n.textContent || '').replace(/\n+$/, ''); if (code.trim()) out.push({ type: 'code', code, lang: detectCode(code) ?? undefined }); return }
+    if (tag === 'PRE') { flush(); const code = (n.textContent || '').replace(/\n+$/, ''); if (code.trim()) { const cls = `${n.querySelector('code')?.className ?? ''} ${n.className ?? ''}`; const mm = /language-([\w+#-]+)/i.exec(cls); out.push({ type: 'code', code, lang: (mm && LANG_MAP[mm[1].toLowerCase()]) || detectCode(code) || undefined }) } return }
     if (tag === 'HR') { flush(); out.push({ type: 'divider' }); return }
     if (tag === 'BR') { para.h += '<br>'; return }
     if (BLOCKY.has(tag)) {
@@ -103,6 +103,56 @@ function walk(node, out, para) {
   flush()
 }
 
+
+// Lo que se copia de un chat (o de cualquier sitio en Markdown): bloques de código con su lenguaje, títulos, listas, citas, tablas, negritas y código en línea
+const LANG_MAP = { js: 'JavaScript', javascript: 'JavaScript', jsx: 'JavaScript', node: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript', tsx: 'TypeScript', py: 'Python', python: 'Python', java: 'Java', kotlin: 'Kotlin', kt: 'Kotlin', sql: 'SQL', bash: 'Bash', sh: 'Bash', shell: 'Bash', zsh: 'Bash', console: 'Bash', c: 'C', cpp: 'C', 'c++': 'C', html: 'HTML', xml: 'HTML', css: 'CSS', json: 'JSON' }
+const inlineMd = (src) => {
+  // el código en línea se aparta primero para que su contenido no se toque
+  const parts = String(src).split(/(`[^`]+`)/g)
+  return parts.map((seg, k) => {
+    if (k % 2) return `<code>${esc(seg.slice(1, -1))}</code>`
+    return esc(seg)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+      .replace(/\*\*([^*\n]+)\*\*|__([^_\n]+)__/g, (_, a2, b2) => `<b>${a2 ?? b2}</b>`)
+      .replace(/(^|[^*\w])\*([^*\s][^*\n]*)\*(?![*\w])/g, '$1<i>$2</i>')
+  }).join('')
+}
+function mdBlocks(lines) {
+  const out = []
+  let i = 0
+  const cells = (l) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => inlineMd(c.trim()))
+  while (i < lines.length) {
+    const l = lines[i].replace(/\s+$/, '')
+    let m
+    if (!l.trim()) { i++; continue }
+    if ((m = l.match(/^\s*(```|~~~)\s*([\w+#-]*)/))) { // bloque de código entre ``` ```
+      const body = []
+      i++
+      while (i < lines.length && !/^\s*(```|~~~)\s*$/.test(lines[i])) body.push(lines[i++])
+      i++
+      const code = body.join('\n').replace(/\n+$/, '')
+      if (code.trim()) out.push({ type: 'code', code, lang: LANG_MAP[m[2].toLowerCase()] ?? detectCode(code) ?? 'Texto' })
+      continue
+    }
+    if (l.includes('|') && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1]) && lines[i + 1].includes('-')) { // tabla con barras
+      const rows = [cells(l)]
+      i += 2
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim()) rows.push(cells(lines[i++]))
+      const cols = Math.max(...rows.map((r) => r.length))
+      out.push({ type: 'table', rows: rows.map((r) => [...r, ...Array(cols - r.length).fill('')]) })
+      continue
+    }
+    if ((m = l.match(/^\s*(#{1,6})\s+(.*)$/))) out.push({ type: `h${Math.min(m[1].length, 3)}`, html: inlineMd(m[2]) })
+    else if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) out.push({ type: 'divider' })
+    else if ((m = l.match(/^\s*[-*+•·▪◦]\s+(.*)$/))) out.push({ type: 'bullet', html: inlineMd(m[1].replace(/^\[[ xX]\]\s+/, '')) })
+    else if ((m = l.match(/^\s*\(?\d{1,3}[.)]\s+(.*)$/))) out.push({ type: 'numbered', html: inlineMd(m[1]) })
+    else if ((m = l.match(/^\s*>\s?(.*)$/))) out.push({ type: 'quote', html: inlineMd(m[1]) })
+    else out.push({ type: 'text', html: inlineMd(l.trim()) })
+    i++
+  }
+  return out
+}
+
 function fromText(text) {
   const t = text.replace(/\r\n?/g, '\n').replace(/\n+$/, '')
   const lines = t.split('\n')
@@ -114,18 +164,7 @@ function fromText(text) {
     const cols = Math.max(...rows.map((r) => r.length))
     return [{ type: 'table', rows: rows.map((r) => [...r, ...Array(cols - r.length).fill('')]) }]
   }
-  const out = []
-  for (const raw of lines) {
-    const l = raw.replace(/\s+$/, '')
-    if (!l.trim()) continue
-    let m
-    if ((m = l.match(/^\s*#{1,3}\s+(.*)$/))) out.push({ type: `h${Math.min((l.trim().match(/^#+/)[0].length), 3)}`, html: esc(m[1]) })
-    else if ((m = l.match(/^\s*[-*•·▪◦]\s+(.*)$/))) out.push({ type: 'bullet', html: esc(m[1]) })
-    else if ((m = l.match(/^\s*\(?\d{1,3}[.)]\s+(.*)$/))) out.push({ type: 'numbered', html: esc(m[1]) })
-    else if ((m = l.match(/^\s*>\s+(.*)$/))) out.push({ type: 'quote', html: esc(m[1]) })
-    else out.push({ type: 'text', html: esc(l.trim()) })
-  }
-  return out
+  return mdBlocks(lines)
 }
 
 /**
@@ -143,7 +182,7 @@ export function blocksFromPaste(html, text) {
 
 function rawBlocks(html, text) {
   // lo copiado parece código (de un editor, de una web…): bloque de código con su lenguaje, sin tocar la estructura si venía con tablas o listas
-  const lang = text ? detectCode(text) : null
+  const lang = text && !/```|^\s*#{1,6}\s/m.test(text) ? detectCode(text) : null
   if (lang && !/<(table|ul|ol|h[1-6])\b/i.test(html || '')) return [{ type: 'code', code: text.replace(/\r\n?/g, '\n').replace(/\n+$/, ''), lang }]
   if (html && /<(table|ul|ol|h[1-6]|pre|blockquote|hr|p|div)\b/i.test(html)) {
     const doc = new DOMParser().parseFromString(html, 'text/html')
