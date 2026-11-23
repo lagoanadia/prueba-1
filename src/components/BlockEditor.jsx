@@ -24,6 +24,7 @@ const filterTypes = (text) => {
   return BLOCK_TYPES.filter((t) => starts(t.label) || starts(t.hint)).sort((a, b) => Number(starts(b.label)) - Number(starts(a.label)))
 }
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+const cleanPasted = (list) => list.map((b) => ({ ...b, ...(typeof b.html === 'string' && /background/i.test(b.html) ? { html: sanitize(b.html) } : {}), ...(Array.isArray(b.blocks) ? { blocks: cleanPasted(b.blocks) } : {}) }))
 const IMG = ['image', 'gallery']
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
@@ -149,7 +150,8 @@ function Tile({ t }) {
  * Cambia la `key` para abrir otro documento.
  */
 export default function BlockEditor({ value, onChange, label = 'Documento', bar = null, appendRef = null, exportAs = null, nested = false, onExit = null, onSplit = null, scrollToId = null }) {
-  const [blocks, setBlocks] = useState(() => toBlocks(value))
+  // Al abrir, se quitan los fondos blancos que se colaron al pegar de otras páginas (los subrayados propios no se tocan)
+  const [blocks, setBlocks] = useState(() => cleanPasted(toBlocks(value)))
   const [focusId, setFocusId] = useState(null)
   const lastId = useRef(null) // último bloque donde tuviste el cursor
   const [menu, setMenu] = useState(null) // { id, q, i, x, y }
@@ -492,7 +494,10 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       return
     }
     const specs = blocksFromPaste(html, cd.getData('text/plain'))
-    if (!specs || !specs.length) return // texto normal: se pega como siempre
+    if (!specs || !specs.length) { // texto normal: se pega sin los fondos ni colores de la página de origen
+      if (html) { e.preventDefault(); document.execCommand('insertHTML', false, sanitize(html, { bg: false })) }
+      return
+    }
     e.preventDefault()
     if (specs.length === 1 && specs[0].type === 'text') { document.execCommand('insertHTML', false, sanitize(specs[0].html)); return }
     const made = specs.map((sp) => {
