@@ -26,6 +26,36 @@ const filterTypes = (text) => {
 const strip = (html) => (html ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 const cleanPasted = (list) => list.map((b) => ({ ...b, ...(typeof b.html === 'string' && /background/i.test(b.html) ? { html: sanitize(b.html) } : {}), ...(Array.isArray(b.blocks) ? { blocks: cleanPasted(b.blocks) } : {}) }))
 const IMG = ['image', 'gallery']
+// Copiar bloques con su formato: lo que va al portapapeles lleva los bloques tal cual (para pegarlos en otro sitio del documento sin que cambie nada)
+const escHtml = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+const htmlOfBlocks = (list) => {
+  let out = ''
+  for (let i = 0; i < list.length; i++) {
+    const b = list[i]
+    if (['bullet', 'numbered', 'todo'].includes(b.type)) {
+      const tag = b.type === 'numbered' ? 'ol' : 'ul'
+      let items = ''
+      while (i < list.length && (list[i].type === b.type || (b.type !== 'numbered' && ['bullet', 'todo'].includes(list[i].type)))) { items += `<li>${list[i].html ?? ''}</li>`; i++ }
+      i--
+      out += `<${tag}>${items}</${tag}>`
+    } else if (/^h[123]$/.test(b.type)) out += `<div><b>${b.html ?? ''}</b></div>`
+    else if (b.type === 'code') out += `<div><code>${escHtml(b.code).replace(/\n/g, '<br>')}</code></div>`
+    else if (b.type === 'table') out += (b.rows ?? []).map((r) => `<div>${r.map((c) => (b.rich ? c : escHtml(c))).join(' · ')}</div>`).join('')
+    else if (b.type === 'box') out += htmlOfBlocks(b.blocks ?? [])
+    else if (['divider', 'image', 'gallery', 'link'].includes(b.type)) out += b.type === 'link' ? `<div>${escHtml(b.title || b.url)}</div>` : ''
+    else out += `<div>${b.html ?? ''}</div>`
+  }
+  return out
+}
+const freshIds = (list) => list.map((x) => ({ ...x, id: crypto.randomUUID(), ...(Array.isArray(x.blocks) ? { blocks: freshIds(x.blocks) } : {}) }))
+const writeClip = async (payload, plain) => {
+  const keep = payload.filter((b) => !['image', 'gallery'].includes(b.type)) // las fotos no se copian (comparten archivo)
+  const html = `<div data-pblocks="${encodeURIComponent(JSON.stringify(keep))}">${htmlOfBlocks(keep)}</div>`
+  try {
+    if (navigator.clipboard?.write && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([plain], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })])
+    else await navigator.clipboard?.writeText(plain)
+  } catch { try { await navigator.clipboard?.writeText(plain) } catch { /* sin permiso */ } }
+}
 const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
 const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : b.type === 'gallery' ? !(b.files ?? []).length : false)
@@ -477,8 +507,29 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (!cd) return
     // Una imagen copiada (captura, «copiar imagen» de una web…) se pega como bloque de foto, con sus mismas opciones;
     // varias a la vez, como galería. Si además viene texto (p. ej. celdas de Excel), manda el texto.
-    const pics = [...(cd.files ?? [])].filter((f) => f.type.startsWith('image/'))
     const html = cd.getData('text/html')
+    // Bloques copiados de este mismo documento (o de otro): se pegan tal cual, con su formato
+    if (html && html.includes('data-pblocks=')) {
+      let pb = null
+      try { pb = JSON.parse(decodeURIComponent(new DOMParser().parseFromString(html, 'text/html').querySelector('[data-pblocks]').getAttribute('data-pblocks'))) } catch { /* no es nuestro */ }
+      if (Array.isArray(pb) && pb.length) {
+        e.preventDefault()
+        if (b.type === 'callout') { document.execCommand('insertHTML', false, sanitize(htmlOfBlocks(pb))); return } // un Destacado es un solo bloque: dentro entran con su formato (negritas, listas, código…)
+        let made = freshIds(pb)
+        if (nested) made = made.flatMap((x) => (x.type === 'box' ? x.blocks ?? [] : [x])) // un Post-it no entra en otro
+        const cur = blocksRef.current.find((x) => x.id === b.id)
+        const at = blocksRef.current.findIndex((x) => x.id === b.id)
+        const empty = cur && isEmpty(cur)
+        const n = [...blocksRef.current]
+        n.splice(empty ? at : at + 1, empty ? 1 : 0, ...made)
+        hist.current.t = 0
+        commit(n)
+        const last = made[made.length - 1]
+        if (last && TEXTY.includes(last.type)) setFocusId(last.id)
+        return
+      }
+    }
+    const pics = [...(cd.files ?? [])].filter((f) => f.type.startsWith('image/'))
     const onlyImg = !html || !/<(table|p|div|h[1-6]|ul|ol|pre)\b/i.test(html.replace(/<img\b[^>]*>/gi, ''))
     if (pics.length && !cd.getData('text/plain').trim() && onlyImg) {
       e.preventDefault()
@@ -631,7 +682,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     const near = n[Math.max(0, Math.min(first, n.length) - 1)]
     if (near && TEXTY.includes(near.type)) setFocusId(near.id) // el cursor queda en el bloque de arriba
   }
-  const copySel = () => { try { navigator.clipboard?.writeText(blocks.filter((b) => sel.includes(b.id)).map(plainOf).join('\n')) } catch { /* sin permiso */ } }
+  const copySel = () => { const chosen = blocks.filter((b) => sel.includes(b.id)); writeClip(chosen, chosen.map(plainOf).join('\n')) }
   // Selección «desde donde haces clic hasta donde sueltas» entre varios bloques (el navegador no deja seleccionar a través de bloques)
   const caretAt = (x, y) => {
     const page = pageRef.current
@@ -666,8 +717,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   })()
   const bounds = (id) => ({ from: id === range.a.id ? range.a.off : 0, to: id === range.b.id ? range.b.off : Infinity })
   const copyRange = () => {
-    const text = rangeIds.map((id) => { const b = blocks.find((k) => k.id === id); if (!b) return ''; if (!TEXTY.includes(b.type)) return plainOf(b); const { from, to } = bounds(id); return plainHtml(sliceHtml(b.html, from, to)) }).join('\n')
-    try { navigator.clipboard?.writeText(text) } catch { /* sin permiso */ }
+    const parts = rangeIds.map((id) => { const b = blocks.find((k) => k.id === id); if (!b) return null; if (!TEXTY.includes(b.type)) return b; const { from, to } = bounds(id); return { ...b, html: sanitize(sliceHtml(b.html, from, to)) } }).filter(Boolean)
+    writeClip(parts, parts.map((b) => (TEXTY.includes(b.type) ? plainHtml(b.html) : plainOf(b))).join('\n'))
   }
   const deleteRange = () => {
     if (!range || !rangeIds.length) return
