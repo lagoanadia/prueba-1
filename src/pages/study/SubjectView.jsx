@@ -29,6 +29,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
   const [palette, setPalette] = useState(false) // selector de color de la asignatura
   const [banner, setBanner] = useState('')
   const subjects = data.subjects ?? []
+  const [editName, setEditName] = useState(null) // nombre de la asignatura mientras se edita (doble clic en el título)
   const p = progressFor(subject, data.assignments)
   const toggleMetric = (k) => changeSubject(update, subject.id, (s) => ({ ...s, metrics: { ...metricsOf(s), [k]: !metricsOf(s)[k] } }))
   const addUnit = (name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: [...s.units, { id: crypto.randomUUID(), name, topics: [] }] })); setDialog(null) }
@@ -101,8 +102,14 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
       <header className="page-head">
         <div className="head-line">
           <button className="icon-btn" onClick={back} aria-label="Volver a Estudios" title="Volver"><Icon name="back" /></button>
-          <h1>{subject.name}</h1>
-          <button className="icon-btn" onClick={() => setDialog('subject')} aria-label="Cambiar el nombre de la asignatura" title="Cambiar el nombre"><Icon name="pen" size={18} /></button>
+          {editName === null
+            ? <h1 className="sv-title" onDoubleClick={() => setEditName(subject.name)} title="Doble clic para cambiar el nombre">{subject.name}</h1>
+            : (
+              <input className="sv-title-input" autoFocus value={editName} maxLength={40} aria-label="Nombre de la asignatura"
+                onChange={(e) => setEditName(e.target.value)} onFocus={(e) => e.target.select()}
+                onBlur={() => { const n = editName.trim(); setEditName(null); if (n && n !== subject.name) renameSubject(n) }}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); else if (e.key === 'Escape') { setEditName(null) } }} />
+            )}
           <div className="sc-wrap">
             <button className="sc-dot" style={{ background: subject.color, '--c': subject.color }} onClick={() => setPalette(!palette)} aria-expanded={palette} aria-label="Cambiar el color de la asignatura" title="Cambiar color" />
             {palette && (
@@ -170,7 +177,6 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
           )
         })}
       </div>
-      {dialog === 'subject' && <NameDialog title="Nombre de la asignatura" initial={subject.name} maxLength={40} onSubmit={renameSubject} onClose={() => setDialog(null)} />}
       {dialog === 'new' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
 

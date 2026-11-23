@@ -4763,3 +4763,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 /* Arrastrar una foto sobre otra: se juntan en una galería */
 .block-slot.drop-merge { outline: 3px solid var(--blue); outline-offset: -3px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 8%, transparent); }
 .block-slot.drop-merge::after { content: 'Soltar para juntarlas en una galería'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--blue); color: #FFFFFF; font: 600 12.5px Poppins, sans-serif; padding: 4px 12px; border-radius: 99px; z-index: 6; pointer-events: none; white-space: nowrap; }
+
+/* Nombre de la asignatura: doble clic para cambiarlo */
+.sv-title { cursor: text; }
+.sv-title-input { font: inherit; font-weight: 600; color: var(--text); border: 0; border-bottom: 3px solid var(--blue); background: transparent; outline: none; padding: 0 2px; min-width: 120px; width: min(520px, 60vw); border-radius: 4px 4px 0 0; }
+.page-head .sv-title-input { font-size: 40px; font-weight: 600; line-height: 1.1; font-family: inherit; }
+@media (max-width: 700px) { .page-head .sv-title-input { font-size: 30px; } }
