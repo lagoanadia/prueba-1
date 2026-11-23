@@ -10,6 +10,7 @@ import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/do
 import { sanitize } from '../lib/richText.js'
 import { blocksFromPaste } from '../lib/pasteBlocks.js'
 import { saveFile } from '../lib/fileStore.js'
+import { syncCodeColor } from '../lib/exportNotes.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
 const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
@@ -178,6 +179,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   const [saving, setSaving] = useState(false) // «Guardando…» en gris claro mientras haces cambios
   const saveTimer = useRef(null)
   const flagSaving = () => { setSaving(true); clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => setSaving(false), 1400) }
+  useEffect(() => { try { const c = JSON.parse(localStorage.getItem('exportStyle') || '{}').color; if (c) syncCodeColor(c) } catch { /* sin guardado */ } }, [])
   const [rev, setRev] = useState(0) // sube al deshacer: los Post-it de dentro se vuelven a cargar
   const commit = (next) => {
     if (!nested) {
@@ -361,9 +363,27 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   // Código dentro de una línea (como la negrita): lo seleccionado se pone con letra de código; si ya lo es, se quita
   const toggleCode = (el, id) => {
     const sel = window.getSelection()
-    if (!sel?.rangeCount || sel.isCollapsed || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) return false
+    if (!sel?.rangeCount || !el.contains(sel.anchorNode) || !el.contains(sel.focusNode)) return false
     const r = sel.getRangeAt(0)
     const codeOf = (n) => (n.nodeType === 3 ? n.parentElement : n)?.closest('code')
+    if (sel.isCollapsed) { // sin nada seleccionado: se entra o se sale del modo código (como con la negrita)
+      const inside = codeOf(r.startContainer)
+      if (inside) { // salir: el cursor pasa justo detrás del código y lo que escribas ya no lo es
+        let after = inside.nextSibling
+        if (!after || after.nodeType !== 3) { after = document.createTextNode('\u200B'); inside.after(after) }
+        else if (!after.textContent.startsWith('\u200B')) after.textContent = `\u200B${after.textContent}` // un carácter invisible para que el cursor se quede fuera del código
+        const nr = document.createRange(); nr.setStart(after, 1); nr.collapse(true)
+        sel.removeAllRanges(); sel.addRange(nr)
+      } else { // entrar: aparece un código vacío con el cursor dentro
+        const c = document.createElement('code'); const t = document.createTextNode('\u200B'); c.appendChild(t)
+        r.insertNode(c)
+        const nr = document.createRange(); nr.setStart(t, 1); nr.collapse(true)
+        sel.removeAllRanges(); sel.addRange(nr)
+      }
+      hist.current.t = 0
+      patch(id, { html: sanitize(el.innerHTML) })
+      return true
+    }
     const a = codeOf(r.startContainer)
     let made
     if (a && a === codeOf(r.endContainer)) { made = [...a.childNodes]; a.replaceWith(...made) } // ya era código: se quita

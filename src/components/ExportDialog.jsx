@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
-import { COLORS, DEFAULT_STYLE, FONTS, PAGE, RADII, loadImages, paginate, printSheet, sheetCss, sheetHtml, blockHtml } from '../lib/exportNotes.js'
+import { COLORS, DEFAULT_STYLE, syncCodeColor, FONTS, PAGE, RADII, loadImages, paginate, printSheet, sheetCss, sheetHtml, blockHtml } from '../lib/exportNotes.js'
 
 const FONT_NAMES = { poppins: 'Poppins', lora: 'Lora', mono: 'Mono' }
 const load = () => { try { return { ...DEFAULT_STYLE, ...JSON.parse(localStorage.getItem('exportStyle') || '{}') } } catch { return DEFAULT_STYLE } }
@@ -28,7 +28,7 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
   }, [])
 
   useEffect(() => { loadImages(initial).then(setImgs) }, [initial])
-  useEffect(() => { try { localStorage.setItem('exportStyle', JSON.stringify(st)) } catch { /* sin guardado */ } }, [st])
+  useEffect(() => { try { localStorage.setItem('exportStyle', JSON.stringify(st)) } catch { /* sin guardado */ } syncCodeColor(st.color) }, [st])
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
   useEffect(() => { // la letra Lora solo se pide si hace falta
     if (!document.getElementById('x-lora')) { const l = document.createElement('link'); l.id = 'x-lora'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap'; document.head.appendChild(l) }

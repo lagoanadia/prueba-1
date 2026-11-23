@@ -4668,7 +4668,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .gal-spacer { min-width: 0; pointer-events: none; }
 
 /* Código dentro de una línea de texto (Ctrl+E, o `así` entre comillas invertidas) */
-.block-text code, .tb-cell code, .x-b code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: .88em; background: #161B2E; color: #E7EAF6; border-radius: 6px; padding: 2px 7px; font-weight: 500; white-space: pre-wrap; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.block-text code, .tb-cell code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: .88em; background: #EEF0F2; color: var(--code-c, #2F6FED); border-radius: 6px; padding: 2px 7px; font-weight: 500; white-space: pre-wrap; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 
 /* Tareas por asignatura: lo de hoy destacado, lápiz y papelera siempre en su sitio (nada se mueve al pasar el ratón) */
 .tk-cols { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }

@@ -6,6 +6,8 @@ import { POSTIT_COLORS } from './docModel.js'
 export const FONTS = { poppins: "'Poppins', sans-serif", lora: "'Lora', Georgia, serif", mono: "ui-monospace, Menlo, Consolas, monospace" }
 export const COLORS = ['#2F6FED', '#E0457B', '#2FA36B', '#F29D38', '#8B5CF6', '#5F6368']
 export const RADII = [0, 8, 16]
+/** El código dentro de una línea toma el color de exportación elegido (también al escribir en el documento) */
+export const syncCodeColor = (color) => { try { document.documentElement.style.setProperty('--code-c', color) } catch { /* sin documento */ } }
 export const DEFAULT_STYLE = { font: 'poppins', color: '#2F6FED', radius: 16, stripes: true }
 
 const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
@@ -20,7 +22,8 @@ export function sheetCss(st) {
 .x-sheet { overflow-wrap: anywhere; word-break: break-word; } /* ningún texto se sale de la hoja, ni sin espacios */
 .x-head { font-size: 11px; color: #5F6368; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
-.x-b code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #161B2E; color: #E7EAF6; border-radius: 4px; padding: 1px 6px; }
+.x-b code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #EEF0F2; color: var(--c); border-radius: 4px; padding: 1px 6px; }
+.x-postit .x-b code { background: rgba(255, 255, 255, .6); }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
 /* Las tablas largas pueden seguir en la hoja siguiente (entre filas) en vez de dejar un hueco enorme */
 .x-b.x-split { break-inside: auto; page-break-inside: auto; } .x-table tr { break-inside: avoid; page-break-inside: avoid; }
