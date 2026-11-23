@@ -11,6 +11,7 @@ const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&a
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0 }
 
 const blockOf = (p) => {
+  if (p.type === 'code') return [{ ...newBlock('code'), code: p.code, ...(p.lang ? { lang: p.lang } : {}) }]
   if (p.type === 'table') return [{ ...newBlock('table'), rich: true, rows: p.rows.map((r) => r.map(esc)) }]
   if (p.items) return p.items.map((t) => newBlock(p.type, esc(t)))
   return [newBlock(p.type, esc(p.text))]
@@ -72,7 +73,7 @@ export async function pdfToBlocks(file, onProgress = () => {}, { maxPages = 120 
       const fs = Math.hypot(a, b) * SCALE
       const left = e * SCALE
       const top = vp.height - f * SCALE - fs
-      return { text: it.str, left, right: left + it.width * SCALE, top, bottom: top + fs, fs }
+      return { text: it.str, left, right: left + it.width * SCALE, top, bottom: top + fs, fs, mono: /mono|courier|consolas|menlo|code|typewriter|fixed/i.test(content.styles?.[it.fontName]?.fontFamily ?? '') }
     })
     let rects = []
     try { rects = await imageRects(pdfjs, page, vp) } catch { /* sin imágenes */ }

@@ -3,7 +3,7 @@ import Icon from './Icon.jsx'
 import { SEGMENT_LABEL, autoPayload, blocksOfPage, classifySelection, toPayload } from '../lib/pdfSelection.js'
 
 // Cómo se puede pegar lo seleccionado: el primero es lo que se detecta solo
-const KINDS = [{ id: 'auto', label: 'Auto', icon: 'marker' }, { id: 'text', label: 'Texto', icon: 'note' }, { id: 'title', label: 'Título', icon: 'title' }, { id: 'list', label: 'Lista', icon: 'list' }, { id: 'table', label: 'Tabla', icon: 'table' }]
+const KINDS = [{ id: 'auto', label: 'Auto', icon: 'marker' }, { id: 'text', label: 'Texto', icon: 'note' }, { id: 'title', label: 'Título', icon: 'title' }, { id: 'list', label: 'Lista', icon: 'list' }, { id: 'code', label: 'Código', icon: 'code' }, { id: 'table', label: 'Tabla', icon: 'table' }]
 const KIND_OF = Object.fromEntries(KINDS.map((k) => [k.id, k]))
 
 /**

@@ -1,15 +1,17 @@
+import { detectCode } from '../components/blocks/highlight.js'
 // Qué es lo que se ha seleccionado en el PDF: título, lista, tabla o texto. Se deduce del tamaño de la letra,
 // de las viñetas/números del principio de línea y de cómo se alinean los trozos de texto en columnas.
 
 const BULLET = /^\s*[•·●▪◦‣∙*–—-]\s+/
 const NUMBERED = /^\s*\(?\d{1,3}[.)]\s+/
+const MONO = /mono|courier|consolas|menlo|code|typewriter|fixed/i // tipografías de ancho fijo: el código
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0 }
 
 /** Trozos de texto del PDF que toca la selección, con su posición y el tamaño de letra. */
 function selectedSpans(root, sel) {
   const all = [...root.querySelectorAll('.textLayer span')].filter((s) => s.textContent.trim() && !s.classList.contains('markedContent'))
   const mine = all.filter((s) => { try { return sel.containsNode(s, true) } catch { return false } })
-  const measure = (s) => { const r = s.getBoundingClientRect(); return { text: s.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom, fs: parseFloat(getComputedStyle(s).fontSize) || r.height } }
+  const measure = (s) => { const r = s.getBoundingClientRect(); const cs = getComputedStyle(s); return { text: s.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom, fs: parseFloat(cs.fontSize) || r.height, mono: MONO.test(cs.fontFamily) } }
   return { mine: mine.map(measure), body: median(all.map((s) => parseFloat(getComputedStyle(s).fontSize) || 0).filter(Boolean)) }
 }
 
@@ -29,8 +31,20 @@ function toLines(spans) {
       const last = cells[cells.length - 1]
       if (last && s.left - last.right < s.fs * 0.9) { last.text += (s.left - last.right > s.fs * 0.15 && !/\s$/.test(last.text) ? ' ' : '') + s.text; last.right = s.right } else cells.push({ text: s.text, left: s.left, right: s.right })
     }
-    return { mid: l.mid, text: cells.map((c) => c.text).join(' ').replace(/\s+/g, ' ').trim(), cells: cells.map((c) => ({ ...c, text: c.text.replace(/\s+/g, ' ').trim() })), fs: l.fs }
+    return { mid: l.mid, text: cells.map((c) => c.text).join(' ').replace(/\s+/g, ' ').trim(), cells: cells.map((c) => ({ ...c, text: c.text.replace(/\s+/g, ' ').trim() })), fs: l.fs, spans: sp, mono: sp.filter((x) => x.mono).length >= sp.length * 0.6 }
   })
+}
+
+/** Líneas de código → texto con su sangría (según la posición de cada trozo y el ancho de una letra) */
+export function codeFrom(run) {
+  const cw = median(run.flatMap((l) => l.spans.map((x) => (x.right - x.left) / Math.max(1, x.text.length))).filter((x) => x > 0)) || 6
+  const minLeft = Math.min(...run.map((l) => l.spans[0].left))
+  return run.map((l) => {
+    let out = ''
+    let pos = minLeft
+    for (const x of l.spans) { out += ' '.repeat(Math.max(0, Math.round((x.left - pos) / cw))) + x.text; pos = x.right }
+    return out.replace(/\s+$/, '')
+  }).join('\n')
 }
 
 const CONT = /^[a-zñáéíóúü]/ // una celda que empieza en minúscula sigue la frase de la línea de arriba
@@ -88,7 +102,13 @@ function segment(lines, body) {
     const before = out.length
     const i0 = i
     const l = lines[i]
-    if (isHead(l)) { // línea(s) de título seguidas con el mismo tamaño
+    if (l.mono) { // letra de ancho fijo: es código
+      let j = i + 1
+      while (j < lines.length && lines[j].mono) j++
+      const code = codeFrom(lines.slice(i, j))
+      out.push({ type: 'code', code, lang: detectCode(code) ?? undefined })
+      i = j
+    } else if (isHead(l)) { // línea(s) de título seguidas con el mismo tamaño
       let j = i + 1
       while (j < lines.length && isHead(lines[j]) && Math.abs(lines[j].fs - l.fs) < l.fs * 0.1) j++
       out.push({ type: levelOf(ratio(l)), text: lines.slice(i, j).map((x) => x.text).join(' ') })
@@ -121,7 +141,9 @@ function segment(lines, body) {
       while (j < lines.length && !isHead(lines[j]) && !isItem(lines[j]) && !(lines[j].cells.length >= 2 && lines[j + 1]?.cells.length >= 2) && lines[j].mid - lines[j - 1].mid < lines[j].fs * 1.9 && !endsHere(j - 1)) { maxLen = Math.max(maxLen, lines[j].text.length); j++ }
       const run = lines.slice(i, j)
       const short = run.length >= 3 && run.every((x) => x.text.length <= 80) && run.every((x) => Math.abs(x.cells[0].left - run[0].cells[0].left) < x.fs * 0.5)
-      if (short) out.push({ type: 'bullet', items: run.map((x) => x.text) }) // líneas cortas alineadas: viñetas dibujadas, sin texto
+      const asCode = run.length >= 3 ? detectCode(run.map((x) => x.text).join('\n')) : null
+      if (asCode) out.push({ type: 'code', code: codeFrom(run), lang: asCode })
+      else if (short) out.push({ type: 'bullet', items: run.map((x) => x.text) }) // líneas cortas alineadas: viñetas dibujadas, sin texto
       else out.push({ type: 'text', text: run.map((x) => x.text).join(' ') })
       i = j
     }
@@ -140,10 +162,11 @@ export function classifySelection(root, sel) {
   const ratio = body ? fs / body : 1
   const textAll = lines.map((l) => l.text).join(' ')
   let kind = 'text'
+  if (lines.length && lines.every((l) => l.mono)) kind = 'code'
   // Tabla: varias líneas con 2 o más celdas, casi todas con el mismo número
   const counts = lines.map((l) => l.cells.length)
   const mode = counts.sort((a, b) => a - b)[Math.floor(counts.length / 2)]
-  if (lines.length >= 2 && mode >= 2 && lines.filter((l) => l.cells.length === mode).length >= Math.ceil(lines.length * 0.7)) kind = 'table'
+  if (kind === 'code') { /* ya es código */ } else if (lines.length >= 2 && mode >= 2 && lines.filter((l) => l.cells.length === mode).length >= Math.ceil(lines.length * 0.7)) kind = 'table'
   else if (lines.length >= 2 && lines.filter((l) => BULLET.test(l.text) || NUMBERED.test(l.text)).length >= Math.ceil(lines.length * 0.6)) kind = 'list'
   else if (lines.length >= 3 && lines.every((l) => l.text.length <= 80) && lines.every((l) => Math.abs(l.cells[0].left - lines[0].cells[0].left) < l.fs * 0.5)) kind = 'list' // líneas cortas alineadas a la izquierda (viñetas dibujadas, sin texto)
   else if (lines.length <= 3 && textAll.length <= 140 && ratio >= 1.12) kind = 'title'
@@ -153,6 +176,7 @@ export function classifySelection(root, sel) {
 /** Lo que se pega en los apuntes según el tipo elegido. */
 export function toPayload(info, type) {
   const lines = info.lines
+  if (type === 'code') { const code = codeFrom(lines); return { type: 'code', code, lang: detectCode(code) ?? undefined } }
   if (type === 'title') {
     const level = info.ratio >= 1.6 ? 'h1' : info.ratio >= 1.3 ? 'h2' : 'h3'
     return { type: level, text: lines.map((l) => l.text).join(' ') }
@@ -178,7 +202,7 @@ export function toPayload(info, type) {
 
 /** Lo que se pega con el modo «auto»: una lista de bloques, cada uno con su tipo. */
 export const autoPayload = (info) => info.segments
-export const SEGMENT_LABEL = { h1: 'Título', h2: 'Título', h3: 'Título', text: 'Texto', bullet: 'Lista', numbered: 'Lista', table: 'Tabla' }
+export const SEGMENT_LABEL = { code: 'Código', h1: 'Título', h2: 'Título', h3: 'Título', text: 'Texto', bullet: 'Lista', numbered: 'Lista', table: 'Tabla' }
 
 /** Trozos de texto ya medidos (left/right/top/bottom/fs/text) → bloques sueltos {type, text | items | rows}. Sirve para pasar un PDF entero. */
 export const segmentsFromSpans = (spans, body) => (spans.length ? segment(toLines(spans), body) : [])
@@ -195,7 +219,7 @@ export function blocksOfPage(pageEl) {
   const pr = pageEl.getBoundingClientRect()
   const els = [...pageEl.querySelectorAll('.textLayer span')].filter((x) => x.textContent.trim() && !x.classList.contains('markedContent'))
   if (!els.length) return []
-  const spans = els.map((x) => { const r = x.getBoundingClientRect(); return { text: x.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom, fs: parseFloat(getComputedStyle(x).fontSize) || r.height } })
+  const spans = els.map((x) => { const r = x.getBoundingClientRect(); const cs = getComputedStyle(x); return { text: x.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom, fs: parseFloat(cs.fontSize) || r.height, mono: MONO.test(cs.fontFamily) } })
   const body = median2(spans.map((x) => x.fs).filter(Boolean))
   const lines = toLines(spans)
   if (!lines.length) return []

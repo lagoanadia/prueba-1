@@ -847,6 +847,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       const esc = (t) => sanitize(String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])))
       const one = (p) => {
         if (p.type === 'table') return [{ ...newBlock('table'), rows: p.rows }]
+        if (p.type === 'code') return [{ ...newBlock('code'), code: p.code, ...(p.lang ? { lang: p.lang } : {}) }]
         if (p.items) return p.items.map((t) => newBlock(p.type, esc(t)))
         return [newBlock(p.type, esc(p.text))]
       }
