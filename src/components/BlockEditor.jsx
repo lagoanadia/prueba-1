@@ -885,8 +885,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 )}
                 {b.type === 'table' && <TableBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
                 {b.type === 'link' && <LinkBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} />}
-                {b.type === 'gallery' && <GalleryBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
-                {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} />}
+                {b.type === 'gallery' && <GalleryBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} onRemove={() => remove(b.id)} />}
+                {b.type === 'image' && <ImageBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} onRemove={() => remove(b.id)} />}
                 {TEXTY.includes(b.type) && (
                   <Line block={b} refCb={(el) => { if (el) refs.current[b.id] = el }} focus={focusId === b.id} done={() => setFocusId(null)}
                     onInput={(e) => onInput(e, b)} onKeyDown={(e) => onKeyDown(e, b, i)} onPaste={(e) => onPaste(e, b)}

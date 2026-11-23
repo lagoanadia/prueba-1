@@ -8,7 +8,7 @@ const ALIGN_PATH = { left: 'M4 6h16M4 12h10M4 18h14', center: 'M4 6h16M7 12h10M5
 const ALIGN_LABEL = { left: 'Alinear a la izquierda', center: 'Centrar', right: 'Alinear a la derecha' }
 
 /** Foto: se sube desde el dispositivo (se guarda en el navegador, como los PDF). */
-export default function ImageBlock({ block, onChange }) {
+export default function ImageBlock({ block, onChange, onRemove = null }) {
   const [url, setUrl] = useState(null)
   const input = useRef(null)
   const fig = useRef(null)
@@ -51,7 +51,8 @@ export default function ImageBlock({ block, onChange }) {
     setLive(last)
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end)
   }
-  const remove = () => { if (block.file?.id) deleteFile(block.file.id).catch(() => {}); onChange({ ...block, file: null }) }
+  // Quitar la foto borra el bloque entero (no deja la casilla vacía)
+  const remove = () => { if (block.file?.id) deleteFile(block.file.id).catch(() => {}); if (onRemove) onRemove(); else onChange({ ...block, file: null }) }
 
   return (
     <div className="img-block">

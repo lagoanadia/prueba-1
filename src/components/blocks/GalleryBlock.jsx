@@ -39,7 +39,7 @@ function Thumb({ file, ratio, onRatio, onRemove, drag, onDragStart, onDragOver, 
  * Galería: varias fotos juntas en un solo bloque. Se elige cómo se reparten (fila, cuadrícula o mosaico),
  * se añaden varias a la vez y se reordenan arrastrándolas. Se guarda en `files` y `layout`.
  */
-export default function GalleryBlock({ block, onChange }) {
+export default function GalleryBlock({ block, onChange, onRemove = null }) {
   const input = useRef(null)
   const fig = useRef(null)
   const frame = useRef(null)
@@ -80,7 +80,8 @@ export default function GalleryBlock({ block, onChange }) {
     for (const f of list) saved.push({ ...(await saveFile(f)), ...(await sizeOf(f)) }) // cada foto entra con sus proporciones
     onChange({ ...block, files: [...files, ...saved] })
   }
-  const remove = (i) => { deleteFile(files[i].id).catch(() => {}); onChange({ ...block, files: files.filter((_, k) => k !== i) }) }
+  // Si era la última foto, se borra el bloque entero
+  const remove = (i) => { deleteFile(files[i].id).catch(() => {}); if (files.length === 1 && onRemove) onRemove(); else onChange({ ...block, files: files.filter((_, k) => k !== i) }) }
   const drop = () => {
     if (drag && drag.over != null && drag.over !== drag.from) {
       const next = [...files]
