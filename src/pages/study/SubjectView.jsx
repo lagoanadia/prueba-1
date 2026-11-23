@@ -46,6 +46,21 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
     onDragOver: (e) => { if (!dragU) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientX > r.left + r.width / 2; if (dragU.over !== u.id || dragU.after !== after) setDragU({ ...dragU, over: u.id, after }) },
     onDrop: (e) => { e.preventDefault(); dropU() },
   })
+  // Cambiar el nombre de la asignatura: las entregas, exámenes y tareas que la usan pasan a llamarse igual
+  const renameSubject = (name) => {
+    const short = name.toUpperCase().slice(0, 14)
+    const taken = (subjects ?? []).some((x) => x.id !== subject.id && x.short.toLowerCase() === short.toLowerCase())
+    if (taken) { setBanner('Ya tienes otra asignatura con ese nombre.'); setTimeout(() => setBanner(''), 6000); setDialog(null); return }
+    const old = subject.short
+    update((d) => ({
+      ...d,
+      subjects: (d.subjects ?? []).map((x) => (x.id === subject.id ? { ...x, name, short } : x)),
+      assignments: (d.assignments ?? []).map((a) => (a.course === old ? { ...a, course: short } : a)),
+      timetable: d.timetable?.cells ? { ...d.timetable, cells: Object.fromEntries(Object.entries(d.timetable.cells).map(([k, v]) => [k, v === old ? short : v])) } : d.timetable, // las casillas del horario
+      tasks: (d.tasks ?? []).map((t) => (t.course === old || t.courses?.includes(old) ? { ...t, course: t.course === old ? short : t.course, courses: t.courses?.map((c) => (c === old ? short : c)) } : t)),
+    }))
+    setDialog(null)
+  }
   const removeUnit = (id) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.filter((u) => u.id !== id) })); setDialog(null) }
   const renameUnit = (id, name) => { changeSubject(update, subject.id, (s) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, name } : u)) })); setDialog(null) }
   const startReview = (r, msg, docs) => { setReview(r); setReviewMsg(msg); setDocsText(docs) }
@@ -87,6 +102,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
         <div className="head-line">
           <button className="icon-btn" onClick={back} aria-label="Volver a Estudios" title="Volver"><Icon name="back" /></button>
           <h1>{subject.name}</h1>
+          <button className="icon-btn" onClick={() => setDialog('subject')} aria-label="Cambiar el nombre de la asignatura" title="Cambiar el nombre"><Icon name="pen" size={18} /></button>
           <div className="sc-wrap">
             <button className="sc-dot" style={{ background: subject.color, '--c': subject.color }} onClick={() => setPalette(!palette)} aria-expanded={palette} aria-label="Cambiar el color de la asignatura" title="Cambiar color" />
             {palette && (
@@ -154,6 +170,7 @@ export default function SubjectView({ data, update, subject, back, openUnit, onD
           )
         })}
       </div>
+      {dialog === 'subject' && <NameDialog title="Nombre de la asignatura" initial={subject.name} maxLength={40} onSubmit={renameSubject} onClose={() => setDialog(null)} />}
       {dialog === 'new' && <NameDialog title="Nombre de la unidad" placeholder="Hilos y concurrencia" onSubmit={addUnit} onClose={() => setDialog(null)} />}
       {dialog?.rename && <NameDialog title="Nombre de la unidad" initial={subject.units.find((u) => u.id === dialog.rename)?.name} onSubmit={(n) => renameUnit(dialog.rename, n)} onDelete={() => removeUnit(dialog.rename)} deleteLabel="Eliminar unidad" deleteWarning="Se borrarán todos sus temas, apuntes y prácticas. No se puede deshacer." onClose={() => setDialog(null)} />}
 
