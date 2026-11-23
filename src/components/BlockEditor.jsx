@@ -941,7 +941,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
                 {b.type === 'numbered' && <span className="block-mark" aria-hidden="true">{numberOf(i)}.</span>}
                 {b.type === 'todo' && <input type="checkbox" className="block-check" checked={!!b.checked} onChange={() => patch(b.id, { checked: !b.checked })} aria-label="Hecha" />}
                 {b.type === 'divider' && <hr className="block-divider" tabIndex={0} onKeyDown={(e) => (e.key === 'Backspace' || e.key === 'Delete') && remove(b.id)} />}
-                {b.type === 'code' && <CodeBlock block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
+                {b.type === 'code' && <CodeBlock pen={pen} block={b} onChange={(nb) => commit(blocks.map((x) => (x.id === b.id ? nb : x)))} focus={focusId === b.id} onFocused={() => setFocusId(null)} onEmptyBackspace={() => remove(b.id)} />}
                 {b.type === 'box' && (
                   <div className="box-wrap" style={{ '--pb': (POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo).bar, '--pf': (POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo).bg }}>
                     <span className="pi-colors" role="radiogroup" aria-label="Color del post-it">

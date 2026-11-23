@@ -56,6 +56,8 @@ export function sheetCss(st) {
 .x-postit .x-box { border-color: var(--pb, #F2B705); border-radius: 4px; } .x-postit .x-box.on { background: var(--pb, #F2B705); }
 .x-postit .x-code, .x-postit .x-img, .x-postit .x-link { border-radius: 12px; } .x-postit .x-link { border-color: var(--pb, #F2B705); } .x-postit .x-link a { color: #202124; }
 .x-callout { background: color-mix(in srgb, var(--c) 12%, #fff); border-left: 4px solid var(--c); border-radius: ${Math.max(r - 2, 0)}px; padding: 10px 14px; }
+.x-code .x-cl, .x-code .x-cm { display: block; }
+.x-code .x-cm { margin: 0 -14px; padding: 0 11px 0 11px; border-left: 3px solid var(--m); background: color-mix(in srgb, var(--m) 28%, transparent); }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
 .x-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
@@ -92,7 +94,12 @@ export function blockHtml(b, n, imgs) {
     case 'quote': return `<div class="x-b x-quote">${rich(b.html)}</div>`
     case 'callout': return `<div class="x-b x-callout">${rich(b.html)}</div>`
     case 'box': { let k = 0; const pc = POSTIT_COLORS[b.color] ?? POSTIT_COLORS.amarillo; return `<div class="x-b x-postit" style="--pb:${pc.bar};--pf:${pc.bg}">${(b.blocks ?? []).map((c) => { k = c.type === 'numbered' ? k + 1 : 0; return blockHtml(c, k, imgs) }).join('')}</div>` }
-    case 'code': return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${esc(b.code)}</div>`
+    case 'code': {
+      const marks = b.marks ?? {}
+      // con líneas subrayadas, cada línea es un bloque (la marcada lleva banda y raya de color)
+      const body = Object.keys(marks).length ? (b.code ?? '').split('\n').map((l, i) => { const pc = POSTIT_COLORS[marks[i]]; return pc ? `<span class="x-cm" style="--m:${pc.bar}">${esc(l) || ' '}</span>` : `<span class="x-cl">${esc(l) || ' '}</span>` }).join('') : esc(b.code)
+      return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${body}</div>`
+    }
     case 'table': {
       const rows = b.rows ?? []
       const cg = b.colW && b.colW.length === (rows[0]?.length ?? 0) ? `<colgroup>${b.colW.map((f) => `<col style="width:${(f * 100).toFixed(2)}%">`).join('')}</colgroup>` : ''

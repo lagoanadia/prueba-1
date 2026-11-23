@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
 import { LANGS, highlight } from './highlight.js'
+import { POSTIT_COLORS } from '../../lib/docModel.js'
 
 // Tres temas: noche (por defecto), claro y cálido
 export const THEMES = {
@@ -13,10 +14,12 @@ export const THEMES = {
  * Bloque de código minimalista: texto sobre fondo de color, etiqueta de lenguaje y un círculo para elegir el tema.
  * El resaltado va en una capa detrás del campo de texto (misma tipografía) para poder editar con normalidad.
  */
-export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBackspace }) {
+export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBackspace, pen = null }) {
   const t = THEMES[block.theme] ?? THEMES.noche
   const code = block.code ?? ''
   const ta = useRef(null)
+  const edit = useRef(null)
+  const [drag, setDrag] = useState(null) // marcas provisionales mientras pasas el subrayador por las líneas
   const [menu, setMenu] = useState(null) // 'lang' | 'theme' | null
   const [copied, setCopied] = useState(false)
   useEffect(() => { if (focus) { ta.current?.focus(); onFocused?.() } }, [focus])
@@ -28,6 +31,32 @@ export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBa
   }, [menu])
 
   const set = (p) => onChange({ ...block, ...p })
+  // Subrayador en el código: se marcan líneas enteras (banda y raya de color); con la goma se quitan
+  const total = code.split('\n').length
+  const marks = drag?.marks ?? block.marks ?? {}
+  const lineAt = (e) => { const r = edit.current.getBoundingClientRect(); return Math.max(0, Math.min(total - 1, Math.floor(((e.clientY - r.top) / (r.height || 1)) * total))) }
+  const paintDown = (e) => {
+    if (!pen?.on || e.button !== 0) return
+    e.preventDefault(); e.currentTarget.setPointerCapture?.(e.pointerId)
+    const line = lineAt(e)
+    const erase = pen.color === 'none' || block.marks?.[line] === pen.color // volver a pasar por una línea del mismo color la quita
+    const start = { ...(block.marks ?? {}) }
+    const apply = (m, a, b) => { for (let i = Math.min(a, b); i <= Math.max(a, b); i++) { if (erase) delete m[i]; else m[i] = pen.color } return m }
+    setDrag({ from: line, base: start, erase, marks: apply({ ...start }, line, line) })
+  }
+  const paintMove = (e) => {
+    if (!drag) return
+    const line = lineAt(e)
+    const m = { ...drag.base }
+    for (let i = Math.min(drag.from, line); i <= Math.max(drag.from, line); i++) { if (drag.erase) delete m[i]; else m[i] = pen.color }
+    setDrag((d) => (d ? { ...d, marks: m } : d))
+  }
+  const paintUp = () => {
+    if (!drag) return
+    const m = Object.fromEntries(Object.entries(drag.marks).filter(([i]) => Number(i) < total))
+    setDrag(null)
+    set({ marks: Object.keys(m).length ? m : undefined })
+  }
   const copy = async () => { try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* sin permiso del portapapeles */ } }
   const pickTheme = (id) => { set({ theme: id }); try { localStorage.setItem('codeTheme', id) } catch { /* sin almacenamiento */ } setMenu(null) }
   const onKey = (e) => {
@@ -53,10 +82,14 @@ export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBa
           )}
         </span>
       </div>
-      <div className="cb-edit">
+      <div className={`cb-edit ${pen?.on ? 'is-painting' : ''}`} ref={edit}>
+        <div className="cb-marks" aria-hidden="true">
+          {Object.entries(marks).filter(([i]) => Number(i) < total).map(([i, c]) => <i key={i} className="cb-mk" style={{ '--i': i, '--m': (POSTIT_COLORS[c] ?? POSTIT_COLORS.amarillo).bar }} />)}
+        </div>
         <pre className="cb-hl" aria-hidden="true" dangerouslySetInnerHTML={{ __html: `${highlight(code, block.lang)}\n` }} />
         <textarea ref={ta} value={code} onChange={(e) => set({ code: e.target.value })} onKeyDown={onKey} spellCheck={false} autoCapitalize="off" autoCorrect="off" aria-label="Código" placeholder="Escribe o pega tu código" />
       </div>
+      {pen?.on && <div className="cb-paint" onPointerDown={paintDown} onPointerMove={paintMove} onPointerUp={paintUp} onPointerCancel={paintUp} />}
       <button className="cb-copy" onClick={copy} aria-label="Copiar código" title="Copiar">{copied ? <Icon name="check" size={16} /> : <Icon name="copy" size={16} />}</button>
     </div>
   )
