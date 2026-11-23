@@ -4738,3 +4738,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .xp-cap { position: absolute; left: 76px; width: 642px; height: 14px; background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); pointer-events: none; z-index: 1; }
 .xp-cap-b { border-radius: 0 0 12px 4px; }
 .xp-cap-t { top: 62px; border-radius: 4px 12px 0 0; }
+
+/* Exámenes de hoy: HOY en lugar de «0 días» (con varios, banda de colores y sus nombres) */
+.exam-today b { font-size: 46px; letter-spacing: .02em; }
+.exam-today .exam-big-sub { margin-top: 4px; }
+.exam-today-n { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; line-height: 1.25; }
+.exam-today-n i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.exam-big.exam-today.is-multi { position: relative; overflow: hidden; background: #F1F3F4; padding-top: 26px; color: var(--text); }
+.exam-band { position: absolute; top: 0; left: 0; right: 0; height: 12px; display: flex; }
+.exam-band i { flex: 1; }
+.exam-mini-d { flex-basis: 44px; }

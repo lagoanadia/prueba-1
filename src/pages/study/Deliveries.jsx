@@ -87,28 +87,48 @@ export default function Deliveries({ data, update, subjects, course = null, exam
 
       {exams && view === 'count' && pending.length > 0 && !form ? (
         <div className="exam-c">
-          <div className={`exam-big ${daysUntil(pending[0].due) < 0 ? 'is-late' : ''}`} style={{ '--c': color(pending[0].course), background: soft(color(pending[0].course), 32) }}>
-            <b>{Math.abs(daysUntil(pending[0].due))}</b>
-            <span>{Math.abs(daysUntil(pending[0].due)) === 1 ? 'día' : 'días'}</span>
-            <small>{pending[0].title}</small>
-            <small className="exam-big-sub">{formatLong(pending[0].due)}</small>
-          </div>
-          {pending.length > 1 && (
-            <div className="exam-side">
-              {pending.slice(1, 7).map((a) => {
-                const n = Math.max(daysUntil(a.due), 0)
-                return (
-                  <div key={a.id} className="exam-mini" style={{ background: soft(color(a.course), 30), '--c': color(a.course) }} title={`${a.course} · ${a.title} · ${formatLong(a.due)}`}>
-                    <b className="w-ellipsis">{a.course}</b>
-                    <span className="exam-mini-t w-ellipsis">{a.title}</span>
-                    <span className="exam-bar" aria-hidden="true"><i style={{ width: `${Math.max(8, 100 - n * 8)}%`, background: color(a.course) }} /></span>
-                    <b className="exam-mini-d">{n} d</b>
+          {(() => {
+            const todays = pending.filter((a) => daysUntil(a.due) === 0)
+            const isToday = daysUntil(pending[0].due) === 0
+            const rest = isToday ? pending.slice(todays.length) : pending.slice(1)
+            const n0 = Math.abs(daysUntil(pending[0].due))
+            return (
+              <>
+                {isToday ? (
+                  // Hoy: en vez de «0 días» pone HOY; si hay varios exámenes, la misma tarjeta con una banda con los colores de cada asignatura y sus nombres
+                  <div className={`exam-big exam-today ${todays.length > 1 ? 'is-multi' : ''}`} style={{ '--c': color(todays[0].course), ...(todays.length > 1 ? {} : { background: soft(color(todays[0].course), 32) }) }}>
+                    {todays.length > 1 && <span className="exam-band" aria-hidden="true">{todays.map((a) => <i key={a.id} style={{ background: color(a.course) }} />)}</span>}
+                    <b>HOY</b>
+                    {todays.map((a) => <small key={a.id} className="exam-today-n">{todays.length > 1 && <i style={{ background: color(a.course) }} />}{a.title}</small>)}
+                    <small className="exam-big-sub">{formatLong(pending[0].due)}</small>
                   </div>
-                )
-              })}
-              {pending.length > 7 && <span className="muted exam-more">+{pending.length - 7} más en la lista</span>}
-            </div>
-          )}
+                ) : (
+                  <div className={`exam-big ${daysUntil(pending[0].due) < 0 ? 'is-late' : ''}`} style={{ '--c': color(pending[0].course), background: soft(color(pending[0].course), 32) }}>
+                    <b>{n0}</b>
+                    <span>{n0 === 1 ? 'día' : 'días'}</span>
+                    <small>{pending[0].title}</small>
+                    <small className="exam-big-sub">{formatLong(pending[0].due)}</small>
+                  </div>
+                )}
+                {rest.length > 0 && (
+                  <div className="exam-side">
+                    {rest.slice(0, 6).map((a) => {
+                      const n = Math.max(daysUntil(a.due), 0)
+                      return (
+                        <div key={a.id} className="exam-mini" style={{ background: soft(color(a.course), 30), '--c': color(a.course) }} title={`${a.course} · ${a.title} · ${formatLong(a.due)}`}>
+                          <b className="w-ellipsis">{a.course}</b>
+                          <span className="exam-mini-t w-ellipsis">{a.title}</span>
+                          <span className="exam-bar" aria-hidden="true"><i style={{ width: `${Math.max(8, 100 - n * 8)}%`, background: color(a.course) }} /></span>
+                          <b className="exam-mini-d">{n === 1 ? 'mañana' : `${n} d`}</b>
+                        </div>
+                      )
+                    })}
+                    {rest.length > 6 && <span className="muted exam-more">+{rest.length - 6} más en la lista</span>}
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
       ) : (
         <>
