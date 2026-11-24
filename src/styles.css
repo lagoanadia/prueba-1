@@ -4809,3 +4809,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .xp-style { overflow-y: auto; }
 
 .exam-todays-h.is-late { color: #B3261E; }
+
+/* Editar una tarea: tarjeta flotante con todo en una línea */
+.tk-ghostrow { position: relative; background: #FFFFFF; }
+.tk-ghost { display: flex; align-items: center; gap: 8px; visibility: hidden; font-size: 14px; }
+.tk-float { position: absolute; left: -8px; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; width: max(calc(100% + 16px), 470px); background: #FFFFFF; border-radius: 18px; padding: 6px 8px 6px 14px; box-shadow: 0 8px 24px rgba(60, 64, 67, .35), 0 0 0 2px var(--blue); animation: sel-in .16s cubic-bezier(.2, 1.2, .35, 1) both; transform-origin: left center; }
+.tk-float input { flex: 1; min-width: 120px; border: 0; background: transparent; font: inherit; font-size: 14.5px; font-weight: 600; outline: none; padding: 4px 0; }
+.tk-float .sp, .tk-float .dp-btn, .tk-float > button { flex: none; }
+@media (prefers-reduced-motion: reduce) { .tk-float { animation: none; } }
+
+.tk-ghost .tk-title { flex: 1; min-width: 0; }

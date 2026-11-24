@@ -64,13 +64,15 @@ export default function Tasks({ data, update, subjects }) {
     const isToday = t.due === today
     const late = t.due && t.due < today
     if (edit?.id === t.id) {
+      // Edición en una tarjeta flotante sobre la tarea: título, asignatura y fecha en la MISMA línea (la caja no se mueve)
       return (
-        <li key={t.id} className="tk-row tk-editing">
-          <form className="tk-edit" onSubmit={saveEdit} onKeyDown={(e) => e.key === 'Escape' && setEdit(null)}>
+        <li key={t.id} className="tk-row tk-ghostrow">
+          <span className="tk-ghost" aria-hidden="true"><i className="tk-check" /><span className="tk-title">{t.title}</span><i className="tk-ic" /><i className="tk-ic" /></span>
+          <form className="tk-float" onSubmit={saveEdit} onKeyDown={(e) => e.key === 'Escape' && setEdit(null)}>
             <input autoFocus value={edit.title} maxLength={80} onChange={(e) => setEdit({ ...edit, title: e.target.value })} aria-label="Nombre de la tarea" />
             <SubjectPicker subjects={options} onCreate={createLabel} onDelete={deleteLabel} value={edit.courses} onChange={(v) => setEdit({ ...edit, courses: v })} label="Asignatura o etiqueta de la tarea" />
             <DatePicker value={edit.due} onChange={(v) => setEdit({ ...edit, due: v })} label="Fecha de la tarea" placeholder="Fecha" />
-            <button type="button" className="icon-btn" onClick={() => setEdit(null)} aria-label="Cancelar" title="Cancelar"><Icon name="close" size={18} /></button>
+            <button type="button" className="icon-btn" onClick={() => setEdit(null)} aria-label="Cancelar" title="Cancelar (Esc)"><Icon name="close" size={18} /></button>
             <button className="icon-btn on" disabled={!edit.title.trim()} aria-label="Guardar" title="Guardar"><Icon name="check" size={18} /></button>
           </form>
         </li>
