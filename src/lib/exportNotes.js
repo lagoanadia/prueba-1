@@ -1,7 +1,7 @@
 // Exportar apuntes a PDF: se arma una hoja HTML con el estilo elegido y se imprime como PDF.
 // Los bloques llevan «break-inside: avoid» para que no se corte nada entre páginas.
 import { getFile } from './fileStore.js'
-import { POSTIT_COLORS, numberAt } from './docModel.js'
+import { POSTIT_COLORS, numberAt, inNumberedList } from './docModel.js'
 
 export const FONTS = { poppins: "'Poppins', sans-serif", lora: "'Lora', Georgia, serif", mono: "ui-monospace, Menlo, Consolas, monospace" }
 export const COLORS = ['#2F6FED', '#E0457B', '#2FA36B', '#F29D38', '#8B5CF6', '#5F6368']
@@ -100,6 +100,7 @@ export function sheetCss(st) {
 .x-h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px; break-after: avoid; }
 .x-h4 { font-size: 13px; font-weight: 700; margin: 10px 0 3px; color: #5F6368; break-after: avoid; }
 .x-text { white-space: pre-wrap; }
+.x-in { margin-left: 26px; }
 .x-li { display: flex; gap: 8px; margin-bottom: 4px; } .x-li > span:first-child { flex: none; min-width: 18px; color: var(--c); font-weight: 700; }
 .x-box { display: inline-block; width: 13px; height: 13px; margin-top: 4px; border: 1.8px solid var(--c); border-radius: ${Math.min(r, 5)}px; position: relative; flex: none; }
 .x-box.on { background: var(--c); } .x-box.on::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
@@ -183,7 +184,8 @@ export function blockHtml(b, n, imgs) {
 export function sheetHtml({ title, subtitle, blocks, breaks, imgs, dots = true, cover = null, pageNums = {} }) {
   const body = blocks.map((b, i) => {
     const n = b.type === 'numbered' ? numberAt(blocks, i) : 0
-    const h = blockHtml(b, n, imgs)
+    let h = blockHtml(b, n, imgs)
+    if (inNumberedList(blocks, i)) h = h.replace('class="x-b ', 'class="x-b x-in ') // lo que cuelga de una lista numerada, metido a la derecha
     return breaks.has(b.id) && i > 0 ? `<div class="x-pb">${h}</div>` : h
   }).join('')
   if (cover?.on) return `<div class="x-sheet">${coverHtml(cover, title, subtitle)}${cover.index ? indexHtml(blocks, pageNums) : ''}${body}</div>` // con portada, esta sustituye a la cabecera

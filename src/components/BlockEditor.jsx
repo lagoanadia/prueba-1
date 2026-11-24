@@ -6,7 +6,7 @@ import ImageBlock from './blocks/ImageBlock.jsx'
 import GalleryBlock from './blocks/GalleryBlock.jsx'
 import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
-import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc, numberAt } from '../lib/docModel.js'
+import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc, numberAt, inNumberedList } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
 import { blocksFromPaste } from '../lib/pasteBlocks.js'
 import { saveFile } from '../lib/fileStore.js'
@@ -951,7 +951,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''} ${pen.on ? 'pen-on' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (
-          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id || drag?.group?.includes(b.id) ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.merge ? 'drop-merge' : drag.after ? 'drop-after' : 'drop-before') : ''}`}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${inNumberedList(blocks, i) ? 'in-list' : ''} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id || drag?.group?.includes(b.id) ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.merge ? 'drop-merge' : drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
             {(range ? rangeIds[0] : firstSel) === b.id && (
               <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Selección">

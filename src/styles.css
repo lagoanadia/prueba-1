@@ -4829,3 +4829,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .sel-bar .sel-move { display: inline-flex; align-items: center; gap: 5px; color: #FFFFFF; font: 600 12.5px Poppins, sans-serif; padding: 5px 10px; border-radius: 10px; cursor: grab; }
 .sel-bar .sel-move:hover { background: rgba(255, 255, 255, .16); }
 .sel-bar .sel-move:active { cursor: grabbing; }
+
+/* Lo que cuelga de una lista numerada se mete a la derecha, alineado con el texto de los elementos */
+.block-slot.in-list > .block { margin-left: 30px; }

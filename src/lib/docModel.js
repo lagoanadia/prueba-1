@@ -14,6 +14,17 @@ export function numberAt(blocks, i) {
   return n
 }
 
+/** ¿Este bloque cuelga de un elemento de lista numerada (código, viñetas, imágenes… entre dos números)? */
+export function inNumberedList(blocks, i) {
+  if (!PASS.includes(blocks[i].type)) return false
+  for (let k = i - 1; k >= 0; k--) {
+    const t = blocks[k].type
+    if (t === 'numbered') return true
+    if (!PASS.includes(t)) return false
+  }
+  return false
+}
+
 export const BLOCK_TYPES = [
   { type: 'text', label: 'Texto', icon: 'note', tint: '#E8EAED', ink: '#5F6368', hint: 'texto normal parrafo' },
   { type: 'h1', label: 'Título 1', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H1', hint: 'titulo grande h1 #' },
