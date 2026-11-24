@@ -254,6 +254,7 @@ export function printPaged(pages, st, title) {
 .pp { position: relative; width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; background: #fff; } .pp:last-child { break-after: auto; page-break-after: auto; }
 .pp-win { position: absolute; left: ${PAGE.m}px; top: ${PAGE.m}px; width: 642px; overflow: hidden; }
 .pp-it { position: absolute; left: 0; width: 642px; overflow: hidden; }
+.pp-it .x-sheet > * { margin-top: 0 !important; margin-bottom: 0 !important; } /* los márgenes de arriba y abajo de cada bloque ya van en su colocación: dentro de la caja recortada taparían el borde del texto */
 .pp-n { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font: 11px Poppins, sans-serif; color: #9AA0A6; }
 .pp-cap { position: absolute; left: ${PAGE.m}px; width: 642px; height: 14px; background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); }
 .pp-cap-b { border-radius: 0 0 12px 4px; } .pp-cap-t { top: ${PAGE.m - 14}px; border-radius: 4px 12px 0 0; }
