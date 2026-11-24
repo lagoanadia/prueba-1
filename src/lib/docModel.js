@@ -2,6 +2,18 @@
 // block = { id, type, html, checked? }  ·  `html` solo lleva formato permitido (negrita, cursiva…).
 import { sanitize } from './richText.js'
 
+/** Número de una lista numerada: sigue contando aunque haya entre medias código, viñetas, imágenes, etc. Se corta con texto normal o títulos. */
+const PASS = ['bullet', 'todo', 'code', 'image', 'gallery', 'callout', 'table', 'quote', 'box', 'link']
+export function numberAt(blocks, i) {
+  let n = 1
+  for (let k = i - 1; k >= 0; k--) {
+    const t = blocks[k].type
+    if (t === 'numbered') n++
+    else if (!PASS.includes(t)) break
+  }
+  return n
+}
+
 export const BLOCK_TYPES = [
   { type: 'text', label: 'Texto', icon: 'note', tint: '#E8EAED', ink: '#5F6368', hint: 'texto normal parrafo' },
   { type: 'h1', label: 'Título 1', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H1', hint: 'titulo grande h1 #' },

@@ -1,7 +1,7 @@
 // Exportar apuntes a PDF: se arma una hoja HTML con el estilo elegido y se imprime como PDF.
 // Los bloques llevan «break-inside: avoid» para que no se corte nada entre páginas.
 import { getFile } from './fileStore.js'
-import { POSTIT_COLORS } from './docModel.js'
+import { POSTIT_COLORS, numberAt } from './docModel.js'
 
 export const FONTS = { poppins: "'Poppins', sans-serif", lora: "'Lora', Georgia, serif", mono: "ui-monospace, Menlo, Consolas, monospace" }
 export const COLORS = ['#2F6FED', '#E0457B', '#2FA36B', '#F29D38', '#8B5CF6', '#5F6368']
@@ -181,9 +181,8 @@ export function blockHtml(b, n, imgs) {
 
 /** Cuerpo de la hoja: los bloques en su orden, con los saltos de página que hayas puesto. */
 export function sheetHtml({ title, subtitle, blocks, breaks, imgs, dots = true, cover = null, pageNums = {} }) {
-  let n = 0
   const body = blocks.map((b, i) => {
-    n = b.type === 'numbered' ? (blocks[i - 1]?.type === 'numbered' ? n + 1 : 1) : 0
+    const n = b.type === 'numbered' ? numberAt(blocks, i) : 0
     const h = blockHtml(b, n, imgs)
     return breaks.has(b.id) && i > 0 ? `<div class="x-pb">${h}</div>` : h
   }).join('')

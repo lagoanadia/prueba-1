@@ -6,7 +6,7 @@ import ImageBlock from './blocks/ImageBlock.jsx'
 import GalleryBlock from './blocks/GalleryBlock.jsx'
 import LinkBlock from './blocks/LinkBlock.jsx'
 import TableBlock from './blocks/TableBlock.jsx'
-import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc } from '../lib/docModel.js'
+import { BLOCK_TYPES, POSTIT_COLORS, newBlock, toBlocks, toDoc, numberAt } from '../lib/docModel.js'
 import { sanitize } from '../lib/richText.js'
 import { blocksFromPaste } from '../lib/pasteBlocks.js'
 import { saveFile } from '../lib/fileStore.js'
@@ -374,7 +374,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     setFocusId(id)
   }
 
-  const numberOf = (i) => { let n = 1; for (let k = i - 1; k >= 0 && blocks[k].type === 'numbered'; k--) n++; return n }
+  const numberOf = (i) => numberAt(blocks, i)
 
   // Posición del cursor dentro de la línea (en caracteres) y colocarlo en otra
   const caretOffset = (el) => { const sel = window.getSelection(); if (!sel?.rangeCount || !sel.isCollapsed) return -1; const r = sel.getRangeAt(0).cloneRange(); r.selectNodeContents(el); r.setEnd(sel.anchorNode, sel.anchorOffset); return r.toString().length }
