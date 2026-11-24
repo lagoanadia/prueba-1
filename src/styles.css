@@ -4749,14 +4749,65 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .exam-band i { flex: 1; }
 .exam-mini-d { flex-basis: 44px; }
 
-/* Varios exámenes el mismo día: fichas con la sigla, apiladas, y el día centrado entre ellas */
-.exam-todays { flex: 0 0 auto; width: 210px; display: flex; flex-direction: column; gap: 8px; }
-.exam-todays-mid { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 2px 0; color: var(--text); }
-.exam-todays-mid b { font-size: 30px; line-height: 1.1; letter-spacing: .01em; }
-.exam-todays-mid small { font-size: 12px; color: var(--muted); }
-.exam-todays-mid.is-late { color: #B3261E; }
-.exam-tcard { border-radius: 18px; padding: 11px 12px; display: grid; place-items: center; border-bottom: 5px solid var(--c); min-width: 0; }
-.exam-tcard b { color: color-mix(in srgb, var(--c) 52%, #000); font-size: 20px; }
+/* Varios exámenes hoy: «HOY» arriba y una tarjeta de color por examen */
+.exam-todays { flex: 0 0 auto; width: 290px; display: flex; flex-direction: column; gap: 8px; }
+.exam-todays-h { font-size: 36px; line-height: 1; letter-spacing: .02em; color: var(--text); }
+.exam-todays-h small { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.exam-tgrid { display: grid; gap: 8px; }
+.exam-tcard { border-radius: 18px; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px; border-bottom: 5px solid var(--c); min-width: 0; }
+.exam-tcard b { color: color-mix(in srgb, var(--c) 52%, #000); font-size: 16px; }
+.exam-tcard span { font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+/* Tarea de hoy: fondo blanco como las demás, título en negrita y la raya de color a la izquierda (sin brillos) */
+.tk-col .tk-row.is-today { background: #FFFFFF; }
+
+/* Arrastrar una foto sobre otra: se juntan en una galería */
+.block-slot.drop-merge { outline: 3px solid var(--blue); outline-offset: -3px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.block-slot.drop-merge::after { content: 'Soltar para juntarlas en una galería'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--blue); color: #FFFFFF; font: 600 12.5px Poppins, sans-serif; padding: 4px 12px; border-radius: 99px; z-index: 6; pointer-events: none; white-space: nowrap; }
+
+/* Nombre de la asignatura: doble clic para cambiarlo */
+.sv-title { cursor: text; border-radius: 6px; }
+.sv-title.is-editing { outline: none; box-shadow: 0 3px 0 var(--blue); min-width: 40px; white-space: pre-wrap; }
+
+/* Selector del PDF: cuadro de arrastre, bloque bajo el ratón y recuadro de lo seleccionado */
+.pdfp-ov { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
+.pdfp-ov i { position: absolute; display: block; box-sizing: border-box; border-radius: 8px; }
+.pdfp-ov b { position: absolute; left: 0; top: -11px; background: #3185FC; color: #FFFFFF; font: 700 10.5px Poppins, sans-serif; padding: 2px 9px; border-radius: 10px; white-space: nowrap; }
+.pdfp-hov { border: 1.5px dashed rgba(49, 133, 252, .65); background: rgba(49, 133, 252, .05); }
+.pdfp-bk { border: 1.5px dashed rgba(49, 133, 252, .55); }
+.pdfp-selbox { border: 2px solid #3185FC; background: rgba(49, 133, 252, .08); border-radius: 5px !important; }
+.pdfp-selbox.is-strong { border-width: 2.5px; background: rgba(49, 133, 252, .13); border-radius: 8px !important; }
+.pdfp-selbox.is-word b { background: #202124; }
+.pdfp-marq { border: 2px dashed #3185FC; background: rgba(49, 133, 252, .09); }
+.pdfp.is-marquee, .pdfp.is-marquee * { user-select: none !important; cursor: crosshair !important; }
+.pdfp-pick { z-index: 6; }
+.pdfp-page .textLayer ::selection { background: rgba(49, 133, 252, .38); }
+.pdfp-selbox b { top: auto; bottom: -11px; }
+
+.note-text ol { margin: 4px 0; padding-left: 24px; }
+
+.bt-callout .block-text ul, .bt-callout .block-text ol { margin: 4px 0; padding-left: 22px; }
+.bt-callout .block-text li { margin: 1px 0; }
+
+/* Subrayador en el código: bandas de color por línea */
+.cb-marks { grid-area: 1 / 1; position: relative; pointer-events: none; font-size: 14px; }
+.cb-mk { position: absolute; left: -18px; right: -18px; top: calc(1.65em * var(--i)); height: 1.65em; background: color-mix(in srgb, var(--m) 26%, transparent); border-left: 3px solid var(--m); }
+.cb-edit.is-painting textarea { pointer-events: none; }
+.cb-paint { position: absolute; left: 0; right: 0; top: 44px; bottom: 0; z-index: 3; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.5 5l5.5 5.5-6.5 6.5H8v-4.5z' fill='%23FFE680' stroke='%23202124'/><path d='M4 20.5h7.5' stroke='%23FFFFFF'/></svg>") 4 20, crosshair; touch-action: none; }
+.cb-paint { top: 0; } .cb-tools, .cb-copy { z-index: 4; }
+
+/* Exportar: portada e índice */
+.xp-virt { position: relative; }
+.xp-covers { display: flex; gap: 8px; }
+.xp-cvbtn { border: 2px solid var(--line); background: #FFFFFF; border-radius: 10px; padding: 3px; cursor: pointer; } .xp-cvbtn.on { border-color: var(--blue); }
+.xp-mini { position: relative; display: block; width: 44px; height: 60px; background: #FFFFFF; border-radius: 3px; box-shadow: 0 0 0 1px #E8EAED; overflow: hidden; }
+.xp-mini i, .xp-mini b { position: absolute; display: block; }
+.xp-mini-A i:first-child { left: 16px; top: 22px; width: 12px; height: 2px; background: var(--c); } .xp-mini-A i:last-child { left: 8px; top: 28px; width: 28px; height: 4px; background: #202124; border-radius: 1px; } .xp-mini-A b { left: 12px; top: 50px; width: 20px; height: 2px; background: #BDC1C6; }
+.xp-mini-B i:first-child { left: 0; top: 0; width: 44px; height: 32px; background: var(--c); border-bottom-right-radius: 14px; } .xp-mini-B i:last-child { left: 6px; top: 40px; width: 20px; height: 3px; background: #BDC1C6; } .xp-mini-B b { left: 6px; top: 50px; width: 16px; height: 2px; background: #BDC1C6; }
+.xp-mini-C i:first-child { left: 0; top: 0; width: 5px; height: 60px; background: var(--c); } .xp-mini-C i:last-child { right: -8px; top: -8px; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--c) 18%, #FFFFFF); } .xp-mini-C b { left: 10px; top: 30px; width: 26px; height: 4px; background: #202124; border-radius: 1px; }
+.xp-in { width: 100%; border: 2px solid var(--line); border-radius: 10px; padding: 5px 9px; font: inherit; font-size: 13px; outline: none; background: #FFFFFF; } .xp-in:focus { border-color: var(--blue); }
+.xp-check { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.xp-style { overflow-y: auto; }
+
 .exam-todays-h.is-late { color: #B3261E; }
 
 /* Editar una tarea: tarjeta flotante con todo en una línea */

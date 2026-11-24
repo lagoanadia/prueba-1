@@ -96,18 +96,18 @@ export default function Deliveries({ data, update, subjects, course = null, exam
             return (
               <>
                 {todays.length > 1 ? (
-                  // Varios exámenes el mismo día: una ficha por examen (solo la sigla), unas encima de otras, y el día centrado entre ellas
-                  (() => {
-                    const half = Math.ceil(todays.length / 2)
-                    const card = (a) => <div key={a.id} className="exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }} title={`${a.course} · ${a.title}`}><b>{a.course}</b></div>
-                    return (
-                      <div className="exam-todays">
-                        {todays.slice(0, half).map(card)}
-                        <div className={`exam-todays-mid ${late ? 'is-late' : ''}`}><b>{isToday ? 'HOY' : late ? `hace ${n0} d` : `${n0} ${n0 === 1 ? 'día' : 'días'}`}</b><small>{formatShort(pending[0].due)}</small></div>
-                        {todays.slice(half).map(card)}
-                      </div>
-                    )
-                  })()
+                  // Varios exámenes el mismo día: el día arriba («HOY», «2 días»…) y una tarjeta de color por examen (con la barrita de su asignatura)
+                  <div className="exam-todays">
+                    <b className={`exam-todays-h ${late ? 'is-late' : ''}`}>{isToday ? 'HOY' : late ? `hace ${n0} d` : `${n0} ${n0 === 1 ? 'día' : 'días'}`} <small>{todays.length} exámenes · {formatShort(pending[0].due)}</small></b>
+                    <div className="exam-tgrid" style={{ gridTemplateColumns: todays.length === 2 ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+                      {todays.map((a) => (
+                        <div key={a.id} className="exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>
+                          <b>{a.course}</b>
+                          <span>{a.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ) : isToday ? (
                   <div className="exam-big exam-today" style={{ '--c': color(todays[0].course), background: soft(color(todays[0].course), 32) }}>
                     <b>HOY</b>
