@@ -4794,3 +4794,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cb-edit.is-painting textarea { pointer-events: none; }
 .cb-paint { position: absolute; left: 0; right: 0; top: 44px; bottom: 0; z-index: 3; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.5 5l5.5 5.5-6.5 6.5H8v-4.5z' fill='%23FFE680' stroke='%23202124'/><path d='M4 20.5h7.5' stroke='%23FFFFFF'/></svg>") 4 20, crosshair; touch-action: none; }
 .cb-paint { top: 0; } .cb-tools, .cb-copy { z-index: 4; }
+
+/* Exportar: portada e índice */
+.xp-virt { position: relative; }
+.xp-covers { display: flex; gap: 8px; }
+.xp-cvbtn { border: 2px solid var(--line); background: #FFFFFF; border-radius: 10px; padding: 3px; cursor: pointer; } .xp-cvbtn.on { border-color: var(--blue); }
+.xp-mini { position: relative; display: block; width: 44px; height: 60px; background: #FFFFFF; border-radius: 3px; box-shadow: 0 0 0 1px #E8EAED; overflow: hidden; }
+.xp-mini i, .xp-mini b { position: absolute; display: block; }
+.xp-mini-A i:first-child { left: 16px; top: 22px; width: 12px; height: 2px; background: var(--c); } .xp-mini-A i:last-child { left: 8px; top: 28px; width: 28px; height: 4px; background: #202124; border-radius: 1px; } .xp-mini-A b { left: 12px; top: 50px; width: 20px; height: 2px; background: #BDC1C6; }
+.xp-mini-B i:first-child { left: 0; top: 0; width: 44px; height: 32px; background: var(--c); border-bottom-right-radius: 14px; } .xp-mini-B i:last-child { left: 6px; top: 40px; width: 20px; height: 3px; background: #BDC1C6; } .xp-mini-B b { left: 6px; top: 50px; width: 16px; height: 2px; background: #BDC1C6; }
+.xp-mini-C i:first-child { left: 0; top: 0; width: 5px; height: 60px; background: var(--c); } .xp-mini-C i:last-child { right: -8px; top: -8px; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--c) 18%, #FFFFFF); } .xp-mini-C b { left: 10px; top: 30px; width: 26px; height: 4px; background: #202124; border-radius: 1px; }
+.xp-in { width: 100%; border: 2px solid var(--line); border-radius: 10px; padding: 5px 9px; font: inherit; font-size: 13px; outline: none; background: #FFFFFF; } .xp-in:focus { border-color: var(--blue); }
+.xp-check { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.xp-style { overflow-y: auto; }

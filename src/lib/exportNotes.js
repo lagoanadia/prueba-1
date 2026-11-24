@@ -12,6 +12,43 @@ export const DEFAULT_STYLE = { font: 'poppins', color: '#2F6FED', radius: 16, st
 
 const esc = (t) => String(t ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 
+/** Portada: estilo A (limpia), B (bloque de color) o C (raya lateral). `index` = índice en la hoja 2. */
+export const DEFAULT_COVER = { on: false, style: 'A', title: '', subtitle: '', author: '', course: '', date: '', index: true }
+export const COVER_H = 955 // alto de una portada / del índice (una hoja A4 sin los márgenes)
+
+/** Portada como HTML (cabe en una hoja; el PDF salta de página al acabar). */
+export function coverHtml(cv, docTitle, kicker) {
+  const meta = [cv.author, cv.course, cv.date].filter((x) => x && x.trim()).map((x) => `<span>${esc(x)}</span>`).join('')
+  const title = esc(cv.title || docTitle)
+  const sub = cv.subtitle ? `<span class="x-cv-sub">${esc(cv.subtitle)}</span>` : ''
+  const k = kicker ? `<small class="x-cv-k">${esc(kicker)}</small>` : ''
+  const st = ['A', 'B', 'C'].includes(cv.style) ? cv.style : 'A'
+  if (st === 'B') return `<div class="x-cover x-cover-B"><div class="x-cv-top">${k}<b class="x-cv-title">${title}</b></div><div class="x-cv-under">${sub}</div><div class="x-cv-meta">${meta}</div></div>`
+  if (st === 'C') return `<div class="x-cover x-cover-C"><i class="x-cv-bar"></i><i class="x-cv-c1"></i><i class="x-cv-c2"></i><div class="x-cv-mid">${k}<b class="x-cv-title">${title}</b>${sub}</div><div class="x-cv-meta">${meta}</div></div>`
+  return `<div class="x-cover x-cover-A"><div class="x-cv-mid"><i class="x-cv-rule"></i><b class="x-cv-title">${title}</b>${sub}</div><div class="x-cv-meta">${meta}</div></div>`
+}
+
+const plainTxt = (h) => String(h ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\u200B/g, '').trim()
+
+/** Títulos del documento para el índice (nivel 1, 2 o 3). */
+export const headingsOf = (blocks) => blocks.filter((b) => /^h[123]$/.test(b.type) && plainTxt(b.html)).map((b) => ({ id: b.id, level: Number(b.type[1]), text: plainTxt(b.html) }))
+
+/** Cómo repartir el índice para que quepa en UNA hoja: primero se achica la letra, luego se quitan los títulos pequeños y, al final, se usan dos columnas. */
+export function indexLayout(entries) {
+  const H = 780
+  const height = (list, s, cols) => (list.reduce((n, e) => n + Math.max(1, Math.ceil(e.text.length / ((cols === 2 ? 30 : 62) / s))) * (e.level === 1 ? 23 : 19.5) * s + (e.level === 1 ? 9 : 3.5) * s, 0)) / cols
+  const tries = [[3, 1, 1], [3, 0.9, 1], [3, 0.8, 1], [2, 1, 1], [2, 0.9, 1], [2, 0.8, 1], [3, 0.7, 2], [3, 0.62, 2], [2, 0.7, 2], [2, 0.62, 2]]
+  for (const [lv, sc, cols] of tries) { const list = entries.filter((e) => e.level <= lv); if (height(list, sc, cols) <= H) return { list, scale: sc, cols, cut: lv < 3 && entries.some((e) => e.level > lv) } }
+  return { list: entries.filter((e) => e.level === 1), scale: 0.7, cols: 1, cut: true }
+}
+
+/** Índice (hoja 2): títulos con su sangría y el número de hoja (con puntos hasta él). */
+export function indexHtml(blocks, pageNums = {}) {
+  const lay = indexLayout(headingsOf(blocks))
+  const rows = lay.list.map((e) => `<div class="x-ix x-ix-${e.level}"><span>${esc(e.text)}</span><i></i><b>${pageNums[e.id] ?? ''}</b></div>`).join('')
+  return `<div class="x-index" style="--s:${lay.scale}"><div class="x-ix-h">Índice</div><div class="x-ix-list" style="column-count:${lay.cols}">${rows || '<p class="x-ix-empty">Añade títulos al documento y saldrán aquí.</p>'}</div></div>`
+}
+
 /** CSS de la hoja (sirve igual para la vista previa y para el PDF). Ancho de contenido = A4 con márgenes de 20 mm. */
 export function sheetCss(st) {
   const c = st.color
@@ -24,6 +61,34 @@ export function sheetCss(st) {
 .x-head i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
 .x-b code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #EEF0F2; color: var(--c); border-radius: 4px; padding: 1px 6px; }
 .x-postit .x-b code { background: rgba(255, 255, 255, .6); }
+/* Portada e índice: una hoja cada uno */
+.x-cover, .x-index { height: ${COVER_H}px; position: relative; overflow: hidden; break-after: page; page-break-after: always; }
+.x-cv-title { display: block; font-size: 44px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; }
+.x-cv-sub { display: block; font-size: 17px; color: #5F6368; margin-top: 14px; line-height: 1.4; }
+.x-cv-k { display: block; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 10px; }
+.x-cv-meta { position: absolute; bottom: 64px; left: 0; right: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: #5F6368; line-height: 1.6; }
+.x-cover-A .x-cv-mid { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-58%); text-align: center; padding: 0 36px; }
+.x-cover-A .x-cv-rule { display: block; width: 56px; height: 5px; border-radius: 3px; background: var(--c); margin: 0 auto 26px; }
+.x-cover-A .x-cv-meta { align-items: center; }
+.x-cover-B .x-cv-top { height: 570px; background: var(--c); color: #FFFFFF; padding: 70px 56px; display: flex; flex-direction: column; justify-content: flex-end; border-bottom-right-radius: 170px; }
+.x-cover-B .x-cv-k { opacity: .85; }
+.x-cover-B .x-cv-under { padding: 34px 56px 0; } .x-cover-B .x-cv-under .x-cv-sub { margin-top: 0; }
+.x-cover-B .x-cv-meta { left: 56px; }
+.x-cover-C .x-cv-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 38px; background: var(--c); }
+.x-cover-C .x-cv-c1 { position: absolute; right: -90px; top: -90px; width: 380px; height: 380px; border-radius: 50%; background: color-mix(in srgb, var(--c) 14%, #FFFFFF); }
+.x-cover-C .x-cv-c2 { position: absolute; right: 70px; top: 150px; width: 110px; height: 110px; border-radius: 50%; background: color-mix(in srgb, var(--c) 30%, #FFFFFF); }
+.x-cover-C .x-cv-mid { position: absolute; left: 92px; right: 40px; top: 400px; }
+.x-cover-C .x-cv-k { color: var(--c); }
+.x-cover-C .x-cv-meta { left: 92px; }
+.x-index { padding: 46px 12px 0; }
+.x-ix-h { font-size: 30px; font-weight: 700; color: var(--c); margin-bottom: 26px; }
+.x-ix-list { column-gap: 34px; }
+.x-ix { display: flex; align-items: baseline; gap: 8px; break-inside: avoid; font-size: calc(var(--s, 1) * 14px); line-height: 1.35; margin-bottom: calc(var(--s, 1) * 4px); }
+.x-ix span { max-width: 88%; } .x-ix i { flex: 1; min-width: 12px; border-bottom: 1.5px dotted #BDC1C6; transform: translateY(-3px); } .x-ix b { font-weight: 600; color: #5F6368; min-width: 18px; text-align: right; }
+.x-ix-1 { font-weight: 600; margin-top: calc(var(--s, 1) * 9px); } .x-ix-1:first-child { margin-top: 0; }
+.x-ix-2 { padding-left: calc(var(--s, 1) * 20px); font-size: calc(var(--s, 1) * 13px); }
+.x-ix-3 { padding-left: calc(var(--s, 1) * 40px); font-size: calc(var(--s, 1) * 12px); color: #3C4043; }
+.x-ix-empty { color: #9AA0A6; }
 .x-b { break-inside: avoid; page-break-inside: avoid; margin: 0 0 10px; }
 /* Las tablas largas pueden seguir en la hoja siguiente (entre filas) en vez de dejar un hueco enorme */
 .x-b.x-split { break-inside: auto; page-break-inside: auto; } .x-table tr { break-inside: avoid; page-break-inside: avoid; }
@@ -114,13 +179,14 @@ export function blockHtml(b, n, imgs) {
 }
 
 /** Cuerpo de la hoja: los bloques en su orden, con los saltos de página que hayas puesto. */
-export function sheetHtml({ title, subtitle, blocks, breaks, imgs, dots = true }) {
+export function sheetHtml({ title, subtitle, blocks, breaks, imgs, dots = true, cover = null, pageNums = {} }) {
   let n = 0
   const body = blocks.map((b, i) => {
     n = b.type === 'numbered' ? (blocks[i - 1]?.type === 'numbered' ? n + 1 : 1) : 0
     const h = blockHtml(b, n, imgs)
     return breaks.has(b.id) && i > 0 ? `<div class="x-pb">${h}</div>` : h
   }).join('')
+  if (cover?.on) return `<div class="x-sheet">${coverHtml(cover, title, subtitle)}${cover.index ? indexHtml(blocks, pageNums) : ''}${body}</div>` // con portada, esta sustituye a la cabecera
   return `<div class="x-sheet"><div class="x-head">${dots ? '<i></i>' : ''}${esc(title)}${subtitle ? ` · ${esc(subtitle)}` : ''}</div>${body}</div>`
 }
 
