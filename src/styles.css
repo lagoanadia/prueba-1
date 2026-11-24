@@ -4790,7 +4790,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 
 /* Subrayador en el código: bandas de color por línea */
 .cb-marks { grid-area: 1 / 1; position: relative; pointer-events: none; font-size: 14px; }
-.cb-mk { position: absolute; left: -18px; right: -18px; top: calc(1.65em * var(--i)); height: 1.65em; background: color-mix(in srgb, var(--m) 26%, transparent); border-left: 3px solid var(--m); }
+.cb-mk { position: absolute; left: -18px; right: -18px; top: calc(1.65em * var(--i)); height: 1.65em; background: color-mix(in srgb, var(--m) 13%, transparent); border-left: 3px solid var(--m); }
 .cb-edit.is-painting textarea { pointer-events: none; }
 .cb-paint { position: absolute; left: 0; right: 0; top: 44px; bottom: 0; z-index: 3; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.5 5l5.5 5.5-6.5 6.5H8v-4.5z' fill='%23FFE680' stroke='%23202124'/><path d='M4 20.5h7.5' stroke='%23FFFFFF'/></svg>") 4 20, crosshair; touch-action: none; }
 .cb-paint { top: 0; } .cb-tools, .cb-copy { z-index: 4; }
