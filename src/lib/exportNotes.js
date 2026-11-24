@@ -98,6 +98,7 @@ export function sheetCss(st) {
 .x-h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin: 6px 0 10px; break-after: avoid; }
 .x-h2 { font-size: 18px; font-weight: 700; color: var(--c); margin: 16px 0 6px; break-after: avoid; }
 .x-h3 { font-size: 15px; font-weight: 700; margin: 12px 0 4px; break-after: avoid; }
+.x-h4 { font-size: 13px; font-weight: 700; margin: 10px 0 3px; color: #5F6368; break-after: avoid; }
 .x-text { white-space: pre-wrap; }
 .x-li { display: flex; gap: 8px; margin-bottom: 4px; } .x-li > span:first-child { flex: none; min-width: 18px; color: var(--c); font-weight: 700; }
 .x-box { display: inline-block; width: 13px; height: 13px; margin-top: 4px; border: 1.8px solid var(--c); border-radius: ${Math.min(r, 5)}px; position: relative; flex: none; }
@@ -152,7 +153,7 @@ const cellHtml = (b, c) => (b.rich ? c ?? '' : esc(c))
 export function blockHtml(b, n, imgs) {
   const rich = (h) => h || ''
   switch (b.type) {
-    case 'h1': case 'h2': case 'h3': return `<div class="x-b x-${b.type}">${rich(b.html)}</div>`
+    case 'h1': case 'h2': case 'h3': case 'h4': return `<div class="x-b x-${b.type}">${rich(b.html)}</div>`
     case 'bullet': return `<div class="x-b x-li"><span>•</span><div>${rich(b.html)}</div></div>`
     case 'numbered': return `<div class="x-b x-li"><span>${n}.</span><div>${rich(b.html)}</div></div>`
     case 'todo': return `<div class="x-b x-li"><span class="x-box ${b.checked ? 'on' : ''}"></span><div class="${b.checked ? 'x-done' : ''}">${rich(b.html)}</div></div>`

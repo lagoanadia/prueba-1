@@ -13,7 +13,7 @@ import { saveFile } from '../lib/fileStore.js'
 import { syncCodeColor } from '../lib/exportNotes.js'
 
 // Atajos de escritura: «# » título, «- » puntos, «1. » numerada, «[] » tareas, «> » cita
-const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
+const SHORTCUTS = [[/^#\s$/, 'h1'], [/^##\s$/, 'h2'], [/^###\s$/, 'h3'], [/^####\s$/, 'h4'], [/^[-*]\s$/, 'bullet'], [/^1\.\s$/, 'numbered'], [/^\[\]\s$/, 'todo'], [/^>\s$/, 'quote']]
 // Sin tildes ni mayúsculas, para que «tit» encuentre «Título»
 const norm = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 /** Tipos de bloque cuya palabra empieza por lo escrito (primero los que coinciden con el nombre) */
@@ -56,7 +56,7 @@ const writeClip = async (payload, plain) => {
     else await navigator.clipboard?.writeText(plain)
   } catch { try { await navigator.clipboard?.writeText(plain) } catch { /* sin permiso */ } }
 }
-const TEXTY = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout']
+const TEXTY = ['text', 'h1', 'h2', 'h3', 'h4', 'bullet', 'numbered', 'todo', 'quote', 'callout']
 const LIST = ['bullet', 'numbered', 'todo']
 const isEmpty = (b) => (b.type === 'box' ? (b.blocks ?? []).every(isEmpty) : TEXTY.includes(b.type) ? !strip(b.html) : b.type === 'code' ? !b.code : b.type === 'link' ? !b.url : b.type === 'image' ? !b.file : b.type === 'gallery' ? !(b.files ?? []).length : false)
 
@@ -329,7 +329,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     else if (y > pr.bottom - 50) page.scrollTop += 14
   }
   // Cambiar el tipo de un bloque conservando su texto (texto, títulos, listas, tareas, cita, destacado, código)
-  const CONVERTIBLE = ['text', 'h1', 'h2', 'h3', 'bullet', 'numbered', 'todo', 'quote', 'callout', 'code']
+  const CONVERTIBLE = ['text', 'h1', 'h2', 'h3', 'h4', 'bullet', 'numbered', 'todo', 'quote', 'callout', 'code']
   const toPlain = (b) => (b.type === 'code' ? b.code ?? '' : (b.html ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'))
   const convert = (id, type) => {
     const cur = blocks.find((b) => b.id === id)
@@ -615,8 +615,8 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     if (sc) { el.innerHTML = ''; setMenu(null); patch(b.id, { type: sc[1], html: '', ...(sc[1] === 'todo' ? { checked: false } : {}) }); return }
     // Marca puesta DELANTE de un texto que ya existe («## » antes de un título…): el bloque cambia de tipo y se queda el resto del texto
     if (e.nativeEvent?.data === ' ' && TEXTY.includes(b.type) && b.type !== 'callout') {
-      const m = text.match(/^(#{1,3}|[-*]|>|1\.|\[\])\s(?=\S)/)
-      const kind = m && { '#': 'h1', '##': 'h2', '###': 'h3', '-': 'bullet', '*': 'bullet', '>': 'quote', '1.': 'numbered', '[]': 'todo' }[m[1]]
+      const m = text.match(/^(#{1,4}|[-*]|>|1\.|\[\])\s(?=\S)/)
+      const kind = m && { '#': 'h1', '##': 'h2', '###': 'h3', '####': 'h4', '-': 'bullet', '*': 'bullet', '>': 'quote', '1.': 'numbered', '[]': 'todo' }[m[1]]
       const first = el.firstChild
       const sel = window.getSelection()
       if (kind && kind !== b.type && first?.nodeType === 3 && sel?.anchorNode === first && sel.anchorOffset === m[0].length && first.textContent.startsWith(m[0])) {
@@ -880,7 +880,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }, [range, blocks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Títulos desplegables: un título plegado oculta lo que tiene debajo hasta el siguiente título de su nivel o superior
-  const headLevel = (b) => (['h1', 'h2', 'h3'].includes(b.type) ? Number(b.type[1]) : 0)
+  const headLevel = (b) => (['h1', 'h2', 'h3', 'h4'].includes(b.type) ? Number(b.type[1]) : 0)
   const folded = new Set()
   const foldedCount = {}
   {

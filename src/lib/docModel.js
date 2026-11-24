@@ -7,6 +7,7 @@ export const BLOCK_TYPES = [
   { type: 'h1', label: 'Título 1', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H1', hint: 'titulo grande h1 #' },
   { type: 'h2', label: 'Título 2', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H2', hint: 'titulo mediano h2 ##' },
   { type: 'h3', label: 'Título 3', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H3', hint: 'titulo pequeño h3 ###' },
+  { type: 'h4', label: 'Título 4', icon: 'title', tint: '#DDEBFF', ink: '#2F6FED', glyph: 'H4', hint: 'titulo mini h4 ####' },
   { type: 'bullet', label: 'Lista con puntos', icon: 'list', tint: '#DFF5E4', ink: '#1FA463', hint: 'lista puntos viñetas -' },
   { type: 'numbered', label: 'Lista numerada', icon: 'list', tint: '#DFF5E4', ink: '#1FA463', hint: 'lista numerada 1.' },
   { type: 'todo', label: 'Tareas', icon: 'check', tint: '#DFF5E4', ink: '#1FA463', hint: 'tareas casillas checklist []' },
@@ -68,6 +69,7 @@ export function toBlocks(value) {
       else if (tag === 'H1') out.push(newBlock('h1', n.innerHTML))
       else if (tag === 'H2') out.push(newBlock('h2', n.innerHTML))
       else if (tag === 'H3') out.push(newBlock('h3', n.innerHTML))
+      else if (tag === 'H4') out.push(newBlock('h4', n.innerHTML))
       else out.push(newBlock('text', n.innerHTML))
     })
     return out.length ? out : [newBlock()]

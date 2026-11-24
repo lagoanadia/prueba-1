@@ -1,5 +1,5 @@
 // Limpia el HTML de los apuntes: solo se permiten etiquetas de formato, nunca scripts ni atributos.
-const TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'P', 'DIV', 'BR', 'SPAN', 'MARK', 'CODE'])
+const TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'H4', 'P', 'DIV', 'BR', 'SPAN', 'MARK', 'CODE'])
 
 const HL = new Set(['amarillo', 'naranja', 'rosa', 'azul', 'verde', 'morado'])
 

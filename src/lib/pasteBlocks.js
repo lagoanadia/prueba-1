@@ -61,7 +61,7 @@ function walk(node, out, para) {
     if (n.nodeType === 3) { para.h += esc(n.textContent.replace(/\s+/g, ' ')); return }
     if (n.nodeType !== 1 || SKIP.has(n.tagName)) return
     const tag = n.tagName
-    if (/^H[1-6]$/.test(tag)) { flush(); const h = clean(inline(n)); if (h) out.push({ type: `h${Math.min(Number(tag[1]), 3)}`, html: h }); return }
+    if (/^H[1-6]$/.test(tag)) { flush(); const h = clean(inline(n)); if (h) out.push({ type: `h${Math.min(Number(tag[1]), 4)}`, html: h }); return }
     if (tag === 'TABLE') {
       flush()
       if (n.dataset.merged) return
@@ -142,7 +142,7 @@ function mdBlocks(lines) {
       out.push({ type: 'table', rows: rows.map((r) => [...r, ...Array(cols - r.length).fill('')]) })
       continue
     }
-    if ((m = l.match(/^\s*(#{1,6})\s+(.*)$/))) out.push({ type: `h${Math.min(m[1].length, 3)}`, html: inlineMd(m[2]) })
+    if ((m = l.match(/^\s*(#{1,6})\s+(.*)$/))) out.push({ type: `h${Math.min(m[1].length, 4)}`, html: inlineMd(m[2]) })
     else if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) out.push({ type: 'divider' })
     else if ((m = l.match(/^\s*[-*+•·▪◦]\s+(.*)$/))) out.push({ type: 'bullet', html: inlineMd(m[1].replace(/^\[[ xX]\]\s+/, '')) })
     else if ((m = l.match(/^\s*\(?\d{1,3}[.)]\s+(.*)$/))) out.push({ type: 'numbered', html: inlineMd(m[1]) })
