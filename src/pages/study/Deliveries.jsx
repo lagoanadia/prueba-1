@@ -88,16 +88,18 @@ export default function Deliveries({ data, update, subjects, course = null, exam
       {exams && view === 'count' && pending.length > 0 && !form ? (
         <div className="exam-c">
           {(() => {
-            const todays = pending.filter((a) => daysUntil(a.due) === 0)
+            // Todos los exámenes del día más cercano (no solo el primero)
+            const todays = pending.filter((a) => a.due === pending[0].due)
             const isToday = daysUntil(pending[0].due) === 0
-            const rest = isToday ? pending.slice(todays.length) : pending.slice(1)
+            const rest = pending.slice(todays.length)
             const n0 = Math.abs(daysUntil(pending[0].due))
+            const late = daysUntil(pending[0].due) < 0
             return (
               <>
-                {isToday && todays.length > 1 ? (
-                  // Varios exámenes hoy: «HOY» como título y una tarjeta de color por examen (con la barrita de su asignatura)
+                {todays.length > 1 ? (
+                  // Varios exámenes el mismo día: el día arriba («HOY», «2 días»…) y una tarjeta de color por examen (con la barrita de su asignatura)
                   <div className="exam-todays">
-                    <b className="exam-todays-h">HOY <small>{todays.length} exámenes</small></b>
+                    <b className={`exam-todays-h ${late ? 'is-late' : ''}`}>{isToday ? 'HOY' : late ? `hace ${n0} d` : `${n0} ${n0 === 1 ? 'día' : 'días'}`} <small>{todays.length} exámenes · {formatShort(pending[0].due)}</small></b>
                     <div className="exam-tgrid" style={{ gridTemplateColumns: todays.length === 2 ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
                       {todays.map((a) => (
                         <div key={a.id} className="exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>

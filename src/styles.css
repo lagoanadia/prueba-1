@@ -4807,3 +4807,5 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .xp-in { width: 100%; border: 2px solid var(--line); border-radius: 10px; padding: 5px 9px; font: inherit; font-size: 13px; outline: none; background: #FFFFFF; } .xp-in:focus { border-color: var(--blue); }
 .xp-check { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
 .xp-style { overflow-y: auto; }
+
+.exam-todays-h.is-late { color: #B3261E; }
