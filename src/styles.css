@@ -4824,3 +4824,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 /* El texto va por encima de la banda del subrayado (así el color solo afecta al fondo) */
 .cb-marks { z-index: 0; }
 .cb-hl { position: relative; z-index: 1; }
+
+/* Mover varios bloques seleccionados a la vez */
+.sel-bar .sel-move { display: inline-flex; align-items: center; gap: 5px; color: #FFFFFF; font: 600 12.5px Poppins, sans-serif; padding: 5px 10px; border-radius: 10px; cursor: grab; }
+.sel-bar .sel-move:hover { background: rgba(255, 255, 255, .16); }
+.sel-bar .sel-move:active { cursor: grabbing; }

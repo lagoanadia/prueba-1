@@ -263,6 +263,14 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
   }
   const remove = (id) => { const i = indexOf(id); const n = blocks.filter((b) => b.id !== id); commit(n.length ? n : [newBlock()]); setFocusId((n[i - 1] ?? n[0])?.id ?? null) }
   const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const n = [...blocks]; [n[i], n[j]] = [n[j], n[i]]; commit(n) }
+  // Bloques seleccionados (por selección de texto entre bloques o por marcado), en el orden de la página
+  const selectedGroup = () => { const ids = range ? rangeIds : sel; return blocksRef.current.filter((x) => ids.includes(x.id)).map((x) => x.id) }
+  const startGroupDrag = (e, ids, leadId) => {
+    e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', ids.join(','))
+    const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0)
+    setRowMenu(null); DRAGGING = null
+    setDrag({ id: leadId, group: ids, over: null, after: false })
+  }
   const dropDrag = () => {
     if (drag?.foreign) { // viene de otro editor (p. ej. de fuera a dentro de un Post-it, o al revés)
       const D = DRAGGING; DRAGGING = null
@@ -291,6 +299,16 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
         setDrag(null)
         return
       }
+    }
+    if (drag.group) { // varios bloques seleccionados: se mueven juntos, en su orden
+      if (drag.group.includes(drag.over)) { setDrag(null); return }
+      const items = blocks.filter((b) => drag.group.includes(b.id))
+      const others = blocks.filter((b) => !drag.group.includes(b.id))
+      const pos = others.findIndex((b) => b.id === drag.over) + (drag.after ? 1 : 0)
+      others.splice(pos, 0, ...items)
+      commit(others)
+      setDrag(null)
+      return
     }
     const item = blocks.find((b) => b.id === drag.id)
     const rest = blocks.filter((b) => b.id !== drag.id)
@@ -322,7 +340,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
     // Arrastrando una foto sobre el centro de otra foto: se juntarán en una galería
     const moving = !foreign && blocksRef.current.find((b) => b.id === drag?.id)
     const target = !foreign && blocksRef.current.find((b) => b.id === over)
-    const merge = Boolean(moving && target && moving.id !== target.id && IMG.includes(moving.type) && IMG.includes(target.type) && y > r.top + r.height * 0.25 && y < r.bottom - r.height * 0.25)
+    const merge = Boolean(!drag?.group && moving && target && moving.id !== target.id && IMG.includes(moving.type) && IMG.includes(target.type) && y > r.top + r.height * 0.25 && y < r.bottom - r.height * 0.25)
     if (!drag || drag.over !== over || drag.after !== after || Boolean(drag.merge) !== merge) setDrag(foreign ? { id: DRAGGING.block.id, foreign: true, over, after } : { ...drag, over, after, merge })
     const pr = page.getBoundingClientRect()
     if (y < pr.top + 50) page.scrollTop -= 14
@@ -933,18 +951,20 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
       {!nested && exporting && <ExportDialog title={exportAs.title} subtitle={exportAs.subtitle} blocks={blocks} onClose={() => setExporting(false)} />}
       <div ref={pageRef} className={`blocks-page ${nested ? 'nested' : ''} ${picking ? 'is-picking' : ''} ${pen.on ? 'pen-on' : ''}`} role="group" aria-label={label} onKeyDownCapture={onUndoKey} onScroll={trackHead} onPointerDownCapture={onPageDown} onFocus={rememberBlock} onKeyUp={rememberBlock} onClick={onPageClick} onDragOver={dragOverPage} onDragLeave={(e) => { if (drag?.foreign && !e.currentTarget.contains(e.relatedTarget)) setDrag(null) }} onDrop={(e) => { e.preventDefault(); if (drag?.foreign) e.stopPropagation(); dropDrag() }}>
         {blocks.map((b, i) => (folded.has(b.id) ? null : (
-          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.merge ? 'drop-merge' : drag.after ? 'drop-after' : 'drop-before') : ''}`}>
+          <div key={b.id} data-id={b.id} className={`block-slot slot-${b.type} ${sel.includes(b.id) ? `is-picked ${sel.includes(blocks[i - 1]?.id) && !folded.has(blocks[i - 1]?.id) ? '' : 'pk-top'} ${sel.includes(blocks[i + 1]?.id) ? '' : 'pk-bot'}` : ''} ${rangeIds.includes(b.id) && !TEXTY.includes(b.type) ? 'range-whole' : ''} ${drag?.id === b.id || drag?.group?.includes(b.id) ? 'is-dragging' : ''} ${drag?.over === b.id && drag.id !== b.id ? (drag.merge ? 'drop-merge' : drag.after ? 'drop-after' : 'drop-before') : ''}`}>
             <Gap />
             {(range ? rangeIds[0] : firstSel) === b.id && (
               <span className={`sel-bar ${i === 0 ? 'in' : ''}`} role="toolbar" aria-label="Selección">
                 {range
                   ? <>
                     <span className="sel-n">{rangeIds.length} {rangeIds.length === 1 ? 'bloque' : 'bloques'}</span>
+                    {rangeIds.length > 1 && <span className="sel-move" draggable title="Arrastra para mover todos los bloques" aria-label="Arrastra para mover todos los bloques" onDragStart={(e) => startGroupDrag(e, rangeIds, rangeIds[0])} onDragEnd={() => setDrag(null)}><Icon name="grip" size={15} />Mover</span>}
                     <button type="button" onClick={copyRange}><Icon name="copy" size={15} />Copiar</button>
                     <button type="button" onClick={deleteRange}><Icon name="trash" size={15} />Borrar</button>
                   </>
                   : <>
                     <span className="sel-n">{sel.length} {sel.length === 1 ? 'bloque' : 'bloques'}</span>
+                    {sel.length > 1 && <span className="sel-move" draggable title="Arrastra para mover todos los bloques" aria-label="Arrastra para mover todos los bloques" onDragStart={(e) => startGroupDrag(e, selectedGroup(), sel[0])} onDragEnd={() => setDrag(null)}><Icon name="grip" size={15} />Mover</span>}
                     {!nested && <button type="button" onClick={wrapSel}><Icon name="doc" size={15} />Post-it</button>}
                     <button type="button" onClick={copySel}><Icon name="copy" size={15} />Copiar</button>
                     <button type="button" onClick={deleteSel}><Icon name="trash" size={15} />Borrar</button>
@@ -958,7 +978,7 @@ export default function BlockEditor({ value, onChange, label = 'Documento', bar 
               <button type="button" className="row-plus" onClick={(e) => { e.stopPropagation(); insertAt(indexOf(b.id) + (b.collapsed ? (foldedCount[b.id] ?? 0) : 0) + 1, b.collapsed ? { ...newBlock(), free: true } : newBlock()) }} aria-label="Añadir un bloque de texto debajo" title="Añadir un bloque debajo"><Icon name="plus" size={16} strokeWidth={2.6} /></button>
               <button type="button" className="row-grip" draggable aria-label="Mover o abrir opciones del bloque" title="Arrastra para mover · pulsa para opciones"
                 onClick={(e) => { e.stopPropagation(); setRowUp(e.currentTarget.getBoundingClientRect().bottom > window.innerHeight * 0.5); setRowQ(''); setRowI(0); setRowMenu(rowMenu === b.id ? null : b.id) }}
-                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }); DRAGGING = { block: b, owner: me, detach: () => { const n = blocksRef.current.filter((x) => x.id !== b.id); commit(n.length ? n : [newBlock()]) }, resetOver: () => setDrag((d) => (d ? { ...d, over: null } : d)), finish: () => setDrag(null) } }}
+                onDragStart={(e) => { const grp = selectedGroup(); if (grp.length > 1 && grp.includes(b.id)) { startGroupDrag(e, grp, b.id); return } e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', b.id); const slot = e.currentTarget.closest('.block-slot'); if (slot) e.dataTransfer.setDragImage(slot, 0, 0); setRowMenu(null); setDrag({ id: b.id, over: null, after: false }); DRAGGING = { block: b, owner: me, detach: () => { const n = blocksRef.current.filter((x) => x.id !== b.id); commit(n.length ? n : [newBlock()]) }, resetOver: () => setDrag((d) => (d ? { ...d, over: null } : d)), finish: () => setDrag(null) } }}
                 onDragEnd={() => { setDrag(null); DRAGGING = null }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">{[3, 7, 11].flatMap((y) => [4.5, 9.5].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" />))}</svg>
               </button>
