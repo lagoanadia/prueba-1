@@ -98,7 +98,7 @@ export default function Deliveries({ data, update, subjects, course = null, exam
                 {todays.length > 1 ? (
                   // Varios exámenes el mismo día: el día arriba («HOY», «2 días»…) y una tarjeta de color por examen (con la barrita de su asignatura)
                   <div className="exam-todays">
-                    <b className={`exam-todays-h ${late ? 'is-late' : ''}`}>{isToday ? 'HOY' : late ? `hace ${n0} d` : `${n0} ${n0 === 1 ? 'día' : 'días'}`} <small>{todays.length} exámenes · {formatShort(pending[0].due)}</small></b>
+                    <b className={`exam-todays-h ${late ? 'is-late' : ''}`}>{isToday ? 'HOY' : late ? `hace ${n0} d` : `${n0} ${n0 === 1 ? 'día' : 'días'}`} <small>{formatShort(pending[0].due)}</small></b>
                     <div className="exam-tgrid" style={{ gridTemplateColumns: todays.length === 2 ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
                       {todays.map((a) => (
                         <div key={a.id} className="exam-tcard" style={{ '--c': color(a.course), background: soft(color(a.course), 32) }}>

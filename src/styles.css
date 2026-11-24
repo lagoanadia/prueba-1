@@ -4819,3 +4819,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { .tk-float { animation: none; } }
 
 .tk-ghost .tk-title { flex: 1; min-width: 0; }
+
+/* El día («2 días») y la fecha, pegados a la derecha sobre las tarjetas */
+.exam-todays-h { display: flex; align-items: baseline; justify-content: flex-end; gap: 10px; }
