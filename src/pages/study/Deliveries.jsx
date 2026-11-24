@@ -46,9 +46,8 @@ export default function Deliveries({ data, update, subjects, course = null, exam
   const untick = (id) => update((d) => ({ ...d, assignments: d.assignments.map((a) => (a.id === id ? { ...a, tick: false, tickAt: null } : a)) }))
 
   const daysText = (d) => { const n = daysUntil(d); return n < 0 ? `hace ${-n} d` : n === 0 ? 'hoy' : n === 1 ? 'mañana' : `${n} días` }
-  const groups = exams ? [['', pending]] : course ? [[course, pending]] : subjects.map((s) => [s.short, pending.filter((a) => a.course === s.short)]).filter(([, l]) => l.length)
-  const orphans = course || exams ? [] : pending.filter((a) => !subjects.some((s) => s.short === a.course))
-  if (orphans.length) groups.push(['Sin asignatura', orphans])
+  // Todas las entregas (y exámenes) juntas por orden de fecha, con la asignatura de cada una; dentro de una asignatura ya van por fecha
+  const groups = [['', pending]]
 
   return (
     <div className="deliv">
@@ -147,13 +146,12 @@ export default function Deliveries({ data, update, subjects, course = null, exam
         <>
       {groups.map(([short, list]) => (
         <div key={short} className="deliv-group">
-          {!course && !exams && <span className="deliv-title"><span className="dot" style={{ background: color(short) }} />{short}</span>}
           {list.map((a) => (
             <div key={a.id} className="deliv-row is-click" style={{ background: soft(color(a.course), 16) }} role="button" tabIndex={0}
               onClick={() => tick(a.id)} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tick(a.id) } }}
               aria-label={`Marcar «${a.title}» como hecha`} title="Toca para marcarla como hecha">
               <span className="deliv-ic" style={{ background: soft(color(a.course), 55) }} aria-hidden="true"><Icon name={KINDS[a.kind]?.icon ?? 'doc'} size={18} /></span>
-              {exams && <span className="exam-tag" style={{ background: soft(color(a.course), 45), '--c': color(a.course) }}>{a.course}</span>}
+              {!course && <span className="exam-tag" style={{ background: soft(color(a.course), 45), '--c': color(a.course) }}>{a.course}</span>}
               <span className="deliv-name w-ellipsis">{a.title}</span>
               {exams ? <span className={`exam-chip ${a.due < today ? 'is-late' : ''}`}>{daysText(a.due)}</span> : <b className={a.due < today ? 'is-late' : ''}>{formatShort(a.due).replace(/^\S+ /, '')}</b>}
               <button className="prio-x" onClick={(e) => { e.stopPropagation(); open(a) }} aria-label={`Editar «${a.title}»`}><Icon name="pen" size={16} /></button>
