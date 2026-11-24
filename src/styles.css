@@ -4819,8 +4819,3 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { .tk-float { animation: none; } }
 
 .tk-ghost .tk-title { flex: 1; min-width: 0; }
-
-/* Líneas subrayadas: texto blanco encima del resaltado para que se lea mejor */
-.cb-white { grid-area: 1 / 1; position: relative; pointer-events: none; font: 14px/1.65 ui-monospace, Menlo, Consolas, monospace; }
-.cb-white i { position: absolute; left: -18px; right: -18px; top: calc(1.65em * var(--i)); height: 1.65em; padding-left: 15px; font-style: normal; white-space: pre; overflow: hidden; color: #FFFFFF; font-weight: 500; tab-size: 2;
-  background: linear-gradient(color-mix(in srgb, var(--m) 26%, transparent), color-mix(in srgb, var(--m) 26%, transparent)), var(--cb-bg); border-left: 3px solid var(--m); }
