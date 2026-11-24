@@ -217,20 +217,47 @@ ${sheetCss(st)}</style></head><body>
 </body></html>`
 }
 
-/** Imprime la hoja como PDF con el diálogo del navegador («Guardar como PDF»). */
-export async function printSheet(html, st, title) {
+/** Imprime un documento HTML en un marco oculto (diálogo del navegador, «Guardar como PDF»). */
+async function printFrame(docHtml) {
   const frame = document.createElement('iframe')
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
   document.body.appendChild(frame)
   const d = frame.contentDocument
   d.open()
-  d.write(printDocument(html, st, title))
+  d.write(docHtml)
   d.close()
   try { await Promise.race([d.fonts.ready, new Promise((r) => setTimeout(r, 2500))]) } catch { /* sin fuentes */ }
   await new Promise((r) => setTimeout(r, 150))
   frame.contentWindow.focus()
   frame.contentWindow.print()
   setTimeout(() => frame.remove(), 60000)
+}
+
+/** Imprime la hoja como PDF con el diálogo del navegador («Guardar como PDF»). */
+export async function printSheet(html, st, title) { return printFrame(printDocument(html, st, title)) }
+
+/**
+ * «Lo que ves es lo que sale»: se imprimen las MISMAS hojas de la vista previa. Cada hoja es una página A4 con su trozo del documento
+ * ya colocado (mismos saltos, mismos cortes, misma portada, índice y números), así el PDF no cambia nada respecto a lo que viste.
+ * `pages` = [{ from, to, cap, items: [{ top, bottom, html }] }] en píxeles de la tira de la vista previa.
+ */
+export function printPaged(pages, st, title) {
+  const total = pages.length
+  const body = pages.map((pg, k) => {
+    const items = pg.items.map((it) => `<div class="pp-it" style="top:${it.top - pg.from}px;height:${it.bottom - it.top}px">${it.html}</div>`).join('')
+    const cap = (pos, c) => (c ? `<i class="pp-cap pp-cap-${pos}" style="--pf:${c.pf};--pb:${c.pb};${pos === 'b' ? `top:${PAGE.m + Math.max(pg.to - pg.from, 1)}px` : ''}"></i>` : '')
+    return `<section class="pp"><div class="pp-win" style="height:${Math.max(pg.to - pg.from, 1)}px">${items}</div>${cap('t', pg.cap?.top)}${cap('b', pg.cap?.bottom)}<span class="pp-n">${k + 1} / ${total}</span></section>`
+  }).join('')
+  return printFrame(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+<style>@page { size: A4; margin: 0; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pp { position: relative; width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; background: #fff; } .pp:last-child { break-after: auto; page-break-after: auto; }
+.pp-win { position: absolute; left: ${PAGE.m}px; top: ${PAGE.m}px; width: 642px; overflow: hidden; }
+.pp-it { position: absolute; left: 0; width: 642px; overflow: hidden; }
+.pp-n { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font: 11px Poppins, sans-serif; color: #9AA0A6; }
+.pp-cap { position: absolute; left: ${PAGE.m}px; width: 642px; height: 14px; background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); }
+.pp-cap-b { border-radius: 0 0 12px 4px; } .pp-cap-t { top: ${PAGE.m - 14}px; border-radius: 4px 12px 0 0; }
+${sheetCss(st)}</style></head><body>${body}</body></html>`)
 }
 
 // Alto útil de una página A4 con márgenes de 20 mm (a 96 dpi) y alto de línea del texto (13 px × 1,65)

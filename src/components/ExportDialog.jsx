@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
-import { COLORS, DEFAULT_COVER, DEFAULT_STYLE, coverHtml, headingsOf, indexHtml, syncCodeColor, FONTS, PAGE, RADII, loadImages, paginate, printSheet, sheetCss, sheetHtml, blockHtml } from '../lib/exportNotes.js'
+import { COLORS, DEFAULT_COVER, DEFAULT_STYLE, coverHtml, headingsOf, indexHtml, syncCodeColor, FONTS, PAGE, RADII, loadImages, paginate, printPaged, sheetCss, sheetHtml, blockHtml } from '../lib/exportNotes.js'
 
 const FONT_NAMES = { poppins: 'Poppins', lora: 'Lora', mono: 'Mono' }
 const loadCover = () => { try { return { ...DEFAULT_COVER, ...JSON.parse(localStorage.getItem('exportCover') || '{}') } } catch { return DEFAULT_COVER } }
@@ -136,7 +136,13 @@ export default function ExportDialog({ title, subtitle, blocks: initial, onClose
 
   const exportPdf = async () => {
     setBusy(true)
-    try { await printSheet(sheetHtml({ title, subtitle, blocks, breaks, imgs, cover, pageNums }), st, title) } finally { setBusy(false) }
+    try {
+      // Se imprimen las hojas tal como se ven (no se vuelve a repartir el texto): así el PDF coincide con la vista previa
+      const el = strip.current
+      const kids = el ? [...el.children].map((c) => ({ top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight, html: (c.querySelector('.x-sheet') ?? c).outerHTML })) : []
+      const sheets = pages.map(([from, to, cap]) => ({ from, to, cap, items: kids.filter((k) => k.bottom > from + 0.5 && k.top < to - 0.5) }))
+      await printPaged(sheets, st, title)
+    } finally { setBusy(false) }
   }
 
   return createPortal(
