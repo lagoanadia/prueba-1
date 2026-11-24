@@ -244,7 +244,7 @@ export async function printSheet(html, st, title) { return printFrame(printDocum
 export function printPaged(pages, st, title) {
   const total = pages.length
   const body = pages.map((pg, k) => {
-    const items = pg.items.map((it) => `<div class="pp-it" style="top:${it.top - pg.from}px;height:${it.bottom - it.top}px">${it.html}</div>`).join('')
+    const items = pg.items.map((it) => `<div class="pp-it" style="top:${it.top - pg.from}px">${it.html}</div>`).join('')
     const cap = (pos, c) => (c ? `<i class="pp-cap pp-cap-${pos}" style="--pf:${c.pf};--pb:${c.pb};${pos === 'b' ? `top:${PAGE.m + Math.max(pg.to - pg.from, 1)}px` : ''}"></i>` : '')
     return `<section class="pp"><div class="pp-win" style="height:${Math.max(pg.to - pg.from, 1)}px">${items}</div>${cap('t', pg.cap?.top)}${cap('b', pg.cap?.bottom)}<span class="pp-n">${k + 1} / ${total}</span></section>`
   }).join('')
@@ -253,7 +253,7 @@ export function printPaged(pages, st, title) {
 <style>@page { size: A4; margin: 0; } html, body { margin: 0; background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .pp { position: relative; width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; background: #fff; } .pp:last-child { break-after: auto; page-break-after: auto; }
 .pp-win { position: absolute; left: ${PAGE.m}px; top: ${PAGE.m}px; width: 642px; overflow: hidden; }
-.pp-it { position: absolute; left: 0; width: 642px; overflow: hidden; }
+.pp-it { position: absolute; left: 0; width: 642px; } /* sin recorte propio: solo recorta la ventana de la hoja (así ninguna letra se corta por abajo) */
 .pp-it .x-sheet > * { margin-top: 0 !important; margin-bottom: 0 !important; } /* los márgenes de arriba y abajo de cada bloque ya van en su colocación: dentro de la caja recortada taparían el borde del texto */
 .pp-n { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; font: 11px Poppins, sans-serif; color: #9AA0A6; }
 .pp-cap { position: absolute; left: ${PAGE.m}px; width: 642px; height: 14px; background: var(--pf, #FFF1B8); border-left: 5px solid var(--pb, #F2B705); }
