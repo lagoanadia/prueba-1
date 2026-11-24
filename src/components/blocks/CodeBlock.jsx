@@ -87,6 +87,9 @@ export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBa
           {Object.entries(marks).filter(([i]) => Number(i) < total).map(([i, c]) => <i key={i} className="cb-mk" style={{ '--i': i, '--m': (POSTIT_COLORS[c] ?? POSTIT_COLORS.amarillo).bar }} />)}
         </div>
         <pre className="cb-hl" aria-hidden="true" dangerouslySetInnerHTML={{ __html: `${highlight(code, block.lang)}\n` }} />
+        <div className="cb-white" aria-hidden="true">
+          {Object.entries(marks).filter(([i]) => Number(i) < total).map(([i, c]) => <i key={i} style={{ '--i': i, '--m': (POSTIT_COLORS[c] ?? POSTIT_COLORS.amarillo).bar }}>{code.split('\n')[i]}</i>)}
+        </div>
         <textarea ref={ta} value={code} onChange={(e) => set({ code: e.target.value })} onKeyDown={onKey} spellCheck={false} autoCapitalize="off" autoCorrect="off" aria-label="Código" placeholder="Escribe o pega tu código" />
       </div>
       {pen?.on && <div className="cb-paint" onPointerDown={paintDown} onPointerMove={paintMove} onPointerUp={paintUp} onPointerCancel={paintUp} />}
