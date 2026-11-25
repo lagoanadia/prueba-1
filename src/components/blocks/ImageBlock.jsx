@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
+import Caption from './Caption.jsx'
 import { deleteFile, getFile, saveFile } from '../../lib/fileStore.js'
 
 const MIN_W = 10 // % mínimo del ancho de la página
@@ -60,7 +61,8 @@ export default function ImageBlock({ block, onChange, onRemove = null }) {
       {url
         ? (
           <figure ref={fig} className="img-fig" style={{ justifyContent: JUSTIFY[align] }}>
-            <div ref={frame} className={`img-frame ${picked ? 'is-picked' : ''}`} style={width ? { width: `${width}%` } : undefined} onClick={() => setPicked(true)}>
+            <div className="img-col" style={width ? { width: `${width}%` } : undefined}>
+            <div ref={frame} className={`img-frame ${picked ? 'is-picked' : ''}`} onClick={() => setPicked(true)}>
               <img src={url} alt={block.file?.name ?? ''} draggable={false} />
               {picked && (
                 <>
@@ -78,6 +80,8 @@ export default function ImageBlock({ block, onChange, onRemove = null }) {
                   </span>
                 </>
               )}
+            </div>
+            <Caption value={block.caption} show={picked} onChange={(caption) => onChange({ ...block, caption: caption || undefined })} />
             </div>
           </figure>
         )

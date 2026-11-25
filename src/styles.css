@@ -4832,3 +4832,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 
 /* Lo que cuelga de una lista numerada se mete a la derecha, alineado con el texto de los elementos */
 .block-slot.in-list > .block { margin-left: 30px; }
+
+/* Título de fotos y galerías (barra azul, pegado al bloque) */
+.img-col { display: flex; flex-direction: column; max-width: 100%; min-width: 0; }
+.cap { display: flex; align-items: center; margin-top: 6px; border-left: 3px solid var(--blue); padding-left: 9px; }
+.cap input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13.5px; color: var(--muted); padding: 2px 0; }
+.cap input:focus { color: var(--text); }
+
+/* Título del código: cabecera sobre el bloque */
+.cb-title { position: absolute; top: 9px; left: 18px; right: 190px; z-index: 4; border: 0; outline: none; background: transparent; font: 600 12.5px Poppins, sans-serif; color: var(--cb-chipfg); padding: 3px 0; min-width: 0; }
+.cb-title::placeholder { color: transparent; }
+.cb:hover .cb-title::placeholder, .cb-title:focus::placeholder { color: var(--cb-muted, #8A93B5); font-weight: 500; }
+.cb-head { display: none; position: absolute; left: 0; right: 0; top: 0; height: 44px; border-radius: 16px 16px 0 0; background: rgba(255, 255, 255, .06); pointer-events: none; }
+.cb.has-title .cb-head { display: block; }
+.cb-head { height: 36px; }

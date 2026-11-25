@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
+import Caption from './Caption.jsx'
 import { deleteFile, getFile, saveFile } from '../../lib/fileStore.js'
 
 const LAYOUTS = [['row', 'Fila'], ['grid', 'Cuadrícula'], ['mosaic', 'Mosaico']]
@@ -107,7 +108,8 @@ export default function GalleryBlock({ block, onChange, onRemove = null }) {
         ? <button type="button" className="img-empty" onClick={() => input.current?.click()}><Icon name="img" size={26} /><span>Añadir fotos (puedes elegir varias)</span></button>
         : (
           <div ref={fig} className="gal-fig" style={{ justifyContent: JUSTIFY[align] }}>
-            <div ref={frame} className={`gal-frame ${picked ? 'is-picked' : ''}`} style={{ width: `${width}%` }} onClick={() => setPicked(true)}>
+            <div className="img-col" style={{ width: `${width}%` }}>
+            <div ref={frame} className={`gal-frame ${picked ? 'is-picked' : ''}`} onClick={() => setPicked(true)}>
               {layout === 'grid' ? (
                 // cuadrícula: filas de tres, cada fila a la misma altura y cada foto con su proporción
                 <div className="gal gal-grid">
@@ -140,6 +142,8 @@ export default function GalleryBlock({ block, onChange, onRemove = null }) {
                   </span>
                 </>
               )}
+            </div>
+            <Caption value={block.caption} show={picked} onChange={(caption) => onChange({ ...block, caption: caption || undefined })} />
             </div>
           </div>
         )}

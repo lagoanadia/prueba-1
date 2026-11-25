@@ -66,7 +66,9 @@ export default function CodeBlock({ block, onChange, focus, onFocused, onEmptyBa
   const vars = { '--cb-bg': t.bg, '--cb-fg': t.fg, '--cb-muted': t.muted, '--cb-chip': t.chip, '--cb-chipfg': t.chipfg, '--cb-k': t.k, '--cb-s': t.s, '--cb-f': t.f, '--cb-c': t.c, '--cb-n': t.n }
 
   return (
-    <div className="cb" style={vars}>
+    <div className={`cb ${block.title ? 'has-title' : ''}`} style={vars}>
+      <div className="cb-head" aria-hidden="true" />
+      <input className="cb-title" value={block.title ?? ''} onChange={(e) => set({ title: e.target.value || undefined })} placeholder="Título del código" aria-label="Título del código" maxLength={120} spellCheck />
       <div className="cb-tools">
         <span className="cb-themes">
           {menu === 'theme'

@@ -126,6 +126,9 @@ export function sheetCss(st) {
 .x-code .x-cl, .x-code .x-cm { display: block; }
 .x-code .x-cm { margin: 0 -14px; padding: 0 11px 0 11px; border-left: 3px solid var(--m); background: color-mix(in srgb, var(--m) 28%, transparent); }
 .x-code { background: #0F172A; color: #E2E8F0; border-radius: ${Math.max(r - 2, 0)}px; padding: 12px 14px; font: 11.5px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.x-codebox { break-inside: avoid; } .x-codebox:has(.x-codetitle) .x-code { border-top-left-radius: 0; border-top-right-radius: 0; margin-top: 0; }
+.x-codetitle { display: flex; justify-content: space-between; gap: 10px; background: #1E293B; color: #CBD5E1; font: 600 10.5px Poppins, sans-serif; padding: 6px 14px; border-radius: 8px 8px 0 0; margin-top: 8px; }
+.x-fig { break-inside: avoid; } .x-cap { margin-top: 4px; padding-left: 8px; border-left: 3px solid #3185FC; font-size: 11px; color: #5F6368; line-height: 1.4; }
 .x-lang { display: block; font: 600 10px Poppins, sans-serif; color: #94A3B8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
 .x-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1.5px solid color-mix(in srgb, var(--c) 35%, #fff); border-radius: var(--r); overflow: hidden; font-size: 12.5px; }
 .x-table th { background: var(--c); color: #fff; text-align: left; font-weight: 600; padding: 8px 12px; }
@@ -152,6 +155,12 @@ const cellHtml = (b, c) => (b.rich ? c ?? '' : esc(c))
 
 /** Cada bloque → su HTML. `n` = número en una lista numerada; `imgs` = id de archivo → data URL. */
 export function blockHtml(b, n, imgs) {
+  const h = blockHtmlRaw(b, n, imgs)
+  // foto o galería con título: todo en un solo bloque para que no se separen al paginar
+  if (h && b.caption && (b.type === 'image' || b.type === 'gallery')) return `<div class="x-b x-fig">${h.replace(/class="x-b( |")/, 'class="x-figin$1')}<div class="x-cap">${esc(b.caption)}</div></div>`
+  return h
+}
+function blockHtmlRaw(b, n, imgs) {
   const rich = (h) => h || ''
   switch (b.type) {
     case 'h1': case 'h2': case 'h3': case 'h4': return `<div class="x-b x-${b.type}">${rich(b.html)}</div>`
@@ -165,7 +174,7 @@ export function blockHtml(b, n, imgs) {
       const marks = b.marks ?? {}
       // con líneas subrayadas, cada línea es un bloque (la marcada lleva banda y raya de color)
       const body = Object.keys(marks).length ? (b.code ?? '').split('\n').map((l, i) => { const pc = POSTIT_COLORS[marks[i]]; return pc ? `<span class="x-cm" style="--m:${pc.bar}">${esc(l) || ' '}</span>` : `<span class="x-cl">${esc(l) || ' '}</span>` }).join('') : esc(b.code)
-      return `<div class="x-b x-code">${b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${body}</div>`
+      return `<div class="x-b x-codebox">${b.title ? `<div class="x-codetitle"><span>${esc(b.title)}</span>${b.lang ? `<span>${esc(b.lang)}</span>` : ''}</div>` : ''}<div class="x-code">${!b.title && b.lang ? `<span class="x-lang">${esc(b.lang)}</span>` : ''}${body}</div></div>`
     }
     case 'table': {
       const rows = b.rows ?? []
