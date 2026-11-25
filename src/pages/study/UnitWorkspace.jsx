@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { saveFile } from '../../lib/fileStore.js'
+import { deleteFile, saveFile } from '../../lib/fileStore.js'
 import { toDoc } from '../../lib/docModel.js'
 import NotesPane from './NotesPane.jsx'
 import DocsTab from './DocsTab.jsx'
@@ -336,7 +336,9 @@ export default function UnitWorkspace({ data, update, subject, unit, route, go, 
 /** Los PDF de un tema: pestañas con sus nombres, el visor del que elijas y un + para añadir otro. */
 function FilesPane({ files, onChange, label, onPickText }) {
   const [idx, setIdx] = useState(0)
+  const [renameAt, setRenameAt] = useState(null)
   const input = useRef(null)
+  const removeAt = (k) => { if (files[k]?.id) deleteFile(files[k].id).catch(() => {}); onChange(files.filter((_, j) => j !== k)) }
   const i = Math.min(idx, Math.max(files.length - 1, 0))
   const addOther = async (e) => {
     const f = e.target.files?.[0]
@@ -348,19 +350,21 @@ function FilesPane({ files, onChange, label, onPickText }) {
   return (
     <div className="files-pane">
       <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
-      {files.length > 1 && (
-        // Varios PDF: pestañas propias encima del visor (así no se mezclan con los botones de ampliar / alejar del PDF)
+      {files.some((f) => !f.type?.startsWith('image/')) && (
+        // Pestañas de los PDF encima del visor: nombre, doble clic para renombrar y × para quitar (el visor solo lleva páginas y ampliar / alejar)
         <div className="file-tabs" role="tablist" aria-label="PDF de este tema">
           {files.map((f, k) => (
             <button key={f.id ?? k} type="button" role="tab" aria-selected={k === i} className={`file-tab ${k === i ? 'on' : ''}`} onClick={() => setIdx(k)} title={f.name}>
-              <Icon name="pdf" size={14} color="#E84855" /><span>{f.name?.replace(/\.pdf$/i, '') || `PDF ${k + 1}`}</span>
+              <Icon name="pdf" size={14} color="#E84855" /><span onDoubleClick={() => setRenameAt(k)}>{f.name?.replace(/\.pdf$/i, '') || `PDF ${k + 1}`}</span>
+              {k === i && <i className="file-tab-x" role="button" tabIndex={0} aria-label={`Quitar ${f.name}`} title="Quitar el PDF" onClick={(e) => { e.stopPropagation(); removeAt(k) }} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); removeAt(k) } }}><Icon name="close" size={12} strokeWidth={2.8} /></i>}
             </button>
           ))}
           <button type="button" className="file-tab file-tab-add" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="plus" size={14} strokeWidth={2.6} /></button>
         </div>
       )}
+      {renameAt !== null && files[renameAt] && <NameDialog title="Nombre del PDF" initial={files[renameAt].name} maxLength={120} onSubmit={(n) => { onChange(files.map((x, k) => (k === renameAt ? { ...x, name: n } : x))); setRenameAt(null) }} onClose={() => setRenameAt(null)} />}
       <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label} onPickText={onPickText}
-        extra={files.length > 1 ? <></> : files.length > 0 && <button className="icon-btn" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="upload" size={20} /></button>}
+        extra={files.length > 0 ? <></> : false}
         onChange={(f) => onChange(f ? (files.length ? files.map((x, k) => (k === i ? f : x)) : [f]) : files.filter((_, k) => k !== i))} />
     </div>
   )
