@@ -348,19 +348,19 @@ function FilesPane({ files, onChange, label, onPickText }) {
   return (
     <div className="files-pane">
       <input ref={input} type="file" accept="application/pdf,image/*" hidden onChange={addOther} />
+      {files.length > 1 && (
+        // Varios PDF: pestañas propias encima del visor (así no se mezclan con los botones de ampliar / alejar del PDF)
+        <div className="file-tabs" role="tablist" aria-label="PDF de este tema">
+          {files.map((f, k) => (
+            <button key={f.id ?? k} type="button" role="tab" aria-selected={k === i} className={`file-tab ${k === i ? 'on' : ''}`} onClick={() => setIdx(k)} title={f.name}>
+              <Icon name="pdf" size={14} color="#E84855" /><span>{f.name?.replace(/\.pdf$/i, '') || `PDF ${k + 1}`}</span>
+            </button>
+          ))}
+          <button type="button" className="file-tab file-tab-add" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="plus" size={14} strokeWidth={2.6} /></button>
+        </div>
+      )}
       <FileFrame key={files[i]?.id ?? 'empty'} file={files[i] ?? null} label={label} onPickText={onPickText}
-        extra={files.length > 0 && (
-          <>
-            {files.length > 1 && (
-              <span className="file-switch" role="group" aria-label="PDF de este tema">
-                <button className="icon-btn" onClick={() => setIdx((i - 1 + files.length) % files.length)} aria-label="PDF anterior"><Icon name="left" size={16} /></button>
-                <b>{i + 1}/{files.length}</b>
-                <button className="icon-btn" onClick={() => setIdx((i + 1) % files.length)} aria-label="PDF siguiente"><Icon name="right" size={16} /></button>
-              </span>
-            )}
-            <button className="icon-btn" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="plus" size={20} /></button>
-          </>
-        )}
+        extra={files.length > 1 ? <></> : files.length > 0 && <button className="icon-btn" onClick={() => input.current?.click()} aria-label="Añadir otro PDF" title="Añadir otro PDF"><Icon name="upload" size={20} /></button>}
         onChange={(f) => onChange(f ? (files.length ? files.map((x, k) => (k === i ? f : x)) : [f]) : files.filter((_, k) => k !== i))} />
     </div>
   )

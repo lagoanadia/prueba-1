@@ -4862,3 +4862,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .tk-order { display: grid; gap: 12px; }
 .tk-row[draggable="true"] { cursor: grab; }
 .tk-tagc { flex: none; font-size: 11.5px; font-weight: 700; }
+
+/* Varios PDF en un tema: pestañas encima del visor */
+.file-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 0 2px 2px; scrollbar-width: thin; flex: none; }
+.file-tab { display: inline-flex; align-items: center; gap: 6px; flex: none; max-width: 190px; border: 0; border-radius: 12px; padding: 6px 12px; background: var(--soft, #F1F3F4); color: var(--muted); font: 600 12.5px Poppins, sans-serif; cursor: pointer; }
+.file-tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-tab.on { background: #FFFFFF; color: var(--text); box-shadow: 0 1px 4px rgba(0, 0, 0, .14); }
+.file-tab-add { padding: 6px 9px; }
