@@ -4846,3 +4846,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .cb-head { display: none; position: absolute; left: 0; right: 0; top: 0; height: 44px; border-radius: 16px 16px 0 0; background: rgba(255, 255, 255, .06); pointer-events: none; }
 .cb.has-title .cb-head { display: block; }
 .cb-head { height: 36px; }
+
+/* Tareas: franja «Hoy» y cambio de vista */
+.tk-switch { display: inline-flex; gap: 3px; background: #F1F3F4; border-radius: 12px; padding: 3px; }
+.tk-switch button { border: 0; background: none; font: 600 12px Poppins, sans-serif; color: var(--muted); padding: 5px 11px; border-radius: 9px; cursor: pointer; }
+.tk-switch button.on { background: #FFFFFF; color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
+.tk-hoy { margin: 4px 0 12px; border: 2px dashed #9DBBF5; border-radius: 18px; background: #F3F8FF; padding: 10px 12px; transition: background .15s, border-color .15s, box-shadow .15s; }
+.tk-hoy.is-over { background: #E6F0FF; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(49, 133, 252, .14); }
+.tk-hoy-h { display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; color: #1F6FEB; } .tk-hoy-h span { font-size: 12px; font-weight: 600; }
+.tk-hoy-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tk-hchip { display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF; border-radius: 12px; border-bottom: 3px solid var(--c); padding: 5px 8px 4px 9px; font-size: 13.5px; box-shadow: 0 1px 4px rgba(0, 0, 0, .09); cursor: grab; }
+.tk-hchip .tk-ic { opacity: 0; transition: opacity .12s; } .tk-hchip:hover .tk-ic, .tk-hchip:focus-within .tk-ic { opacity: 1; }
+@media (hover: none) { .tk-hchip .tk-ic { opacity: 1; } }
+.tk-hoy-empty { margin: 6px 0 0; font-size: 12.5px; color: #7FA3E8; text-align: center; }
+.tk-order { display: grid; gap: 12px; }
+.tk-row[draggable="true"] { cursor: grab; }
+.tk-tagc { flex: none; font-size: 11.5px; font-weight: 700; }
